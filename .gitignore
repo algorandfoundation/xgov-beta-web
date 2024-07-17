@@ -1,5 +1,6 @@
 # build output
 dist/
+coverage
 
 # generated types
 .astro/
@@ -22,3 +23,5 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+*storybook.log
