@@ -1,9 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Header from '../components/Header.astro';
+import {Header} from '../components/Header.tsx';
+import {Icon} from '../components/Icon.tsx';
 import ProposalFilter from '../components/ProposalFilter';
 import type { ProposalCardDetails } from '../types/proposals';
 import ProposalList from '../components/ProposalList';
+import React from "react";
 
 const title = 'xGov';
 
@@ -52,14 +54,27 @@ const mockProposals: ProposalCardDetails[] = [
 		fundingType: 'retroactive',
 		requestedAmount: 100_000,
 		proposer: 'SwapX'
-	
+
 	}
 ];
 
 ---
-
+<script>
+	const onConnectWallet = (url: string) => {
+		console.log(url)
+	}
+	document.getElementById('connect-button')?.addEventListener('click', () => {
+		onConnectWallet('https://wallet.algorand.org')
+	})
+</script>
 <Layout title={title}>
-	<Header title={title} />
+	<Header title={title}>
+		<!-- Add Actions to Header based on Page and Wallet state -->
+		<button id="connect-button" class="flex items-center gap-2 bg-algo-black text-lg rounded-md text-white p-2 px-4">
+			<Icon name="wallet"/>
+			Connect Wallet
+		</button>
+	</Header>
 	<main class="m-auto p-4 lg:px-10 w-full grid grid-cols-1 lg:grid-cols-2">
 		<div>
 			<ProposalFilter className="my-2 lg:my-4" client:react-only />
