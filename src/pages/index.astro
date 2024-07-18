@@ -1,9 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
-import ProposalFilter from '../components/ProposalFilter.astro';
+import ProposalFilter from '../components/ProposalFilter';
 import type { ProposalCardDetails } from '../types/proposals';
-import ProposalList from '../components/ProposalList.astro';
+import ProposalList from '../components/ProposalList';
 
 const title = 'xGov';
 
@@ -62,8 +62,8 @@ const mockProposals: ProposalCardDetails[] = [
 	<Header title={title} />
 	<main class="m-auto p-4 lg:px-10 w-full grid grid-cols-1 lg:grid-cols-2">
 		<div>
-			<ProposalFilter class="my-2 lg:my-4"/>
-			<ProposalList proposals={mockProposals} />
+			<ProposalFilter className="my-2 lg:my-4" client:react-only />
+			<ProposalList proposals={mockProposals} client:react-only />
 		</div>
 	</main>
 </Layout>
