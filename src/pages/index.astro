@@ -63,7 +63,7 @@ const mockProposals: ProposalCardDetails[] = [
 	const onConnectWallet = (url: string) => {
 		console.log(url)
 	}
-	document.getElementById('connect-button').addEventListener('click', () => {
+	document.getElementById('connect-button')?.addEventListener('click', () => {
 		onConnectWallet('https://wallet.algorand.org')
 	})
 </script>
