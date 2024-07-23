@@ -1,11 +1,11 @@
-import ProposalCard from "./ProposalCard";
+import { ProposalCard } from "./ProposalCard";
 import type { ProposalCardDetails } from "../types/proposals";
 
 export interface ProposalListProps {
     proposals: ProposalCardDetails[];
 }
 
-export default function ProposalList({ proposals }: ProposalListProps) {
+export function ProposalList({ proposals }: ProposalListProps) {
 return (
     <>
         <h2 className="text-2xl lg:text-4xl font-bold py-2 mb-2">Active Proposals</h2>

@@ -1,11 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import {Header} from '../components/Header.tsx';
-import {Icon} from '../components/Icon.tsx';
-import ProposalFilter from '../components/ProposalFilter';
+import {WalletIcon} from '../icons/WalletIcon.tsx';
+import {ProposalFilter} from '../components/ProposalFilter';
 import type { ProposalCardDetails } from '../types/proposals';
-import ProposalList from '../components/ProposalList';
-import React from "react";
+import {ProposalList} from '../components/ProposalList';
 
 const title = 'xGov';
 
@@ -68,17 +67,19 @@ const mockProposals: ProposalCardDetails[] = [
 	})
 </script>
 <Layout title={title}>
-	<Header title={title}>
+	<Header
+		title={title}
+	>
 		<!-- Add Actions to Header based on Page and Wallet state -->
-		<button id="connect-button" class="flex items-center gap-2 bg-algo-black text-lg rounded-md text-white p-2 px-4">
-			<Icon name="wallet"/>
+		<button id="connect-button" class="flex items-center gap-2.5 bg-algo-black text-lg rounded-md text-white p-2 px-4">
+			<WalletIcon className="size-6" />
 			Connect Wallet
 		</button>
 	</Header>
 	<main class="m-auto p-4 lg:px-10 w-full grid grid-cols-1 lg:grid-cols-2">
 		<div>
-			<ProposalFilter className="my-2 lg:my-4" client:react-only />
-			<ProposalList proposals={mockProposals} client:react-only />
+			<ProposalFilter className="my-2 lg:my-4" /> 
+			<ProposalList proposals={mockProposals} client:only="react" />
 		</div>
 	</main>
 </Layout>

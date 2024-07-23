@@ -13,7 +13,7 @@ export const phaseToText = {
     closure: 'Closure'
 };
 
-export default function ProposalCard({ proposal }: ProposalCardProps) {
+export function ProposalCard({ proposal }: ProposalCardProps) {
     return (
         <li className="relative bg-white border-2 border-algo-black p-4 rounded-lg max-w-3xl">
             <h3 className="text-lg text-wrap w-52 lg:w-[38rem] lg:text-2xl mt-10 mb-6 lg:mb-14 font-bold">{proposal.title}</h3>
