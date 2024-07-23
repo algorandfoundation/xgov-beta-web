@@ -56,7 +56,7 @@ const meta = {
     // 👇 Assert DOM structure
     await expect(
         canvas.getByTestId('header-cohort-link')
-    ).toHaveClass('bg-purple-900');
+    ).toHaveClass('bg-algo-blue');
   },
 } satisfies Meta<typeof Header>;
 
