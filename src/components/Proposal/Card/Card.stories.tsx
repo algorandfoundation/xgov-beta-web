@@ -1,0 +1,94 @@
+import type { Meta, StoryObj } from '@storybook/react';
+import { userEvent, within, expect } from '@storybook/test';
+
+import type { ProposalCardDetails } from '@/types/proposals';
+import { useState } from 'react';
+import { ProposalCard, type ProposalCardProps } from '.';
+
+export const mockProposal: ProposalCardDetails & { pastProposals?: { title: string, link: string }[] } = {
+    id: 1,
+    title: "Auto-Compounding Farms",
+    description: "This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users",
+    phase: "discussion",
+    proposer: "CompX",
+    properties: {
+        openSource: true,
+        focus: 'defi',
+        deliveryDate: '2023-01-01',
+        team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
+        experience: 'CompX has been delivering impact via auto-compounding farms for years',
+        presentProposal: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
+        deliverable: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users ',
+        futureBlueprint: 'CompX will continue to deliver impact via auto-compounding farms',
+        benefits: 'Algorand users will benefit from the impact delivered by CompX',
+    },
+    pastProposals: [
+        { title: 'Tealscript interactive developer course Tealscript interactive developer course', link: '/proposals/2' },
+        { title: 'Use-Wallet', link: '/proposals/3' },
+        { title: 'AlgoNFT Marketplace', link: '/proposals/4' },
+    ],
+};
+
+function ProposalCardWrapper(props: ProposalCardProps) {
+  const [clickedLink, setClickedLink] = useState<string | null>(null);
+
+  return (
+    <div>
+      <ProposalCard {...props} />
+      {clickedLink && (
+        <div data-testid="clicked-link">Clicked: {clickedLink}</div>
+      )}
+    </div>
+  );
+}
+
+const meta = {
+  title: 'Components/ProposalCard',
+  component: ProposalCardWrapper,
+  tags: ['autodocs'],
+  parameters: {
+    layout: 'padded',
+  },
+  args: {
+    proposal: mockProposal,
+  },
+  argTypes: {
+    proposal: {
+      control: 'object',
+      description: 'Proposal object to display',
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const firstLink = canvas.getAllByRole('link')[0];
+    await userEvent.click(firstLink);
+    await expect(canvas.getByTestId('clicked-link')).toHaveTextContent('Clicked: /past-proposal-1');
+  },
+} satisfies Meta<typeof ProposalCardWrapper>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: {
+    proposal: mockProposal,
+  },
+};
+
+export const VotingPhase: Story = {
+  args: {
+    proposal: {
+      ...mockProposal,
+      phase: 'vote',
+    },
+  },
+};
+
+export const NoPastProposals: Story = {
+  args: {
+    proposal: {
+      ...mockProposal,
+      pastProposals: [],
+    },
+  },
+};

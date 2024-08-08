@@ -1,7 +1,7 @@
 ---
-import Layout from "@layouts/Layout.astro";
+import Layout from "@/layouts/Layout.astro";
 import { App } from "src/App";
 ---
 <Layout>
-    <App client:load path="/docs"/>
+    <App client:only path="/docs"/>
 </Layout>

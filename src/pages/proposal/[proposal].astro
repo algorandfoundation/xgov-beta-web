@@ -1,5 +1,5 @@
 ---
-import Layout from "@layouts/Layout.astro";
+import Layout from "@/layouts/Layout.astro";
 import { App } from "src/App";
 
 export function getStaticPaths() {
@@ -15,5 +15,5 @@ export function getStaticPaths() {
 const { proposal } = Astro.props;
 ---
 <Layout>
-    <App client:load path={`/proposal/${proposal}`}/>
+    <App client:only path={`/proposal/${proposal}`}/>
 </Layout>

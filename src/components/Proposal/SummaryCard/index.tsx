@@ -1,7 +1,7 @@
-import { capitalizeFirstLetter } from "../../functions/capitalization";
-import { phaseToText, type ProposalSummaryCardDetails } from "../../types/proposals";
-import { cn } from "../../functions/utils";
-import { Link } from "@components/Link";
+import { capitalizeFirstLetter } from "@/functions/capitalization";
+import { phaseToText, type ProposalSummaryCardDetails } from "@/types/proposals";
+import { cn } from "@/functions/utils";
+import { Link } from "@/components/Link";
 
 export interface ProposalCardProps {
     /**

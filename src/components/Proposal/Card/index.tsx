@@ -1,7 +1,7 @@
-import { capitalizeFirstLetter } from "../../functions/capitalization";
-import type { ProposalCardDetails } from "../../types/proposals";
-import { cn } from "../../functions/utils";
-import { Link } from "@components/Link";
+import { capitalizeFirstLetter } from "@/functions/capitalization";
+import type { ProposalCardDetails } from "@/types/proposals";
+import { cn } from "@/functions/utils";
+import { Link } from "@/components/Link";
 
 export interface ProposalCardProps {
     proposal: ProposalCardDetails;
@@ -24,7 +24,7 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
                     className={cn(
                         phase === 'discussion' ? 'text-algo-blue border-algo-blue' : '',
                         phase === 'vote' ? 'text-algo-teal border-algo-teal' : '',
-                        "p-0.5 px-4 rounded-full lg:text-lg text-algo-blue border-2 border-algo-blue"
+                        "p-0.5 px-4 rounded-full lg:text-lg border-2"
                     )}>
                     {phaseToText[phase]}
                 </span>
@@ -43,20 +43,26 @@ export function ProposalCard({ proposal }: ProposalCardProps) {
                 <h2 className="text-3xl font-bold my-4">Deliverables</h2>
                 <p className="text-xl dark:text-algo-blue-10">{capitalizeFirstLetter(deliverable)}</p>
 
-                <h2 className="text-3xl font-bold my-4">Past Proposals</h2>
-                <ul className="text-xl dark:text-algo-blue-10 flex flex-col gap-2 ">
-                    {pastProposals.map((pastProposal) => (
-                        <li key={pastProposal.link} className="truncate">
-                            <Link
-                                key={pastProposal.link}
-                                className="hover:text-algo-teal dark:hover:text-algo-blue"
-                                to={pastProposal.link}
-                            >
-                                {pastProposal.title}
-                            </Link>
-                        </li>
-                    ))}
-                </ul>
+                {
+                    !!pastProposals && !!pastProposals.length && (
+                        <>
+                            <h2 className="text-3xl font-bold my-4">Past Proposals</h2>
+                            <ul className="text-xl dark:text-algo-blue-10 flex flex-col gap-2 ">
+                                {pastProposals.map((pastProposal) => (
+                                    <li key={pastProposal.link} className="truncate">
+                                        <Link
+                                            key={pastProposal.link}
+                                            className="hover:text-algo-teal dark:hover:text-algo-blue"
+                                            to={pastProposal.link}
+                                        >
+                                            {pastProposal.title}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )
+                }
             </div>
         </div>
     )

@@ -1,5 +1,5 @@
-import type { ProposalSummaryCardDetails } from "../../types/proposals";
-import { ProposalSummaryCard } from "./ProposalSummaryCard";
+import type { ProposalSummaryCardDetails } from "@/types/proposals";
+import { ProposalSummaryCard } from "@/components/Proposal/SummaryCard";
 
 export interface ProposalListProps {
     proposals: ProposalSummaryCardDetails[];

@@ -1,18 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { fn, userEvent, within, expect } from '@storybook/test';
-import { Header, type HeaderProps } from './Header.tsx';
-import {type ComponentType, useState} from "react";
-import type {LinkProps} from "./Link.tsx";
+import { Header, type HeaderProps } from '.';
+import { type ComponentType, useState } from "react";
+import type { LinkProps } from "../Link.tsx";
 
-function HeaderWrapper(props: HeaderProps){
+function HeaderWrapper(props: HeaderProps) {
   const [path, setPath] = useState("/docs")
 
-  function Link(props: LinkProps & {onClick: ()=>void}){
+  function Link(props: LinkProps & { onClick: () => void }) {
     return (
-      <button {...props} onClick={()=>setPath(props.to)} />
+      <button {...props} onClick={() => setPath(props.to)} />
     )
   }
-  return <Header {...props} path={path} LinkComponent={Link as ComponentType<LinkProps>}/>
+  return <Header {...props} path={path} LinkComponent={Link as ComponentType<LinkProps>} />
 }
 
 const meta = {
@@ -25,7 +25,7 @@ const meta = {
   args: {
     children: "Connected"
   },
-  argTypes:{
+  argTypes: {
     children: {
       name: 'Wallet State',
       type: 'function',
@@ -36,12 +36,12 @@ const meta = {
       options: ['Connected', 'Disconnected'],
       mapping: {
         // TODO: Connect Component
-        Connected: <button onClick={()=>fn()} id="connect-button"
-                         className="flex items-center gap-2 bg-algo-black text-lg rounded-md text-white p-2 px-4">
+        Connected: <button onClick={() => fn()} id="connect-button"
+          className="flex items-center gap-2 bg-algo-black text-lg rounded-md text-white p-2 px-4">
           xgov.algo
         </button>,
-        Disconnected: <button onClick={()=>fn()} id="connect-button"
-                           className="flex items-center gap-2 bg-algo-black text-lg rounded-md text-white p-2 px-4">
+        Disconnected: <button onClick={() => fn()} id="connect-button"
+          className="flex items-center gap-2 bg-algo-black text-lg rounded-md text-white p-2 px-4">
           Connect Wallet
         </button>,
       }
@@ -50,13 +50,13 @@ const meta = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-   // 👇 Click the "Cohort" link
-   await userEvent.click(canvas.getByTestId('header-cohort-link'));
+    // 👇 Click the "Cohort" link
+    await userEvent.click(canvas.getByTestId('header-cohort-link'));
 
     // 👇 Assert DOM structure
     await expect(
-        canvas.getByTestId('header-cohort-link')
-    ).toHaveClass('bg-algo-blue');
+      canvas.getByTestId('header-cohort-link')
+    ).toHaveClass('text-algo-blue');
   },
 } satisfies Meta<typeof Header>;
 

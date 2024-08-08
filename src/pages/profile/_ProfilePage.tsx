@@ -12,7 +12,8 @@ import type { ComponentType } from "react";
 
 const title = 'xGov';
 
-export function CohortsPage() {
+export function ProfilePage(){
+    // TODO Handle other pages operations
     return (
         <Page title={title} LinkComponent={Link as unknown as ComponentType<LinkProps>}>
             <div>
@@ -23,12 +24,12 @@ export function CohortsPage() {
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbPage>Cohorts</BreadcrumbPage>
+                            <BreadcrumbPage>Profile</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
                 <h1 className="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
-                    Cohorts
+                    Profile
                 </h1>
             </div>
         </Page>

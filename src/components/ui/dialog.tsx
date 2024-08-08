@@ -3,7 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { Cross2Icon } from "@radix-ui/react-icons"
 
 import { cn } from "src/functions/utils"
-import { AlgorandIcon } from "@components/icons/AlgorandIcon"
+import { AlgorandIcon } from "@/components/icons/AlgorandIcon"
 
 const Dialog = DialogPrimitive.Root
 
@@ -30,8 +30,10 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    onCloseClick?: () => void
+  }
+>(({ className, children, onCloseClick = () => {}, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -44,7 +46,10 @@ const DialogContent = React.forwardRef<
     >
       {children}
       <AlgorandIcon className="absolute left-4 top-4 fill-algo-teal dark:fill-white size-10" />
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm ring-offset-white focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-white data-[state=open]:text-algo-black dark:ring-offset-slate-950 dark:focus:ring-slate-300 dark:data-[state=open]:bg-algo-black dark:data-[state=open]:text-white">
+      <DialogPrimitive.Close
+        onClick={() => onCloseClick()}
+        className="absolute right-4 top-4 rounded-sm ring-offset-white focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-white data-[state=open]:text-algo-black dark:ring-offset-slate-950 dark:focus:ring-slate-300 dark:data-[state=open]:bg-algo-black dark:data-[state=open]:text-white"
+      >
         <Cross2Icon className="size-10 text-algo-black dark:text-white" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>

@@ -1,10 +1,10 @@
 import React from "react";
 import { NetworkId, WalletId, WalletManager, WalletProvider } from "@txnlab/use-wallet-react";
 import {createBrowserRouter, createMemoryRouter, RouterProvider} from "react-router-dom";
-import {HomePage} from "@pages/_HomePage";
-import {ProposalPage} from "@pages/proposal/_ProposalPage";
-import { DocsPage } from "@pages/_DocsPage";
-import { CohortsPage } from "@pages/_CohortPage";
+import {HomePage} from "@/pages/_HomePage";
+import {ProposalPage} from "@/pages/proposal/_ProposalPage";
+import { DocsPage } from "@/pages/_DocsPage";
+import { CohortsPage } from "@/pages/_CohortPage";
 
 const walletManager = new WalletManager({
     wallets: [

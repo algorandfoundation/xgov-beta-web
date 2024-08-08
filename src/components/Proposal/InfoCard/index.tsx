@@ -1,7 +1,6 @@
-
-import type { ProposalInfoCardDetails } from "@types/proposals";
-import { capitalizeFirstLetter } from "@functions/capitalization";
-import { Link } from "@components/Link";
+import type { ProposalInfoCardDetails } from "@/types/proposals";
+import { capitalizeFirstLetter } from "@/functions/capitalization";
+import { Link } from "@/components/Link";
 
 export interface ProposalProps {
     proposal: ProposalInfoCardDetails;

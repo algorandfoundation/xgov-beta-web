@@ -1,9 +1,7 @@
 ---
 const title = "xGov";
-import '@styles/globals.css';
+import '@/styles/globals.css';
 ---
-
-<!-- class="bg-gradient-to-t from-algo-teal-10 via-algo-blue-10 to-white bg-fixed" -->
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
@@ -14,16 +12,27 @@ import '@styles/globals.css';
 		<title>{title}</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<!-- Aeonik font faces -->
+		<!-- slightly broken until we find out if we have Aeonik-Medium fonts since our css refers to it -->
+		<!-- at some point Shane will setup the domain for this: aeonik.applications.algorandfoundtion.tools -->
+		<link
+			href="https://d3qysudl7slyhp.cloudfront.net/stylesheet-family-support.css"
+			rel="stylesheet"
+		/>
 		<link
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
 			rel="stylesheet"
 		/>
-		<!-- Aeonik font faces -->
-		<!-- broken until Shane moves the font files into the same directory on our CDN -->
-		<link
-			href="https://d3qysudl7slyhp.cloudfront.net/css/stylesheet-family-support.css"
-			rel="stylesheet"
-		/>
+		<script is:inline>
+			// persistent nanoStores need a default value, system preference takes precedence so we check for default
+			const check = 
+				localStorage.theme === 'dark'
+				|| (
+					(!('theme' in localStorage) || localStorage.theme === 'default')
+					&& window.matchMedia('(prefers-color-scheme: dark)').matches
+				);
+			document.documentElement.classList.toggle('dark', check);
+		</script>
 	</head>
 	<body class="bg-white dark:bg-algo-black">
 		<slot />
@@ -37,9 +46,8 @@ import '@styles/globals.css';
 	}
 </style>
 <script>
-	import { $themeStore } from "@stores/themeStore";
+	import { $themeStore } from "@/stores/themeStore";
 
-	$themeStore.subscribe((theme: 'light' | 'dark') => {
-		document.documentElement.classList.toggle('dark', theme === 'dark');
-	});
+	const cl = document.documentElement.classList;
+	$themeStore.subscribe((theme) => theme !== 'default' && cl.toggle("dark", theme === "dark"));
 </script>

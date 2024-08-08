@@ -1,13 +1,14 @@
-import { Header } from "./Header.tsx";
+import { Header } from "@/components/Header";
 import { Link } from 'react-router-dom'
 import type { ComponentProps, ComponentType, PropsWithChildren, ReactNode } from "react";
-import type { LinkProps } from "./Link.tsx";
+import type { LinkProps } from "@/components/Link.tsx";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useStore } from "@nanostores/react";
-import { $overlayStore } from "@stores/overlayStore.ts";
-import { cn } from "@functions/utils.ts";
-import { ThemeToggle } from "./button/ThemeToggle.tsx";
-import { ConnectDialog } from "./dialogs/Connect.tsx";
+import { $overlayStore } from "@/stores/overlayStore.ts";
+import { cn } from "@/functions/utils.ts";
+import { ThemeToggle } from "@/components/button/ThemeToggle";
+import { Connect } from "@/components/Connect";
+import { MobileNav } from "@/components/MobileNav";
 
 export function DefaultSidebar(){
     return (
@@ -57,7 +58,7 @@ export function Page({
     LinkComponent = Link as unknown as ComponentType<LinkProps>
 }: PageProps) {
     const overlay = useStore($overlayStore);
-    const { activeAddress } = useWallet();
+    const { wallets, activeAddress, activeWallet } = useWallet();
     // TODO: Get NFD name using the activeAddress
 
     return (
@@ -65,11 +66,14 @@ export function Page({
             <Header
                 title={title}
                 LinkComponent={LinkComponent}
+                MobileNav={<MobileNav />}
                 {...headerProps}
             >                
-                <ConnectDialog
-                    nfdName={'carl.algo'}
+                <Connect
+                    wallets={wallets}
+                    // nfdName={!!activeAddress ? activeAddress : undefined}
                     activeAddress={activeAddress}
+                    activeWallet={activeWallet}
                 />
                 <ThemeToggle />   
             </Header>

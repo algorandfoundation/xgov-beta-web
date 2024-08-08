@@ -3,9 +3,9 @@ import {
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuTrigger,
-} from "@components/ui/dropdown-menu"
-import { capitalizeFirstLetter } from "@functions/capitalization"
-import { cn } from "@functions/utils"
+} from "@/components/ui/dropdown-menu"
+import { capitalizeFirstLetter } from "@/functions/capitalization"
+import { cn } from "@/functions/utils"
 import { useState } from "react"
 
 export function ProposalFilterDropDown({ title, options }: { title: string, options: string[] }) {

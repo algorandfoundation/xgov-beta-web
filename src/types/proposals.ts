@@ -24,7 +24,7 @@ export type ProposalCardDetails = Pick<ProposalJson, 'title' | 'description' | '
     id: number,
     phase: ProposalPhase,
     proposer: string
-	pastProposals: { title: string, link: string }[];
+	pastProposals?: { title: string, link: string }[];
 }
 
 export interface ProposalInfoCardDetails {
