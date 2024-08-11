@@ -3,7 +3,6 @@ import {
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuShortcut,
     DropdownMenuTrigger,
@@ -14,7 +13,6 @@ export interface ConnectDropdownProps {
     children: React.ReactNode;
     onLogOut: () => void;
 }
-
 
 export function ConnectDropdown({ activeAddress, children, onLogOut }: ConnectDropdownProps) {
     return (
