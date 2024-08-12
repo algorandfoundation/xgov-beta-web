@@ -15,6 +15,7 @@
     "chromatic": "npx chromatic"
   },
   "dependencies": {
+    "@algorandfoundation/xgov": "github:algorandfoundation/xgov-beta-ts",
     "@astrojs/check": "^0.8.1",
     "@astrojs/react": "^3.6.0",
     "@astrojs/tailwind": "^5.1.0",
@@ -44,5 +45,7 @@
     "storybook": "^8.2.4",
     "tailwindcss": "^3.4.6"
   },
-  "engines" : { "node" : ">=18.0 <22.0" }
+  "engines": {
+    "node": ">=18.0 <22.0"
+  }
 }
