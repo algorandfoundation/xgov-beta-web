@@ -1,6 +1,5 @@
 import { Page } from "@/components/Page";
-import type { ProposalInfoCardDetails } from "@/types/proposals";
-import { ProposalCard } from "@/components/Proposal/Card";
+import { ProposalCard } from "@/components/Proposal/Card/Card";
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -9,12 +8,11 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
-import { ProposalInfoCard } from "@/components/Proposal/InfoCard";
 import { type ComponentType } from "react";
 
 // mock data
 import { mockProposal } from "@/components/Proposal/Card/Card.stories";
-import { mockProposalInfo } from "@/components/Proposal/InfoCard/InfoCard.stories";
+import { mockProposalInfo } from "@/components/Proposal/Card/Card.stories";
 
 const title = 'xGov';
 
@@ -24,7 +22,7 @@ function ProposalCardAndTitle() {
             <h1 className="text-3xl text-wrap lg:text-4xl max-w-4xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
                 Info
             </h1>
-            <ProposalInfoCard proposal={mockProposalInfo} />
+            <ProposalCard proposal={mockProposalInfo} />
         </>
     )
 }

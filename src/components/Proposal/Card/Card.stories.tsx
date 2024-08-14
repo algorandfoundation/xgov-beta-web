@@ -1,11 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { userEvent, within, expect } from '@storybook/test';
 
-import type { ProposalCardDetails } from '@/types/proposals';
+import type { ProposalInfoCardDetails, ProposalMainCardDetails } from '@/types/proposals';
 import { useState } from 'react';
-import { ProposalCard, type ProposalCardProps } from '.';
+import { ProposalCard, type ProposalCardProps } from './Card';
 
-export const mockProposal: ProposalCardDetails & { pastProposals?: { title: string, link: string }[] } = {
+export const mockProposal: ProposalMainCardDetails = {
     id: 1,
     title: "Auto-Compounding Farms",
     description: "This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users",
@@ -28,6 +28,15 @@ export const mockProposal: ProposalCardDetails & { pastProposals?: { title: stri
         { title: 'AlgoNFT Marketplace', link: '/proposals/4' },
     ],
 };
+
+export const mockProposalInfo: ProposalInfoCardDetails = {
+  discussionLink: 'https://proposal-discussion-link-here.com',
+  fundingType: 'retroactive',
+  category: 'DeFi',
+  license: 'MIT',
+  requestedAmount: 75_000,
+};
+
 
 function ProposalCardWrapper(props: ProposalCardProps) {
   const [clickedLink, setClickedLink] = useState<string | null>(null);

@@ -9,6 +9,20 @@ export const phaseToText = {
     closure: 'Closure'
 };
 
+export type ProposalCardDetails = ProposalMainCardDetails | ProposalSummaryCardDetails | ProposalInfoCardDetails;
+
+export function isProposalMainCardDetails(details: ProposalCardDetails): details is ProposalMainCardDetails {
+	return !isProposalSummaryCardDetails(details) && !isProposalInfoCardDetails(details);
+}
+
+export function isProposalSummaryCardDetails(details: ProposalCardDetails): details is ProposalSummaryCardDetails {
+	return (details as ProposalSummaryCardDetails).title !== undefined;
+}
+
+export function isProposalInfoCardDetails(details: ProposalCardDetails): details is ProposalInfoCardDetails {
+	return (details as ProposalInfoCardDetails).discussionLink !== undefined;
+}
+
 export interface ProposalSummaryCardDetails {
 	id: number;
 	title: string;
@@ -17,10 +31,9 @@ export interface ProposalSummaryCardDetails {
 	fundingType: FundingType;
 	requestedAmount: number;
 	proposer: string;
-	
 }
 
-export type ProposalCardDetails = Pick<ProposalJson, 'title' | 'description' | 'properties'> & {
+export type ProposalMainCardDetails = Pick<ProposalJson, 'title' | 'description' | 'properties'> & {
     id: number,
     phase: ProposalPhase,
     proposer: string

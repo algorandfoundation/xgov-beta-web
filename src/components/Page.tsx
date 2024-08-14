@@ -1,4 +1,4 @@
-import { Header } from "@/components/Header";
+import { Header } from "@/components/Header/Header";
 import { Link } from 'react-router-dom'
 import type { ComponentProps, ComponentType, PropsWithChildren, ReactNode } from "react";
 import type { LinkProps } from "@/components/Link.tsx";
@@ -6,9 +6,9 @@ import { useWallet } from "@txnlab/use-wallet-react";
 import { useStore } from "@nanostores/react";
 import { $overlayStore } from "@/stores/overlayStore.ts";
 import { cn } from "@/functions/utils.ts";
-import { ThemeToggle } from "@/components/button/ThemeToggle";
-import { Connect } from "@/components/Connect";
-import { MobileNav } from "@/components/MobileNav";
+import { ThemeToggle } from "@/components/button/ThemeToggle/ThemeToggle";
+import { Connect } from "@/components/Connect/Connect";
+import { MobileNav } from "@/components/MobileNav/MobileNav";
 
 export function DefaultSidebar(){
     return (

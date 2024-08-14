@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { userEvent, within } from '@storybook/test';
-import { ThemeToggle } from './index';
+import { ThemeToggle } from './ThemeToggle';
 
 const meta = {
   title: 'Components/ThemeToggle',
