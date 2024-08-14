@@ -3,7 +3,7 @@ import { userEvent, within, expect } from '@storybook/test';
 
 import { useState } from 'react';
 import type { ProposalSummaryCardDetails } from '@/types/proposals';
-import { ProposalList, type ProposalListProps } from '.';
+import { ProposalList, type ProposalListProps } from './ProposalList';
 
 export const mockProposals: ProposalSummaryCardDetails[] = [
   {

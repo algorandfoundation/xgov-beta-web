@@ -1,5 +1,5 @@
 import type { ProposalSummaryCardDetails } from "@/types/proposals";
-import { ProposalSummaryCard } from "@/components/Proposal/SummaryCard";
+import { ProposalCard } from "../ProposalCard/ProposalCard";
 
 export interface ProposalListProps {
     proposals: ProposalSummaryCardDetails[];
@@ -16,7 +16,7 @@ export function ProposalList({ proposals }: ProposalListProps) {
     return (
         <ul className="flex flex-col gap-4">
             {proposals.map((proposal) => (
-                <ProposalSummaryCard key={proposal.id} proposal={proposal} />
+                <ProposalCard key={proposal.id} proposal={proposal} />
             ))}
         </ul>
     )

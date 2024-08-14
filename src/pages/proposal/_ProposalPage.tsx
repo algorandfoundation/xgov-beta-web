@@ -1,5 +1,5 @@
 import { Page } from "@/components/Page";
-import { ProposalCard } from "@/components/Proposal/Card/Card";
+import { ProposalCard } from "@/components/ProposalCard/ProposalCard";
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -11,8 +11,7 @@ import {
 import { type ComponentType } from "react";
 
 // mock data
-import { mockProposal } from "@/components/Proposal/Card/Card.stories";
-import { mockProposalInfo } from "@/components/Proposal/Card/Card.stories";
+import { mockProposal, mockProposalInfo } from "@/components/ProposalCard/ProposalCard.stories";
 
 const title = 'xGov';
 

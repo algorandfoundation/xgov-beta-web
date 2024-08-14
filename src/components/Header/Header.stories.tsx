@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { fn, userEvent, within, expect } from '@storybook/test';
-import { Header, type HeaderProps } from '.';
+import { Header, type HeaderProps } from './Header.tsx';
 import { type ComponentType, useState } from "react";
 import type { LinkProps } from "../Link.tsx";
 

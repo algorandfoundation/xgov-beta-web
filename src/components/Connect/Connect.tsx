@@ -20,7 +20,6 @@ import { BaseWallet, type Wallet } from "@txnlab/use-wallet-react"
 import { useState } from "react"
 import { cn } from "@/functions/utils";
 
-
 export interface ConnectProps {
     wallets: Wallet[];
     activeAddress: string | null;

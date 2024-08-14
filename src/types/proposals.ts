@@ -16,16 +16,16 @@ export function isProposalMainCardDetails(details: ProposalCardDetails): details
 }
 
 export function isProposalSummaryCardDetails(details: ProposalCardDetails): details is ProposalSummaryCardDetails {
-	return (details as ProposalSummaryCardDetails).title !== undefined;
+	return (details as ProposalInfoCardDetails).discussionLink === undefined
+		&& (details as ProposalMainCardDetails).properties === undefined;
 }
 
 export function isProposalInfoCardDetails(details: ProposalCardDetails): details is ProposalInfoCardDetails {
 	return (details as ProposalInfoCardDetails).discussionLink !== undefined;
 }
 
-export interface ProposalSummaryCardDetails {
+export type ProposalSummaryCardDetails = Pick<ProposalJson, 'title'> & {
 	id: number;
-	title: string;
 	phase: ProposalPhase;
 	category: string;
 	fundingType: FundingType;

@@ -3,7 +3,7 @@ import { userEvent, within, expect } from '@storybook/test';
 
 import type { ProposalInfoCardDetails, ProposalMainCardDetails } from '@/types/proposals';
 import { useState } from 'react';
-import { ProposalCard, type ProposalCardProps } from './Card';
+import { ProposalCard, type ProposalCardProps } from './ProposalCard';
 
 export const mockProposal: ProposalMainCardDetails = {
     id: 1,

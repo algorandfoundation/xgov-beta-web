@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { userEvent, within, expect } from '@storybook/test';
-import { filters, ProposalFilter, type ProposalFilterProps } from './index';
-import { useState } from 'react';
+import { ProposalFilter, type ProposalFilterProps } from './ProposalFilter';
 
 function ProposalFilterWrapper(props: ProposalFilterProps) {
   return (

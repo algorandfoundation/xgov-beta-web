@@ -1,12 +1,12 @@
 import { Page } from "../components/Page.tsx";
-import { ProposalFilter } from "@/components/Proposal/Filter";
-import { ProposalList } from "@/components/Proposal/List";
+import { ProposalFilter } from "@/components/ProposalFilter/ProposalFilter.tsx";
+import { ProposalList } from "@/components/ProposalList/ProposalList.tsx";
 import { Link } from "react-router-dom";
 import type { ComponentType } from "react";
 import type { LinkProps } from "../components/Link.tsx";
 
 // mock data
-import { mockProposals } from "@/components/Proposal/List/List.stories.tsx";
+import { mockProposals } from "@/components/ProposalList/ProposalList.stories.tsx";
 
 const title = 'xGov';
 
