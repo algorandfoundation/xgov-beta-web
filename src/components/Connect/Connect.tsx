@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
     DropdownMenuContent,
-    DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuSeparator,
-    DropdownMenuShortcut,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
@@ -19,6 +17,7 @@ import { shortenAddress } from "@/functions/shortening"
 import { BaseWallet, type Wallet } from "@txnlab/use-wallet-react"
 import { useState } from "react"
 import { cn } from "@/functions/utils";
+import { Link } from 'react-router-dom'
 
 export interface ConnectProps {
     wallets: Wallet[];
@@ -77,19 +76,14 @@ function ConnectDropdown({ activeAddress, children, onLogOut }: ConnectDropdownP
                 {children}
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-52">
-                <DropdownMenuGroup>
-                    <DropdownMenuItem
-                        onSelect={() => {
-                            // TODO: navigate to profile
-                        }}
-                    >
+                <Link to={`/profile/${activeAddress}`}>
+                    <DropdownMenuItem>
                         Profile
                     </DropdownMenuItem>
-                </DropdownMenuGroup>
+                </Link>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onLogOut()}>
+                <DropdownMenuItem className="text-red-500" onClick={() => onLogOut()}>
                     Log out
-                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

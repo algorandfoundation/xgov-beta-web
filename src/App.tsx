@@ -5,6 +5,7 @@ import {HomePage} from "@/pages/_HomePage";
 import {ProposalPage} from "@/pages/proposal/_ProposalPage";
 import { DocsPage } from "@/pages/_DocsPage";
 import { CohortsPage } from "@/pages/_CohortPage";
+import { ProfilePage } from "./pages/profile/_ProfilePage";
 
 const walletManager = new WalletManager({
     wallets: [
@@ -22,7 +23,8 @@ const routes = [
     { path: '/docs', element: <DocsPage />},
     { path: '/cohort', element: <CohortsPage />},
     { path: '/proposal', element: <HomePage />},
-    { path: '/proposal/:proposalId', element: <ProposalPage />}
+    { path: '/proposal/:proposal', element: <ProposalPage />},
+    { path: '/profile/:address', element: <ProfilePage />},
 ]
 
 const router = typeof window !== 'undefined'
