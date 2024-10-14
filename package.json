@@ -15,11 +15,8 @@
     "chromatic": "npx chromatic"
   },
   "dependencies": {
-<<<<<<< HEAD
     "@agoralabs-sh/avm-web-provider": "^1.6.2",
-=======
     "@algorandfoundation/xgov": "github:algorandfoundation/xgov-beta-ts",
->>>>>>> main
     "@astrojs/check": "^0.8.1",
     "@astrojs/react": "^3.6.0",
     "@astrojs/tailwind": "^5.1.0",
