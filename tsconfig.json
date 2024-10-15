@@ -6,6 +6,7 @@
     "baseUrl": ".",
     "paths": {
       "@/components/*": ["src/components/*"],
+      "@/contexts/*": ["src/contexts/*"],
       "@/functions/*": ["src/functions/*"],
       "@/reactPages/*": ["src/reactPages/*"],
       "@/providers/*": ["src/providers/*"],

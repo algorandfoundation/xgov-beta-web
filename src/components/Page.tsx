@@ -1,14 +1,14 @@
 import { Header } from "@/components/Header/Header";
 import { Link } from 'react-router-dom'
-import type { ComponentProps, ComponentType, PropsWithChildren, ReactNode } from "react";
+import { useEffect, useState, type ComponentProps, type ComponentType, type PropsWithChildren, type ReactNode } from "react";
 import type { LinkProps } from "@/components/Link.tsx";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { useStore } from "@nanostores/react";
-import { $overlayStore } from "@/stores/overlayStore.ts";
 import { cn } from "@/functions/utils.ts";
 import { ThemeToggle } from "@/components/button/ThemeToggle/ThemeToggle";
 import { Connect } from "@/components/Connect/Connect";
 import { MobileNav } from "@/components/MobileNav/MobileNav";
+import { useRegistryClient } from "@/contexts/RegistryClientContext";
+import { encodeAddress } from "algosdk";
 
 export function DefaultSidebar(){
     return (
@@ -16,15 +16,12 @@ export function DefaultSidebar(){
     )
 }
 
-type ContentProps = PropsWithChildren<{
-    overlay: boolean;
-    Sidebar?: ComponentType;
-}>
+type ContentProps = PropsWithChildren<{ Sidebar?: ComponentType; }>
 
-export function Content({ children, overlay, Sidebar = DefaultSidebar }: ContentProps){
+export function Content({ children, Sidebar = DefaultSidebar }: ContentProps){
     return (
         <main className={cn(
-            overlay ? "max-h-full pointer-events-none overflow-hidden" : "",
+            // overlay ? "max-h-full pointer-events-none overflow-hidden" : "",
             "m-auto p-4 lg:px-10 w-full grid grid-cols-1 lg:grid-cols-2"
         )}>
             {children}
@@ -57,15 +54,41 @@ export function Page({
     Sidebar = DefaultSidebar,
     LinkComponent = Link as unknown as ComponentType<LinkProps>
 }: PageProps) {
-    const overlay = useStore($overlayStore);
     const { wallets, activeAddress, activeWallet } = useWallet();
-    // TODO: Get NFD name using the activeAddress
+    const { roles, globalStateLoading } = useRegistryClient();
+    const [showAdmin, setShowAdmin] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (!activeAddress) {
+            setShowAdmin(false);
+            return;
+        }
+
+        if (globalStateLoading) {
+            return;
+        }
+
+        const addresses = [
+            roles.kycProvider,
+            roles.xGovManager,
+            roles.committeePublisher,
+            roles.committeeManager,
+            roles.xGovPayor,
+            roles.xGovReviewer,
+            roles.xGovSubscriber,
+        ];
+
+        const isAdmin = addresses.some((address) => address && address === activeAddress);
+        setShowAdmin(isAdmin);
+
+    }, [activeAddress, globalStateLoading, roles]);
 
     return (
         <>
             <Header
                 title={title}
                 LinkComponent={LinkComponent}
+                showAdmin={showAdmin}
                 MobileNav={<MobileNav />}
                 {...headerProps}
             >                
@@ -77,10 +100,9 @@ export function Page({
                 />
                 <ThemeToggle />   
             </Header>
-            <Content Sidebar={Sidebar} overlay={overlay.open}>
+            <Content Sidebar={Sidebar}>
                 {children}
             </Content>
         </>
     )
 }
-

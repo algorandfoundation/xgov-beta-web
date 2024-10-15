@@ -37,7 +37,7 @@ export function ProposalCard({ proposal, path = '' }: ProposalCardProps) {
     const { phase, description, properties: { team, presentProposal, deliverable }, pastProposals } = proposal;
 
     return (
-        <div className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
+        <li role="listitem" className="list-none relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
             <div className="absolute top-0 right-0 mt-4 mr-4 flex flex-col items-end gap-4">
                 <span
                     className={cn(
@@ -83,7 +83,7 @@ export function ProposalCard({ proposal, path = '' }: ProposalCardProps) {
                     )
                 }
             </div>
-        </div>
+        </li>
     )
 }
 
@@ -99,7 +99,7 @@ interface ProposalSummaryCardProps {
 
 function ProposalSummaryCard({ path, proposal }: ProposalSummaryCardProps) {
     return (
-        <li className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
+        <li role="listitem" className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
             <h3 className="text-lg text-wrap w-52 md:w-[20rem] lg:max-w-[38rem] lg:text-2xl mt-10 mb-6 lg:mb-14 font-bold">{proposal.title}</h3>
             <p className="text-xl">{proposal.category}</p>
             <p className="text-xl">{capitalizeFirstLetter(proposal.fundingType)}</p>
@@ -137,7 +137,7 @@ interface ProposalProps {
 
 function ProposalInfoCard({ proposal: { discussionLink, fundingType, category, license, requestedAmount } }: ProposalProps) {
     return (
-        <div className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-xl lg:min-w-[36rem]">
+        <li role="listitem" className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-xl lg:min-w-[36rem]">
             <div className="max-w-3xl">
                 <h2 className="text-xl font-bold mt-2 mb-4">Discussion Link</h2>
                 <Link className="text-xl font-normal dark:text-algo-blue-10 hover:text-algo-teal dark:hover:text-algo-blue" to={discussionLink}>{discussionLink}</Link>
@@ -154,6 +154,6 @@ function ProposalInfoCard({ proposal: { discussionLink, fundingType, category, l
                 <h2 className="text-xl font-bold my-4">Ask</h2>
                 <p className="text-xl font-normal dark:text-algo-blue-10 mb-6 lg:mb-14">{requestedAmount.toLocaleString()} ALGO</p>
             </div>
-        </div>
+        </li>
     )
 }
