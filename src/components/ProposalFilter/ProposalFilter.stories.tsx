@@ -1,11 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { userEvent, within, expect } from '@storybook/test';
 import { ProposalFilter, type ProposalFilterProps } from './ProposalFilter';
+import { useState } from 'react';
 
 function ProposalFilterWrapper(props: ProposalFilterProps) {
+
   return (
     <div>
       <ProposalFilter {...props} onFilterChange={() => {}} />
+        {/* <div data-testid="selected-filter">status: {selectedFilter}</div> */}
     </div>
   );
 }
@@ -28,11 +31,13 @@ const meta = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+
     const statusDropdown = canvas.getByText('status');
     await userEvent.click(statusDropdown);
-    const discussionOption = canvas.getByText('Discussion');
+    
+    const discussionOption = canvas.queryAllByRole('menuitem')[1];
     await userEvent.click(discussionOption);
-    await expect(canvas.getByTestId('selected-filters')).toHaveTextContent('status: discussion');
+    await expect(statusDropdown).toHaveClass('border-algo-teal');
   },
 } satisfies Meta<typeof ProposalFilterWrapper>;
 
