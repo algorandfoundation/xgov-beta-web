@@ -10,11 +10,17 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
-import type { ComponentType } from "react";
+import { useState, type ComponentType } from "react";
 
 // mock data
 import { mockProposals } from "@/components/ProposalList/ProposalList.stories";
 import { useWallet } from "@txnlab/use-wallet-react";
+import { useStore } from "@nanostores/react";
+import { $registryContractStore } from "@/stores/registryStore";
+import { AlgorandClient } from "src/algorand/algo-client";
+import { RegistryAppID, RegistryClient } from "src/algorand/contract-clients";
+import algosdk, { makePaymentTxnWithSuggestedParamsFromObject } from "algosdk";
+import { Buffer } from 'buffer';
 
 const title = 'xGov';
 
@@ -39,8 +45,50 @@ function RulesCardAndTitle() {
     )
 }
 
-export function ProfilePage(){
-    const { activeAddress } = useWallet();
+export function ProfilePage() {
+    const { transactionSigner, activeAddress } = useWallet();
+    const registryStatus = useStore($registryContractStore);
+
+    const [newProposalLoading, setNewProposalLoading] = useState<boolean>(false);
+
+    const newProposal = async () => {
+        if (!activeAddress) return;
+
+        setNewProposalLoading(true);
+
+        const suggestedParams = await AlgorandClient.getSuggestedParams();
+
+        const payment = makePaymentTxnWithSuggestedParamsFromObject({
+            from: activeAddress,
+            to: algosdk.getApplicationAddress(RegistryAppID),
+            amount: registryStatus.globalState.proposalFee.asBigInt(),
+            suggestedParams,
+        });
+
+        await RegistryClient.openProposal(
+            { payment },
+            {
+                sender: {
+                    addr: activeAddress,
+                    signer: transactionSigner
+                },
+                boxes: [
+                    new Uint8Array(
+                        Buffer.concat([
+                            Buffer.from('p'),
+                            algosdk.decodeAddress(activeAddress).publicKey
+                        ])
+                    ),
+                ]
+            }
+        ).catch((e: Error) => {
+            alert(`Error calling the contract: ${e.message}`)
+            setNewProposalLoading(false);
+            return
+        });
+        
+        setNewProposalLoading(false);
+    }
 
     return (
         <Page
@@ -60,19 +108,33 @@ export function ProfilePage(){
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
-                <h1 className="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
+                <h1 className="text-3xl lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
                     My Profile
                 </h1>
                 <ProfileCard
                     activeAddress={activeAddress!}
-                    votingAddress={activeAddress!}
-                    isXGov
-                    isProposer
+                    votingAddress={registryStatus.votingAddress}
+                    isXGov={registryStatus.isXGov}
+                    isProposer={registryStatus.isProposer}
+                    validKYC={(registryStatus.proposer?.kycStatus && registryStatus.proposer?.kycExpiring > Date.now()) || false}
                 />
-                <h1 className="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
-                    My Proposals
-                </h1>
-                <ProposalList proposals={mockProposals} />
+                <div className="flex items-center gap-2 mt-16 mb-8">
+                    <h1 className="text-3xl lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold">
+                        My Proposals
+                    </h1>
+                    <button
+                        type='button'
+                        className="border-2 hover:border-b-[3px] text-xs text-algo-black dark:text-algo-blue-20 border-algo-black dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 transition"
+                        onClick={newProposal}
+                        disabled={!registryStatus.isProposer}
+                    >
+                        { newProposalLoading ? 'Loading...' : 'New Proposal'}
+                    </button>
+                </div>
+                <ProposalList proposals={mockProposals.map(x => {
+                    const { proposer, ...y } = x;
+                    return y;
+                })} />
             </div>
         </Page>
     )

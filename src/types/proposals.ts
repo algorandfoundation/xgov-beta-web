@@ -9,19 +9,34 @@ export const phaseToText = {
     closure: 'Closure'
 };
 
-export type ProposalCardDetails = ProposalMainCardDetails | ProposalSummaryCardDetails | ProposalInfoCardDetails;
+export type ProposalCardDetails = MyProposalSummaryCardDetails | ProposalMainCardDetails | ProposalSummaryCardDetails | ProposalInfoCardDetails;
+
+export type ProposalSummaryDetails = MyProposalSummaryCardDetails | ProposalSummaryCardDetails;
+
+export function isMyProposalSummaryCardDetails(details: ProposalCardDetails): details is MyProposalSummaryCardDetails {
+	return (details as ProposalSummaryCardDetails).proposer === undefined;
+}
 
 export function isProposalMainCardDetails(details: ProposalCardDetails): details is ProposalMainCardDetails {
-	return !isProposalSummaryCardDetails(details) && !isProposalInfoCardDetails(details);
+	return !isMyProposalSummaryCardDetails && !isProposalSummaryCardDetails(details) && !isProposalInfoCardDetails(details);
 }
 
 export function isProposalSummaryCardDetails(details: ProposalCardDetails): details is ProposalSummaryCardDetails {
-	return (details as ProposalInfoCardDetails).discussionLink === undefined
+	return !isMyProposalSummaryCardDetails(details)
+		&& (details as ProposalInfoCardDetails).discussionLink === undefined
 		&& (details as ProposalMainCardDetails).properties === undefined;
 }
 
 export function isProposalInfoCardDetails(details: ProposalCardDetails): details is ProposalInfoCardDetails {
 	return (details as ProposalInfoCardDetails).discussionLink !== undefined;
+}
+
+export type MyProposalSummaryCardDetails = Pick<ProposalJson, 'title'> & {
+	id: number;
+	phase: ProposalPhase;
+	category: string;
+	fundingType: FundingType;
+	requestedAmount: number;
 }
 
 export type ProposalSummaryCardDetails = Pick<ProposalJson, 'title'> & {

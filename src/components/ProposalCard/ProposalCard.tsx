@@ -1,5 +1,5 @@
 import { capitalizeFirstLetter } from "@/functions/capitalization";
-import { isProposalInfoCardDetails, isProposalSummaryCardDetails, type ProposalCardDetails, type ProposalInfoCardDetails, type ProposalSummaryCardDetails } from "@/types/proposals";
+import { isMyProposalSummaryCardDetails, isProposalInfoCardDetails, isProposalSummaryCardDetails, type MyProposalSummaryCardDetails, type ProposalCardDetails, type ProposalInfoCardDetails, type ProposalSummaryCardDetails } from "@/types/proposals";
 import { cn } from "@/functions/utils";
 import { Link } from "@/components/Link";
 
@@ -23,6 +23,12 @@ export function ProposalCard({ proposal, path = '' }: ProposalCardProps) {
     if (isProposalInfoCardDetails(proposal)) {
         return (
             <ProposalInfoCard proposal={proposal} />
+        )
+    }
+
+    if (isMyProposalSummaryCardDetails(proposal)) {
+        return (
+            <MyProposalSummaryCard path={path} proposal={proposal} />
         )
     }
 
@@ -127,6 +133,50 @@ function ProposalSummaryCard({ path, proposal }: ProposalSummaryCardProps) {
             >
                 Read More
             </Link>
+        </li>
+    )
+}
+
+interface MyProposalSummaryCardProps {
+    /**
+     * Router Path
+     */
+    path?: string;
+    proposal: MyProposalSummaryCardDetails;
+}
+
+function MyProposalSummaryCard({ path, proposal }: MyProposalSummaryCardProps) {
+    return (
+        <li className="bg-white hover:bg-algo-teal-10 dark:hover:bg-algo-blue-50 dark:bg-algo-black border-2 border-algo-black hover:border-algo-teal dark:border-white dark:hover:border-algo-blue-40 text-algo-black dark:text-white rounded-lg max-w-3xl">
+            <div className="p-2">
+            <Link to={`/proposal/${proposal.id}`}>
+                <div className="flex items-center">
+                    <h3 className="text-lg w-full font-bold truncate">{proposal.title}</h3>
+                    <div>
+                        <span className="text-xl">[</span>
+                        <span
+                            className={cn(
+                                proposal.phase === 'discussion' ? 'text-algo-blue' : '',
+                                proposal.phase === 'vote' ? 'text-algo-teal' : '',
+                                "p-0.5 px-1 lg:text-lg"
+                            )}>
+
+                            {phaseToText[proposal.phase]}
+
+                        </span>
+                        <span className="text-xl">]</span>
+                    </div>
+                </div>
+                
+                <div className="w-full flex items-center justify-between gap-4">
+                    <div className="flex">
+                        <span className="w-36 text-lg font-normal">{proposal.category}</span>
+                        <span className="w-36 text-lg font-normal">{capitalizeFirstLetter(proposal.fundingType)}</span>
+                        <span className="text-lg font-normal">{proposal.requestedAmount.toLocaleString()} ALGO</span>
+                    </div>
+                </div>
+            </Link>
+            </div>
         </li>
     )
 }

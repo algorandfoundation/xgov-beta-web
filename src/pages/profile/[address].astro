@@ -2,12 +2,6 @@
 import Layout from "@/layouts/Layout.astro";
 import { App } from "src/App";
 
-export function getStaticPaths() {
-    return [
-        {params:{address: 'X5KD3VTDUN3H2FFYJX2NDIGQ2V2SS44XUSYGJWHI4KH6ZOXF44SE7KEXVU'}}, 
-    ];
-}
-
 const { address } = Astro.props;
 ---
 <Layout>
