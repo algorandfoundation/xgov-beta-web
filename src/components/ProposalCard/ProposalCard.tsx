@@ -37,7 +37,7 @@ export function ProposalCard({ proposal, path = '' }: ProposalCardProps) {
     const { phase, description, properties: { team, presentProposal, deliverable }, pastProposals } = proposal;
 
     return (
-        <li role="listitem" className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
+        <li role="listitem" className="list-none relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
             <div className="absolute top-0 right-0 mt-4 mr-4 flex flex-col items-end gap-4">
                 <span
                     className={cn(

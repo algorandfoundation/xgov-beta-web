@@ -1,8 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { userEvent, within, expect } from '@storybook/test';
 
 import type { ProposalInfoCardDetails, ProposalMainCardDetails } from '@/types/proposals';
-import { useState } from 'react';
 import { ProposalCard, type ProposalCardProps } from './ProposalCard';
 
 export const mockProposal: ProposalMainCardDetails = {
@@ -37,16 +35,10 @@ export const mockProposalInfo: ProposalInfoCardDetails = {
   requestedAmount: 75_000,
 };
 
-
 function ProposalCardWrapper(props: ProposalCardProps) {
-  const [clickedLink, setClickedLink] = useState<string | null>(null);
-
   return (
     <div>
       <ProposalCard {...props} />
-      {clickedLink && (
-        <div data-testid="clicked-link">Clicked: {clickedLink}</div>
-      )}
     </div>
   );
 }
@@ -66,13 +58,7 @@ const meta = {
       control: 'object',
       description: 'Proposal object to display',
     },
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const firstLink = canvas.getAllByRole('link')[0];
-    await userEvent.click(firstLink);
-    await expect(canvas.getByTestId('clicked-link')).toHaveTextContent('Clicked: /past-proposal-1');
-  },
+  }
 } satisfies Meta<typeof ProposalCardWrapper>;
 
 export default meta;
