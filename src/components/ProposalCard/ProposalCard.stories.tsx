@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { within, expect } from '@storybook/test';
 
 import type { ProposalInfoCardDetails, ProposalMainCardDetails } from '@/types/proposals';
 import { ProposalCard, type ProposalCardProps } from './ProposalCard';
@@ -37,9 +38,7 @@ export const mockProposalInfo: ProposalInfoCardDetails = {
 
 function ProposalCardWrapper(props: ProposalCardProps) {
   return (
-    <div>
       <ProposalCard {...props} />
-    </div>
   );
 }
 
@@ -58,7 +57,7 @@ const meta = {
       control: 'object',
       description: 'Proposal object to display',
     },
-  }
+  },
 } satisfies Meta<typeof ProposalCardWrapper>;
 
 export default meta;

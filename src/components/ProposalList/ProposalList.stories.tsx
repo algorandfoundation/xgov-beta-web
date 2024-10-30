@@ -97,10 +97,20 @@ export const Empty: Story = {
   args: {
     proposals: [],
   },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const p = await canvas.findByRole('paragraph');
+    expect(p).toHaveTextContent('No proposals yet');
+  },
 };
 
 export const SingleProposal: Story = {
   args: {
     proposals: [mockProposals[0]],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const proposals = canvas.getAllByRole('listitem')
+    expect(proposals.length).toBe(1);
   },
 };
