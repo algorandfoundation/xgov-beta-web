@@ -1,0 +1,19 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { App } from "src/App";
+
+export function getStaticPaths() {
+    return [
+        {params:{proposal: 1}}, 
+        {params:{proposal: 2}},
+        {params:{proposal: 3}},
+        {params:{proposal: 4}},
+        {params:{proposal: 5}},
+    ];
+}
+
+const { proposal } = Astro.props;
+---
+<Layout>
+    <App client:only path={`/proposal/${proposal}`}/>
+</Layout>

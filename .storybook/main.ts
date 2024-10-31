@@ -1,4 +1,6 @@
 import type { StorybookConfig } from "@storybook/react-vite";
+import tsconfigPaths from 'vite-tsconfig-paths';
+import { mergeConfig } from "vite";
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.mdx", "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
@@ -14,5 +16,12 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
+  viteFinal(config, { configType }) {
+    return mergeConfig(config, {
+      plugins: [
+        tsconfigPaths()
+      ]
+    })
+  }
 };
 export default config;
