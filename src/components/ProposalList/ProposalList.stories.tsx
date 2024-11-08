@@ -54,14 +54,9 @@ export const mockProposals: ProposalSummaryCardDetails[] = [
 ];
 
 function ProposalListWrapper(props: ProposalListProps) {
-  const [selectedProposal, setSelectedProposal] = useState<string | null>(null);
-
   return (
     <div>
       <ProposalList {...props} />
-      {selectedProposal && (
-        <div data-testid="selected-proposal">Selected: {selectedProposal}</div>
-      )}
     </div>
   );
 }
@@ -84,9 +79,8 @@ const meta = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const firstProposal = canvas.getAllByRole('listitem')[0];
-    await userEvent.click(firstProposal);
-    await expect(canvas.getByTestId('selected-proposal')).toHaveTextContent('Selected: 1');
+    const proposals = canvas.getAllByRole('listitem')
+    expect(proposals.length).toBe(5);
   },
 } satisfies Meta<typeof ProposalListWrapper>;
 
@@ -103,10 +97,20 @@ export const Empty: Story = {
   args: {
     proposals: [],
   },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const p = await canvas.findByRole('paragraph');
+    expect(p).toHaveTextContent('No proposals yet');
+  },
 };
 
 export const SingleProposal: Story = {
   args: {
     proposals: [mockProposals[0]],
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const proposals = canvas.getAllByRole('listitem')
+    expect(proposals.length).toBe(1);
   },
 };
