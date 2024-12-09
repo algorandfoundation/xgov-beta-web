@@ -1,21 +1,18 @@
-import { XGovRegistryClient } from '@algorandfoundation/xgov/registry';
+import { XGovRegistryClient, XGovRegistryFactory } from '@algorandfoundation/xgov/registry';
 import { ProposalClient as XGovProposalClient } from '@algorandfoundation/xgov/proposal';
-import { algod } from './algo-client';
+import { AlgorandClient as algorand } from './algo-client'
 
 export const RegistryAppID: bigint = BigInt(import.meta.env.PUBLIC_REGISTRY_APP_ID);
 
-export const RegistryClient = new XGovRegistryClient(
-    {
-        resolveBy: 'id',
-        id: RegistryAppID,
-    },
-    algod,
-);
+export const RegistryClient = algorand.client.getTypedAppClientById(XGovRegistryClient, {
+    appId: RegistryAppID,
+    // appName?: string | undefined;
+    // defaultSender?: string | undefined;
+    // defaultSigner?: algosdk.TransactionSigner | undefined;
+    // approvalSourceMap?: algosdk.SourceMap | undefined;
+    // clearSourceMap?: algosdk.SourceMap | undefined;
+})
 
-export const ProposalClient = new XGovProposalClient(
-    {
-        resolveBy: 'id',
-        id: 0,
-    },
-    algod,
-);
+export const ProposalClient = algorand.client.getTypedAppClientById(XGovProposalClient, {
+    appId: BigInt(0),
+});

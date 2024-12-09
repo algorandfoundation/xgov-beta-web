@@ -4,8 +4,8 @@ import { useRef, useState } from "react";
 import { AlgorandClient } from "src/algorand/algo-client";
 import { RegistryAppID, RegistryClient } from "src/algorand/contract-clients";
 import { Buffer } from 'buffer';
-import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
 import { setIsProposer, setIsXGov, setVotingAddress as storeSetVotingAddress } from "@/stores/registryStore";
+import { initializeMockEnvironment } from "src/algorand/mock-init";
 
 export interface ProfileCardProps {
     activeAddress: string;
@@ -38,23 +38,22 @@ export function ProfileCard({ activeAddress, votingAddress, isXGov, isProposer, 
             suggestedParams,
         })
 
-        await RegistryClient.subscribeXgov(
-            { payment },
-            {
-                sender: {
-                    addr: activeAddress,
-                    signer: transactionSigner
-                },
-                boxes: [
-                    new Uint8Array(
-                        Buffer.concat([
-                            Buffer.from('x'),
-                            algosdk.decodeAddress(activeAddress).publicKey
-                        ])
-                    ),
-                ]
-            }
-        ).catch((e: Error) => {
+        await RegistryClient.send.subscribeXgov({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: {
+                payment,
+                votingAddress: activeAddress
+            },
+            boxReferences: [
+                new Uint8Array(
+                    Buffer.concat([
+                        Buffer.from('x'),
+                        algosdk.decodeAddress(activeAddress).publicKey
+                    ])
+                ),
+            ]
+        }).catch((e: Error) => {
             alert(`Error calling the contract: ${e.message}`)
             setSubscribeXGovLoading(false);
             return
@@ -68,23 +67,22 @@ export function ProfileCard({ activeAddress, votingAddress, isXGov, isProposer, 
     const setVotingAddress = async (address: string) => {
         setSetVotingAddressLoading(true);
 
-        await RegistryClient.setVotingAccount(
-            { xgovAddress: activeAddress, votingAddress: address },
-            {
-                sender: {
-                    addr: activeAddress,
-                    signer: transactionSigner
-                },
-                boxes: [
-                    new Uint8Array(
-                        Buffer.concat([
-                            Buffer.from('x'),
-                            algosdk.decodeAddress(activeAddress).publicKey
-                        ])
-                    ),
-                ]
-            }
-        ).catch((e: Error) => {
+        await RegistryClient.send.setVotingAccount({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: {
+                xgovAddress: activeAddress,
+                votingAddress: address
+            },
+            boxReferences: [
+                new Uint8Array(
+                    Buffer.concat([
+                        Buffer.from('x'),
+                        algosdk.decodeAddress(activeAddress).publicKey
+                    ])
+                ),
+            ]
+        }).catch((e: Error) => {
             alert(`Error calling the contract: ${e.message}`)
             setSetVotingAddressLoading(false);
             return
@@ -98,26 +96,22 @@ export function ProfileCard({ activeAddress, votingAddress, isXGov, isProposer, 
     const unsubscribeXgov = async () => {
         setSubscribeXGovLoading(true);
 
-        await RegistryClient.unsubscribeXgov(
-            {},
-            {
-                sendParams: {
-                    fee: new AlgoAmount({ microAlgos: (ALGORAND_MIN_TX_FEE * 2) })
-                },
-                sender: {
-                    addr: activeAddress,
-                    signer: transactionSigner
-                },
-                boxes: [
-                    new Uint8Array(
-                        Buffer.concat([
-                            Buffer.from('x'),
-                            algosdk.decodeAddress(activeAddress).publicKey
-                        ])
-                    ),
-                ]
-            }
-        ).catch((e: Error) => {
+        await RegistryClient.send.unsubscribeXgov({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: {
+                xgovAddress: activeAddress
+            },
+            extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
+            boxReferences: [
+                new Uint8Array(
+                    Buffer.concat([
+                        Buffer.from('x'),
+                        algosdk.decodeAddress(activeAddress).publicKey
+                    ])
+                ),
+            ]
+        }).catch((e: Error) => {
             alert(`Error calling the contract: ${e.message}`)
             setSubscribeXGovLoading(false);
             return
@@ -140,23 +134,19 @@ export function ProfileCard({ activeAddress, votingAddress, isXGov, isProposer, 
             suggestedParams,
         })
 
-        await RegistryClient.subscribeProposer(
-            { payment },
-            {
-                sender: {
-                    addr: activeAddress,
-                    signer: transactionSigner
-                },
-                boxes: [
-                    new Uint8Array(
-                        Buffer.concat([
-                            Buffer.from('p'),
-                            algosdk.decodeAddress(activeAddress).publicKey
-                        ])
-                    ),
-                ]
-            }
-        ).catch((e: Error) => {
+        await RegistryClient.send.subscribeProposer({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: { payment },
+            boxReferences: [
+                new Uint8Array(
+                    Buffer.concat([
+                        Buffer.from('p'),
+                        algosdk.decodeAddress(activeAddress).publicKey
+                    ])
+                ),
+            ]
+        }).catch((e: Error) => {
             alert(`Error calling the contract: ${e.message}`)
             setSubscribeProposerLoading(false);
             return

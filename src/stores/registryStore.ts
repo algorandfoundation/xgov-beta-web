@@ -1,9 +1,8 @@
 import algosdk, { ABIType } from 'algosdk';
 import { map } from 'nanostores';
-import { algod } from 'src/algorand/algo-client';
+import { algod, AlgorandClient as algorand } from 'src/algorand/algo-client';
 import { Buffer } from 'buffer';
 import { RegistryClient } from 'src/algorand/contract-clients';
-import { getAppBoxValueFromABIType } from '@algorandfoundation/algokit-utils';
 
 console.log('registry app id', import.meta.env.PUBLIC_REGISTRY_APP_ID);
 const registryAppID: number = import.meta.env.PUBLIC_REGISTRY_APP_ID;
@@ -24,7 +23,7 @@ export interface RegistryContractStore {
 }
 
 export const $registryContractStore = map<RegistryContractStore>({
-    registryAppID: registryAppID,
+    registryAppID: Number(registryAppID),
     globalState: false,
     isXGov: false,
     votingAddress: '',
@@ -33,7 +32,7 @@ export const $registryContractStore = map<RegistryContractStore>({
 
 export async function initRegistryContractStore() {
     try {
-        const state = await RegistryClient.getGlobalState();
+        const state = await RegistryClient.appClient.getGlobalState();
         $registryContractStore.setKey('globalState', state);
     } catch (e) {
         console.error('failed to fetch global registry contract state', e);
@@ -47,15 +46,12 @@ export async function initAddressRegistryContractStore(address: string) {
 
     try {
         const results = await Promise.allSettled([
-            algod.getApplicationBoxByName(registryAppID, xGovBoxName).do(),
-            getAppBoxValueFromABIType(
-                {
-                    appId: registryAppID,
-                    boxName: proposerBoxName,
-                    type: ABIType.from('(bool,bool,uint64)')
-                },
-                algod
-            )
+            algod.getApplicationBoxByName(Number(registryAppID), xGovBoxName).do(),
+            algorand.app.getBoxValueFromABIType({
+                appId: BigInt(registryAppID),
+                boxName: proposerBoxName,
+                type: ABIType.from('(bool,bool,uint64)')
+            }),
         ]);
     
         const xgovBoxValue = results[0].status === 'fulfilled' ? results[0].value : null;

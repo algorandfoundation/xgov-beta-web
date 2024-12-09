@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@agoralabs-sh/avm-web-provider": "^1.7.0",
-    "@algorandfoundation/algokit-utils": "^6.2.1",
+    "@algorandfoundation/algokit-utils": "^7.0.0",
     "@algorandfoundation/xgov": "link:../xgov-beta-ts",
     "@astrojs/check": "^0.8.3",
     "@astrojs/react": "^3.6.2",
