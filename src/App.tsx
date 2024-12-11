@@ -1,6 +1,13 @@
 import React, { useEffect } from "react";
 import { WalletId, WalletManager, WalletProvider, type SupportedWallet } from "@txnlab/use-wallet-react";
 import {createBrowserRouter, createMemoryRouter, RouterProvider} from "react-router-dom";
+import {
+    useQuery,
+    useMutation,
+    useQueryClient,
+    QueryClient,
+    QueryClientProvider,
+  } from '@tanstack/react-query'
 import {HomePage} from "@/pages/_HomePage";
 import {ProposalPage} from "@/pages/proposal/_ProposalPage";
 import { DocsPage } from "@/pages/_DocsPage";
@@ -43,6 +50,8 @@ const router = typeof window !== 'undefined'
     ? createBrowserRouter(routes)
     : createMemoryRouter(routes);
 
+const queryClient = new QueryClient();
+
 export function App({ path = "/" }) {
     router.state.location.pathname = path;
 
@@ -57,9 +66,11 @@ export function App({ path = "/" }) {
 
     return (
         <React.StrictMode>
-            <WalletProvider manager={walletManager}>
-                <RouterProvider router={router} />
-            </WalletProvider>
+            <QueryClientProvider client={queryClient}>
+                <WalletProvider manager={walletManager}>
+                    <RouterProvider router={router} />
+                </WalletProvider>
+            </QueryClientProvider>
         </React.StrictMode>
     );
 }

@@ -21,6 +21,8 @@ import { AlgorandClient } from "src/algorand/algo-client";
 import { RegistryAppID, RegistryClient } from "src/algorand/contract-clients";
 import algosdk, { makePaymentTxnWithSuggestedParamsFromObject } from "algosdk";
 import { Buffer } from 'buffer';
+import { useQuery } from "@tanstack/react-query";
+import { getProposalsByProposer } from "src/api/proposals";
 
 const title = 'xGov';
 
@@ -51,6 +53,12 @@ export function ProfilePage() {
 
     const [newProposalLoading, setNewProposalLoading] = useState<boolean>(false);
 
+    const proposals = useQuery({
+        queryKey: ['getProposalsByProposer', activeAddress],
+        queryFn: () => getProposalsByProposer(activeAddress!),
+        enabled: !!activeAddress
+    })
+
     const newProposal = async () => {
         if (!activeAddress) return;
 
@@ -65,14 +73,12 @@ export function ProfilePage() {
             suggestedParams,
         });
 
-        await RegistryClient.openProposal(
-            { payment },
+        await RegistryClient.send.openProposal(
             {
-                sender: {
-                    addr: activeAddress,
-                    signer: transactionSigner
-                },
-                boxes: [
+                sender: activeAddress,
+                signer: transactionSigner,
+                args: { payment },
+                boxReferences: [
                     new Uint8Array(
                         Buffer.concat([
                             Buffer.from('p'),
@@ -94,7 +100,7 @@ export function ProfilePage() {
         <Page
             title={title}
             LinkComponent={Link as unknown as ComponentType<LinkProps>}
-            Sidebar={RulesCardAndTitle as unknown as ComponentType}
+            Sidebar={() => <RulesCardAndTitle />}
         >
             <div>
                 <Breadcrumb className="-mb-[20px]">
@@ -131,10 +137,9 @@ export function ProfilePage() {
                         { newProposalLoading ? 'Loading...' : 'New Proposal'}
                     </button>
                 </div>
-                <ProposalList proposals={mockProposals.map(x => {
-                    const { proposer, ...y } = x;
-                    return y;
-                })} />
+                {
+                    !!proposals.data && <ProposalList proposals={proposals.data} />
+                }
             </div>
         </Page>
     )

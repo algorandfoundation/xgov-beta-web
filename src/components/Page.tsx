@@ -39,7 +39,7 @@ export type PageProps = {
     headerProps?: ComponentProps<typeof Header>;
 
     // Sidebar Components
-    Sidebar?: ComponentType;
+    Sidebar?: (props: any) => JSX.Element;
     // TODO: SidebarProps
 
     // Generic Components
@@ -50,7 +50,7 @@ export function Page({
     children,
     title,
     headerProps,
-    Sidebar = DefaultSidebar,
+    Sidebar = () => <DefaultSidebar/>,
     LinkComponent = Link as unknown as ComponentType<LinkProps>
 }: PageProps) {
     const { wallets, activeAddress, activeWallet } = useWallet();

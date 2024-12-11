@@ -8,6 +8,7 @@ export default defineConfig({
   vite: {
     define: {
       global: 'globalThis',
+      // 'global.Buffer': ['buffer', 'Buffer'],
     },
   },
   integrations: [

@@ -2,6 +2,7 @@ import algosdk, { ABIType } from 'algosdk';
 import { map } from 'nanostores';
 import { algod, AlgorandClient as algorand } from 'src/algorand/algo-client';
 import { Buffer } from 'buffer';
+
 import { RegistryClient } from 'src/algorand/contract-clients';
 
 console.log('registry app id', import.meta.env.PUBLIC_REGISTRY_APP_ID);
@@ -14,8 +15,8 @@ export interface ProposerBoxState {
 }
 
 export interface RegistryContractStore {
-    registryAppID: number;
     globalState: any;
+    proposers: { [key: string]: ProposerBoxState };
     isXGov: boolean;
     votingAddress: string;
     isProposer: boolean;
@@ -23,8 +24,8 @@ export interface RegistryContractStore {
 }
 
 export const $registryContractStore = map<RegistryContractStore>({
-    registryAppID: Number(registryAppID),
     globalState: false,
+    proposers: {},
     isXGov: false,
     votingAddress: '',
     isProposer: false,
@@ -52,10 +53,10 @@ export async function initAddressRegistryContractStore(address: string) {
                 boxName: proposerBoxName,
                 type: ABIType.from('(bool,bool,uint64)')
             }),
+            getAllProposers(),
         ]);
     
         const xgovBoxValue = results[0].status === 'fulfilled' ? results[0].value : null;
-        console.log('xgov box', xgovBoxValue);
 
         let votingAddress: string = ''
         if (!!xgovBoxValue && !!xgovBoxValue.value) {
@@ -63,7 +64,6 @@ export async function initAddressRegistryContractStore(address: string) {
         }
 
         const proposerBoxValue = results[1].status === 'fulfilled' ? results[1].value : null;
-        console.log('proposer box', proposerBoxValue);
 
         let proposer: ProposerBoxState;
         if (Array.isArray(proposerBoxValue) && proposerBoxValue.length === 3) {
@@ -80,9 +80,11 @@ export async function initAddressRegistryContractStore(address: string) {
             }
         }
 
+        const proposers = results[2].status === 'fulfilled' ? results[2].value : {};
+
         $registryContractStore.set({
-            registryAppID: registryAppID,
             globalState: $registryContractStore.value?.globalState,
+            proposers,
             isXGov: results[0].status === 'fulfilled',
             votingAddress,
             isProposer: results[1].status === 'fulfilled',
@@ -90,8 +92,8 @@ export async function initAddressRegistryContractStore(address: string) {
         });
     } catch (e) {
         $registryContractStore.set({
-            registryAppID: registryAppID,
             globalState: $registryContractStore.value?.globalState,
+            proposers: {},
             isXGov: false,
             votingAddress: '',
             isProposer: false,
@@ -116,6 +118,39 @@ export async function checkIsXGov(address: string) {
     } catch (e) {
         console.error(e);
     }
+}
+
+export async function getAllProposers(): Promise<{ [key: string]: ProposerBoxState }> {
+    const proposers: { [key: string]: ProposerBoxState } = {};
+    const boxes = await algorand.client.algod.getApplicationBoxes(registryAppID).do();
+    
+    for (const box of boxes.boxes) {
+        if (box.name[0] !== 112) {
+            continue;
+        }
+
+        const proposerBoxValue = await algorand.app.getBoxValueFromABIType({
+            appId: BigInt(registryAppID),
+            boxName: box.name,
+            type: ABIType.from('(bool,bool,uint64)')
+        });
+
+        if (!Array.isArray(proposerBoxValue) || proposerBoxValue.length !== 3) {
+            throw new Error('invalid proposer box value');
+        } 
+
+        const proposer: ProposerBoxState = {
+            activeProposal: (proposerBoxValue[0] as boolean),
+            kycStatus: (proposerBoxValue[1] as boolean),
+            kycExpiring: (proposerBoxValue[2] as bigint),
+        }
+
+        const addr = algosdk.encodeAddress(Buffer.from(box.name.slice(1)));
+
+        proposers[addr] = proposer;
+    }
+
+    return proposers;
 }
 
 export function setIsXGov(isXGov: boolean) {
