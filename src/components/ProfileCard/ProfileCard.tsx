@@ -1,164 +1,44 @@
-import { useWallet } from "@txnlab/use-wallet-react";
-import algosdk, { ALGORAND_MIN_TX_FEE, makePaymentTxnWithSuggestedParamsFromObject } from "algosdk";
+import type { ProposerBoxState } from "@/types/proposer";
 import { useRef, useState } from "react";
-import { AlgorandClient } from "src/algorand/algo-client";
-import { RegistryAppID, RegistryClient } from "src/algorand/contract-clients";
-import { Buffer } from 'buffer';
-import { setIsProposer, setIsXGov, setVotingAddress as storeSetVotingAddress } from "@/stores/registryStore";
-import { initializeMockEnvironment } from "src/algorand/mock-init";
 
 export interface ProfileCardProps {
     activeAddress: string;
     votingAddress: string;
+    setVotingAddress: (votingAddress: string) => void;
+    setVotingAddressLoading: boolean;
     isXGov: boolean;
-    isProposer: boolean;
-    validKYC: boolean;
+    subscribeXgov: () => void;
+    unsubscribeXgov: () => void;
+    subscribeXGovLoading: boolean;
+    proposer?: { isProposer: boolean } & ProposerBoxState;
+    subscribeProposer: () => void;
+    subscribeProposerLoading: boolean;
 }
 
-export function ProfileCard({ activeAddress, votingAddress, isXGov, isProposer, validKYC }: ProfileCardProps) {
-    const { transactionSigner } = useWallet();
-    const [subscribeXGovLoading, setSubscribeXGovLoading] = useState<boolean>(false);
-    const [setVotingAddressLoading, setSetVotingAddressLoading] = useState<boolean>(false);
-    const [subscribeProposerLoading, setSubscribeProposerLoading] = useState<boolean>(false);
-
+export function ProfileCard({
+    activeAddress,
+    votingAddress,
+    setVotingAddress,
+    setVotingAddressLoading,
+    isXGov,
+    subscribeXgov,
+    unsubscribeXgov,
+    subscribeXGovLoading,
+    proposer,
+    subscribeProposer,
+    subscribeProposerLoading,
+}: ProfileCardProps) {
     const votingAddressRef = useRef<HTMLInputElement>(null);
     const cancelButtonRef = useRef<HTMLButtonElement>(null);
     const [editingVotingAddress, setEditingVotingAddress] = useState<boolean>(false);
     const [votingAddressFieldError, setVotingAddressFieldError] = useState<string>('');
 
-    const subscribeXgov = async () => {
-        setSubscribeXGovLoading(true);
-
-        const suggestedParams = await AlgorandClient.getSuggestedParams();
-
-        const payment = makePaymentTxnWithSuggestedParamsFromObject({
-            from: activeAddress,
-            to: algosdk.getApplicationAddress(RegistryAppID),
-            amount: 1_000_000,
-            suggestedParams,
-        })
-
-        await RegistryClient.send.subscribeXgov({
-            sender: activeAddress,
-            signer: transactionSigner,
-            args: {
-                payment,
-                votingAddress: activeAddress
-            },
-            boxReferences: [
-                new Uint8Array(
-                    Buffer.concat([
-                        Buffer.from('x'),
-                        algosdk.decodeAddress(activeAddress).publicKey
-                    ])
-                ),
-            ]
-        }).catch((e: Error) => {
-            alert(`Error calling the contract: ${e.message}`)
-            setSubscribeXGovLoading(false);
-            return
-        });
-
-        setIsXGov(true);
-        storeSetVotingAddress(activeAddress);
-        setSubscribeXGovLoading(false);
-    }
-
-    const setVotingAddress = async (address: string) => {
-        setSetVotingAddressLoading(true);
-
-        await RegistryClient.send.setVotingAccount({
-            sender: activeAddress,
-            signer: transactionSigner,
-            args: {
-                xgovAddress: activeAddress,
-                votingAddress: address
-            },
-            boxReferences: [
-                new Uint8Array(
-                    Buffer.concat([
-                        Buffer.from('x'),
-                        algosdk.decodeAddress(activeAddress).publicKey
-                    ])
-                ),
-            ]
-        }).catch((e: Error) => {
-            alert(`Error calling the contract: ${e.message}`)
-            setSetVotingAddressLoading(false);
-            return
-        });
-
-        storeSetVotingAddress(activeAddress);
-        setSetVotingAddressLoading(false);
-        setEditingVotingAddress(false);
-    }
-
-    const unsubscribeXgov = async () => {
-        setSubscribeXGovLoading(true);
-
-        await RegistryClient.send.unsubscribeXgov({
-            sender: activeAddress,
-            signer: transactionSigner,
-            args: {
-                xgovAddress: activeAddress
-            },
-            extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
-            boxReferences: [
-                new Uint8Array(
-                    Buffer.concat([
-                        Buffer.from('x'),
-                        algosdk.decodeAddress(activeAddress).publicKey
-                    ])
-                ),
-            ]
-        }).catch((e: Error) => {
-            alert(`Error calling the contract: ${e.message}`)
-            setSubscribeXGovLoading(false);
-            return
-        });
-
-        setIsXGov(false);
-        storeSetVotingAddress('');
-        setSubscribeXGovLoading(false);
-    }
-
-    const subscribeProposer = async () => {
-        setSubscribeProposerLoading(true);
-
-        const suggestedParams = await AlgorandClient.getSuggestedParams();
-
-        const payment = makePaymentTxnWithSuggestedParamsFromObject({
-            from: activeAddress,
-            to: algosdk.getApplicationAddress(RegistryAppID),
-            amount: 10_000_000,
-            suggestedParams,
-        })
-
-        await RegistryClient.send.subscribeProposer({
-            sender: activeAddress,
-            signer: transactionSigner,
-            args: { payment },
-            boxReferences: [
-                new Uint8Array(
-                    Buffer.concat([
-                        Buffer.from('p'),
-                        algosdk.decodeAddress(activeAddress).publicKey
-                    ])
-                ),
-            ]
-        }).catch((e: Error) => {
-            alert(`Error calling the contract: ${e.message}`)
-            setSubscribeProposerLoading(false);
-            return
-        });
-
-        setIsProposer(true);
-        setSubscribeProposerLoading(false);
-    }
-
-    const setKYC = async () => {
-
-    }
+    const validKYC =
+        (
+            proposer
+            && proposer.kycStatus 
+            && proposer.kycExpiring > Date.now()
+        ) || false
 
     return (
         <div className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
@@ -179,10 +59,11 @@ export function ProfileCard({ activeAddress, votingAddress, isXGov, isProposer, 
                                         ? <>
                                             <button
                                                 type='button'
-                                                className="border-2 hover:border-b-[3px] text-xs text-algo-black dark:text-algo-blue-20 border-algo-black dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md my-1 px-2 py-0.5 transition"
+                                                className="border-2 hover:border-l-[3px] hover:border-b-[3px] hover:-translate-y-[1px] hover:translate-x-[1px] text-xs text-algo-black disabled:text-algo-black-40 dark:text-algo-blue-20 border-algo-black disabled:border-algo-black-40 dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 duration-75 transform-gpu"
                                                 onClick={() => {
                                                     if (votingAddressRef?.current?.value) {
                                                         setVotingAddress(votingAddressRef?.current?.value);
+                                                        setEditingVotingAddress(false);
                                                     }
                                                 }}
                                                 disabled={setVotingAddressLoading || !!votingAddressFieldError}
@@ -192,7 +73,7 @@ export function ProfileCard({ activeAddress, votingAddress, isXGov, isProposer, 
                                             <button
                                                 ref={cancelButtonRef}
                                                 type='button'
-                                                className="border-2 hover:border-b-[3px] text-xs text-algo-black dark:text-algo-blue-20 border-algo-black dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md my-1 px-2 py-0.5 transition"
+                                                className="border-2 hover:border-l-[3px] hover:border-b-[3px] hover:-translate-y-[1px] hover:translate-x-[1px] text-xs text-algo-black disabled:text-algo-black-40 dark:text-algo-blue-20 border-algo-black disabled:border-algo-black-40 dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 duration-75 transform-gpu"
                                                 onClick={() => {
                                                     if (votingAddressRef?.current) {
                                                         votingAddressRef.current.value = votingAddress;
@@ -208,7 +89,7 @@ export function ProfileCard({ activeAddress, votingAddress, isXGov, isProposer, 
                                         </>
                                         : <button
                                             type='button'
-                                            className="border-2 hover:border-b-[3px] text-xs text-algo-black dark:text-algo-blue-20 border-algo-black dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md my-1 px-2 py-0.5 transition"
+                                            className="border-2 hover:border-l-[3px] hover:border-b-[3px] hover:-translate-y-[1px] hover:translate-x-[1px] text-xs text-algo-black disabled:text-algo-black-40 dark:text-algo-blue-20 border-algo-black disabled:border-algo-black-40 dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 duration-75 transform-gpu"
                                             onClick={() => {
                                                 setVotingAddressFieldError('');
                                                 setEditingVotingAddress(true);
@@ -259,7 +140,7 @@ export function ProfileCard({ activeAddress, votingAddress, isXGov, isProposer, 
                                 ? <>
                                     <button
                                         type='button'
-                                        className="border-2 hover:border-b-[3px] text-xs text-algo-black dark:text-algo-blue-20 border-algo-black dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 transition"
+                                        className="border-2 hover:border-l-[3px] hover:border-b-[3px] hover:-translate-y-[1px] hover:translate-x-[1px] text-xs text-algo-black dark:text-algo-blue-20 border-algo-black disabled:border-algo-black-40 disabled:text-algo-black-40 dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 duration-75 transform-gpu"
                                         onClick={unsubscribeXgov}
                                         disabled={subscribeXGovLoading}
                                     >
@@ -269,7 +150,7 @@ export function ProfileCard({ activeAddress, votingAddress, isXGov, isProposer, 
                                 : <>
                                     <button
                                         type='button'
-                                        className="border-2 hover:border-b-[3px] text-xs text-algo-black dark:text-algo-blue-20 border-algo-black dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 transition"
+                                        className="border-2 hover:border-l-[3px] hover:border-b-[3px] hover:-translate-y-[1px] hover:translate-x-[1px] text-xs text-algo-black disabled:text-algo-black-40 dark:text-algo-blue-20 border-algo-black disabled:border-algo-black-40 dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 duration-75 transform-gpu"
                                         onClick={subscribeXgov}
                                         disabled={subscribeXGovLoading}
                                     >
@@ -290,10 +171,10 @@ export function ProfileCard({ activeAddress, votingAddress, isXGov, isProposer, 
                     <div className="flex items-center gap-2">
                         <h2 className="text-xl py-1 font-bold">Proposer Status</h2>
                         {
-                            !isProposer &&
+                            !proposer?.isProposer &&
                             <button
                                 type='button'
-                                className="border-2 text-xs text-algo-black dark:text-algo-blue-20 border-algo-black dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 transition"
+                                className="border-2 hover:border-l-[3px] hover:border-b-[3px] hover:-translate-y-[1px] hover:translate-x-[1px] text-xs text-algo-black disabled:text-algo-black-40 dark:text-algo-blue-20 border-algo-black disabled:border-algo-black-40 dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 duration-75 transform-gpu"
                                 onClick={subscribeProposer}
                                 disabled={subscribeProposerLoading}
                             >
@@ -303,7 +184,7 @@ export function ProfileCard({ activeAddress, votingAddress, isXGov, isProposer, 
                     </div>
                     <p className="text-xl mt-2 dark:text-algo-blue-20">
                         {
-                            isProposer
+                            proposer?.isProposer
                                 ? '✅ Active Proposer'
                                 : '❌ Not a Proposer'
                         }

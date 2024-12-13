@@ -11,18 +11,14 @@ import {
     BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 import { useState, type ComponentType } from "react";
-
-// mock data
-import { mockProposals } from "@/components/ProposalList/ProposalList.stories";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { useStore } from "@nanostores/react";
-import { $registryContractStore } from "@/stores/registryStore";
 import { AlgorandClient } from "src/algorand/algo-client";
 import { RegistryAppID, RegistryClient } from "src/algorand/contract-clients";
-import algosdk, { makePaymentTxnWithSuggestedParamsFromObject } from "algosdk";
+import algosdk, { ALGORAND_MIN_TX_FEE, makePaymentTxnWithSuggestedParamsFromObject } from "algosdk";
 import { Buffer } from 'buffer';
-import { useQuery } from "@tanstack/react-query";
-import { getProposalsByProposer } from "src/api/proposals";
+import { useProposer, useXGov, useRegistry } from "src/hooks/useRegistry";
+import { useProposalsByProposer } from "src/hooks/useProposals";
+import { useNavigate, useParams } from "react-router-dom";
 
 const title = 'xGov';
 
@@ -48,16 +44,168 @@ function RulesCardAndTitle() {
 }
 
 export function ProfilePage() {
+    const navigate = useNavigate();
+    const { address } = useParams();
     const { transactionSigner, activeAddress } = useWallet();
-    const registryStatus = useStore($registryContractStore);
+    const registry = useRegistry();
+    const xgov = useXGov(activeAddress);
+    const proposer = useProposer(activeAddress);
+    const proposals = useProposalsByProposer(activeAddress);
+
+    const isLoading = registry.isLoading || xgov.isLoading || proposer.isLoading || proposals.isLoading;
+    const isError = registry.isError || xgov.isError || proposer.isError || proposals.isError;
+
+    const [subscribeXGovLoading, setSubscribeXGovLoading] = useState<boolean>(false);
+    const [setVotingAddressLoading, setSetVotingAddressLoading] = useState<boolean>(false);
+    const [subscribeProposerLoading, setSubscribeProposerLoading] = useState<boolean>(false);
 
     const [newProposalLoading, setNewProposalLoading] = useState<boolean>(false);
 
-    const proposals = useQuery({
-        queryKey: ['getProposalsByProposer', activeAddress],
-        queryFn: () => getProposalsByProposer(activeAddress!),
-        enabled: !!activeAddress
-    })
+    !activeAddress && navigate('/');
+    activeAddress !== address && navigate(`/profile/${activeAddress}`);
+
+    if (!activeAddress || isLoading) {
+        return (
+            <div>Loading...</div>
+        )
+    }
+
+    if (isError) {
+        return (
+            <div>Error...</div>
+        )
+    }
+
+    const subscribeXgov = async () => {
+        setSubscribeXGovLoading(true);
+
+        const suggestedParams = await AlgorandClient.getSuggestedParams();
+
+        const payment = makePaymentTxnWithSuggestedParamsFromObject({
+            from: activeAddress,
+            to: algosdk.getApplicationAddress(RegistryAppID),
+            amount: 1_000_000,
+            suggestedParams,
+        })
+
+        await RegistryClient.send.subscribeXgov({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: {
+                payment,
+                votingAddress: activeAddress
+            },
+            boxReferences: [
+                new Uint8Array(
+                    Buffer.concat([
+                        Buffer.from('x'),
+                        algosdk.decodeAddress(activeAddress).publicKey
+                    ])
+                ),
+            ]
+        }).catch((e: Error) => {
+            console.error(`Error calling the contract: ${e.message}`)
+            setSubscribeXGovLoading(false);
+            return
+        });
+
+        xgov.refetch();        
+        setSubscribeXGovLoading(false);
+    }
+
+    const setVotingAddress = async (address: string) => {
+        setSetVotingAddressLoading(true);
+
+        await RegistryClient.send.setVotingAccount({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: {
+                xgovAddress: activeAddress,
+                votingAddress: address
+            },
+            boxReferences: [
+                new Uint8Array(
+                    Buffer.concat([
+                        Buffer.from('x'),
+                        algosdk.decodeAddress(activeAddress).publicKey
+                    ])
+                ),
+            ]
+        }).catch((e: Error) => {
+            console.error(`Error calling the contract: ${e.message}`)
+            setSetVotingAddressLoading(false);
+            return
+        });
+
+        
+        await proposer.refetch();
+        setSetVotingAddressLoading(false);
+    }
+
+    const unsubscribeXgov = async () => {
+        setSubscribeXGovLoading(true);
+
+        await RegistryClient.send.unsubscribeXgov({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: {
+                xgovAddress: activeAddress
+            },
+            extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
+            boxReferences: [
+                new Uint8Array(
+                    Buffer.concat([
+                        Buffer.from('x'),
+                        algosdk.decodeAddress(activeAddress).publicKey
+                    ])
+                ),
+            ]
+        }).catch((e: Error) => {
+            console.error(`Error calling the contract: ${e.message}`)
+            setSubscribeXGovLoading(false);
+            return
+        });
+
+        await Promise.all([
+            xgov.refetch(),
+            proposer.refetch(),
+        ])
+        setSubscribeXGovLoading(false);
+    }
+
+    const subscribeProposer = async () => {
+        setSubscribeProposerLoading(true);
+
+        const suggestedParams = await AlgorandClient.getSuggestedParams();
+
+        const payment = makePaymentTxnWithSuggestedParamsFromObject({
+            from: activeAddress,
+            to: algosdk.getApplicationAddress(RegistryAppID),
+            amount: 10_000_000,
+            suggestedParams,
+        })
+
+        await RegistryClient.send.subscribeProposer({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: { payment },
+            boxReferences: [
+                new Uint8Array(
+                    Buffer.concat([
+                        Buffer.from('p'),
+                        algosdk.decodeAddress(activeAddress).publicKey
+                    ])
+                ),
+            ]
+        }).catch((e: Error) => {
+            console.error(`Error calling the contract: ${e.message}`)
+            setSubscribeProposerLoading(false);
+            return
+        });
+
+        await proposer.refetch();
+        setSubscribeProposerLoading(false);
+    }
 
     const newProposal = async () => {
         if (!activeAddress) return;
@@ -66,29 +214,33 @@ export function ProfilePage() {
 
         const suggestedParams = await AlgorandClient.getSuggestedParams();
 
+        const proposalFee = registry.data?.proposalFee;
+
+        if (!proposalFee) {
+            throw new Error('Proposal fee not found');
+        }
+
         const payment = makePaymentTxnWithSuggestedParamsFromObject({
             from: activeAddress,
             to: algosdk.getApplicationAddress(RegistryAppID),
-            amount: registryStatus.globalState.proposalFee.asBigInt(),
+            amount: proposalFee,
             suggestedParams,
         });
 
-        await RegistryClient.send.openProposal(
-            {
-                sender: activeAddress,
-                signer: transactionSigner,
-                args: { payment },
-                boxReferences: [
-                    new Uint8Array(
-                        Buffer.concat([
-                            Buffer.from('p'),
-                            algosdk.decodeAddress(activeAddress).publicKey
-                        ])
-                    ),
-                ]
-            }
-        ).catch((e: Error) => {
-            alert(`Error calling the contract: ${e.message}`)
+        await RegistryClient.send.openProposal({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: { payment },
+            boxReferences: [
+                new Uint8Array(
+                    Buffer.concat([
+                        Buffer.from('p'),
+                        algosdk.decodeAddress(activeAddress).publicKey
+                    ])
+                ),
+            ]
+        }).catch((e: Error) => {
+            console.error(`Error calling the contract: ${e.message}`)
             setNewProposalLoading(false);
             return
         });
@@ -119,10 +271,17 @@ export function ProfilePage() {
                 </h1>
                 <ProfileCard
                     activeAddress={activeAddress!}
-                    votingAddress={registryStatus.votingAddress}
-                    isXGov={registryStatus.isXGov}
-                    isProposer={registryStatus.isProposer}
-                    validKYC={(registryStatus.proposer?.kycStatus && registryStatus.proposer?.kycExpiring > Date.now()) || false}
+                    votingAddress={xgov.data?.votingAddress || ''}
+                    setVotingAddress={setVotingAddress}
+                    setVotingAddressLoading={setVotingAddressLoading}
+                    isXGov={xgov.data?.isXGov || false}
+                    subscribeXgov={subscribeXgov}
+                    unsubscribeXgov={unsubscribeXgov}
+                    subscribeXGovLoading={subscribeXGovLoading}
+                    proposer={proposer.data}
+                    subscribeProposer={subscribeProposer}
+                    subscribeProposerLoading={subscribeProposerLoading}
+
                 />
                 <div className="flex items-center gap-2 mt-16 mb-8">
                     <h1 className="text-3xl lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold">
@@ -130,9 +289,9 @@ export function ProfilePage() {
                     </h1>
                     <button
                         type='button'
-                        className="border-2 hover:border-b-[3px] text-xs text-algo-black dark:text-algo-blue-20 border-algo-black dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 transition"
+                        className="border-2 hover:border-l-[3px] hover:border-b-[3px] hover:-translate-y-[1px] hover:translate-x-[1px] text-xs text-algo-black disabled:text-algo-black-40 dark:text-algo-blue-20 border-algo-black disabled:border-algo-black-40 dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 duration-75 transform-gpu"
                         onClick={newProposal}
-                        disabled={!registryStatus.isProposer}
+                        disabled={!proposer.data?.isProposer}
                     >
                         { newProposalLoading ? 'Loading...' : 'New Proposal'}
                     </button>

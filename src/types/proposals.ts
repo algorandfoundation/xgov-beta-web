@@ -94,13 +94,6 @@ export interface ProposalJSON {
     forumLink: string;
 }
 
-// ------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------
-
-
-// export type ProposalPhase = 'null' | 'draft' | 'submission' | 'discussion' | 'voting' | 'closure';
-
 export const statusToPhase = {
 	[ProposalStatus.ProposalStatusEmpty]: 'null',
 	[ProposalStatus.ProposalStatusDraft]: 'draft',

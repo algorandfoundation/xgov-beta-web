@@ -13,6 +13,7 @@ import type { ProposalInfoCardDetails } from "@/types/proposals";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { getProposal } from "src/api/proposals";
+import { useProposal } from "src/hooks/useProposals";
 
 const title = 'xGov';
 
@@ -31,12 +32,8 @@ export function ProposalPage() {
     // const { activeAddress } = useWallet();
     // TODO: Get NFD name using the activeAddress
     const { proposal: proposalId } = useParams();
-    console.log('params: ', proposalId);
-    
-    const proposal = useQuery({ 
-        queryKey: ['getProposal', Number(proposalId!)],
-        queryFn: () => getProposal(BigInt(proposalId!))
-    });
+    // const proposalId = Number(proposalIdParam);
+    const proposal = useProposal(Number(proposalId));
 
     if (proposal.isLoading) {
         return <div>Loading...</div>

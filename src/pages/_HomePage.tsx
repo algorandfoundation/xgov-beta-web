@@ -2,16 +2,15 @@ import { Page } from "../components/Page.tsx";
 import { ProposalFilter } from "@/components/ProposalFilter/ProposalFilter.tsx";
 import { ProposalList } from "@/components/ProposalList/ProposalList.tsx";
 import { Link } from "react-router-dom";
-import type { ComponentType } from "react";
+import { type ComponentType } from "react";
 import type { LinkProps } from "../components/Link.tsx";
-import { useQuery } from "@tanstack/react-query";
-import { getAllProposals } from "src/api/proposals.ts";
+import { useGetAllProposals } from "src/hooks/useProposals.ts";
 
 const title = 'xGov';
 
 export function HomePage() {
-    
-    const proposals = useQuery({ queryKey: ['getAllProposals'], queryFn: getAllProposals })
+
+    const proposals = useGetAllProposals();
 
     return (
         <Page title={title} LinkComponent={Link as unknown as ComponentType<LinkProps>}>

@@ -28,7 +28,9 @@ export const mockProposals: MockProposalCreationData[] = [
             openSource: true,
             category: ProposalFundingCategory.FundingCategoryDeFi,
             adoptionMetrics: ['1000 users', '1000 transactions'],
-            pastProposalLinks: [],
+            pastProposalLinks: [
+                BigInt(1), BigInt(2), BigInt(3)
+            ],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Retroactive,
@@ -128,7 +130,49 @@ const WEIGHTED_QUORUM_SMALL = BigInt(200);
 const WEIGHTED_QUORUM_MEDIUM = BigInt(300);
 const WEIGHTED_QUORUM_LARGE = BigInt(400);
 
+async function getLastRound(): Promise<number> {
+    return (await algorand.client.algod.status().do())['last-round'];
+}
 
+async function getLatestTimestamp(): Promise<number> {
+    const lastRound = await getLastRound();
+    const block = (await algorand.client.algod.block(lastRound).do());
+    return block.block.ts;
+}
+
+export async function roundWarp(to: number = 0) {
+    algorand.setSuggestedParamsCacheTimeout(0);
+    const dispenser = await algorand.account.dispenserFromEnvironment();
+    let nRounds;
+    if (to !== 0) {
+        const lastRound = await getLastRound();
+
+        if (to < lastRound) {
+            throw new Error(`Cannot warp to the past: ${to} < ${lastRound}`);
+        }
+
+        nRounds = to - lastRound;
+    } else {
+        nRounds = 1;
+    }
+
+    for (let i = 0; i < nRounds; i++) {
+        await algorand.send.payment({
+            sender: dispenser.addr,
+            signer: dispenser.signer,
+            receiver: dispenser.addr,
+            amount: (0).microAlgo(),
+        })
+    }
+}
+
+export async function timeWarp(to: number) {
+    algorand.setSuggestedParamsCacheTimeout(0);
+    const current = (await getLatestTimestamp());
+    await algorand.client.algod.setBlockOffsetTimestamp(to - current).do();
+    await roundWarp()
+    await algorand.client.algod.setBlockOffsetTimestamp(0).do();
+}
 
 export async function initializeMockEnvironment(mockProposals: MockProposalCreationData[]) {
 
@@ -223,6 +267,32 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
         },
     })
 
+    await registryClient.send.setCommitteeManager({
+        sender: adminAccount.addr,
+        signer: adminAccount.signer,
+        args: {
+            manager: adminAccount.addr,
+        }
+    });
+
+    await registryClient.send.setCommitteePublisher({
+        sender: adminAccount.addr,
+        signer: adminAccount.signer,
+        args: {
+            publisher: adminAccount.addr,
+        }
+    });
+
+    await registryClient.send.declareCommittee({
+        sender: adminAccount.addr,
+        signer: adminAccount.signer,
+        args: {
+            cid: new Uint8Array(Buffer.from('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')),
+            size: 1,
+            votes: 10,
+        },
+    })
+
     // Generate and setup mock proposer accounts
     const proposerAccounts: (TransactionSignerAccount & { account: algosdk.Account; })[] = [];
     const proposalIds: bigint[] = [];
@@ -247,6 +317,7 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
         );
 
         proposerAccounts.push(account);
+
         const addr = algosdk.decodeAddress(account.addr).publicKey;
         const proposerBoxName = new Uint8Array(Buffer.concat([Buffer.from('p'), addr]));
 
@@ -306,7 +377,14 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
         // instance a new proposal client
         const proposalClient = proposalFactory.getAppClientById({ appId: result.return });
 
-        const { cid } = await ipfsClient.add(JSON.stringify(mockProposals[i].proposalJson), { cidVersion: 1 });
+        const { cid } = await ipfsClient.add(JSON.stringify(
+            mockProposals[i].proposalJson,
+            (_, value) => (
+                typeof value === 'bigint'
+                    ? value.toString()
+                    : value // return everything else unchanged
+            )
+        ), { cidVersion: 1 });
 
         const proposalSubmissionFee = Math.trunc(Number(
             ((mockProposals[i].requestedAmount).algos().microAlgos * BigInt(1_000)) / BigInt(10_000)
@@ -335,11 +413,23 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
             },
             appReferences: [registryClient.appId],
         });
+    }
+
+    const ts = (await getLatestTimestamp()) + (86400 * 5)
+    await timeWarp(ts);
+    console.log('finished time warp, new ts: ', await getLatestTimestamp());
+
+    for (let i = 0; i < mockProposals.length; i++) {
+
+        const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
 
         await proposalClient.send.finalize({
-            sender: account.addr,
-            signer: account.signer,
-            args: {}
+            sender: proposerAccounts[i].addr,
+            signer: proposerAccounts[i].signer,
+            args: {},
+            appReferences: [registryClient.appId],
+            accountReferences: [adminAccount.addr],
+            extraFee: (ALGORAND_MIN_TX_FEE).microAlgos(),
         });
     }
 

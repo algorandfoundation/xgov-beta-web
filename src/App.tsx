@@ -1,20 +1,16 @@
-import React, { useEffect } from "react";
+import './polyfills';
+import React from "react";
 import { WalletId, WalletManager, WalletProvider, type SupportedWallet } from "@txnlab/use-wallet-react";
-import {createBrowserRouter, createMemoryRouter, RouterProvider} from "react-router-dom";
+import { createBrowserRouter, createMemoryRouter, RouterProvider } from "react-router-dom";
 import {
-    useQuery,
-    useMutation,
-    useQueryClient,
     QueryClient,
     QueryClientProvider,
-  } from '@tanstack/react-query'
-import {HomePage} from "@/pages/_HomePage";
-import {ProposalPage} from "@/pages/proposal/_ProposalPage";
+} from '@tanstack/react-query'
+import { HomePage } from "@/pages/_HomePage";
+import { ProposalPage } from "@/pages/proposal/_ProposalPage";
 import { DocsPage } from "@/pages/_DocsPage";
 import { CohortsPage } from "@/pages/_CohortPage";
 import { ProfilePage } from "./pages/profile/_ProfilePage";
-
-import { initAddressRegistryContractStore, initRegistryContractStore } from "./stores/registryStore";
 
 let walletProviders: SupportedWallet[] = [
     WalletId.KMD,
@@ -22,7 +18,7 @@ let walletProviders: SupportedWallet[] = [
     WalletId.PERA,
     WalletId.EXODUS,
     WalletId.KIBISIS,
-    { id: WalletId.LUTE, options: { siteName: "XGov Beta" }},
+    { id: WalletId.LUTE, options: { siteName: "XGov Beta" } },
 ];
 
 if (import.meta.env.PUBLIC_KMD_SERVER) {
@@ -38,12 +34,12 @@ const walletManager = new WalletManager({
 });
 
 const routes = [
-    { path: '/', element: <HomePage />},
-    { path: '/docs', element: <DocsPage />},
-    { path: '/cohort', element: <CohortsPage />},
-    { path: '/proposal', element: <HomePage />},
-    { path: '/proposal/:proposal', element: <ProposalPage />},
-    { path: '/profile/:address', element: <ProfilePage />},
+    { path: '/', element: <HomePage /> },
+    { path: '/docs', element: <DocsPage /> },
+    { path: '/cohort', element: <CohortsPage /> },
+    { path: '/proposal', element: <HomePage /> },
+    { path: '/proposal/:proposal', element: <ProposalPage /> },
+    { path: '/profile/:address', element: <ProfilePage /> },
 ]
 
 const router = typeof window !== 'undefined'
@@ -54,15 +50,6 @@ const queryClient = new QueryClient();
 
 export function App({ path = "/" }) {
     router.state.location.pathname = path;
-
-    useEffect(() => {
-        initRegistryContractStore();
-    }, [])
-
-    useEffect(() => {
-        if (!walletManager.activeAddress) return;
-        initAddressRegistryContractStore(walletManager.activeAddress);
-    }, [walletManager.activeAddress])
 
     return (
         <React.StrictMode>

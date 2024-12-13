@@ -17,23 +17,28 @@ import { shortenAddress } from "@/functions/shortening"
 import { BaseWallet, type Wallet } from "@txnlab/use-wallet-react"
 import { useState } from "react"
 import { cn } from "@/functions/utils";
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 export interface ConnectProps {
+    path: string;
     wallets: Wallet[];
     activeAddress: string | null;
     activeWallet?: BaseWallet | null;
     nfdName?: string;
 }
 
-export function Connect({ wallets, activeAddress, activeWallet, nfdName }: ConnectProps) {
+export function Connect({ path, wallets, activeAddress, activeWallet, nfdName }: ConnectProps) {
+    const navigate = useNavigate();
     const [dialogOpen, setOpenDialog] = useState(false);
 
     if (!!activeAddress) {
         return (
             <ConnectDropdown
                 activeAddress={activeAddress}
-                onLogOut={() => activeWallet!.disconnect()}
+                onLogOut={() => {
+                    activeWallet!.disconnect()
+                    path.includes('profile') && navigate('/');
+                }}
             >
                 <Button
                     id="connect-button"
