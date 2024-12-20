@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { within, expect } from '@storybook/test';
+// import { within, expect } from '@storybook/test';
 
-import { ProposalFocus, ProposalFundingType, ProposalStatus, type ProposalInfoCardDetails, type ProposalMainCardDetails } from '@/types/proposals';
+import { ProposalFocus, ProposalFundingType, ProposalStatus, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from '@/types/proposals';
 import { ProposalCard, type ProposalCardProps } from './ProposalCard';
 
 declare global
@@ -47,6 +47,17 @@ export const mockProposalInfo: ProposalInfoCardDetails = {
   openSource: true,
   requestedAmount: BigInt(75_000_000_000),
 };
+
+export const mockProposalSummaryCard: ProposalSummaryCardDetails = {
+  id: BigInt(1),
+  title: "Auto-Compounding Farms",
+  cid: "QmQk7wM2J8Gc2e8s9XZ1W5LQJr7d1z2J9",
+  requestedAmount: BigInt(75_000_000_000),
+  proposer: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ',
+  fundingType: ProposalFundingType.Proactive,
+  status: ProposalStatus.ProposalStatusFinal,
+  focus: ProposalFocus.FocusDeFi,
+}
 
 function ProposalCardWrapper(props: ProposalCardProps) {
   return (
@@ -98,3 +109,22 @@ export const NoPastProposals: Story = {
     },
   },
 };
+
+export const InfoCard: Story = {
+  args: {
+    proposal: mockProposalInfo,
+  },
+};
+
+export const ProposalSummaryCard: Story = {
+  args: {
+    proposal: mockProposalSummaryCard,
+  },
+};
+
+export const MiniProposalSummaryCard: Story = {
+  args: {
+    proposal: mockProposalSummaryCard,
+    mini: true,
+  },
+}

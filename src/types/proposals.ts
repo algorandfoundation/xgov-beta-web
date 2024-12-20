@@ -99,7 +99,7 @@ export interface ProposalJSON {
 export const statusToPhase = {
 	[ProposalStatus.ProposalStatusEmpty]: 'null',
 	[ProposalStatus.ProposalStatusDraft]: 'draft',
-	[ProposalStatus.ProposalStatusFinal]: 'submission',
+	[ProposalStatus.ProposalStatusFinal]: 'discussion',
 	[ProposalStatus.ProposalStatusVoting]: 'voting',
 	[ProposalStatus.ProposalStatusApproved]: 'closure',
 	[ProposalStatus.ProposalStatusRejected]: 'closure',

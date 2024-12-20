@@ -4,7 +4,7 @@ import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils
 import { AlgorandClient as algorand } from './algo-client'
 import { create } from 'kubo-rpc-client';
 import { ProposalFactory } from '@algorandfoundation/xgov';
-import { ProposalFundingCategory, ProposalFundingType, type ProposalJSON, type ProposalStatus } from '@/types/proposals';
+import { ProposalFocus, ProposalFundingType, type ProposalJSON, type ProposalStatus } from '@/types/proposals';
 import { ProposalStatus as PS } from '@/types/proposals';
 
 export interface MockProposalCreationData {
@@ -26,7 +26,7 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            category: ProposalFundingCategory.FundingCategoryDeFi,
+            focus: ProposalFocus.FocusDeFi,
             adoptionMetrics: ['1000 users', '1000 transactions'],
             pastProposalLinks: [
                 BigInt(1), BigInt(2), BigInt(3)
@@ -44,7 +44,7 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            category: ProposalFundingCategory.FundingCategoryEducation,
+            focus: ProposalFocus.FocusEducation,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
@@ -59,7 +59,7 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            category: ProposalFundingCategory.FundingCategoryLibraries,
+            focus: ProposalFocus.FocusLibraries,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
@@ -74,7 +74,7 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            category: ProposalFundingCategory.FundingCategoryNFT,
+            focus: ProposalFocus.FocusNFT,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
@@ -89,7 +89,7 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            category: ProposalFundingCategory.FundingCategoryDeFi,
+            focus: ProposalFocus.FocusDeFi,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },

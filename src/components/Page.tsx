@@ -3,7 +3,6 @@ import { Link, useLocation } from 'react-router-dom'
 import type { ComponentProps, ComponentType, PropsWithChildren, ReactNode } from "react";
 import type { LinkProps } from "@/components/Link.tsx";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { useStore } from "@nanostores/react";
 import { cn } from "@/functions/utils.ts";
 import { ThemeToggle } from "@/components/button/ThemeToggle/ThemeToggle";
 import { Connect } from "@/components/Connect/Connect";

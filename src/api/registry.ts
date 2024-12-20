@@ -1,7 +1,5 @@
 
 import type { ProposerBoxState } from "@/types/proposer";
-import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
-import type { AppState } from "@algorandfoundation/algokit-utils/types/app";
 import type { TypedGlobalState } from "@algorandfoundation/xgov/registry";
 import algosdk, { ABIType, type TransactionSigner } from "algosdk";
 import { algod, AlgorandClient as algorand } from 'src/algorand/algo-client';

@@ -1,4 +1,4 @@
-import { FocusMap, isProposalInfoCardDetails, isProposalSummaryCardDetails, ProposalCategoryMap, ProposalFundingTypeMap, statusToPhase, type ProposalCardDetails, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from "@/types/proposals";
+import { FocusMap, isProposalInfoCardDetails, isProposalSummaryCardDetails, ProposalFundingTypeMap, statusToPhase, type ProposalCardDetails, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from "@/types/proposals";
 import { cn } from "@/functions/utils";
 import { Link } from "@/components/Link";
 import { shortenAddress } from "@/functions/shortening";
@@ -165,18 +165,8 @@ function ProposalSummaryCard({
     )
 }
 
-interface MyProposalSummaryCardProps {
-    /**
-     * Router Path
-     */
-    path?: string;
-    proposal: ProposalInfoCardDetails;
-}
-
-
 
 function MyProposalSummaryCard({
-    path,
     proposal: {
         id,
         title,
@@ -190,7 +180,7 @@ function MyProposalSummaryCard({
     const phase = statusToPhase[status];
 
     return (
-        <li className="bg-white hover:bg-algo-teal-10 dark:hover:bg-algo-blue-50 dark:bg-algo-black border-2 border-algo-black hover:border-algo-teal dark:border-white dark:hover:border-algo-blue-40 text-algo-black dark:text-white rounded-lg max-w-3xl">
+        <li className="list-none bg-white hover:bg-algo-teal-10 dark:hover:bg-algo-blue-50 dark:bg-algo-black border-2 border-algo-black hover:border-algo-teal dark:border-white dark:hover:border-algo-blue-40 text-algo-black dark:text-white rounded-lg max-w-3xl">
             <div className="p-2">
                 <Link to={`/proposal/${id}`}>
                     <div className="flex items-center">
@@ -243,7 +233,7 @@ function ProposalInfoCard({ proposal: { forumLink, fundingType, focus, openSourc
                 <h2 className="text-xl font-bold my-4">Category</h2>
                 <p className="text-xl font-normal dark:text-algo-blue-10">{FocusMap[focus]}</p>
 
-                <h2 className="text-xl font-bold my-4">Open Source?</h2>
+                <h2 className="text-xl font-bold my-4">Open Source</h2>
                 <p className="text-xl font-normal dark:text-algo-blue-10">{openSource ? '✅' : '❌'}</p>
 
                 <h2 className="text-xl font-bold my-4">Ask</h2>

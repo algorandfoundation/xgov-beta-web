@@ -1,5 +1,4 @@
 import type { ProposerBoxState } from "@/types/proposer";
-import { useRef, useState } from "react";
 import EditableAddress from "../EditableAddress/EditableAddress";
 import ActionButton from "../button/ActionButton/ActionButton";
 
@@ -53,7 +52,7 @@ export function ProfileCard({
                             defaultValue={votingAddress}
                             loading={setVotingAddressLoading}
                             onSave={(v) => { setVotingAddress(v); }}
-                        />   
+                        />
                     )
                 }
 
@@ -64,7 +63,7 @@ export function ProfileCard({
                             isXGov
                                 ? <>
                                     <ActionButton
-                                        type='button'                                        
+                                        type='button'
                                         onClick={unsubscribeXgov}
                                         disabled={subscribeXGovLoading}
                                     >
@@ -73,7 +72,7 @@ export function ProfileCard({
                                 </>
                                 : <>
                                     <ActionButton
-                                        type='button'                                        
+                                        type='button'
                                         onClick={subscribeXgov}
                                         disabled={subscribeXGovLoading}
                                     >
@@ -105,11 +104,14 @@ export function ProfileCard({
                         }
                     </div>
                     <p className="text-xl mt-2 dark:text-algo-blue-20">
-                        {
-                            proposer?.isProposer
-                                ? '✅ Active Proposer'
-                                : '❌ Not a Proposer'
+                        {!proposer?.isProposer && '❌ Not a Proposer'}
+                        {proposer?.isProposer && !proposer.kycStatus && '🟡 Unverified KYC'}
+                        {proposer?.isProposer
+                            && proposer.kycStatus
+                            && proposer.kycExpiring < Date.now()
+                            && '⏰ Expired KYC'
                         }
+                        {validKYC && '✅ Active Proposer'}
                     </p>
                 </div>
             </div>

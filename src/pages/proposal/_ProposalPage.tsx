@@ -10,9 +10,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { shortenAddress } from "@/functions/shortening";
 import type { ProposalInfoCardDetails } from "@/types/proposals";
-import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { getProposal } from "src/api/proposals";
 import { useProposal } from "src/hooks/useProposals";
 
 const title = 'xGov';
@@ -54,7 +52,7 @@ export function ProposalPage() {
             Sidebar={() =>
                 <ProposalCardAndTitle
                     proposal={{
-                        category: proposal.data.category,
+                        focus: proposal.data.focus,
                         requestedAmount: proposal.data.requestedAmount,
                         fundingType: proposal.data.fundingType,
                         forumLink: proposal.data.forumLink,

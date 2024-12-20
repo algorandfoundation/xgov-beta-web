@@ -41,7 +41,7 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
             proposer,
             fundingType: Number(state['funding_type'].value),
             status: Number(state.status.value),
-            category: proposalJSON.category
+            focus: proposalJSON.focus
         }
     }));
 }
