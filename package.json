@@ -18,9 +18,10 @@
     "@agoralabs-sh/avm-web-provider": "^1.7.0",
     "@algorandfoundation/algokit-utils": "^7.0.0",
     "@algorandfoundation/xgov": "github:algorandfoundation/xgov-beta-ts#feat/switch_to_real_proposal",
-    "@astrojs/check": "^0.8.3",
-    "@astrojs/react": "^3.6.2",
-    "@astrojs/tailwind": "^5.1.2",
+    "@astrojs/check": "^0.9.4",
+    "@astrojs/node": "^9.0.0",
+    "@astrojs/react": "^4.1.2",
+    "@astrojs/tailwind": "^5.1.4",
     "@blockshake/defly-connect": "^1.1.6",
     "@nanostores/persistent": "^0.10.2",
     "@nanostores/react": "^0.7.3",
@@ -37,7 +38,7 @@
     "@walletconnect/client": "^1.8.0",
     "@walletconnect/socket-transport": "github:awesome-algorand/walletconnect-socket-transport",
     "algosdk": "^2.9.0",
-    "astro": "^4.16.7",
+    "astro": "^5.1.1",
     "astro-icon": "^1.1.1",
     "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.0",
@@ -71,8 +72,5 @@
     "storybook": "^8.3.6",
     "tailwindcss": "^3.4.14",
     "vite-tsconfig-paths": "^5.0.1"
-  },
-  "engines": {
-    "node": ">=18.0 <22.0"
   }
 }
