@@ -1,7 +1,7 @@
 
 import type { ProposerBoxState } from "@/types/proposer";
 import type { TypedGlobalState } from "@algorandfoundation/xgov/registry";
-import algosdk, { ABIType, type TransactionSigner } from "algosdk";
+import algosdk, { ABIType } from "algosdk";
 import { algod, AlgorandClient as algorand } from 'src/algorand/algo-client';
 import { RegistryClient } from "src/algorand/contract-clients";
 
