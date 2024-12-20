@@ -55,28 +55,28 @@ export const ProposalFundingTypeMap = {
 	[ProposalFundingType.Retroactive]: 'Retroactive',
 }
 
-export enum ProposalFundingCategory {
-    FundingCategoryNull = 0,
-    FundingCategoryDeFi = 10,
-    FundingCategoryEducation = 20,
-    FundingCategoryLibraries = 30,
-    FundingCategoryNFT = 40,
-    FundingCategoryTooling = 50,
-    FundingCategorySaas = 60,
-    FundingCategoryOther = 70,
+export enum ProposalFocus {
+    FocusNull = 0,
+    FocusDeFi = 10,
+    FocusEducation = 20,
+    FocusLibraries = 30,
+    FocusNFT = 40,
+    FocusTooling = 50,
+    FocusSaas = 60,
+    FocusOther = 70,
 }
 
-export type FundingCategory = 'Null' | 'DeFi' | 'Education' | 'Libraries' | 'NFT' | 'Tooling' | 'Saas' | 'Other';
+export type Focus = 'Null' | 'DeFi' | 'Education' | 'Libraries' | 'NFT' | 'Tooling' | 'Saas' | 'Other';
 
-export const FundingCategoryMap = {
-    [ProposalFundingCategory.FundingCategoryNull]: 'Null',
-    [ProposalFundingCategory.FundingCategoryDeFi]: 'DeFi',
-    [ProposalFundingCategory.FundingCategoryEducation]: 'Education',
-    [ProposalFundingCategory.FundingCategoryLibraries]: 'Libraries',
-    [ProposalFundingCategory.FundingCategoryNFT]: 'NFT',
-    [ProposalFundingCategory.FundingCategoryTooling]: 'Tooling',
-    [ProposalFundingCategory.FundingCategorySaas]: 'Saas',
-    [ProposalFundingCategory.FundingCategoryOther]: 'Other',
+export const FocusMap = {
+    [ProposalFocus.FocusNull]: 'Null',
+    [ProposalFocus.FocusDeFi]: 'DeFi',
+    [ProposalFocus.FocusEducation]: 'Education',
+    [ProposalFocus.FocusLibraries]: 'Libraries',
+    [ProposalFocus.FocusNFT]: 'NFT',
+    [ProposalFocus.FocusTooling]: 'Tooling',
+    [ProposalFocus.FocusSaas]: 'Saas',
+    [ProposalFocus.FocusOther]: 'Other',
 }
 
 export interface ProposalJSON {
@@ -84,11 +84,13 @@ export interface ProposalJSON {
     team: string;
     additionalInfo?: string;
     openSource: boolean;
-    category: ProposalFundingCategory;
+    focus: ProposalFocus;
+    // applicable for proactive proposals
     deliverables?: {
         amount: bigint;
         description: string;
     }[];
+    // applicable for retroactive proposals
     adoptionMetrics?: string[];
     pastProposalLinks: bigint[];
     forumLink: string;
@@ -135,12 +137,12 @@ export interface ProposalSummaryCardDetails {
     proposer: string;
     fundingType: ProposalFundingType;
     status: ProposalStatus;
-	category: ProposalFundingCategory;
+	focus: ProposalFocus;
 }
 
-export type ProposalMainCardDetails = Omit<ProposalSummaryCardDetails, 'category'> & ProposalJSON;
+export type ProposalMainCardDetails = Omit<ProposalSummaryCardDetails, 'focus'> & ProposalJSON;
 
 export type ProposalInfoCardDetails = Pick<
     ProposalMainCardDetails, 
-    'forumLink' | 'fundingType' | 'category' | 'openSource' | 'requestedAmount'
+    'forumLink' | 'fundingType' | 'focus' | 'openSource' | 'requestedAmount'
 >

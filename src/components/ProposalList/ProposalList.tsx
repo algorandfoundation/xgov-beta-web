@@ -9,7 +9,7 @@ export function ProposalList({ proposals }: ProposalListProps) {
 
     if (proposals.length === 0) {
         return (
-            <p>No proposals yet</p>
+            <p className="text-algo-black dark:text-white">No proposals yet</p>
         )
     }
 

@@ -19,6 +19,7 @@ import { Buffer } from 'buffer';
 import { useProposer, useXGov, useRegistry } from "src/hooks/useRegistry";
 import { useProposalsByProposer } from "src/hooks/useProposals";
 import { useNavigate, useParams } from "react-router-dom";
+import ActionButton from "@/components/button/ActionButton/ActionButton";
 
 const title = 'xGov';
 
@@ -287,14 +288,13 @@ export function ProfilePage() {
                     <h1 className="text-3xl lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold">
                         My Proposals
                     </h1>
-                    <button
-                        type='button'
-                        className="border-2 hover:border-l-[3px] hover:border-b-[3px] hover:-translate-y-[1px] hover:translate-x-[1px] text-xs text-algo-black disabled:text-algo-black-40 dark:text-algo-blue-20 border-algo-black disabled:border-algo-black-40 dark:border-algo-blue-20 hover:border-algo-teal hover:text-algo-teal dark:hover:border-algo-blue-50 dark:hover:text-algo-blue-50 rounded-md px-2 py-1 duration-75 transform-gpu"
+                    <ActionButton
+                        type='button'                        
                         onClick={newProposal}
                         disabled={!proposer.data?.isProposer}
                     >
                         { newProposalLoading ? 'Loading...' : 'New Proposal'}
-                    </button>
+                    </ActionButton>
                 </div>
                 {
                     !!proposals.data && <ProposalList proposals={proposals.data} />
