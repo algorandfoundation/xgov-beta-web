@@ -1,55 +1,59 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { userEvent, within, expect } from '@storybook/test';
+import { within, expect } from '@storybook/test';
 
-import { useState } from 'react';
-import type { ProposalSummaryCardDetails } from '@/types/proposals';
+import { ProposalFocus, ProposalFundingType, ProposalStatus, type ProposalSummaryCardDetails } from '@/types/proposals';
 import { ProposalList, type ProposalListProps } from './ProposalList';
 
 export const mockProposals: ProposalSummaryCardDetails[] = [
   {
-      id: 1,
+      id: BigInt(1),
       title: "Auto-Compounding Farms",
-      phase: "discussion",
-      category: "DeFi",
-      fundingType: "retroactive",
-      requestedAmount: 75_000,
-      proposer: "CompX",
+      cid: "QmQk7wM2J8Gc2e8s9XZ1W5LQJr7d1z2J9",
+      status: ProposalStatus.ProposalStatusDraft,
+      focus: ProposalFocus.FocusDeFi,
+      fundingType: ProposalFundingType.Retroactive,
+      requestedAmount: BigInt(75_000_000_000),
+      proposer: "compx.algo",
   },
   {
-      id: 2,
+      id: BigInt(2),
       title: "Tealscript interactive developer course Tealscript interactive developer course",
-      phase: "vote",
-      category: "Education",
-      fundingType: "proactive",
-      requestedAmount: 30_000,
-      proposer: "AgorApp",
+      cid: "QmQk7wM2J8Gc2e8s9XZ1W5LQJr7d1z2J9",
+      status: ProposalStatus.ProposalStatusFinal,
+      focus: ProposalFocus.FocusEducation,
+      fundingType: ProposalFundingType.Proactive,
+      requestedAmount: BigInt(30_000_000_000),
+      proposer: "agorapp.algo",
   },
   {
-      id: 3,
+      id: BigInt(3),
       title: "Use-Wallet",
-      phase: "vote",
-      category: "Libraries",
-      fundingType: "retroactive",
-      requestedAmount: 75_000,
-      proposer: "TxnLab",
+      cid: "QmQk7wM2J8Gc2e8s9XZ1W5LQJr7d1z2J9",
+      status: ProposalStatus.ProposalStatusFinal,
+      focus: ProposalFocus.FocusLibraries,
+      fundingType: ProposalFundingType.Retroactive,
+      requestedAmount: BigInt(75_000_000_000),
+      proposer: "txnlab.algo",
   },
   {
-      id: 4,
+      id: BigInt(4),
       title: "AlgoNFT Marketplace",
-      phase: "submission",
-      category: "NFT",
-      fundingType: "proactive",
-      requestedAmount: 50_000,
-      proposer: "NFTify",
+      cid: "QmQk7wM2J8Gc2e8s9XZ1W5LQJr7d1z2J9",
+      status: ProposalStatus.ProposalStatusFinal,
+      focus: ProposalFocus.FocusNFT,
+      fundingType: ProposalFundingType.Proactive,
+      requestedAmount: BigInt(50_000_000_000),
+      proposer: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ',
   },
   {
-      id: 5,
+      id: BigInt(5),
       title: "AlgoSwap",
-      phase: "closure",
-      category: "DeFi",
-      fundingType: "retroactive",
-      requestedAmount: 100_000,
-      proposer: "SwapX",
+      cid: "QmQk7wM2J8Gc2e8s9XZ1W5LQJr7d1z2J9",
+      status: ProposalStatus.ProposalStatusApproved,
+      focus: ProposalFocus.FocusDeFi,
+      fundingType: ProposalFundingType.Retroactive,
+      requestedAmount: BigInt(100_000_000_000),
+      proposer: "swapx.algo",
   },
 ];
 

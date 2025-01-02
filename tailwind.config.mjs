@@ -44,6 +44,9 @@ export default {
 				'algo-black-80': '#334250',
 				'algo-black-90': '#192A39',
 				'algo-black': '#001324',
+				'algo-orange': '#FF7F48',
+				'algo-yellow': '#FFE248',
+				'algo-green': '#01DC94',
 			},
       keyframes: {
         "accordion-down": {

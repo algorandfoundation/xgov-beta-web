@@ -1,9 +1,8 @@
 import { Header } from "@/components/Header/Header";
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import type { ComponentProps, ComponentType, PropsWithChildren, ReactNode } from "react";
 import type { LinkProps } from "@/components/Link.tsx";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { useStore } from "@nanostores/react";
 import { cn } from "@/functions/utils.ts";
 import { ThemeToggle } from "@/components/button/ThemeToggle/ThemeToggle";
 import { Connect } from "@/components/Connect/Connect";
@@ -39,7 +38,7 @@ export type PageProps = {
     headerProps?: ComponentProps<typeof Header>;
 
     // Sidebar Components
-    Sidebar?: ComponentType;
+    Sidebar?: (props: any) => JSX.Element;
     // TODO: SidebarProps
 
     // Generic Components
@@ -50,9 +49,10 @@ export function Page({
     children,
     title,
     headerProps,
-    Sidebar = DefaultSidebar,
+    Sidebar = () => <DefaultSidebar/>,
     LinkComponent = Link as unknown as ComponentType<LinkProps>
 }: PageProps) {
+    const { pathname } = useLocation();
     const { wallets, activeAddress, activeWallet } = useWallet();
     // TODO: Get NFD name using the activeAddress
 
@@ -65,6 +65,7 @@ export function Page({
                 {...headerProps}
             >                
                 <Connect
+                    path={pathname}
                     wallets={wallets}
                     // nfdName={!!activeAddress ? activeAddress : undefined}
                     activeAddress={activeAddress}

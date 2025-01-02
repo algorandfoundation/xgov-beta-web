@@ -1,40 +1,63 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { within, expect } from '@storybook/test';
+// import { within, expect } from '@storybook/test';
 
-import type { ProposalInfoCardDetails, ProposalMainCardDetails } from '@/types/proposals';
+import { ProposalFocus, ProposalFundingType, ProposalStatus, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from '@/types/proposals';
 import { ProposalCard, type ProposalCardProps } from './ProposalCard';
 
+declare global
+{
+    interface BigIntConstructor
+    {
+        toJSON:()=>string;
+    }
+}
+
+BigInt.toJSON = function() { return this.toString(); };
+
 export const mockProposal: ProposalMainCardDetails = {
-    id: 1,
+    id: BigInt(1),
     title: "Auto-Compounding Farms",
+    cid: "QmQk7wM2J8Gc2e8s9XZ1W5LQJr7d1z2J9",
+    requestedAmount: BigInt(75_000_000_000),
+    proposer: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ',
+    fundingType: ProposalFundingType.Proactive,
+    status: ProposalStatus.ProposalStatusFinal,
     description: "This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users",
-    phase: "discussion",
-    proposer: "CompX",
-    properties: {
-        openSource: true,
-        focus: 'defi',
-        deliveryDate: '2023-01-01',
-        team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
-        experience: 'CompX has been delivering impact via auto-compounding farms for years',
-        presentProposal: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
-        deliverable: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users ',
-        futureBlueprint: 'CompX will continue to deliver impact via auto-compounding farms',
-        benefits: 'Algorand users will benefit from the impact delivered by CompX',
-    },
-    pastProposals: [
-        { title: 'Tealscript interactive developer course Tealscript interactive developer course', link: '/proposals/2' },
-        { title: 'Use-Wallet', link: '/proposals/3' },
-        { title: 'AlgoNFT Marketplace', link: '/proposals/4' },
+    // phase: "discussion",
+    // proposer: "CompX",
+    team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
+    additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users ',
+    openSource: true,
+    focus: ProposalFocus.FocusDeFi,
+    deliverables: [
+        { amount: BigInt(75_000_000_000), description: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms.' },
     ],
+    pastProposalLinks: [
+        BigInt(1),
+        BigInt(2),
+        BigInt(3),
+    ],
+    forumLink: 'https://forum.algorand.org/',
 };
 
 export const mockProposalInfo: ProposalInfoCardDetails = {
-  discussionLink: 'https://proposal-discussion-link-here.com',
-  fundingType: 'retroactive',
-  category: 'DeFi',
-  license: 'MIT',
-  requestedAmount: 75_000,
+  forumLink: 'https://proposal-discussion-link-here.com',
+  fundingType: ProposalFundingType.Proactive,
+  focus: ProposalFocus.FocusDeFi,
+  openSource: true,
+  requestedAmount: BigInt(75_000_000_000),
 };
+
+export const mockProposalSummaryCard: ProposalSummaryCardDetails = {
+  id: BigInt(1),
+  title: "Auto-Compounding Farms",
+  cid: "QmQk7wM2J8Gc2e8s9XZ1W5LQJr7d1z2J9",
+  requestedAmount: BigInt(75_000_000_000),
+  proposer: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ',
+  fundingType: ProposalFundingType.Proactive,
+  status: ProposalStatus.ProposalStatusFinal,
+  focus: ProposalFocus.FocusDeFi,
+}
 
 function ProposalCardWrapper(props: ProposalCardProps) {
   return (
@@ -73,7 +96,7 @@ export const VotingPhase: Story = {
   args: {
     proposal: {
       ...mockProposal,
-      phase: 'vote',
+      status: ProposalStatus.ProposalStatusVoting,
     },
   },
 };
@@ -82,7 +105,26 @@ export const NoPastProposals: Story = {
   args: {
     proposal: {
       ...mockProposal,
-      pastProposals: [],
+      pastProposalLinks: [],
     },
   },
 };
+
+export const InfoCard: Story = {
+  args: {
+    proposal: mockProposalInfo,
+  },
+};
+
+export const ProposalSummaryCard: Story = {
+  args: {
+    proposal: mockProposalSummaryCard,
+  },
+};
+
+export const MiniProposalSummaryCard: Story = {
+  args: {
+    proposal: mockProposalSummaryCard,
+    mini: true,
+  },
+}
