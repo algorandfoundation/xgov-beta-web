@@ -16,15 +16,15 @@ export function DefaultSidebar(){
 
 type ContentProps = PropsWithChildren<{ Sidebar?: ComponentType; }>
 
-export function Content({ children, Sidebar = DefaultSidebar }: ContentProps){
+export function Content({ children, Sidebar }: ContentProps){
     return (
         <main className={cn(
             // overlay ? "max-h-full pointer-events-none overflow-hidden" : "",
-            "m-auto p-4 lg:px-10 w-full grid grid-cols-1 lg:grid-cols-2"
+            "m-auto w-full px-2 md:px-4"
         )}>
             {children}
             <div className="justify-self-end">
-                <Sidebar/>
+                { Sidebar && <Sidebar/> }
             </div>
         </main>
     )

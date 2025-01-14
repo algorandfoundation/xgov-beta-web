@@ -42,7 +42,7 @@ export function Connect({ path, wallets, activeAddress, activeWallet, nfdName }:
             >
                 <Button
                     id="connect-button"
-                    className="flex items-center gap-2.5 bg-algo-black dark:bg-white text-lg rounded-md text-white dark:text-algo-black border-none shadow-none p-2 px-4"
+                    className="flex items-center gap-2.5 bg-white dark:bg-white text-lg rounded-md text-white dark:text-algo-black border-none shadow-none p-2 px-4"
                     variant="default"
                 >
                     <WalletIcon className="size-6 stroke-white dark:stroke-algo-black stroke-[1.5]" />
@@ -56,11 +56,11 @@ export function Connect({ path, wallets, activeAddress, activeWallet, nfdName }:
         <ConnectDialog open={dialogOpen} setOpen={setOpenDialog} wallets={wallets}>
             <Button
                 id="connect-button"
-                className="flex items-center gap-2.5 bg-algo-black dark:bg-white text-lg rounded-md text-white dark:text-algo-black border-none shadow-none p-2 px-4"
+                className="flex items-center gap-2.5 bg-white dark:bg-white text-lg rounded-md text-algo-black dark:text-algo-black border-none shadow-none p-2 px-4"
                 variant="default"
                 onClick={() => setOpenDialog(true)}
             >
-                <WalletIcon className="size-6 stroke-white dark:stroke-algo-black stroke-[1.5]" />
+                <WalletIcon className="size-6 stroke-algo-black dark:stroke-algo-black stroke-[1.5]" />
                 Connect Wallet
             </Button>
         </ConnectDialog>
@@ -118,7 +118,7 @@ function ConnectDialog({ open, setOpen, wallets, children }: ConnectDialogProps)
                         wallets.map((wallet) => (
                             <li key={wallet.id}>
                                 <button
-                                    className="group text-5xl font-bold flex items-center gap-4 h-18 pr-5 pl-1 py-1 hover:bg-algo-teal dark:hover:bg-algo-blue dark:text-white hover:text-white rounded-2xl transition"
+                                    className="group text-5xl font-bold flex items-center gap-4 h-18 pr-5 pl-1 py-1 hover:bg-algo-blue dark:hover:bg-algo-teal dark:text-white hover:text-white rounded-2xl transition"
                                     onClick={() => {
                                         setOpen(false);
                                         wallet.connect();

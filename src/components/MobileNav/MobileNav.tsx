@@ -31,12 +31,12 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
                 {
                     !trigger ? (
                         <Button
-                            className="lg:hidden border-none shadow-none"
+                            className="lg:hidden border-none shadow-none bg-transparent"
                             variant="outline"
                             size="icon"
                             onClick={() => setOpen(true)}
                         >
-                            <BarsIcon className="size-10 text-algo-black dark:text-white" />
+                            <BarsIcon className="size-10 text-white/60" />
                         </Button>
                     ) : trigger
                 }
@@ -89,9 +89,9 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
                                                 setOpen(false);
                                             }}
                                         >
-                                            <div className='bg-algo-black overflow-hidden rounded-full'>
+                                            <div className='bg-algo-black overflow-hidden rounded-2xl'>
                                                 <div className='p-0.5'>
-                                                    <div className="size-14 overflow-hidden rounded-full">
+                                                    <div className="size-14 overflow-hidden rounded-2xl">
                                                         <img
                                                             className="object-cover"
                                                             src={wallet.metadata.icon}

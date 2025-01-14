@@ -8,7 +8,7 @@ export function ThemeToggle() {
         className="p-1"
             onClick={() => toggleTheme()}
         >
-            <SunIcon className="dark:hidden stroke-algo-black size-6"/>
+            <SunIcon className="dark:hidden stroke-white size-6"/>
             <MoonIcon className="hidden dark:block stroke-white size-6"/>
         </button>
     )

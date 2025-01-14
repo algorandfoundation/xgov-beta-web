@@ -7,9 +7,10 @@ import {
 import { capitalizeFirstLetter } from "@/functions/capitalization"
 import { cn } from "@/functions/utils"
 import { useState } from "react"
+import { AlgoShapeIcon11 } from "../icons/AlgoShapeIcon11";
 
 export interface ProposalFilterProps {
-    className: string;
+    className?: string;
     onFilterChange?: (filter: string, value: string) => void;
 }
 
@@ -21,6 +22,18 @@ export const filters: { [key: string]: string[] } = {
 };
 
 export function ProposalFilter({ className }: ProposalFilterProps) {
+
+    return (
+        <button
+            className={cn(
+                "group flex justify-center items-center hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50 size-10 rounded-full transition",
+                className
+            )}
+        >
+            <AlgoShapeIcon11 className="fill-algo-blue dark:fill-algo-teal group-hover:fill-white rotate-180 size-6" />
+        </button>
+    )
+
     return (
         <div className={cn(className, "w-full flex items-center justify-around lg:justify-start lg:gap-10")}>
             {
