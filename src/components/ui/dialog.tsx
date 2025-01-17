@@ -45,10 +45,10 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <AlgorandIcon className="absolute left-5 top-5 fill-algo-blue dark:fill-algo-teal  size-8" />
+      <AlgorandIcon className="absolute left-[23px] top-[19px] fill-algo-blue dark:fill-algo-teal  size-8" />
       <DialogPrimitive.Close
         onClick={() => onCloseClick()}
-        className="absolute right-4 top-4 rounded-sm ring-offset-white focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-white data-[state=open]:text-algo-black dark:ring-offset-slate-950 dark:focus:ring-slate-300 dark:data-[state=open]:bg-algo-black dark:data-[state=open]:text-white"
+        className="absolute right-[23px] top-[14px] rounded-sm ring-offset-white focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-white data-[state=open]:text-algo-black dark:ring-offset-slate-950 dark:focus:ring-slate-300 dark:data-[state=open]:bg-algo-black dark:data-[state=open]:text-white"
       >
         <Cross2Icon className="size-10 text-algo-black dark:text-white" />
         <span className="sr-only">Close</span>

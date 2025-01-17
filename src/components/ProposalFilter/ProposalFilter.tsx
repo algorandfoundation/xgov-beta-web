@@ -26,11 +26,13 @@ export function ProposalFilter({ className }: ProposalFilterProps) {
     return (
         <button
             className={cn(
-                "group flex justify-center items-center hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50 size-10 rounded-full transition",
+                "relative group flex justify-center items-center hover:bg-algo-blue dark:hover:bg-algo-teal size-10 rounded-full transition",
                 className
             )}
         >
-            <AlgoShapeIcon11 className="fill-algo-blue dark:fill-algo-teal group-hover:fill-white rotate-180 size-6" />
+            <AlgoShapeIcon11 className="absolute opacity-0 translate-y-2 translate-x-2 fill-algo-blue-40 dark:fill-algo-teal-40 group-hover:opacity-100 group-hover:translate-y-1 group-hover:translate-x-1 rotate-180 size-6 transition duration-500" />
+            <AlgoShapeIcon11 className="absolute translate-y-1 translate-x-1 fill-algo-blue-40 dark:fill-algo-teal-40 group-hover:fill-white dark:group-hover:fill-algo-black group-hover:translate-y-0 group-hover:translate-x-0 rotate-180 size-6 transition duration-500" />
+            <AlgoShapeIcon11 className="fill-algo-blue dark:fill-algo-teal group-hover:fill-white dark:group-hover:fill-algo-black group-hover:opacity-0 group-hover:-translate-y-1 group-hover:-translate-x-1 rotate-180 size-6 transition duration-500" />
         </button>
     )
 

@@ -1,7 +1,38 @@
+.intro {
+    animation: scaleDownOut 1s ease-in forwards;
+    animation-delay: .6s;
+}
+
+@keyframes scaleDownOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(-100%);
+        pointer-events: none;
+    }
+}
+
+.intro img {
+    animation: fadeOut .3s ease forwards;
+    animation-delay: .6s;
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
 .titleFadeIn {
     opacity: 0;
     animation: fadeInUp .6s ease forwards;
-    animation-delay: 1.2s;
+    animation-delay: 1.5s;
 }
 
 @keyframes fadeInUp {
@@ -18,12 +49,13 @@
 .descriptionFadeIn {
     opacity: 0;
     animation: fadeInUp .6s ease forwards;
-    animation-delay: 1.2s;
+    animation-delay: 1.5s;
 }
 
 .shapeSlideFadeIn1 {
     opacity: 0;
     animation: SlideFadeInToLeftOne 2s ease forwards;
+    animation-delay: 1.5s;
 }
 
 @keyframes SlideFadeInToLeftOne {
@@ -54,27 +86,32 @@
 .shapeSlideFadeIn2 {
     opacity: 0;
     animation: SlideFadeInToRight 2s ease forwards;
+    animation-delay: 1.5s;
 }
 
 .shapeSlideFadeIn3 {
     opacity: 0;
     animation: SlideFadeInToLeft 2s ease forwards;
+    animation-delay: 1.5s;
 }
 
 .shapeSlideFadeIn4 {
     opacity: 0;
     animation: SlideFadeInToLeft 2s ease forwards;
+    animation-delay: 1.5s;
 }
 
 .shapeSlideFadeIn5 {
     opacity: 0;
     animation: SlideFadeInToRight 2s ease forwards;
+    animation-delay: 1.5s;
 }
 
 @media screen and (max-width: 768px) {
     .shapeSlideFadeIn5 {
         opacity: 0;
         animation: SlideFadeInToRight5 2s ease forwards;
+        animation-delay: 1.5s;
     }
     
     @keyframes SlideFadeInToRight5 {
@@ -92,6 +129,7 @@
 .shapeSlideFadeIn6 {
     opacity: 0;
     animation: SlideFadeInToRight6 2s ease forwards;
+    animation-delay: 1.5s;
 }
 
 @keyframes SlideFadeInToRight6 {
@@ -108,6 +146,7 @@
 .shapeSlideFadeIn7 {
     opacity: 0;
     animation: SlideFadeInToRight7 2s ease forwards;
+    animation-delay: 1.5s;
 }
 
 @keyframes SlideFadeInToRight7 {
@@ -124,6 +163,7 @@
 .shapeSlideFadeIn8 {
     opacity: 0;
     animation: SlideFadeInToLeft8 2s ease forwards;
+    animation-delay: 1.5s;
 }
 
 @keyframes SlideFadeInToLeft8 {
@@ -161,7 +201,7 @@
 
 .popUpInCohort {
     animation: popUpInCohort 1s ease forwards;
-    animation-delay: 1.2s;
+    animation-delay: 1.5s;
     transform: translateY(200%);
 }
 

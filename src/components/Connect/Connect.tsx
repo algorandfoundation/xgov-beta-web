@@ -42,10 +42,10 @@ export function Connect({ path, wallets, activeAddress, activeWallet, nfdName }:
             >
                 <Button
                     id="connect-button"
-                    className="flex items-center gap-2.5 bg-white dark:bg-white text-lg rounded-md text-white dark:text-algo-black border-none shadow-none p-2 px-4"
+                    className="flex items-center gap-2.5 bg-white dark:bg-algo-black text-lg rounded-md text-algo-black dark:text-white border-none shadow-none p-2 px-4"
                     variant="default"
                 >
-                    <WalletIcon className="size-6 stroke-white dark:stroke-algo-black stroke-[1.5]" />
+                    <WalletIcon className="size-6 stroke-algo-black dark:stroke-white stroke-[1.5]" />
                     {!!nfdName ? nfdName : shortenAddress(activeAddress)}
                 </Button>
             </ConnectDropdown>
@@ -56,11 +56,11 @@ export function Connect({ path, wallets, activeAddress, activeWallet, nfdName }:
         <ConnectDialog open={dialogOpen} setOpen={setOpenDialog} wallets={wallets}>
             <Button
                 id="connect-button"
-                className="flex items-center gap-2.5 bg-white dark:bg-white text-lg rounded-md text-algo-black dark:text-algo-black border-none shadow-none p-2 px-4"
+                className="flex items-center gap-2.5 bg-white dark:bg-algo-black text-lg rounded-md text-algo-black dark:text-white border-none shadow-none p-2 px-4"
                 variant="default"
                 onClick={() => setOpenDialog(true)}
             >
-                <WalletIcon className="size-6 stroke-algo-black dark:stroke-algo-black stroke-[1.5]" />
+                <WalletIcon className="size-6 stroke-algo-black dark:stroke-white stroke-[1.5]" />
                 Connect Wallet
             </Button>
         </ConnectDialog>

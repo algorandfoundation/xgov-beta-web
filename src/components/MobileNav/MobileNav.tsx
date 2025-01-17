@@ -36,7 +36,7 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
                             size="icon"
                             onClick={() => setOpen(true)}
                         >
-                            <BarsIcon className="size-10 text-white/60" />
+                            <BarsIcon className="size-10 text-white/70 dark:text-algo-black-70" />
                         </Button>
                     ) : trigger
                 }

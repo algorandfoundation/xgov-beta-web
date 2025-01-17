@@ -7,6 +7,7 @@ import { cn } from "@/functions/utils.ts";
 import { ThemeToggle } from "@/components/button/ThemeToggle/ThemeToggle";
 import { Connect } from "@/components/Connect/Connect";
 import { MobileNav } from "@/components/MobileNav/MobileNav";
+import Footer from "./Footer/Footer";
 
 export function DefaultSidebar(){
     return (
@@ -76,6 +77,7 @@ export function Page({
             <Content Sidebar={Sidebar}>
                 {children}
             </Content>
+            <Footer />
         </>
     )
 }

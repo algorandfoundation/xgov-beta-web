@@ -19,9 +19,9 @@ export function Header({ path, title = "xGov", LinkComponent = Link, children, M
     return (
         <header
             className="fixed w-full px-2 md:px-4 z-50">
-            <div className="w-full bg-algo-blue dark:bg-algo-teal text-white rounded-b-3xl flex justify-between items-center py-4 px-3 lg:px-10 ">
+            <div className="w-full bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-b-3xl flex justify-between items-center p-4 lg:px-10 ">
                 <div className="flex gap-4 items-center">
-                    <AlgorandIcon className="fill-white dark:fill-white size-8" />
+                    <AlgorandIcon className="fill-white dark:fill-algo-black size-8" />
                 </div>
 
                 <div className="hidden lg:inline-flex items-center gap-2 lg:gap-6">

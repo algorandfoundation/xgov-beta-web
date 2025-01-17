@@ -449,6 +449,34 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
         },
     })
 
+    const committeeMembers = [algorand.account.random()];
+
+    await algorand.account.ensureFunded(
+        committeeMembers[0].addr,
+        dispenser,
+        fundAmount,
+    );
+
+    await registryClient.send.subscribeXgov({
+        sender: committeeMembers[0].addr,
+        signer: committeeMembers[0].signer,
+        args: {
+            votingAddress: committeeMembers[0].addr,
+            payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+                amount: 1_000_000,
+                from: committeeMembers[0].addr,
+                to: registryClient.appAddress,
+                suggestedParams: await algorand.getSuggestedParams(),
+            }),
+        },
+        boxReferences: [
+            new Uint8Array(Buffer.concat([
+                Buffer.from('x'),
+                algosdk.decodeAddress(committeeMembers[0].addr).publicKey,
+            ])),
+        ]
+    });
+
     // Generate and setup mock proposer accounts
     const proposerAccounts: (TransactionSignerAccount & { account: algosdk.Account; })[] = [];
     const proposalIds: bigint[] = [];
@@ -576,17 +604,47 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
     console.log('finished time warp, new ts: ', await getLatestTimestamp());
 
     for (let i = 0; i < mockProposals.length; i++) {
+        const proposal = mockProposals[i];
+        if (proposal.status === PS.ProposalStatusFinal) {
+            const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
 
-        const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
+            await proposalClient.send.finalize({
+                sender: proposerAccounts[i].addr,
+                signer: proposerAccounts[i].signer,
+                args: {},
+                appReferences: [registryClient.appId],
+                accountReferences: [adminAccount.addr],
+                extraFee: (ALGORAND_MIN_TX_FEE).microAlgos(),
+            });
+        }
+    }
 
-        await proposalClient.send.finalize({
-            sender: proposerAccounts[i].addr,
-            signer: proposerAccounts[i].signer,
-            args: {},
-            appReferences: [registryClient.appId],
-            accountReferences: [adminAccount.addr],
-            extraFee: (ALGORAND_MIN_TX_FEE).microAlgos(),
-        });
+    for (let i = 0; i < mockProposals.length; i++) {
+        const proposal = mockProposals[i];
+        if (proposal.status === PS.ProposalStatusVoting) {
+            const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
+            for (const committeeMember of committeeMembers) {
+
+                const addr = algosdk.decodeAddress(committeeMember.addr).publicKey;
+
+                await proposalClient.send.assignVoter({
+                    sender: adminAccount.addr,
+                    signer: adminAccount.signer,
+                    args: {
+                        voter: committeeMember.addr,
+                        votingPower: 10,
+                    },
+                    appReferences: [registryClient.appId],
+                    boxReferences: [
+                        new Uint8Array(Buffer.concat([
+                            Buffer.from('V'),
+                            addr,
+                        ])),
+                    ]
+                })
+                console.log('assigned voter');
+            }
+        }
     }
 
     return {

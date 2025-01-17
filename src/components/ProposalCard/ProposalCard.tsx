@@ -39,7 +39,7 @@ export function ProposalCard({ proposal, path = '', mini = false }: ProposalCard
     const phase = statusToPhase[status];
 
     return (
-        <li role="listitem" className="list-none relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
+        <div className="bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between gap-x-6 gap-y-4 p-5 sm:flex-nowrap relative transition overflow-hidden">
             <div className="absolute top-0 right-0 mt-4 mr-4 flex flex-col items-end gap-4">
                 <div>
                     <span className="text-xl">[</span>
@@ -94,7 +94,7 @@ export function ProposalCard({ proposal, path = '', mini = false }: ProposalCard
                     )
                 }
             </div>
-        </li>
+        </div>
     )
 }
 
