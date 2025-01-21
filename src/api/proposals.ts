@@ -1,4 +1,4 @@
-import type { ProposalJSON, ProposalMainCardDetails, ProposalSummaryCardDetails } from "@/types/proposals";
+import type { ProposalBrief, ProposalJSON, ProposalMainCardDetails, ProposalStatus, ProposalSummaryCardDetails } from "@/types/proposals";
 import { AppManager } from "@algorandfoundation/algokit-utils/types/app-manager";
 import algosdk from "algosdk";
 import { AlgorandClient as algorand } from "src/algorand/algo-client";
@@ -90,4 +90,8 @@ export async function getProposal(id: bigint): Promise<ProposalMainCardDetails> 
 
 export async function getProposalJSON(cid: string): Promise<ProposalJSON> {
     return await (await fetch(`http://${cid}.ipfs.localhost:8080/`)).json() as ProposalJSON;
+}
+
+export async function getProposalBrief(ids: bigint[]): Promise<ProposalBrief[]> {
+    return (await Promise.all(ids.map(id => getProposal(id)))).map(proposal => ({  id: proposal.id, status: proposal.status, title: proposal.title }));
 }

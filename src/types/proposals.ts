@@ -146,3 +146,9 @@ export type ProposalInfoCardDetails = Pick<
     ProposalMainCardDetails, 
     'forumLink' | 'fundingType' | 'focus' | 'openSource' | 'requestedAmount'
 >
+
+export interface ProposalBrief {
+    id: bigint;
+    status: ProposalStatus;
+    title: string;
+}

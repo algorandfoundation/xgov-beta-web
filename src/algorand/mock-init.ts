@@ -605,7 +605,7 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
 
     for (let i = 0; i < mockProposals.length; i++) {
         const proposal = mockProposals[i];
-        if (proposal.status === PS.ProposalStatusFinal) {
+        // if (proposal.status === PS.ProposalStatusFinal) {
             const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
 
             await proposalClient.send.finalize({
@@ -616,7 +616,7 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
                 accountReferences: [adminAccount.addr],
                 extraFee: (ALGORAND_MIN_TX_FEE).microAlgos(),
             });
-        }
+        // }
     }
 
     for (let i = 0; i < mockProposals.length; i++) {

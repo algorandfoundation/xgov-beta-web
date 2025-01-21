@@ -1,5 +1,6 @@
-import { FocusMap, ProposalFocus } from "@/types/proposals";
-import { TargetIcon } from "../icons/TargetIcon";
+import { ProposalFundingType, ProposalFundingTypeMap } from "@/types/proposals";
+import { ArrowRightIcon } from "../icons/ArrowRightIcon";
+import { ArrowUTurnLeftIcon } from "../icons/ArrowUTurnLeftIcon";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/functions/utils";
 
@@ -19,7 +20,7 @@ const detailVariants = cva(
 )
 
 const iconVariants = cva(
-    "stroke-[6] size-5 ml-1 mr-1",
+    "size-5",
     {
         variants: {
             variant: {
@@ -31,17 +32,21 @@ const iconVariants = cva(
             variant: "default"
         },
     }
-)
+);
 
-export interface FocusDetailProps extends VariantProps<typeof detailVariants> {
-    focus: ProposalFocus;
+export interface FundingTypeDetailProps extends VariantProps<typeof detailVariants> {
+    fundingType: ProposalFundingType;
 }
 
-export default function FocusDetail({ variant, focus }: FocusDetailProps) {
+export default function FundingTypeDetail({ variant, fundingType }: FundingTypeDetailProps) {
     return (
         <p className={cn(detailVariants({ variant }))}>
-            <TargetIcon className={cn(iconVariants({ variant }))} />
-            {FocusMap[focus]}
+            {
+                fundingType === ProposalFundingType.Proactive
+                    ? <ArrowRightIcon className={cn(iconVariants({ variant }))} />
+                    : <ArrowUTurnLeftIcon className={cn(iconVariants({ variant }))} />
+            }
+            {ProposalFundingTypeMap[fundingType]}
         </p>
     )
 }
