@@ -1,3 +1,5 @@
+.wrangler
+
 # build output
 dist/
 coverage
