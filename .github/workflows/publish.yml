@@ -17,6 +17,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Step 2: Include SSH Keys
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.TEMP_DEPLOY_KEY }}
+            ${{ secrets.TEMP_SC_DEPLOY_KEY }}
+
       # Step 3: Set up Node.js (used by Astro)
       - name: Set up Node.js
         uses: actions/setup-node@v3
