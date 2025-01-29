@@ -7,7 +7,7 @@ import {
   BreadcrumbList,
 } from "@/components/ui/breadcrumb";
 
-import { useState, useEffect, type ComponentType } from "react";
+import { useState, type ComponentType } from "react";
 
 import { useWallet } from "@txnlab/use-wallet-react";
 
@@ -15,7 +15,9 @@ import { KYCBox } from "./_KYCBox";
 import { RoleList, RoleModal } from "./_RolesSection";
 import { PanelStatistics, type panelStatisticsData } from "./_PanelStatistics"
 import { VotingCohort } from "./_VotingCohort";
-import { useRegistryClient } from "@/contexts/RegistryClientContext";
+// import { useRegistryClient } from "@/contexts/RegistryClientContext";
+import { RegistryClient as registryClient} from "src/algorand/contract-clients";
+import { useRegistry } from "src/hooks/useRegistry";
 
 // Mock data in frontend
 import { mockProposals } from "@/components/ProposalList/ProposalList.stories.tsx";
@@ -29,14 +31,13 @@ const mockPanelStatisticsData: panelStatisticsData = {
 
 export function AdminPage() {
   const { activeAddress, transactionSigner } = useWallet();
-  const { registryClient, loading, roles, refreshBoxes } = useRegistryClient();
+  const registryGlobalState = useRegistry(); 
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
 
   const handleSetRole = (role: string) => {
     setSelectedRole(role);
     setModalIsOpen(true);
-    console.log(`Opening modal for role: ${role}`); // Debugging log
   };
 
   const handleSubmitAddress = async (address: string) => {
@@ -80,6 +81,14 @@ export function AdminPage() {
           signer: transactionSigner
         });
         break;
+        
+      case 'kycProvider':
+        res = await registryClient.send.setKycProvider({
+          args: [address],
+          sender: activeAddress,
+          signer: transactionSigner
+        });
+        break;
 
       case 'xGovReviewer':
         res = await registryClient.send.setXgovReviewer({
@@ -96,14 +105,6 @@ export function AdminPage() {
           signer: transactionSigner
         });
         break;
-
-      case 'kycProvider':
-        res = await registryClient.send.setKycProvider({
-          args: [address],
-          sender: activeAddress,
-          signer: transactionSigner
-        });
-        break;
       
       default:
         console.log('Role not found');
@@ -114,7 +115,7 @@ export function AdminPage() {
     if(res.confirmation.confirmedRound !== undefined && res.confirmation.confirmedRound > 0 && res.confirmation.poolError === '') {
       console.log('Transaction confirmed');
       setModalIsOpen(false);
-      refreshBoxes(); // Refresh the roles after setting a new role
+      registryGlobalState.refetch() // Refresh the roles after setting a new role
       return true
     }
     
@@ -122,14 +123,14 @@ export function AdminPage() {
     return false;
   };
 
-  if (loading) {
+  if (registryGlobalState.isLoading) {
     return <div>Loading...</div>;
   }
 
   return (
     <Page 
       title={title} LinkComponent={Link as unknown as ComponentType<LinkProps>}
-      Sidebar={activeAddress ? VotingCohort as unknown as ComponentType : undefined}
+      Sidebar={activeAddress ? (props: any) => <VotingCohort {...props} /> : undefined}
     >
       <div>
         <Breadcrumb className="-mb-[20px]">
@@ -147,23 +148,23 @@ export function AdminPage() {
             <div className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
               {PanelStatistics(mockPanelStatisticsData)}
             </div>
-            {roles.xGovManager && activeAddress === roles.xGovManager && (
+            {registryGlobalState.data?.xgovManager && activeAddress === registryGlobalState.data?.xgovManager && (
               <>
               <h1 className="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
               Roles
             </h1>
             <RoleModal isOpen={modalIsOpen} onRequestClose={() => setModalIsOpen(false)} role={selectedRole} handleSubmitAddress={handleSubmitAddress} />
-            <RoleList roles={roles} activeAddress={activeAddress} xGovManager={roles.xGovManager} handleSetRole={handleSetRole} />           
+            <RoleList registryGlobalState={registryGlobalState.data} activeAddress={activeAddress} xGovManager={registryGlobalState.data?.xgovManager} handleSetRole={handleSetRole} />           
             </>
             )}
-              {roles.xGovManager && activeAddress === roles.xGovManager && (
+              {registryGlobalState.data?.kycProvider && activeAddress === registryGlobalState.data?.kycProvider && (
               <>
               <h1 className="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
                 Know-Your-Customer Management
               </h1>
               <div className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
-                {roles.kycProvider && (
-                  <KYCBox kycProvider={roles.kycProvider} activeAddress={activeAddress} transactionSigner={transactionSigner} />
+                {registryGlobalState.data?.kycProvider && (
+                  <KYCBox kycProvider={registryGlobalState.data?.kycProvider} activeAddress={activeAddress} transactionSigner={transactionSigner} />
                 )}
               </div>
               </>

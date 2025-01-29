@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { encodeAddress, isValidAddress } from "algosdk";
+import { isValidAddress } from "algosdk";
 import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+import type { TypedGlobalState } from "@algorandfoundation/xgov/registry";
 
 const rolePretty: { [key: string]: string } = {
   kycProvider: 'KYC Provider',
@@ -17,7 +19,7 @@ const rolePretty: { [key: string]: string } = {
   xGovSubscriber: 'xGov Subscriber',
 };
 
-export function RoleList({ roles, activeAddress, xGovManager, handleSetRole }: { roles: any, activeAddress: string, xGovManager: string, handleSetRole: (role: string) => void }) {
+export function RoleList({ registryGlobalState, activeAddress, xGovManager, handleSetRole }: { registryGlobalState: TypedGlobalState, activeAddress: string, xGovManager: string, handleSetRole: (role: string) => void }) {
   const handleCopyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
       alert('Address copied to clipboard');
@@ -26,19 +28,29 @@ export function RoleList({ roles, activeAddress, xGovManager, handleSetRole }: {
     });
   };
 
+  const roles = new Map<string, string>([
+    ['kycProvider', registryGlobalState.kycProvider],
+    ['xGovManager', registryGlobalState.xgovManager],
+    ['committeePublisher', registryGlobalState.committeePublisher],
+    ['committeeManager', registryGlobalState.committeeManager],
+    ['xGovPayor', registryGlobalState.xgovPayor],
+    ['xGovReviewer', registryGlobalState.xgovReviewer],
+    ['xGovSubscriber', registryGlobalState.xgovSubscriber],
+  ]);
+
   return (
     <div className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
       <ul>
-        {Object.keys(roles).map((role) => (
+        {Array.from(roles.entries()).map(([role, address]) => (
           <li key={role} className="mb-2 flex items-center justify-between">
             <div className="flex items-center w-full">
               <span className="font-semibold w-48">{rolePretty[role]}:</span>
-              <span className="flex-1 truncate" title={roles[role] ? roles[role] : 'Not set'}>
-                <span className="select-all">{roles[role] ? roles[role] : 'Not set'}</span>
+              <span className="flex-1 truncate" title={address ? address : 'Not set'}>
+                <span className="select-all">{address ? address : 'Not set'}</span>
               </span>
-              {roles[role] && (
+              {address && (
                 <button
-                  onClick={() => handleCopyToClipboard(roles[role])}
+                  onClick={() => handleCopyToClipboard(address)}
                   className="ml-2 px-2 py-1 bg-gray-300 text-black rounded cursor-pointer"
                 >
                   Copy

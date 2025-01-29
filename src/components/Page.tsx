@@ -1,14 +1,14 @@
 import { Header } from "@/components/Header/Header";
-import { Link } from 'react-router-dom'
-import { useEffect, useState, type ComponentProps, type ComponentType, type PropsWithChildren, type ReactNode } from "react";
+import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useState } from "react";
+import type { ComponentProps, ComponentType, PropsWithChildren, ReactNode } from "react";
 import type { LinkProps } from "@/components/Link.tsx";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { cn } from "@/functions/utils.ts";
 import { ThemeToggle } from "@/components/button/ThemeToggle/ThemeToggle";
 import { Connect } from "@/components/Connect/Connect";
 import { MobileNav } from "@/components/MobileNav/MobileNav";
-import { useRegistryClient } from "@/contexts/RegistryClientContext";
-import { encodeAddress } from "algosdk";
+import { useRegistry } from "src/hooks/useRegistry";
 
 export function DefaultSidebar(){
     return (
@@ -40,7 +40,7 @@ export type PageProps = {
     headerProps?: ComponentProps<typeof Header>;
 
     // Sidebar Components
-    Sidebar?: ComponentType;
+    Sidebar?: (props: any) => JSX.Element;
     // TODO: SidebarProps
 
     // Generic Components
@@ -51,11 +51,13 @@ export function Page({
     children,
     title,
     headerProps,
-    Sidebar = DefaultSidebar,
+    Sidebar = () => <DefaultSidebar/>,
     LinkComponent = Link as unknown as ComponentType<LinkProps>
 }: PageProps) {
+    const { pathname } = useLocation();
     const { wallets, activeAddress, activeWallet } = useWallet();
-    const { roles, globalStateLoading } = useRegistryClient();
+    const registryGlobalState = useRegistry()
+    
     const [showAdmin, setShowAdmin] = useState<boolean>(false);
 
     useEffect(() => {
@@ -64,24 +66,24 @@ export function Page({
             return;
         }
 
-        if (globalStateLoading) {
+        if (registryGlobalState.isLoading) {
             return;
         }
 
         const addresses = [
-            roles.kycProvider,
-            roles.xGovManager,
-            roles.committeePublisher,
-            roles.committeeManager,
-            roles.xGovPayor,
-            roles.xGovReviewer,
-            roles.xGovSubscriber,
+            registryGlobalState.data?.kycProvider,
+            registryGlobalState.data?.xgovManager,
+            registryGlobalState.data?.committeePublisher,
+            registryGlobalState.data?.committeeManager,
+            registryGlobalState.data?.xgovPayor,
+            // registryGlobalState.data?.xgovReviewer,
+            // registryGlobalState.data?.xgovSubscriber,
         ];
 
         const isAdmin = addresses.some((address) => address && address === activeAddress);
         setShowAdmin(isAdmin);
 
-    }, [activeAddress, globalStateLoading, roles]);
+    }, [activeAddress, registryGlobalState.isLoading, registryGlobalState.data]);
 
     return (
         <>
@@ -93,6 +95,7 @@ export function Page({
                 {...headerProps}
             >                
                 <Connect
+                    path={pathname}
                     wallets={wallets}
                     // nfdName={!!activeAddress ? activeAddress : undefined}
                     activeAddress={activeAddress}

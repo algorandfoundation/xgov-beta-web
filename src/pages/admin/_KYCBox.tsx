@@ -1,9 +1,10 @@
-import { ABIType, decodeAddress, encodeAddress } from "algosdk";
+import { decodeAddress } from "algosdk";
 import { KYCCard } from "@/components/KYCCard/KYCCard";
-import { useRegistryClient } from "@/contexts/RegistryClientContext";
-import { Algorand } from "src/algorand/algo-client";
-import { useState, useEffect } from "react";
-import type { ProposerBoxData } from '@/contexts/RegistryClientContext';
+import { useState } from "react";
+import type { ProposerBoxState } from 'src/types/proposer';
+import { RegistryClient as registryClient } from "src/algorand/contract-clients";
+import { useAllProposers } from "src/hooks/useRegistry";
+import { FaSync } from 'react-icons/fa';
 
 export interface KYCData {
   address: string;
@@ -13,47 +14,29 @@ export interface KYCData {
 
 export interface ProposerBoxes {
   parsedAddress: string;
-  values: ProposerBoxData;
+  values: ProposerBoxState;
 }
 
 export const KYCBox = ({ kycProvider, activeAddress, transactionSigner }: { kycProvider: string, activeAddress: string, transactionSigner: any }) => {
-  const { registryClient, boxes, boxesLoading, refreshBoxes } = useRegistryClient();
   const [errorMessage, setErrorMessage] = useState("");
-  const [proposerBoxes, setProposerBoxes] = useState<ProposerBoxes[]>([]);
-  const [refreshTrigger, setRefreshTrigger] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [filter, setFilter] = useState("");
 
-  useEffect(() => {
-    if (registryClient && !boxesLoading) {
-      const fetchProposers = async () => {
-        try {
-          const resolvedBoxes = await boxes;
-          const requests = await Promise.all(resolvedBoxes
-            .filter((box: any) => box.name.nameRaw[0] === 'p'.charCodeAt(0)) // Proposer box specifically
-            .map(async (box: any) => ({
-              parsedAddress: encodeAddress(box.name.nameRaw.slice(1)),
-              values: await Algorand.app.getBoxValueFromABIType({
-                appId: BigInt(registryClient.appId),
-                boxName: box.name.nameRaw,
-                type: ABIType.from('(bool,bool,uint64)')
-              }) as ProposerBoxData
-            })));
-          setProposerBoxes(await Promise.all(requests));
-        } catch (error) {
-          console.error("Failed to fetch boxes", error);
-          setErrorMessage("Failed to fetch boxes.");
-        }
-      };
-      fetchProposers();
-    }
-  }, [registryClient, boxesLoading, refreshTrigger, boxes]);
+  const allProposers = useAllProposers();
+
+  const proposerBoxes = allProposers.data
+    ? Object.keys(allProposers.data).map(key => ({
+        parsedAddress: key,
+        values: allProposers.data[key] as unknown as ProposerBoxState,
+      }))
+    : [];
 
   async function callSetProposerKYC(proposalAddress: string, kycStatus: boolean, expiration: number) {
     console.log('Setting KYC status of', proposalAddress, 'to', kycStatus, 'with expiration date', expiration);
 
     if (!activeAddress || !registryClient) {
+      setErrorMessage("Active address or registry client not available.");
       return false;
     }
 
@@ -74,15 +57,17 @@ export const KYCBox = ({ kycProvider, activeAddress, transactionSigner }: { kycP
 
       if (res.confirmation.confirmedRound !== undefined && res.confirmation.confirmedRound > 0 && res.confirmation.poolError === '') {
         console.log('Transaction confirmed');
-        setRefreshTrigger(prev => !prev); // Trigger the useEffect to refresh boxes and fetch proposers
-        refreshBoxes(); // Explicitly refresh boxes
+        allProposers.refetch();
+        setErrorMessage(""); // Clear any previous error message
         return true;
       }
 
       console.log("Transaction failed to confirm:", res);
+      setErrorMessage("Transaction failed to confirm.");
       return false;
     } catch (error) {
       console.error("Failed to set KYC status", error);
+      setErrorMessage("Failed to set KYC status. Please try again.");
       return false;
     }
   }
@@ -91,7 +76,7 @@ export const KYCBox = ({ kycProvider, activeAddress, transactionSigner }: { kycP
     return <div>You are not set as the KYC provider</div>;
   }
 
-  if (boxesLoading) {
+  if (allProposers.isLoading) {
     return <div>Loading...</div>;
   }
 
@@ -110,15 +95,33 @@ export const KYCBox = ({ kycProvider, activeAddress, transactionSigner }: { kycP
     setCurrentPage(pageNumber);
   };
 
+  const handleRefresh = () => {
+    try {
+      allProposers.refetch();
+      setErrorMessage(""); // Clear any previous error message
+    } catch (error) {
+      console.error("Failed to refresh proposers", error);
+      setErrorMessage("Failed to refresh proposers. Please try again.");
+    }
+  };
+
   return (
     <>
-      <input
-        type="text"
-        placeholder="Filter by address"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        className="mb-4 p-2 border rounded"
-      />
+      <div className="flex items-center mb-4">
+        <input
+          type="text"
+          placeholder="Filter by address"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="p-2 border rounded"
+        />
+        <button
+          onClick={handleRefresh}
+          className="ml-2 px-4 py-2 bg-blue-500 text-white rounded flex items-center justify-center"
+        >
+          <FaSync />
+        </button>
+      </div>
       {errorMessage && (
         <div className="text-red-500 mb-4">{errorMessage}</div>
       )}

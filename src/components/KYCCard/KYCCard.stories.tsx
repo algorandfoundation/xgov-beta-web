@@ -1,6 +1,6 @@
 import type { Meta, StoryFn } from '@storybook/react';
 import KYCCard, { type KYCCardProps } from './KYCCard';
-import type { ProposerBoxData } from '@/contexts/RegistryClientContext';
+import type { ProposerBoxState } from '@/types/proposer'
 
 const meta: Meta<typeof KYCCard> = {
   title: 'Components/KYCCard',
@@ -11,7 +11,7 @@ const meta: Meta<typeof KYCCard> = {
   },
   args: {
     proposalAddress: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ',
-    values: [false, false, BigInt(0).toString()] as unknown as ProposerBoxData,
+    values: [false, false, BigInt(0).toString()] as unknown as ProposerBoxState,
     callSetProposerKYC: async () => true,
   },
   argTypes: {
@@ -37,15 +37,15 @@ const Template: StoryFn<KYCCardProps> = (args: any) => <KYCCard {...args} />;
 export const mockKYCBoxData = [
   {
     proposalAddress: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ",
-    values: [false, false, BigInt(0).toString()] as unknown as ProposerBoxData,
+    values: [false, false, BigInt(0).toString()] as unknown as ProposerBoxState,
   },
   {
     proposalAddress: "B243SD5USOH4DMV55K7SOOHXJQ3LUUVIQJOFXM7QIVEKUGCPKM6Q2B5PCA",
-    values: [true, true, BigInt(Math.floor(Date.now() / 1000)).toString()] as unknown as ProposerBoxData,
+    values: [true, true, BigInt(Math.floor(Date.now() / 1000)).toString()] as unknown as ProposerBoxState,
   },
   {
     proposalAddress: "FU56YMMJFRODITZMI7JPOSVHRJ5QBJBSN5TZTE724MOSLAPCK7OGQ2HFRQ",
-    values: [true, true, BigInt(Math.floor(new Date(3000, 0, 1).getTime() / 1000)).toString()] as unknown as ProposerBoxData,
+    values: [true, true, BigInt(Math.floor(new Date(3000, 0, 1).getTime() / 1000)).toString()] as unknown as ProposerBoxState,
   }
 ];
 
