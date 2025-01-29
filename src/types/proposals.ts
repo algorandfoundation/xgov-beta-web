@@ -25,22 +25,6 @@ export const ProposalStatusMap = {
 	[ProposalStatus.ProposalStatusDelete]: 'Delete',
 }
 
-export enum ProposalCategory {
-    ProposalCategoryNull = 0,
-    ProposalCategorySmall = 10,
-    ProposalCategoryMedium = 20,
-    ProposalCategoryLarge = 33,
-}
-
-export type Category = 'Null' | 'Small' | 'Medium' | 'Large';
-
-export const ProposalCategoryMap = {
-	[ProposalCategory.ProposalCategoryNull]: 'Null',
-	[ProposalCategory.ProposalCategorySmall]: 'Small',
-	[ProposalCategory.ProposalCategoryMedium]: 'Medium',
-	[ProposalCategory.ProposalCategoryLarge]: 'Large',
-}
-
 export enum ProposalFundingType {
     Null = 0,
     Proactive = 10,

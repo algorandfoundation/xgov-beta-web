@@ -1,5 +1,6 @@
 import { Header } from "@/components/Header/Header";
 import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useState } from "react";
 import type { ComponentProps, ComponentType, PropsWithChildren, ReactNode } from "react";
 import type { LinkProps } from "@/components/Link.tsx";
 import { useWallet } from "@txnlab/use-wallet-react";
@@ -7,6 +8,7 @@ import { cn } from "@/functions/utils.ts";
 import { ThemeToggle } from "@/components/button/ThemeToggle/ThemeToggle";
 import { Connect } from "@/components/Connect/Connect";
 import { MobileNav } from "@/components/MobileNav/MobileNav";
+import { useRegistry } from "src/hooks/useRegistry";
 
 export function DefaultSidebar(){
     return (
@@ -54,13 +56,41 @@ export function Page({
 }: PageProps) {
     const { pathname } = useLocation();
     const { wallets, activeAddress, activeWallet } = useWallet();
-    // TODO: Get NFD name using the activeAddress
+    const registryGlobalState = useRegistry()
+    
+    const [showAdmin, setShowAdmin] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (!activeAddress) {
+            setShowAdmin(false);
+            return;
+        }
+
+        if (registryGlobalState.isLoading) {
+            return;
+        }
+
+        const addresses = [
+            registryGlobalState.data?.kycProvider,
+            registryGlobalState.data?.xgovManager,
+            registryGlobalState.data?.committeePublisher,
+            registryGlobalState.data?.committeeManager,
+            registryGlobalState.data?.xgovPayor,
+            // registryGlobalState.data?.xgovReviewer,
+            // registryGlobalState.data?.xgovSubscriber,
+        ];
+
+        const isAdmin = addresses.some((address) => address && address === activeAddress);
+        setShowAdmin(isAdmin);
+
+    }, [activeAddress, registryGlobalState.isLoading, registryGlobalState.data]);
 
     return (
         <>
             <Header
                 title={title}
                 LinkComponent={LinkComponent}
+                showAdmin={showAdmin}
                 MobileNav={<MobileNav />}
                 {...headerProps}
             >                
@@ -79,4 +109,3 @@ export function Page({
         </>
     )
 }
-

@@ -7,11 +7,13 @@ import {
     QueryClientProvider,
 } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { HomePage } from "@/pages/_HomePage";
-import { ProposalPage } from "@/pages/proposal/_ProposalPage";
-import { DocsPage } from "@/pages/_DocsPage";
+import { AdminPage } from "@/pages/admin/_AdminPage";
+import { BecomeProposerPage } from './pages/_BecomePage';
 import { CohortsPage } from "@/pages/_CohortPage";
+import { DocsPage } from "@/pages/_DocsPage";
+import { HomePage } from "@/pages/_HomePage";
 import { ProfilePage } from "./pages/profile/_ProfilePage";
+import { ProposalPage } from "@/pages/proposal/_ProposalPage";
 
 let walletProviders: SupportedWallet[] = [
     WalletId.KMD,
@@ -36,6 +38,8 @@ const walletManager = new WalletManager({
 
 const routes = [
     { path: '/', element: <HomePage /> },
+    { path: '/admin', element: <AdminPage />},
+    { path: '/become-proposer', element: <BecomeProposerPage />},
     { path: '/docs', element: <DocsPage /> },
     { path: '/cohort', element: <CohortsPage /> },
     { path: '/proposal', element: <HomePage /> },
