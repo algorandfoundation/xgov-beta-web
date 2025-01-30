@@ -44,7 +44,7 @@ jobs:
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          accountId: laXK1Uq9j8OO3W3jj5-6Odqxo9AImERc1a5-ykxz
           command: pages deploy dist --project-name=${{ secrets.CF_PROJECT_NAME }}
           # Optional: Enable this if you want to have GitHub Deployments triggered
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
