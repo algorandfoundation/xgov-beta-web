@@ -30,3 +30,7 @@ pnpm-debug.log*
 
 *storybook.log
 storybook-static/
+
+# IPFS
+ipfs_staging/
+ipfs_data/
