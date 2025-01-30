@@ -6,7 +6,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro check && astro build",
-    "preview": "astro preview",
+    "preview": "npm run build && wrangler pages dev ./dist",
     "astro": "astro",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
@@ -76,6 +76,7 @@
     "postcss": "^8.4.47",
     "storybook": "^8.3.6",
     "tailwindcss": "^3.4.14",
-    "vite-tsconfig-paths": "^5.0.1"
+    "vite-tsconfig-paths": "^5.0.1",
+    "wrangler": "^3.106.0"
   }
 }
