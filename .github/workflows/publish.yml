@@ -38,7 +38,14 @@ jobs:
       - name: Build the project
         run: npm run build
 
-      # Step 6: Deploy to Cloudflare Pages and capture the Preview URL
+      # Step 6: Debug - List files in the dist directory
+      - name: Debug - List files in the dist directory
+        run: |
+          ls -alh
+          cd dist
+          ls -alh
+
+      # Step 7: Deploy to Cloudflare Pages and capture the Preview URL
       - name: Publish to Cloudflare Pages
         id: deploy
         uses: cloudflare/pages-action@v1
