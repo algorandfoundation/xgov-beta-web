@@ -38,23 +38,11 @@ jobs:
       - name: Build the project
         run: npm run build
 
-      # Step 6: Debug - List files in the dist directory
-      - name: Debug - List files in the dist directory
-        run: |
-          ls -alh
-          cd dist
-          ls -alh
-
-      # Step 7: Deploy to Cloudflare Pages and capture the Preview URL
+      # Step 6: Deploy to Cloudflare Pages using wrangler
       - name: Publish to Cloudflare Pages
         id: deploy
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: ${{ secrets.CF_PROJECT_NAME }}
-          directory: dist/
-          # Optional: Enable this if you want to have GitHub Deployments triggered
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          # Optional: Change the Wrangler version, allows you to point to a specific version or a tag such as `beta`
-          wranglerVersion: "3"
+          command: |
+            pages deploy dist --project-name ${{ secrets.CF_PROJECT_NAME }}
