@@ -28,7 +28,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: "18" # Specify the required Node.js version
+          node-version: "20"
 
       # Step 4: Install dependencies using pnpm
       - name: Install dependencies
