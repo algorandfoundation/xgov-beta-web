@@ -16,7 +16,6 @@ import { ProfilePage } from "./pages/profile/_ProfilePage";
 import { ProposalPage } from "@/pages/proposal/_ProposalPage";
 
 let walletProviders: SupportedWallet[] = [
-    WalletId.KMD,
     WalletId.DEFLY,
     WalletId.PERA,
     WalletId.EXODUS,
