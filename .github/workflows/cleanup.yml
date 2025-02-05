@@ -4,6 +4,9 @@ name: Delete Cloudflare Pages Preview Deployment
 on:
   pull_request:
     types: [closed]
+  push:
+    branches:
+      - ci/remove-cloudflare-deployments
 
 jobs:
   delete-preview-deployment:
