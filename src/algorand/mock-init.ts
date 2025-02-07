@@ -11,10 +11,9 @@ export interface MockProposalCreationData {
     status: ProposalStatus;
     title: string;
     proposalJson: ProposalJSON;
-    // status: ProposalStatus;
-    // category: ProposalCategory;
     fundingType: ProposalFundingType;
     requestedAmount: number;
+    focus: ProposalFocus;
 }
 
 export const mockProposals: MockProposalCreationData[] = [
@@ -26,7 +25,6 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusDeFi,
             adoptionMetrics: ['1000 users', '1000 transactions'],
             pastProposalLinks: [
                 BigInt(1), BigInt(2), BigInt(3)
@@ -35,6 +33,7 @@ export const mockProposals: MockProposalCreationData[] = [
         },
         fundingType: ProposalFundingType.Retroactive,
         requestedAmount: 75_000,
+        focus: ProposalFocus.FocusDeFi,
     },
     {
         status: PS.ProposalStatusVoting,
@@ -44,12 +43,12 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusEducation,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Proactive,
         requestedAmount: 30_000,
+        focus: ProposalFocus.FocusEducation,
     },
     {
         status: PS.ProposalStatusVoting,
@@ -59,12 +58,12 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusLibraries,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Retroactive,
         requestedAmount: 75_000,
+        focus: ProposalFocus.FocusLibraries,
     },
     {
         status: PS.ProposalStatusFinal,
@@ -74,12 +73,12 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusNFT,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Proactive,
         requestedAmount: 50_000,
+        focus: ProposalFocus.FocusNFT,
     },
     {
         status: PS.ProposalStatusFinal,
@@ -89,12 +88,12 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusDeFi,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Retroactive,
         requestedAmount: 100_000,
+        focus: ProposalFocus.FocusDeFi,
     },
     {
         status: PS.ProposalStatusFinal,
@@ -104,7 +103,6 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusDeFi,
             adoptionMetrics: ['1000 users', '1000 transactions'],
             pastProposalLinks: [
                 BigInt(1), BigInt(2), BigInt(3)
@@ -113,6 +111,7 @@ export const mockProposals: MockProposalCreationData[] = [
         },
         fundingType: ProposalFundingType.Retroactive,
         requestedAmount: 75_000,
+        focus: ProposalFocus.FocusDeFi,
     },
     {
         status: PS.ProposalStatusVoting,
@@ -122,12 +121,12 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusEducation,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Proactive,
         requestedAmount: 30_000,
+        focus: ProposalFocus.FocusEducation,
     },
     {
         status: PS.ProposalStatusVoting,
@@ -137,12 +136,12 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusLibraries,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Retroactive,
         requestedAmount: 75_000,
+        focus: ProposalFocus.FocusLibraries,
     },
     {
         status: PS.ProposalStatusFinal,
@@ -152,12 +151,12 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusNFT,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Proactive,
         requestedAmount: 50_000,
+        focus: ProposalFocus.FocusNFT,
     },
     {
         status: PS.ProposalStatusFinal,
@@ -167,12 +166,12 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusDeFi,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Retroactive,
         requestedAmount: 100_000,
+        focus: ProposalFocus.FocusDeFi,
     },
     {
         status: PS.ProposalStatusFinal,
@@ -182,7 +181,6 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusDeFi,
             adoptionMetrics: ['1000 users', '1000 transactions'],
             pastProposalLinks: [
                 BigInt(1), BigInt(2), BigInt(3)
@@ -191,6 +189,7 @@ export const mockProposals: MockProposalCreationData[] = [
         },
         fundingType: ProposalFundingType.Retroactive,
         requestedAmount: 75_000,
+        focus: ProposalFocus.FocusDeFi,
     },
     {
         status: PS.ProposalStatusVoting,
@@ -200,12 +199,12 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusEducation,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Proactive,
         requestedAmount: 30_000,
+        focus: ProposalFocus.FocusEducation,
     },
     {
         status: PS.ProposalStatusVoting,
@@ -215,12 +214,12 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusLibraries,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Retroactive,
         requestedAmount: 75_000,
+        focus: ProposalFocus.FocusLibraries,
     },
     {
         status: PS.ProposalStatusFinal,
@@ -230,12 +229,12 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusNFT,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Proactive,
         requestedAmount: 50_000,
+        focus: ProposalFocus.FocusNFT,
     },
     {
         status: PS.ProposalStatusFinal,
@@ -245,12 +244,12 @@ export const mockProposals: MockProposalCreationData[] = [
             team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
             openSource: true,
-            focus: ProposalFocus.FocusDeFi,
             pastProposalLinks: [],
             forumLink: 'https://forum.algorand.org/',
         },
         fundingType: ProposalFundingType.Retroactive,
         requestedAmount: 100_000,
+        focus: ProposalFocus.FocusDeFi,
     }
 ]
 
@@ -358,7 +357,7 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
     // Fund the registry
     await registryClient.appClient.fundAppAccount({
         sender: dispenser.addr,
-        amount: (10_000_000).microAlgos(), // 10 Algos
+        amount: (100).algos(),
     });
 
     // Generate KYC provider account
@@ -443,39 +442,43 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
         sender: adminAccount.addr,
         signer: adminAccount.signer,
         args: {
-            cid: new Uint8Array(Buffer.from('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')),
+            cid: new Uint8Array(Buffer.from('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')),
             size: 1,
             votes: 10,
         },
     })
 
-    const committeeMembers = [algorand.account.random()];
+    const committeeMembers = [
+        algorand.account.random()
+    ];
 
-    await algorand.account.ensureFunded(
-        committeeMembers[0].addr,
-        dispenser,
-        fundAmount,
-    );
+    for (const committeeMember of committeeMembers) {
+        await algorand.account.ensureFunded(
+            committeeMember.addr,
+            dispenser,
+            fundAmount,
+        );
 
-    await registryClient.send.subscribeXgov({
-        sender: committeeMembers[0].addr,
-        signer: committeeMembers[0].signer,
-        args: {
-            votingAddress: committeeMembers[0].addr,
-            payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-                amount: 1_000_000,
-                from: committeeMembers[0].addr,
-                to: registryClient.appAddress,
-                suggestedParams: await algorand.getSuggestedParams(),
-            }),
-        },
-        boxReferences: [
-            new Uint8Array(Buffer.concat([
-                Buffer.from('x'),
-                algosdk.decodeAddress(committeeMembers[0].addr).publicKey,
-            ])),
-        ]
-    });
+        await registryClient.send.subscribeXgov({
+            sender: committeeMember.addr,
+            signer: committeeMember.signer,
+            args: {
+                votingAddress: committeeMember.addr,
+                payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+                    amount: 1_000_000,
+                    from: committeeMember.addr,
+                    to: registryClient.appAddress,
+                    suggestedParams: await algorand.getSuggestedParams(),
+                }),
+            },
+            boxReferences: [
+                new Uint8Array(Buffer.concat([
+                    Buffer.from('x'),
+                    algosdk.decodeAddress(committeeMember.addr).publicKey,
+                ])),
+            ]
+        });
+    }
 
     // Generate and setup mock proposer accounts
     const proposerAccounts: (TransactionSignerAccount & { account: algosdk.Account; })[] = [];
@@ -486,13 +489,13 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
     // get suggestedparams
     const suggestedParams = await algorand.getSuggestedParams();
 
-    const oneYearFromNow = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
+    const oneYearFromNow = await getLatestTimestamp() + 365 * 24 * 60 * 60;
 
     const proposalFactory = new ProposalFactory({ algorand });
 
     for (let i = 0; i < mockProposals.length; i++) {
         const account = algorand.account.random();
-        console.log('proposer account', account.addr);
+        console.log('\nproposer account', account.addr);
 
         await algorand.account.ensureFunded(
             account.addr,
@@ -520,17 +523,22 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
             boxReferences: [proposerBoxName]
         });
 
-        // Approve proposer KYC
-        await registryClient.send.setProposerKyc({
-            sender: kycProvider.addr,
-            signer: kycProvider.signer,
-            args: {
-                proposer: account.addr,
-                kycStatus: true,
-                kycExpiring: BigInt(oneYearFromNow),
-            },
-            boxReferences: [proposerBoxName]
-        });
+        try {
+            // Approve proposer KYC
+            await registryClient.send.setProposerKyc({
+                sender: kycProvider.addr,
+                signer: kycProvider.signer,
+                args: {
+                    proposer: account.addr,
+                    kycStatus: true,
+                    kycExpiring: BigInt(oneYearFromNow),
+                },
+                boxReferences: [proposerBoxName]
+            });
+        } catch (e) {
+            console.error('Failed to approve proposer KYC');
+            return;
+        }
 
         // Create a proposal
         const result = await registryClient.send.openProposal({
@@ -578,25 +586,35 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
         console.log(`Title: ${mockProposals[i].title}\n`);
         console.log(`Cid: ${cid.toString()}\n`);
         console.log(`Funding Type: ${mockProposals[i].fundingType}\n`);
-        console.log(`Requested Amount: ${(mockProposals[i].requestedAmount).algos().microAlgos}\n\n`);
+        console.log(`Requested Amount: ${(mockProposals[i].requestedAmount).algos().microAlgos}\n`);
+        console.log(`Focus: ${mockProposals[i].focus}\n\n`);
 
-        await proposalClient.send.submit({
-            sender: account.addr,
-            signer: account.signer,
-            args: {
-                payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-                    amount: proposalSubmissionFee,
-                    from: account.addr,
-                    to: proposalClient.appAddress,
-                    suggestedParams,
-                }),
-                title: mockProposals[i].title,
-                cid: new Uint8Array(Buffer.from(cid.toString())),
-                fundingType: mockProposals[i].fundingType,
-                requestedAmount: (mockProposals[i].requestedAmount).algos().microAlgos,
-            },
-            appReferences: [registryClient.appId],
-        });
+        try {
+            await proposalClient.send.submit({
+                sender: account.addr,
+                signer: account.signer,
+                args: {
+                    payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+                        amount: proposalSubmissionFee,
+                        from: account.addr,
+                        to: proposalClient.appAddress,
+                        suggestedParams,
+                    }),
+                    title: mockProposals[i].title,
+                    cid: cid.bytes,
+                    fundingType: mockProposals[i].fundingType,
+                    requestedAmount: (mockProposals[i].requestedAmount).algos().microAlgos,
+                    focus: mockProposals[i].focus,
+                },
+                appReferences: [registryClient.appId],
+            });
+        } catch (e) {
+            console.log(e);
+
+            console.error('Failed to submit proposal');
+
+            return;
+        }
     }
 
     const ts = (await getLatestTimestamp()) + (86400 * 5)
@@ -604,18 +622,18 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
     console.log('finished time warp, new ts: ', await getLatestTimestamp());
 
     for (let i = 0; i < mockProposals.length; i++) {
-        const proposal = mockProposals[i];
+        // const proposal = mockProposals[i];
         // if (proposal.status === PS.ProposalStatusFinal) {
-            const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
+        const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
 
-            await proposalClient.send.finalize({
-                sender: proposerAccounts[i].addr,
-                signer: proposerAccounts[i].signer,
-                args: {},
-                appReferences: [registryClient.appId],
-                accountReferences: [adminAccount.addr],
-                extraFee: (ALGORAND_MIN_TX_FEE).microAlgos(),
-            });
+        await proposalClient.send.finalize({
+            sender: proposerAccounts[i].addr,
+            signer: proposerAccounts[i].signer,
+            args: {},
+            appReferences: [registryClient.appId],
+            accountReferences: [adminAccount.addr],
+            extraFee: (ALGORAND_MIN_TX_FEE).microAlgos(),
+        });
         // }
     }
 

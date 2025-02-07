@@ -16,7 +16,7 @@ export type Status = 'Empty' | 'Draft' | 'Final' | 'Voting' | 'Approved' | 'Reje
 export const ProposalStatusMap = {
 	[ProposalStatus.ProposalStatusEmpty]: 'Empty',
 	[ProposalStatus.ProposalStatusDraft]: 'Draft',
-	[ProposalStatus.ProposalStatusFinal]: 'Final',
+	[ProposalStatus.ProposalStatusFinal]: 'Discussion',
 	[ProposalStatus.ProposalStatusVoting]: 'Voting',
 	[ProposalStatus.ProposalStatusApproved]: 'Approved',
 	[ProposalStatus.ProposalStatusRejected]: 'Rejected',
@@ -84,7 +84,6 @@ export interface ProposalJSON {
     team: string;
     additionalInfo?: string;
     openSource: boolean;
-    focus: ProposalFocus;
     // applicable for proactive proposals
     deliverables?: {
         amount: bigint;
@@ -96,24 +95,24 @@ export interface ProposalJSON {
     forumLink: string;
 }
 
-export const statusToPhase = {
-	[ProposalStatus.ProposalStatusEmpty]: 'null',
-	[ProposalStatus.ProposalStatusDraft]: 'draft',
-	[ProposalStatus.ProposalStatusFinal]: 'discussion',
-	[ProposalStatus.ProposalStatusVoting]: 'voting',
-	[ProposalStatus.ProposalStatusApproved]: 'closure',
-	[ProposalStatus.ProposalStatusRejected]: 'closure',
-	[ProposalStatus.ProposalStatusFunded]: 'closure',
-	[ProposalStatus.ProposalStatusBlocked]: 'closure',
-	[ProposalStatus.ProposalStatusDelete]: 'closure',
-};
+// export const statusToPhase = {
+// 	[ProposalStatus.ProposalStatusEmpty]: 'null',
+// 	[ProposalStatus.ProposalStatusDraft]: 'draft',
+// 	[ProposalStatus.ProposalStatusFinal]: 'discussion',
+// 	[ProposalStatus.ProposalStatusVoting]: 'voting',
+// 	[ProposalStatus.ProposalStatusApproved]: 'closure',
+// 	[ProposalStatus.ProposalStatusRejected]: 'closure',
+// 	[ProposalStatus.ProposalStatusFunded]: 'closure',
+// 	[ProposalStatus.ProposalStatusBlocked]: 'closure',
+// 	[ProposalStatus.ProposalStatusDelete]: 'closure',
+// };
 
-export const phaseToText = {
-    submission: 'Submission',
-    discussion: 'Discussion',
-    voting: 'Voting',
-    closure: 'Closure'
-};
+// export const phaseToText = {
+//     submission: 'Submission',
+//     discussion: 'Discussion',
+//     voting: 'Voting',
+//     closure: 'Closure'
+// };
 
 export type ProposalCardDetails = ProposalMainCardDetails | ProposalSummaryCardDetails | ProposalInfoCardDetails;
 
@@ -140,11 +139,11 @@ export interface ProposalSummaryCardDetails {
 	focus: ProposalFocus;
 }
 
-export type ProposalMainCardDetails = Omit<ProposalSummaryCardDetails, 'focus'> & ProposalJSON;
+export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;
 
 export type ProposalInfoCardDetails = Pick<
     ProposalMainCardDetails, 
-    'forumLink' | 'fundingType' | 'focus' | 'openSource' | 'requestedAmount'
+    'focus' | 'forumLink' | 'fundingType' | 'openSource' | 'requestedAmount'
 >
 
 export interface ProposalBrief {

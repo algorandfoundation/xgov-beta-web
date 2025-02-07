@@ -1,4 +1,4 @@
-import { FocusMap, isProposalInfoCardDetails, isProposalSummaryCardDetails, ProposalFundingTypeMap, statusToPhase, type ProposalCardDetails, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from "@/types/proposals";
+import { FocusMap, isProposalInfoCardDetails, isProposalSummaryCardDetails, ProposalFundingTypeMap, ProposalStatusMap, type ProposalCardDetails, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from "@/types/proposals";
 import { cn } from "@/functions/utils";
 import { Link } from "@/components/Link";
 import { shortenAddress } from "@/functions/shortening";
@@ -36,7 +36,7 @@ export function ProposalCard({ proposal, path = '', mini = false }: ProposalCard
     // implicitly main card
     const { status, description, team, additionalInfo, pastProposalLinks } = proposal as ProposalMainCardDetails;
 
-    const phase = statusToPhase[status];
+    const phase = ProposalStatusMap[status];
 
     return (
         <div className="bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between gap-x-6 gap-y-4 p-5 sm:flex-nowrap relative transition overflow-hidden">
@@ -45,10 +45,10 @@ export function ProposalCard({ proposal, path = '', mini = false }: ProposalCard
                     <span className="text-xl">[</span>
                     <span
                         className={cn(
-                            phase === 'draft' ? 'text-algo-black-60' : '',
-                            phase === 'submission' ? 'text-algo-blue dark:text-algo-teal' : '',
-                            phase === 'discussion' ? 'text-algo-blue dark:text-algo-teal' : '',
-                            phase === 'voting' ? 'text-algo-teal' : '',
+                            phase === 'Draft' ? 'text-algo-black-60' : '',
+                            phase === 'Submission' ? 'text-algo-blue dark:text-algo-teal' : '',
+                            phase === 'Discussion' ? 'text-algo-blue dark:text-algo-teal' : '',
+                            phase === 'Voting' ? 'text-algo-teal' : '',
 
                             "p-0.5 px-1 lg:text-lg"
                         )}>
@@ -119,7 +119,7 @@ function ProposalSummaryCard({
     }
 }: ProposalSummaryCardProps) {
 
-    const phase = statusToPhase[status];
+    const phase = ProposalStatusMap[status];
 
     return (
         <Link
@@ -169,7 +169,7 @@ function MyProposalSummaryCard({
     }
 }: ProposalSummaryCardProps) {
 
-    const phase = statusToPhase[status];
+    const phase = ProposalStatusMap[status];
 
     return (
         <li className="list-none bg-white hover:bg-algo-teal-10 dark:hover:bg-algo-blue-50 dark:bg-algo-black border-2 border-algo-black hover:border-algo-teal dark:border-white dark:hover:border-algo-blue-40 text-algo-black dark:text-white rounded-lg max-w-3xl">

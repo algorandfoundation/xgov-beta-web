@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { type ComponentType } from "react";
 import type { LinkProps } from "../components/Link.tsx";
 import { useGetAllProposals } from "src/hooks/useProposals.ts";
-import { statusToPhase, type ProposalSummaryCardDetails } from "@/types/proposals.ts";
+import { ProposalStatusMap, type ProposalSummaryCardDetails } from "@/types/proposals.ts";
 import { Hero } from "@/components/Hero/Hero.tsx";
 import HeroAnimation from "@/components/HeroAnimation/HeroAnimation.tsx";
 import UserPill from "@/components/UserPill/UserPill.tsx";
@@ -21,7 +21,6 @@ import { useRegistry } from "src/hooks/useRegistry.ts";
 const title = 'Algorand xGov';
 
 export function HomePage() {
-
     // const cohort = useGetCohort();
     const registry = useRegistry();
     const proposals = useGetAllProposals();
@@ -41,12 +40,12 @@ export function HomePage() {
                 <div className="mt-10">
                     <ProposalListHeader title="Active Proposals">
                         <ProposalFilter />
-                        <button
-                            type="button"
+                        <Link
+                            to='/new/proposal'
                             className="block rounded-md bg-algo-blue dark:bg-algo-teal px-1.5 sm:px-3 py-2 text-center text-xs sm:text-sm font-semibold text-white dark:text-algo-black shadow-sm hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50"
                         >
                             New Proposal
-                        </button>
+                        </Link>
                     </ProposalListHeader>
                     {
                         !!proposals.data
@@ -72,7 +71,7 @@ export default function StackedList({ proposals }: { proposals: ProposalSummaryC
                 proposer
             }) => {
 
-                const phase = statusToPhase[status];
+                const phase = ProposalStatusMap[status];
 
                 return (
                     <div
@@ -81,9 +80,9 @@ export default function StackedList({ proposals }: { proposals: ProposalSummaryC
                     >
                         <Link className="absolute left-0 top-0 w-full h-full hover:bg-algo-blue/30 dark:hover:bg-algo-teal/30" to={`/proposal/${Number(id)}`}></Link>
                         <div>
-                            <p className="text-xl font-semibold text-algo-black dark:text-white">
+                            <p className=" text-xl font-semibold text-algo-black dark:text-white">
                                 <BracketedPhaseDetail phase={phase} />
-                                {title}
+                                &nbsp;&nbsp;{title}
                             </p>
                             <div className="mt-3 hidden md:flex md:items-center gap-4 md:gap-10 text-algo-blue dark:text-algo-teal font-mono">
                                 <UserPill address={proposer} />
@@ -100,7 +99,7 @@ export default function StackedList({ proposals }: { proposals: ProposalSummaryC
                             <div className="flex flex-col justify-end items-end gap-4">
                                 <div className="flex items-end gap-4">
                                     {
-                                        phase === 'voting' && (
+                                        phase === 'Voting' && (
                                             <>
                                                 <UserCircleRow />
                                                 <VoteCounter />
@@ -109,7 +108,7 @@ export default function StackedList({ proposals }: { proposals: ProposalSummaryC
                                     }
 
                                     {
-                                        phase === 'discussion' && (
+                                        phase === 'Discussion' && (
                                             <>
                                                 <UserCircleRow />
                                                 <DiscussionLink to={`https://forum.algorand.org/`} />

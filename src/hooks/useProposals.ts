@@ -8,7 +8,7 @@ export function useGetAllProposals() {
     });
 }
 
-export function useProposalsByProposer(address: string | null) {
+export function useProposalsByProposer(address: string | undefined) {
     return useQuery({
         queryKey: ['getProposalsByProposer', address],
         queryFn: () => getProposalsByProposer(address!),
@@ -23,13 +23,3 @@ export function useProposal(proposalId: number | null) {
         enabled: !!proposalId,
     });
 }
-
-export function useProposalBrief(pastProposalLinks: bigint[] | undefined) {
-    console.log('pastProposalLinks', pastProposalLinks);
-    return useQuery({
-        queryKey: ['getProposalBrief', pastProposalLinks],
-        queryFn: () => getProposalBrief(pastProposalLinks!),
-        enabled: !!pastProposalLinks && pastProposalLinks.length > 0
-    });
-}
-

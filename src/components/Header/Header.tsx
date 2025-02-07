@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, type LinkProps } from "@/components/Link.tsx";
 import { AlgorandIcon } from "../icons/AlgorandIcon";
+import { Link as RRLink } from "react-router-dom";
 
 export type HeaderProps = {
     title?: string;
@@ -20,9 +21,9 @@ export function Header({ path, title = "xGov", LinkComponent = Link, children, M
         <header
             className="fixed w-full px-2 md:px-4 z-50">
             <div className="w-full bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-b-3xl flex justify-between items-center p-4 lg:px-10 ">
-                <div className="flex gap-4 items-center">
+                <RRLink to='/' className="flex gap-4 items-center">
                     <AlgorandIcon className="fill-white dark:fill-algo-black size-8" />
-                </div>
+                </RRLink>
 
                 <div className="hidden lg:inline-flex items-center gap-2 lg:gap-6">
                     <nav className="hidden md:flex gap-6 font-bold text-lg">

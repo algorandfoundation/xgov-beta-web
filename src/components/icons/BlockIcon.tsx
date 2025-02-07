@@ -8,7 +8,6 @@ export const BlockIcon = (props: any) => (
     {...props}
   >
     <path
-      stroke="#fff"
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth={8}

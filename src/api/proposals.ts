@@ -1,6 +1,7 @@
 import type { ProposalBrief, ProposalJSON, ProposalMainCardDetails, ProposalStatus, ProposalSummaryCardDetails } from "@/types/proposals";
 import { AppManager } from "@algorandfoundation/algokit-utils/types/app-manager";
 import algosdk from "algosdk";
+import { CID } from "kubo-rpc-client";
 import { AlgorandClient as algorand } from "src/algorand/algo-client";
 import { getProposalClientById, RegistryClient } from "src/algorand/contract-clients";
 
@@ -15,24 +16,6 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
         ? algosdk.encodeAddress(state.proposer.valueRaw)
         : '';
 
-        const downstreamData = await Promise.allSettled([
-            getProposalJSON(cid),
-            Promise.reject('Not implemented')
-            // getNonFungibleDomainName(proposer),
-        ]);
-
-        const proposalJSON = downstreamData[0].status === 'fulfilled'
-            ? downstreamData[0].value
-            : null;
-        
-        if (!proposalJSON) {
-            throw new Error('Proposal JSON not found');
-        }
-
-        proposer = downstreamData[1].status === 'fulfilled'
-            ? downstreamData[1].value
-            : proposer;
-
         return {
             id: data.id,
             title: String(state.title.value),
@@ -41,7 +24,7 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
             proposer,
             fundingType: Number(state['funding_type'].value),
             status: Number(state.status.value),
-            focus: proposalJSON.focus
+            focus: Number(state.focus.value),
         }
     }));
 }
@@ -69,23 +52,32 @@ export async function getProposal(id: bigint): Promise<ProposalMainCardDetails> 
         throw new Error('Proposal state not found');
     }
 
-    const cid = String(state.cid.value);
-    const proposalJSON = await getProposalJSON(cid);
+    if (!('valueRaw' in state.cid)) {
+        throw new Error('CID not found');
+    }
+
+    const cid = CID.decode(state.cid.valueRaw)
+    const proposalJSON = await getProposalJSON(cid.toString());
 
     const proposer = 'valueRaw' in state.proposer
         ? algosdk.encodeAddress(state.proposer.valueRaw)
         : '';
 
-    return {
+    const ret = {
         id: data.id,
         title: String(state.title.value),
-        cid,
+        cid: cid.toString(),
         requestedAmount: BigInt(state['requested_amount'].value),
         proposer,
         fundingType: Number(state['funding_type'].value),
         status: Number(state.status.value),
+        focus: Number(state.focus.value),
         ...proposalJSON
     }
+
+    console.log('ret', ret)
+
+    return ret
 }
 
 export async function getProposalJSON(cid: string): Promise<ProposalJSON> {
