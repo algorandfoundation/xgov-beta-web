@@ -46,7 +46,8 @@ export const mockProposalInfo: ProposalInfoCardDetails = {
   fundingType: ProposalFundingType.Proactive,
   focus: ProposalFocus.FocusDeFi,
   openSource: true,
-  requestedAmount: BigInt(75_000_000_000),
+  requestedAmount: BigInt(75000000000),
+  status: ProposalStatus.ProposalStatusEmpty
 };
 
 export const mockProposalSummaryCard: ProposalSummaryCardDetails = {

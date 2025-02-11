@@ -1,4 +1,4 @@
-import type { ProposalSummaryCardDetails } from "@/types/proposals";
+import { ProposalStatus, type ProposalSummaryCardDetails } from "@/types/proposals";
 import { ProposalCard } from "../ProposalCard/ProposalCard";
 
 export interface ProposalListProps {
@@ -6,8 +6,11 @@ export interface ProposalListProps {
 }
 
 export function ProposalList({ proposals }: ProposalListProps) {
+    // Filter out blocked proposals
+    // They will be visible in the Admin page
+    const filteredProposals = proposals.filter(proposal => proposal.status !== ProposalStatus.ProposalStatusBlocked);
 
-    if (proposals.length === 0) {
+    if (filteredProposals.length === 0) {
         return (
             <p className="text-algo-black dark:text-white">No proposals yet</p>
         )
@@ -15,7 +18,7 @@ export function ProposalList({ proposals }: ProposalListProps) {
 
     return (
         <ul className="flex flex-col gap-4">
-            {proposals.map((proposal) => (
+            {filteredProposals.map((proposal) => (
                 <ProposalCard key={proposal.id} proposal={proposal} />
             ))}
         </ul>

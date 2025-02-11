@@ -181,7 +181,7 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
     const ipfsClient = create();
     // Generate admin account (the one that creates the registry)
     const fundAmount = (10).algo();
-    const adminAccount = algorand.account.random();
+    const adminAccount = await algorand.account.fromKmd('unencrypted-default-wallet');
     console.log('admin account', adminAccount.addr);
     const dispenser = await algorand.account.dispenserFromEnvironment();
 
@@ -208,7 +208,7 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
     });
 
     // Generate KYC provider account
-    const kycProvider = algorand.account.random();
+    const kycProvider = await algorand.account.fromKmd('unencrypted-default-wallet');
     console.log('kyc provider', kycProvider.addr);
 
     await algorand.account.ensureFunded(
@@ -302,7 +302,7 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
     const proposalFee = (PROPOSAL_FEE).microAlgo();
 
     // get suggestedparams
-    const suggestedParams = await algorand.getSuggestedParams();
+    let suggestedParams = await algorand.getSuggestedParams();
 
     const oneYearFromNow = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60;
 
@@ -412,6 +412,7 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
                 cid: CID.asCID(cid)!.bytes,
                 fundingType: mockProposals[i].fundingType,
                 requestedAmount: (mockProposals[i].requestedAmount).algos().microAlgos,
+                focus: mockProposals[i].proposalJson.focus,
             },
             appReferences: [registryClient.appId],
         });
@@ -434,6 +435,72 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
             extraFee: (ALGORAND_MIN_TX_FEE).microAlgos(),
         });
     }
+    
+    // For one proposal, we will have a voting period
+    const chosenProposalClient = proposalFactory.getAppClientById({ appId: proposalIds[0] });
+    
+    const adminPK = algosdk.decodeAddress(adminAccount.addr).publicKey;
+    const xGovRegBoxName = new Uint8Array(Buffer.concat([Buffer.from('x'), adminPK])); 
+    const voterBoxName = new Uint8Array(Buffer.concat([Buffer.from('V'), adminPK]));
+    
+    // Assign a voter for proposal #0
+    await chosenProposalClient.send.assignVoter({
+        sender: adminAccount.addr,
+        signer: adminAccount.signer,
+        args: [adminAccount.addr, 10n],
+        appReferences: [registryClient.appId],
+        boxReferences: [voterBoxName],
+    });
+
+    // We need to make sure that the sender is an actual xGov
+    suggestedParams = await algorand.getSuggestedParams();
+    await registryClient.send.subscribeXgov({
+        sender: adminAccount.addr,
+        signer: adminAccount.signer,
+        args: {
+            votingAddress: adminAccount.addr,
+            payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+                amount: XGOV_FEE,
+                from: adminAccount.addr,
+                to: registryClient.appAddress,
+                suggestedParams,
+            }),
+        },
+        boxReferences: [xGovRegBoxName]
+    })
+
+
+    // Send votes for proposal #0
+    await registryClient.send.voteProposal({
+        sender: adminAccount.addr,
+        signer: adminAccount.signer,
+        args: {
+            proposalId: proposalIds[0],
+            xgovAddress: adminAccount.addr,
+            approvalVotes: 10n,
+            rejectionVotes: 0n,
+        },
+        accountReferences: [adminAccount.addr],
+        appReferences: [proposalIds[0]],
+        boxReferences: [xGovRegBoxName, { appId: proposalIds[0], name: voterBoxName }],
+        extraFee: (ALGORAND_MIN_TX_FEE * 100).microAlgos(),
+    })
+    
+    // Scrutinize proposal #0's voting  
+    await chosenProposalClient.send.scrutiny({
+        sender: adminAccount.addr,
+        signer: adminAccount.signer,
+        args: {},
+        appReferences: [registryClient.appId],
+        accountReferences: [proposerAccounts[0].addr],
+    })
+
+    // Set admin account as xGov Reviewer to avoid having to click through admin panel
+    await registryClient.send.setXgovReviewer({
+        sender: adminAccount.addr,
+        signer: adminAccount.signer,
+        args: [adminAccount.addr],
+    });
 
     return {
         adminAccount,

@@ -1,5 +1,6 @@
 import { Page } from "@/components/Page";
 import { ProposalCard } from "@/components/ProposalCard/ProposalCard";
+import ProposalReviewerCard from "@/components/ProposalReviewerCard/ProposalReviewerCard";
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -10,8 +11,10 @@ import {
 } from "@/components/ui/breadcrumb";
 import { shortenAddress } from "@/functions/shortening";
 import type { ProposalInfoCardDetails } from "@/types/proposals";
+import { useWallet } from "@txnlab/use-wallet-react";
 import { useParams } from "react-router-dom";
 import { useProposal } from "src/hooks/useProposals";
+import { useRegistry } from "src/hooks/useRegistry";
 
 const title = 'xGov';
 
@@ -27,13 +30,13 @@ function ProposalCardAndTitle({ proposal }: { proposal: ProposalInfoCardDetails 
 }
 
 export function ProposalPage() {
-    // const { activeAddress } = useWallet();
+    const { activeAddress } = useWallet();
+    const registryGlobalState = useRegistry(); 
     // TODO: Get NFD name using the activeAddress
     const { proposal: proposalId } = useParams();
-    // const proposalId = Number(proposalIdParam);
     const proposal = useProposal(Number(proposalId));
 
-    if (proposal.isLoading) {
+    if (proposal.isLoading || registryGlobalState.isLoading) {
         return <div>Loading...</div>
     }
 
@@ -50,6 +53,7 @@ export function ProposalPage() {
         <Page
             title={title}
             Sidebar={() =>
+                <>
                 <ProposalCardAndTitle
                     proposal={{
                         focus: proposal.data.focus,
@@ -57,8 +61,17 @@ export function ProposalPage() {
                         fundingType: proposal.data.fundingType,
                         forumLink: proposal.data.forumLink,
                         openSource: proposal.data.openSource,
+                        status: proposal.data.status,
                     }}
-                />
+                    />
+                {registryGlobalState.data?.xgovReviewer && activeAddress && activeAddress === registryGlobalState.data?.xgovReviewer && (
+                    <ProposalReviewerCard
+                        proposalId={proposal.data.id}
+                        status={proposal.data.status}
+                        refetch={proposal.refetch}
+                    />
+                )}
+                </>
             }
         >
             <div>

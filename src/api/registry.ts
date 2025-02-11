@@ -2,6 +2,7 @@
 import type { ProposerBoxState } from "@/types/proposer";
 import type { TypedGlobalState } from "@algorandfoundation/xgov/registry";
 import algosdk, { ABIType } from "algosdk";
+import type { BoxDescriptor } from "algosdk/dist/types/client/v2/algod/models/types";
 import { algod, AlgorandClient as algorand } from 'src/algorand/algo-client';
 import { RegistryClient } from "src/algorand/contract-clients";
 
@@ -110,4 +111,17 @@ export async function getAllProposers(): Promise<{ [key: string]: ProposerBoxSta
     }
 
     return proposers;
+}
+
+export async function getAllSubscribedXGovs(): Promise<string[]> {
+    const boxes = await algorand.client.algod.getApplicationBoxes(registryAppID).do();
+
+    const xGovBoxes = boxes.boxes.filter((box) => {
+        const boxName = new TextDecoder().decode(box.name);
+        return boxName.startsWith('x');
+    });
+
+    return xGovBoxes.map((box) => {
+        return algosdk.encodeAddress(Buffer.from(box.name.slice(1)));
+    });
 }

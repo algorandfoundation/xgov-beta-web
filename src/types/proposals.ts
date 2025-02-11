@@ -6,6 +6,7 @@ export enum ProposalStatus {
     ProposalStatusVoting = 25,
     ProposalStatusApproved = 30,
     ProposalStatusRejected = 40,
+    ProposalStatusReviewed = 45,
     ProposalStatusFunded = 50,
     ProposalStatusBlocked = 60,
     ProposalStatusDelete = 70,
@@ -20,6 +21,7 @@ export const ProposalStatusMap = {
 	[ProposalStatus.ProposalStatusVoting]: 'Voting',
 	[ProposalStatus.ProposalStatusApproved]: 'Approved',
 	[ProposalStatus.ProposalStatusRejected]: 'Rejected',
+    [ProposalStatus.ProposalStatusReviewed]: 'Reviewed',
 	[ProposalStatus.ProposalStatusFunded]: 'Funded',
 	[ProposalStatus.ProposalStatusBlocked]: 'Blocked',
 	[ProposalStatus.ProposalStatusDelete]: 'Delete',
@@ -87,6 +89,7 @@ export const statusToPhase = {
 	[ProposalStatus.ProposalStatusVoting]: 'voting',
 	[ProposalStatus.ProposalStatusApproved]: 'closure',
 	[ProposalStatus.ProposalStatusRejected]: 'closure',
+    [ProposalStatus.ProposalStatusReviewed]: 'closure',
 	[ProposalStatus.ProposalStatusFunded]: 'closure',
 	[ProposalStatus.ProposalStatusBlocked]: 'closure',
 	[ProposalStatus.ProposalStatusDelete]: 'closure',
@@ -128,5 +131,5 @@ export type ProposalMainCardDetails = Omit<ProposalSummaryCardDetails, 'focus'> 
 
 export type ProposalInfoCardDetails = Pick<
     ProposalMainCardDetails, 
-    'forumLink' | 'fundingType' | 'focus' | 'openSource' | 'requestedAmount'
+    'forumLink' | 'fundingType' | 'focus' | 'openSource' | 'requestedAmount' | 'status'
 >
