@@ -118,8 +118,6 @@ function ProposalSummaryCard({
 
     const phase = statusToPhase[status];
 
-    console.log("phase:", status, phase)
-
     return (
         <li role="listitem" className="list-none relative flex bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
             <div className="flex-1 flex flex-col justify-center">
