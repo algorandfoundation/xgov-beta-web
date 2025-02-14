@@ -2,7 +2,6 @@
 import type { ProposerBoxState } from "@/types/proposer";
 import type { TypedGlobalState } from "@algorandfoundation/xgov/registry";
 import algosdk, { ABIType } from "algosdk";
-import type { BoxDescriptor } from "algosdk/dist/types/client/v2/algod/models/types";
 import { algod, AlgorandClient as algorand } from 'src/algorand/algo-client';
 import { RegistryClient } from "src/algorand/contract-clients";
 
