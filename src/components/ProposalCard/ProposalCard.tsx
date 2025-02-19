@@ -144,6 +144,7 @@ function ProposalSummaryCard({
     refetcher,
 }: ProposalSummaryCardProps) {
     const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
+    const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
 
     const phase = statusToPhase[status];
 
@@ -151,8 +152,16 @@ function ProposalSummaryCard({
         setIsFinalizeModalOpen(true);
     };
 
+    const handleOpenWithdrawModal = () => {
+        setIsWithdrawModalOpen(true);
+    };
+
     const handleCloseFinalizeModal = () => {
         setIsFinalizeModalOpen(false);
+    };
+
+    const handleCloseWithdrawModal = () => {
+        setIsWithdrawModalOpen(false);
     };
 
     return (
@@ -185,7 +194,23 @@ function ProposalSummaryCard({
                 <p className="text-lg my-1 mr-2">- {proposer.length === 58 ? shortenAddress(proposer) : proposer}</p>
             </div>
 
-            <div className="absolute bottom-0 right-0 mb-4 mr-4 flex flex-col items-center gap-2">
+            <div className="absolute bottom-0 right-0 mb-4 mr-4 flex flex-row items-center gap-2">
+                {(proposer == activeAddress) && status === ProposalStatus.ProposalStatusDraft && (
+                    <div className="flex flex-row items-center gap-2">
+                        <button
+                            className="text-xl font-semi-bold text-red-600 dark:text-red-400"
+                            onClick={handleOpenWithdrawModal}
+                        >
+                            Withdraw Proposal
+                        </button>
+                        <button
+                            className="text-xl font-semi-bold text-blue-600 dark:text-blue-400"
+                            onClick={handleOpenFinalizeModal}
+                        >
+                            Submit for Vote
+                        </button>
+                    </div>
+                )}
                 <Link
                     data-testid="proposol-link"
                     className={cn(
@@ -196,18 +221,18 @@ function ProposalSummaryCard({
                 >
                     Read More
                 </Link>
-                {(proposer == activeAddress) && status === ProposalStatus.ProposalStatusDraft && (
-                    <button
-                        className="text-xl font-semi-bold text-algo-teal dark:text-algo-blue"
-                        onClick={handleOpenFinalizeModal}
-                    >
-                        Submit for Vote
-                    </button>
-                )}
             </div>
             <FinalizeModal
                 isOpen={isFinalizeModalOpen}
                 onClose={handleCloseFinalizeModal}
+                proposalId={id}
+                activeAddress={activeAddress ?? ''}
+                transactionSigner={transactionSigner}
+                refetcher={refetcher}
+            />
+            <WithdrawModal
+                isOpen={isWithdrawModalOpen}
+                onClose={handleCloseWithdrawModal}
                 proposalId={id}
                 activeAddress={activeAddress ?? ''}
                 transactionSigner={transactionSigner}
@@ -390,6 +415,72 @@ export function FinalizeModal({
                 <div className="mt-4 flex justify-end gap-2">
                     <button className="bg-gray-300 dark:bg-gray-700 p-2 rounded" onClick={onClose}>Cancel</button>
                     <button className="bg-algo-teal dark:bg-algo-blue text-white p-2 rounded" onClick={handleSubmit}>Submit</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export function WithdrawModal({
+    isOpen,
+    onClose,
+    proposalId,
+    activeAddress,
+    transactionSigner,
+    refetcher,
+}: FinalizeModalProps) {
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const handleDrop = async () => {
+        try {
+            if (!activeAddress || !transactionSigner) {
+                setErrorMessage("Wallet not connected.");
+                return false;
+            }
+
+            const proposalFactory = new ProposalFactory({ algorand });
+            const proposalClient = proposalFactory.getAppClientById({ appId: proposalId });
+
+            const res = await proposalClient.send.drop({
+                sender: activeAddress,
+                signer: transactionSigner,
+                args: {},
+                appReferences: [registryClient.appId],
+                accountReferences: [activeAddress],
+                extraFee: (1000).microAlgos(),
+            });
+
+            if (res.confirmation.confirmedRound !== undefined && res.confirmation.confirmedRound > 0 && res.confirmation.poolError === '') {
+                console.log('Transaction confirmed');
+                setErrorMessage(null);
+                onClose();
+                refetcher();
+                return true;
+            }
+
+            console.log('Transaction not confirmed');
+            setErrorMessage("Transaction not confirmed.");
+            return false;
+        } catch (error) {
+            console.error('Error during drop:', error);
+            setErrorMessage("An error occurred calling the proposal contract.");
+            return false;
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-algo-black p-4 rounded-lg max-w-lg w-full">
+                <button className="absolute top-2 right-2 text-xl" onClick={onClose}>×</button>
+                <h2 className="text-2xl font-bold mb-4">Withdraw Proposal?</h2>
+                <p>Are you sure you want to withdraw this proposal?</p>
+                <p>Once withdrawn you cannot undo this action.</p>
+                {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+                <div className="mt-4 flex justify-end gap-2">
+                    <button className="bg-gray-300 dark:bg-gray-700 p-2 rounded" onClick={onClose}>Cancel</button>
+                    <button className="bg-algo-teal dark:bg-algo-blue text-white p-2 rounded" onClick={handleDrop}>Withdraw</button>
                 </div>
             </div>
         </div>

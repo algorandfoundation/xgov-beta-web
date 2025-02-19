@@ -22,9 +22,11 @@ export function ProposalList({ proposals, activeAddress, transactionSigner, refe
 
     return (
         <ul className="flex flex-col gap-4">
-            {filteredProposals.map((proposal) => {
-                return <ProposalCard key={proposal.id} proposal={proposal} activeAddress={activeAddress} transactionSigner={transactionSigner} refetcher={refetcher} />;
-            })}
+            {filteredProposals.map((proposal) => (
+                proposal.status !== ProposalStatus.ProposalStatusEmpty && (
+                    <ProposalCard key={proposal.id} proposal={proposal} activeAddress={activeAddress} transactionSigner={transactionSigner} refetcher={refetcher} />
+                )
+            ))}
         </ul>
     )
 }
