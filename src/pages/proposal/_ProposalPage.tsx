@@ -1,3 +1,4 @@
+import { Link } from "@/components/Link";
 import { Page } from "@/components/Page";
 import { ProposalCard } from "@/components/ProposalCard/ProposalCard";
 import ProposalReviewerCard from "@/components/ProposalReviewerCard/ProposalReviewerCard";
@@ -42,13 +43,26 @@ export function ProposalPage() {
 
     if (proposal.isError) {
         console.log('error', proposal.error);
-        return <div>Error</div>
+        return (
+            <div>
+                <div>Encountered an error: {proposal.error.message}</div>
+                <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    Return to Homepage?
+                </Link>
+            </div>
+        );
     }
 
     if (!proposal.data) {
-        return <div>Proposal not found</div>
+        return (
+            <div>
+                <div>Proposal not found!</div>
+                <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    Return to Homepage?
+                </Link>
+            </div>
+        );
     }
-
     return (
         <Page
             title={title}
