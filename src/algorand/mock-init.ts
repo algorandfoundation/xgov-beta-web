@@ -1,13 +1,14 @@
 import algosdk, { ALGORAND_MIN_TX_FEE } from 'algosdk';
-import { XGovRegistryFactory } from '@algorandfoundation/xgov/registry';
+import { XGovRegistryClient, XGovRegistryFactory } from '@algorandfoundation/xgov/registry';
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account';
 import { AlgorandClient as algorand } from './algo-client'
-import { create } from 'kubo-rpc-client';
+import { create, type KuboRPCClient } from 'kubo-rpc-client';
 import { ProposalFactory } from '@algorandfoundation/xgov';
 import { ProposalFocus, ProposalFundingType, type ProposalJSON, type ProposalStatus } from '@/types/proposals';
 import { ProposalStatus as PS } from '@/types/proposals';
 
 import { CID } from 'multiformats';
+import type { AlgoAmount } from '@algorandfoundation/algokit-utils/types/amount';
 
 export interface MockProposalCreationData {
     status: ProposalStatus;
@@ -308,7 +309,24 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
 
     const proposalFactory = new ProposalFactory({ algorand });
 
-    for (let i = 0; i < mockProposals.length; i++) {
+    proposalIds.push(
+        await pushProposal(
+            adminAccount,
+            registryClient,
+            proposerFee,
+            proposalFee,
+            suggestedParams,
+            kycProvider,
+            oneYearFromNow,
+            0,
+            proposalFactory,
+            ipfsClient
+        )); // Let's assign proposal # 0 to Admin
+    
+    proposerAccounts.push(adminAccount);
+
+    // The remaining proposals, we create a proposer account for each
+    for (let i = 1; i < mockProposals.length; i++) {
         const account = algorand.account.random();
         console.log('proposer account', account.addr);
 
@@ -319,110 +337,29 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
         );
 
         proposerAccounts.push(account);
-
-        const addr = algosdk.decodeAddress(account.addr).publicKey;
-        const proposerBoxName = new Uint8Array(Buffer.concat([Buffer.from('p'), addr]));
-
-        // Subscribe as proposer
-        await registryClient.send.subscribeProposer({
-            sender: account.addr,
-            signer: account.signer,
-            args: {
-                payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-                    amount: proposerFee.microAlgos,
-                    from: account.addr,
-                    to: registryClient.appAddress,
-                    suggestedParams,
-                }),
-            },
-            boxReferences: [proposerBoxName]
-        });
-
-        // Approve proposer KYC
-        await registryClient.send.setProposerKyc({
-            sender: kycProvider.addr,
-            signer: kycProvider.signer,
-            args: {
-                proposer: account.addr,
-                kycStatus: true,
-                kycExpiring: BigInt(oneYearFromNow),
-            },
-            boxReferences: [proposerBoxName]
-        });
-
-        // Create a proposal
-        const result = await registryClient.send.openProposal({
-            sender: account.addr,
-            signer: account.signer,
-            args: {
-                payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-                    amount: proposalFee.microAlgos,
-                    from: account.addr,
-                    to: registryClient.appAddress,
-                    suggestedParams,
-                }),
-            },
-            boxReferences: [proposerBoxName],
-            extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
-        });
-
-        // Store proposal ID if available
-        if (!result.return) {
-            console.error('Proposal creation failed');
-            return;
-        }
-
-        console.log(`\nNew Proposal: ${result.return}\n`)
-
-        proposalIds.push(result.return);
-
-        // instance a new proposal client
-        const proposalClient = proposalFactory.getAppClientById({ appId: result.return });
-
-        const { cid } = await ipfsClient.add(JSON.stringify(
-            mockProposals[i].proposalJson,
-            (_, value) => (
-                typeof value === 'bigint'
-                    ? value.toString()
-                    : value // return everything else unchanged
-            )
-        ), { cidVersion: 1 });
-
-        const proposalSubmissionFee = Math.trunc(Number(
-            ((mockProposals[i].requestedAmount).algos().microAlgos * BigInt(1_000)) / BigInt(10_000)
-        ));
-
-        console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
-        console.log(`Title: ${mockProposals[i].title}\n`);
-        console.log(`Cid: ${cid.toString()}\n`);
-        console.log(`Funding Type: ${mockProposals[i].fundingType}\n`);
-        console.log(`Requested Amount: ${(mockProposals[i].requestedAmount).algos().microAlgos}\n\n`);
-
-        await proposalClient.send.submit({
-            sender: account.addr,
-            signer: account.signer,
-            args: {
-                payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-                    amount: proposalSubmissionFee,
-                    from: account.addr,
-                    to: proposalClient.appAddress,
-                    suggestedParams,
-                }),
-                title: mockProposals[i].title,
-                cid: CID.asCID(cid)!.bytes,
-                fundingType: mockProposals[i].fundingType,
-                requestedAmount: (mockProposals[i].requestedAmount).algos().microAlgos,
-                focus: mockProposals[i].proposalJson.focus,
-            },
-            appReferences: [registryClient.appId],
-        });
+        proposalIds.push(
+            await pushProposal(
+                account,
+                registryClient,
+                proposerFee,
+                proposalFee,
+                suggestedParams,
+                kycProvider,
+                oneYearFromNow,
+                i,
+                proposalFactory,
+                ipfsClient
+            ));
     }
 
     const ts = (await getLatestTimestamp()) + (86400 * 5)
     await timeWarp(ts);
     console.log('finished time warp, new ts: ', await getLatestTimestamp());
 
-    for (let i = 0; i < mockProposals.length; i++) {
+    // FINALIZING PROPOSALS
+
+    // Let's finalize all proposals except the first one, owned by admin
+    for (let i = 1; i < mockProposals.length; i++) {
 
         const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
 
@@ -437,7 +374,7 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
     }
     
     // For one proposal, we will have a voting period
-    const chosenProposalClient = proposalFactory.getAppClientById({ appId: proposalIds[0] });
+    const chosenProposalClient = proposalFactory.getAppClientById({ appId: proposalIds[1] });
     
     const adminPK = algosdk.decodeAddress(adminAccount.addr).publicKey;
     const xGovRegBoxName = new Uint8Array(Buffer.concat([Buffer.from('x'), adminPK])); 
@@ -470,29 +407,29 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
     })
 
 
-    // Send votes for proposal #0
+    // Send votes for proposal #1
     await registryClient.send.voteProposal({
         sender: adminAccount.addr,
         signer: adminAccount.signer,
         args: {
-            proposalId: proposalIds[0],
+            proposalId: proposalIds[1],
             xgovAddress: adminAccount.addr,
             approvalVotes: 10n,
             rejectionVotes: 0n,
         },
         accountReferences: [adminAccount.addr],
-        appReferences: [proposalIds[0]],
-        boxReferences: [xGovRegBoxName, { appId: proposalIds[0], name: voterBoxName }],
+        appReferences: [proposalIds[1]],
+        boxReferences: [xGovRegBoxName, { appId: proposalIds[1], name: voterBoxName }],
         extraFee: (ALGORAND_MIN_TX_FEE * 100).microAlgos(),
     })
     
-    // Scrutinize proposal #0's voting  
+    // Scrutinize proposal #1's voting  
     await chosenProposalClient.send.scrutiny({
         sender: adminAccount.addr,
         signer: adminAccount.signer,
         args: {},
         appReferences: [registryClient.appId],
-        accountReferences: [proposerAccounts[0].addr],
+        accountReferences: [proposerAccounts[1].addr],
     })
 
     // Set admin account as xGov Reviewer to avoid having to click through admin panel
@@ -508,4 +445,117 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
         proposerAccounts,
         proposalIds,
     };
+}
+
+
+
+async function pushProposal(
+    account: TransactionSignerAccount,
+    registryClient: XGovRegistryClient,
+    proposerFee: AlgoAmount,
+    proposalFee: AlgoAmount,
+    suggestedParams: algosdk.SuggestedParams,
+    kycProvider: TransactionSignerAccount,
+    oneYearFromNow: number,
+    iter: number,
+    proposalFactory: ProposalFactory,
+    ipfsClient: KuboRPCClient): Promise<bigint> {
+
+    const addr = algosdk.decodeAddress(account.addr).publicKey;
+    const proposerBoxName = new Uint8Array(Buffer.concat([Buffer.from('p'), addr]));
+
+    // Subscribe as proposer
+    await registryClient.send.subscribeProposer({
+        sender: account.addr,
+        signer: account.signer,
+        args: {
+            payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+                amount: proposerFee.microAlgos,
+                from: account.addr,
+                to: registryClient.appAddress,
+                suggestedParams,
+            }),
+        },
+        boxReferences: [proposerBoxName]
+    });
+
+    // Approve proposer KYC
+    await registryClient.send.setProposerKyc({
+        sender: kycProvider.addr,
+        signer: kycProvider.signer,
+        args: {
+            proposer: account.addr,
+            kycStatus: true,
+            kycExpiring: BigInt(oneYearFromNow),
+        },
+        boxReferences: [proposerBoxName]
+    });
+
+    // Create a proposal
+    const result = await registryClient.send.openProposal({
+        sender: account.addr,
+        signer: account.signer,
+        args: {
+            payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+                amount: proposalFee.microAlgos,
+                from: account.addr,
+                to: registryClient.appAddress,
+                suggestedParams,
+            }),
+        },
+        boxReferences: [proposerBoxName],
+        extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
+    });
+
+    // Store proposal ID if available
+    if (!result.return) {
+        console.error('Proposal creation failed');
+        throw Error('Proposal creation failed');
+    }
+
+    console.log(`\nNew Proposal: ${result.return}\n`)
+
+    // instance a new proposal client
+    const proposalClient = proposalFactory.getAppClientById({ appId: result.return });
+
+    const { cid } = await ipfsClient.add(JSON.stringify(
+        mockProposals[iter].proposalJson,
+        (_, value) => (
+            typeof value === 'bigint'
+                ? value.toString()
+                : value // return everything else unchanged
+        )
+    ), { cidVersion: 1 });
+
+    const proposalSubmissionFee = Math.trunc(Number(
+        ((mockProposals[iter].requestedAmount).algos().microAlgos * BigInt(1_000)) / BigInt(10_000)
+    ));
+
+    console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
+    console.log(`Title: ${mockProposals[iter].title}\n`);
+    console.log(`Cid: ${cid.toString()}\n`);
+    console.log(`Funding Type: ${mockProposals[iter].fundingType}\n`);
+    console.log(`Requested Amount: ${(mockProposals[iter].requestedAmount).algos().microAlgos}\n\n`);
+
+    await proposalClient.send.submit({
+        sender: account.addr,
+        signer: account.signer,
+        args: {
+            payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+                amount: proposalSubmissionFee,
+                from: account.addr,
+                to: proposalClient.appAddress,
+                suggestedParams,
+            }),
+            title: mockProposals[iter].title,
+            cid: CID.asCID(cid)!.bytes,
+            fundingType: mockProposals[iter].fundingType,
+            requestedAmount: (mockProposals[iter].requestedAmount).algos().microAlgos,
+            focus: mockProposals[iter].proposalJson.focus,
+        },
+        appReferences: [registryClient.appId],
+    });
+
+
+    return result.return;
 }
