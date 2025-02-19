@@ -129,4 +129,14 @@ export const MiniProposalSummaryCard: Story = {
     proposal: mockProposalSummaryCard,
     mini: true,
   },
-}
+};
+
+export const FinalizeModalStory: Story = {
+  args: {
+    proposal: {
+      ...mockProposal,
+      status: ProposalStatus.ProposalStatusDraft,
+    },
+    isOwner: true,
+  },
+};
