@@ -6,12 +6,14 @@ import { type ComponentType, useState, useEffect } from "react";
 import type { LinkProps } from "../components/Link";
 import { useGetAllProposals } from "src/hooks/useProposals";
 import { FocusMap, ProposalFundingTypeMap, statusToPhase, type ProposalSummaryCardDetails } from "@/types/proposals";
+import { useWallet } from "@txnlab/use-wallet-react";
 
 const title = 'xGov';
 
 export function HomePage() {
-    const { data: proposalsData } = useGetAllProposals();
+    const { data: proposalsData, refetch } = useGetAllProposals();
     const [filteredProposals, setFilteredProposals] = useState<ProposalSummaryCardDetails[]>([]);
+    const { activeAddress, transactionSigner } = useWallet();
 
     useEffect(() => {
         if (proposalsData) {
@@ -57,7 +59,7 @@ export function HomePage() {
                 <h1 className="text-3xl text-wrap lg:text-4xl max-w-4xl text-algo-black dark:text-white font-bold mt-16 mb-8">Active Proposals</h1>
                 {
                     !!filteredProposals.length ? (
-                        <ProposalList proposals={filteredProposals} />
+                        <ProposalList proposals={filteredProposals} activeAddress={activeAddress ?? ""} transactionSigner={transactionSigner} refetcher={refetch} />
                     ) : (
                         <p className="text-algo-black dark:text-white">No proposals match the selected filters.</p>
                     )

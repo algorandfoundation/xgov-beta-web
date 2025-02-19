@@ -4,11 +4,9 @@ import { Link } from "@/components/Link";
 import { shortenAddress } from "@/functions/shortening";
 import { capitalizeFirstLetter } from "@/functions/capitalization";
 import { useState } from "react";
-import { useWallet } from "@txnlab/use-wallet-react";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { AlgorandClient as algorand } from 'src/algorand/algo-client';
 import { RegistryClient as registryClient } from "src/algorand/contract-clients";
-import { useGetAllProposals, useProposal } from "src/hooks/useProposals";
 
 
 
@@ -19,10 +17,19 @@ export interface ProposalCardProps {
     path?: string;
     proposal: ProposalCardDetails;
     mini?: boolean;
-    isOwner?: boolean;
+    activeAddress?: string | null;
+    transactionSigner?: any;
+    refetcher?: () => void;
 }
 
-export function ProposalCard({ proposal, path = '', mini = false, isOwner = false }: ProposalCardProps) { 
+export function ProposalCard({
+    proposal,
+    path = '',
+    mini = false,
+    activeAddress = null,
+    transactionSigner = null,
+    refetcher = () => {}
+}: ProposalCardProps) { 
 
     if (isProposalInfoCardDetails(proposal)) {
         return (
@@ -38,7 +45,13 @@ export function ProposalCard({ proposal, path = '', mini = false, isOwner = fals
         }
 
         return (
-            <ProposalSummaryCard path={path} proposal={proposal} isOwner={isOwner} />
+            <ProposalSummaryCard
+                path={path}
+                proposal={proposal}
+                activeAddress={activeAddress}
+                transactionSigner={transactionSigner}
+                refetcher={refetcher}
+            />
         )
     }
 
@@ -110,7 +123,9 @@ interface ProposalSummaryCardProps {
      */
     path?: string;
     proposal: ProposalSummaryCardDetails;
-    isOwner?: boolean;
+    activeAddress: string | null;
+    transactionSigner: any;
+    refetcher: () => void;
 }
 
 function ProposalSummaryCard({
@@ -124,9 +139,10 @@ function ProposalSummaryCard({
         requestedAmount,
         proposer
     },
-    isOwner = false
+    activeAddress,
+    transactionSigner,
+    refetcher,
 }: ProposalSummaryCardProps) {
-
     const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
 
     const phase = statusToPhase[status];
@@ -142,7 +158,7 @@ function ProposalSummaryCard({
     return (
         <li role="listitem" className="list-none relative flex bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
             <div className="flex-1 flex flex-col justify-center">
-                <h3 className="text-lg text-wrap lg:text-2xl mb-3 lg:mb-6 font-bold">{title} {isOwner && ("🫵")}</h3>
+                <h3 className="text-lg text-wrap lg:text-2xl mb-3 lg:mb-6 font-bold">{title} {(proposer == activeAddress) && ("🫵")}</h3>
                 <p className="text-xl">{FocusMap[focus]}</p>
                 <p className="text-xl">{ProposalFundingTypeMap[fundingType]}</p>
                 <p className="text-xl">{(Number(requestedAmount) / 1_000_000).toLocaleString()} ALGO</p>
@@ -180,7 +196,7 @@ function ProposalSummaryCard({
                 >
                     Read More
                 </Link>
-                {isOwner && status === ProposalStatus.ProposalStatusDraft && (
+                {(proposer == activeAddress) && status === ProposalStatus.ProposalStatusDraft && (
                     <button
                         className="text-xl font-semi-bold text-algo-teal dark:text-algo-blue"
                         onClick={handleOpenFinalizeModal}
@@ -189,11 +205,23 @@ function ProposalSummaryCard({
                     </button>
                 )}
             </div>
-            <FinalizeModal isOpen={isFinalizeModalOpen} onClose={handleCloseFinalizeModal} proposalId={id} />    
+            <FinalizeModal
+                isOpen={isFinalizeModalOpen}
+                onClose={handleCloseFinalizeModal}
+                proposalId={id}
+                activeAddress={activeAddress ?? ''}
+                transactionSigner={transactionSigner}
+                refetcher={refetcher}
+            />
         </li>
     )
 }
 
+
+interface MyProposalSummaryCardProps {
+    path?: string;
+    proposal: ProposalSummaryCardDetails;
+}
 
 function MyProposalSummaryCard({
     proposal: {
@@ -204,7 +232,7 @@ function MyProposalSummaryCard({
         fundingType,
         requestedAmount,
     }
-}: ProposalSummaryCardProps) {
+}: MyProposalSummaryCardProps) {
 
     const phase = statusToPhase[status];
 
@@ -297,16 +325,20 @@ interface FinalizeModalProps {
     isOpen: boolean;
     onClose: () => void;
     proposalId: bigint;
+    activeAddress: string | null;
+    transactionSigner: any;
+    refetcher: () => void;
 }
 
-export function FinalizeModal({ isOpen, onClose, proposalId }: FinalizeModalProps) {
-    const { activeAddress, transactionSigner } = useWallet();
+export function FinalizeModal({
+    isOpen,
+    onClose,
+    proposalId,
+    activeAddress,
+    transactionSigner,
+    refetcher,
+}: FinalizeModalProps) {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-    const p = useProposal(Number(proposalId)); // In case called from /proposal/
-    const pAll = useGetAllProposals(); // In case called from homepage
-
-    if (!isOpen) return null;
 
     const handleSubmit = async () => {
         try {
@@ -331,8 +363,7 @@ export function FinalizeModal({ isOpen, onClose, proposalId }: FinalizeModalProp
                 console.log('Transaction confirmed');
                 setErrorMessage(null);
                 onClose();
-                p.refetch();
-                pAll.refetch();
+                refetcher();
                 return true;
             }
 
@@ -345,6 +376,8 @@ export function FinalizeModal({ isOpen, onClose, proposalId }: FinalizeModalProp
             return false;
         }
     };
+
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

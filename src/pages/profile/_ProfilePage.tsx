@@ -297,7 +297,7 @@ export function ProfilePage() {
                     </ActionButton>
                 </div>
                 {
-                    !!proposals.data && <ProposalList proposals={proposals.data} />
+                    !!proposals.data && <ProposalList proposals={proposals.data} activeAddress={activeAddress} transactionSigner={transactionSigner} refetcher={proposals.refetch} />
                 }
             </div>
         </Page>

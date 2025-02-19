@@ -1,13 +1,14 @@
 import { ProposalStatus, type ProposalSummaryCardDetails } from "@/types/proposals";
 import { ProposalCard } from "../ProposalCard/ProposalCard";
-import { useWallet } from "@txnlab/use-wallet-react";
 
 export interface ProposalListProps {
     proposals: ProposalSummaryCardDetails[];
+    activeAddress: string;
+    transactionSigner: any;
+    refetcher: () => void;
 }
 
-export function ProposalList({ proposals }: ProposalListProps) {
-    const { activeAddress } = useWallet();
+export function ProposalList({ proposals, activeAddress, transactionSigner, refetcher }: ProposalListProps) {
 
     // Filter out blocked proposals
     // They will be visible in the Admin page
@@ -22,7 +23,7 @@ export function ProposalList({ proposals }: ProposalListProps) {
     return (
         <ul className="flex flex-col gap-4">
             {filteredProposals.map((proposal) => {
-                return <ProposalCard key={proposal.id} proposal={proposal} isOwner={proposal.proposer == activeAddress} />;
+                return <ProposalCard key={proposal.id} proposal={proposal} activeAddress={activeAddress} transactionSigner={transactionSigner} refetcher={refetcher} />;
             })}
         </ul>
     )

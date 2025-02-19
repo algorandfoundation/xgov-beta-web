@@ -30,7 +30,7 @@ function ProposalCardAndTitle({ proposal }: { proposal: ProposalInfoCardDetails 
 }
 
 export function ProposalPage() {
-    const { activeAddress } = useWallet();
+    const { activeAddress, transactionSigner } = useWallet();
     const registryGlobalState = useRegistry(); 
     // TODO: Get NFD name using the activeAddress
     const { proposal: proposalId } = useParams();
@@ -93,7 +93,7 @@ export function ProposalPage() {
                 <h1 className="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
                     {Number(proposal.data?.id)} - {shortenAddress(proposal.data?.proposer!)}
                 </h1>
-                <ProposalCard proposal={proposal.data} isOwner={proposal.data.proposer == activeAddress} />
+                <ProposalCard proposal={proposal.data} activeAddress={activeAddress} transactionSigner={transactionSigner} refetcher={proposal.refetch} />
             </div>
         </Page>
     )
