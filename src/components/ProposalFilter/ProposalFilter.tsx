@@ -14,7 +14,7 @@ export interface ProposalFilterProps {
 }
 
 export const filters: { [key: string]: string[] } = {
-    status: ['discussion', 'voting', 'submission', 'closure'],
+    status: ['discussion', 'voting', 'submission', 'closure', 'draft'],
     type: ['Proactive', 'Retroactive'],
     amount: ['0-1000', '1000-10000', '10000-100000', '100000+'],
     category: ['DeFi', 'Education', 'Libraries', 'NFT'],

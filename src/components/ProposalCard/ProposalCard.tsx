@@ -3,6 +3,14 @@ import { cn } from "@/functions/utils";
 import { Link } from "@/components/Link";
 import { shortenAddress } from "@/functions/shortening";
 import { capitalizeFirstLetter } from "@/functions/capitalization";
+import { useState } from "react";
+import { useWallet } from "@txnlab/use-wallet-react";
+import { ProposalFactory } from "@algorandfoundation/xgov";
+import { AlgorandClient as algorand } from 'src/algorand/algo-client';
+import { RegistryClient as registryClient } from "src/algorand/contract-clients";
+import { useGetAllProposals, useProposal } from "src/hooks/useProposals";
+
+
 
 export interface ProposalCardProps {
     /**
@@ -11,9 +19,10 @@ export interface ProposalCardProps {
     path?: string;
     proposal: ProposalCardDetails;
     mini?: boolean;
+    isOwner?: boolean;
 }
 
-export function ProposalCard({ proposal, path = '', mini = false }: ProposalCardProps) {
+export function ProposalCard({ proposal, path = '', mini = false, isOwner = false }: ProposalCardProps) { 
 
     if (isProposalInfoCardDetails(proposal)) {
         return (
@@ -29,7 +38,7 @@ export function ProposalCard({ proposal, path = '', mini = false }: ProposalCard
         }
 
         return (
-            <ProposalSummaryCard path={path} proposal={proposal} />
+            <ProposalSummaryCard path={path} proposal={proposal} isOwner={isOwner} />
         )
     }
 
@@ -101,6 +110,7 @@ interface ProposalSummaryCardProps {
      */
     path?: string;
     proposal: ProposalSummaryCardDetails;
+    isOwner?: boolean;
 }
 
 function ProposalSummaryCard({
@@ -113,15 +123,26 @@ function ProposalSummaryCard({
         fundingType,
         requestedAmount,
         proposer
-    }
+    },
+    isOwner = false
 }: ProposalSummaryCardProps) {
 
+    const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
+
     const phase = statusToPhase[status];
+
+    const handleOpenFinalizeModal = () => {
+        setIsFinalizeModalOpen(true);
+    };
+
+    const handleCloseFinalizeModal = () => {
+        setIsFinalizeModalOpen(false);
+    };
 
     return (
         <li role="listitem" className="list-none relative flex bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
             <div className="flex-1 flex flex-col justify-center">
-                <h3 className="text-lg text-wrap lg:text-2xl mb-3 lg:mb-6 font-bold">{title}</h3>
+                <h3 className="text-lg text-wrap lg:text-2xl mb-3 lg:mb-6 font-bold">{title} {isOwner && ("🫵")}</h3>
                 <p className="text-xl">{FocusMap[focus]}</p>
                 <p className="text-xl">{ProposalFundingTypeMap[fundingType]}</p>
                 <p className="text-xl">{(Number(requestedAmount) / 1_000_000).toLocaleString()} ALGO</p>
@@ -148,16 +169,27 @@ function ProposalSummaryCard({
                 <p className="text-lg my-1 mr-2">- {proposer.length === 58 ? shortenAddress(proposer) : proposer}</p>
             </div>
 
-            <Link
-                data-testid="proposol-link"
-                className={cn(
-                    path === `/proposal/${id}` ? 'bg-algo-blue' : '',
-                    "absolute bottom-0 right-0 mb-4 mr-4 text-xl font-semi-bold hover:text-algo-teal dark:hover:text-algo-blue"
+            <div className="absolute bottom-0 right-0 mb-4 mr-4 flex flex-col items-center gap-2">
+                <Link
+                    data-testid="proposol-link"
+                    className={cn(
+                        path === `/proposal/${id}` ? 'bg-algo-blue' : '',
+                        "text-xl font-semi-bold hover:text-algo-teal dark:hover:text-algo-blue"
+                    )}
+                    to={`/proposal/${Number(id)}`}
+                >
+                    Read More
+                </Link>
+                {isOwner && status === ProposalStatus.ProposalStatusDraft && (
+                    <button
+                        className="text-xl font-semi-bold text-algo-teal dark:text-algo-blue"
+                        onClick={handleOpenFinalizeModal}
+                    >
+                        Submit for Vote
+                    </button>
                 )}
-                to={`/proposal/${Number(id)}`}
-            >
-                Read More
-            </Link>
+            </div>
+            <FinalizeModal isOpen={isFinalizeModalOpen} onClose={handleCloseFinalizeModal} proposalId={id} />    
         </li>
     )
 }
@@ -259,4 +291,74 @@ function ProposalInfoCard({ proposal: { forumLink, fundingType, focus, openSourc
             </div>
         </li>
     )
+}
+
+interface FinalizeModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    proposalId: bigint;
+}
+
+export function FinalizeModal({ isOpen, onClose, proposalId }: FinalizeModalProps) {
+    const { activeAddress, transactionSigner } = useWallet();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const p = useProposal(Number(proposalId)); // In case called from /proposal/
+    const pAll = useGetAllProposals(); // In case called from homepage
+
+    if (!isOpen) return null;
+
+    const handleSubmit = async () => {
+        try {
+            if (!activeAddress || !transactionSigner) {
+                setErrorMessage("Wallet not connected.");
+                return false;
+            }
+
+            const proposalFactory = new ProposalFactory({ algorand });
+            const proposalClient = proposalFactory.getAppClientById({ appId: proposalId });
+
+            const res = await proposalClient.send.finalize({
+                sender: activeAddress,
+                signer: transactionSigner,
+                args: {},
+                appReferences: [registryClient.appId],
+                accountReferences: [activeAddress],
+                extraFee: (1000).microAlgos(),
+            });
+
+            if (res.confirmation.confirmedRound !== undefined && res.confirmation.confirmedRound > 0 && res.confirmation.poolError === '') {
+                console.log('Transaction confirmed');
+                setErrorMessage(null);
+                onClose();
+                p.refetch();
+                pAll.refetch();
+                return true;
+            }
+
+            console.log('Transaction not confirmed');
+            setErrorMessage("Transaction not confirmed.");
+            return false;
+        } catch (error) {
+            console.error('Error during finalize:', error);
+            setErrorMessage("An error occurred calling the proposal contract.");
+            return false;
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-algo-black p-4 rounded-lg max-w-lg w-full">
+                <button className="absolute top-2 right-2 text-xl" onClick={onClose}>×</button>
+                <h2 className="text-2xl font-bold mb-4">Submit Proposal for Vote</h2>
+                <p>Are you sure you want to submit this proposal for voting?</p>
+                <p>Once submitted, you cannot edit any further.</p>
+                {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+                <div className="mt-4 flex justify-end gap-2">
+                    <button className="bg-gray-300 dark:bg-gray-700 p-2 rounded" onClick={onClose}>Cancel</button>
+                    <button className="bg-algo-teal dark:bg-algo-blue text-white p-2 rounded" onClick={handleSubmit}>Submit</button>
+                </div>
+            </div>
+        </div>
+    );
 }

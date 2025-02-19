@@ -93,7 +93,7 @@ export function ProposalPage() {
                 <h1 className="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
                     {Number(proposal.data?.id)} - {shortenAddress(proposal.data?.proposer!)}
                 </h1>
-                <ProposalCard proposal={proposal.data} />
+                <ProposalCard proposal={proposal.data} isOwner={proposal.data.proposer == activeAddress} />
             </div>
         </Page>
     )
