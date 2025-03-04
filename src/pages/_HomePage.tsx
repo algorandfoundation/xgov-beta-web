@@ -95,7 +95,7 @@ export function HomePage() {
                     {
                         !!proposals && proposals.length > 0
                             ? <StackedList proposals={proposals} />
-                            : <div className="h-[96rem]">No Results</div>
+                            : <div className="h-80 flex justify-center items-center">No Results</div>
                     }
                 </div>
             </Page>
