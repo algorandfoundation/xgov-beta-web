@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
 // import { within, expect } from '@storybook/test';
 
-import { ProposalFocus, ProposalFundingType, ProposalStatus, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from '@/types/proposals';
+import { ProposalFocus, ProposalFundingType, ProposalStatus } from '@/types/proposals';
+import type { ProposalInfoCardDetails, ProposalMainCardDetails, ProposalSummaryCardDetails } from '@/types/proposals';
 import { ProposalCard, type ProposalCardProps } from './ProposalCard';
 
 declare global

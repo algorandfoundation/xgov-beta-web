@@ -7,6 +7,8 @@ import { ProposalFactory } from '@algorandfoundation/xgov';
 import { ProposalFocus, ProposalFundingType, type ProposalJSON, type ProposalStatus } from '@/types/proposals';
 import { ProposalStatus as PS } from '@/types/proposals';
 
+import { CID } from 'multiformats';
+
 export interface MockProposalCreationData {
     status: ProposalStatus;
     title: string;
@@ -601,7 +603,7 @@ export async function initializeMockEnvironment(mockProposals: MockProposalCreat
                         suggestedParams,
                     }),
                     title: mockProposals[i].title,
-                    cid: cid.bytes,
+                    cid: CID.asCID(cid)!.bytes,
                     fundingType: mockProposals[i].fundingType,
                     requestedAmount: (mockProposals[i].requestedAmount).algos().microAlgos,
                     focus: mockProposals[i].focus,

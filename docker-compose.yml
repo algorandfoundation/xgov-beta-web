@@ -1,0 +1,12 @@
+services:
+  ipfs_host:
+    image: ipfs/kubo:latest
+    container_name: ipfs_host
+    volumes:
+      - ./ipfs_staging:/export
+      - ./ipfs_data:/data/ipfs
+    ports:
+      - "4040:4001"
+      - "4040:4001/udp"
+      - "127.0.0.1:8081:8080"
+      - "127.0.0.1:5001:5001"

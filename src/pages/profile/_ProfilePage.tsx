@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { useState, type ComponentType } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { AlgorandClient } from "src/algorand/algo-client";
+import { AlgorandClient as algorand } from "src/algorand/algo-client";
 import { RegistryAppID, RegistryClient } from "src/algorand/contract-clients";
 import algosdk, { ALGORAND_MIN_TX_FEE, makePaymentTxnWithSuggestedParamsFromObject } from "algosdk";
 import { Buffer } from 'buffer';
@@ -90,7 +90,7 @@ export function ProfilePage() {
     const subscribeXgov = async () => {
         setSubscribeXGovLoading(true);
 
-        const suggestedParams = await AlgorandClient.getSuggestedParams();
+        const suggestedParams = await algorand.getSuggestedParams();
 
         const payment = makePaymentTxnWithSuggestedParamsFromObject({
             from: activeAddress,
@@ -187,7 +187,7 @@ export function ProfilePage() {
     const subscribeProposer = async () => {
         setSubscribeProposerLoading(true);
 
-        const suggestedParams = await AlgorandClient.getSuggestedParams();
+        const suggestedParams = await algorand.getSuggestedParams();
 
         const payment = makePaymentTxnWithSuggestedParamsFromObject({
             from: activeAddress,
@@ -223,7 +223,7 @@ export function ProfilePage() {
 
         setNewProposalLoading(true);
 
-        const suggestedParams = await AlgorandClient.getSuggestedParams();
+        const suggestedParams = await algorand.getSuggestedParams();
 
         const proposalFee = registry.data?.proposalFee;
 

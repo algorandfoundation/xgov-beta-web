@@ -161,7 +161,7 @@ export interface ProposalSummaryCardDetails {
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;
 
 export type ProposalInfoCardDetails = Pick<
-    ProposalMainCardDetails, 
+    ProposalMainCardDetails,
     'focus' | 'forumLink' | 'fundingType' | 'openSource' | 'requestedAmount'
 >
 
