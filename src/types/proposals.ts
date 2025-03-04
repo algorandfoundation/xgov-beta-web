@@ -25,6 +25,20 @@ export const ProposalStatusMap = {
 	[ProposalStatus.ProposalStatusDelete]: 'Delete',
 }
 
+export const ProposalStatusReverseMap: { [key: string]: ProposalStatus } = {
+    'Empty': ProposalStatus.ProposalStatusEmpty,
+	'Draft': ProposalStatus.ProposalStatusDraft,
+	'Discussion': ProposalStatus.ProposalStatusFinal,
+	'Voting': ProposalStatus.ProposalStatusVoting,
+	'Approved': ProposalStatus.ProposalStatusApproved,
+	'Rejected': ProposalStatus.ProposalStatusRejected,
+	'Funded': ProposalStatus.ProposalStatusFunded,
+	'Blocked': ProposalStatus.ProposalStatusBlocked,
+	'Delete': ProposalStatus.ProposalStatusDelete,
+}
+
+export const ProposalStatusFilterKeys = ['Discussion', 'Voting'];
+
 export enum ProposalCategory {
     ProposalCategoryNull = 0,
     ProposalCategorySmall = 10,
@@ -41,6 +55,13 @@ export const ProposalCategoryMap = {
 	[ProposalCategory.ProposalCategoryLarge]: 'Large',
 }
 
+export const ProposalCategoryReverseMap = {
+    'Null': ProposalCategory.ProposalCategoryNull,
+    'Small': ProposalCategory.ProposalCategorySmall,
+    'Medium': ProposalCategory.ProposalCategoryMedium,
+    'Large': ProposalCategory.ProposalCategoryLarge,
+}
+
 export enum ProposalFundingType {
     Null = 0,
     Proactive = 10,
@@ -53,6 +74,12 @@ export const ProposalFundingTypeMap = {
 	[ProposalFundingType.Null]: 'Null',
 	[ProposalFundingType.Proactive]: 'Proactive',
 	[ProposalFundingType.Retroactive]: 'Retroactive',
+}
+
+export const ProposalFundingTypeReverseMap: { [key: string]: ProposalFundingType } = {
+    'Null': ProposalFundingType.Null,
+    'Proactive': ProposalFundingType.Proactive,
+    'Retroactive': ProposalFundingType.Retroactive,
 }
 
 export enum ProposalFocus {
@@ -79,6 +106,17 @@ export const FocusMap = {
     [ProposalFocus.FocusOther]: 'Other',
 }
 
+export const FocusReverseMap: { [key: string]: ProposalFocus } = {
+    'Null': ProposalFocus.FocusNull,
+    'DeFi': ProposalFocus.FocusDeFi,
+    'Education': ProposalFocus.FocusEducation,
+    'Libraries': ProposalFocus.FocusLibraries,
+    'NFT': ProposalFocus.FocusNFT,
+    'Tooling': ProposalFocus.FocusTooling,
+    'Saas': ProposalFocus.FocusSaas,
+    'Other': ProposalFocus.FocusOther,
+}
+
 export interface ProposalJSON {
     description: string;
     team: string;
@@ -94,25 +132,6 @@ export interface ProposalJSON {
     pastProposalLinks: bigint[];
     forumLink: string;
 }
-
-// export const statusToPhase = {
-// 	[ProposalStatus.ProposalStatusEmpty]: 'null',
-// 	[ProposalStatus.ProposalStatusDraft]: 'draft',
-// 	[ProposalStatus.ProposalStatusFinal]: 'discussion',
-// 	[ProposalStatus.ProposalStatusVoting]: 'voting',
-// 	[ProposalStatus.ProposalStatusApproved]: 'closure',
-// 	[ProposalStatus.ProposalStatusRejected]: 'closure',
-// 	[ProposalStatus.ProposalStatusFunded]: 'closure',
-// 	[ProposalStatus.ProposalStatusBlocked]: 'closure',
-// 	[ProposalStatus.ProposalStatusDelete]: 'closure',
-// };
-
-// export const phaseToText = {
-//     submission: 'Submission',
-//     discussion: 'Discussion',
-//     voting: 'Voting',
-//     closure: 'Closure'
-// };
 
 export type ProposalCardDetails = ProposalMainCardDetails | ProposalSummaryCardDetails | ProposalInfoCardDetails;
 

@@ -81,24 +81,24 @@ export function Hero({ title, description, xgovs, proposals, treasury, votes }: 
                     </div>
 
                     <h1 className="text-2xl mb-2 font-bold">Current Cohort</h1>
-                    <ul className="flex flex-wrap gap-x-8 gap-y-4 sm:gap-10 md:gap-40 text-sm font-mono text-algo-blue-30 dark:text-algo-black-70">
+                    <ul className="flex flex-wrap gap-x-8 gap-y-4 sm:gap-10 md:gap-40 text-sm font-mono text-white dark:text-algo-black">
                         <li className="flex flex-col">
-                            <span className="text-bold text-white dark:text-algo-black">xGovs</span>
+                            <span className="text-bold text-algo-blue-30 dark:text-algo-black-70">xGovs</span>
                             {xgovs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                         </li>
                         <li className="flex flex-col">
-                            <span className="text-bold text-white dark:text-algo-black">Proposals</span>
+                            <span className="text-bold text-algo-blue-30 dark:text-algo-black-70">Proposals</span>
                             {proposals.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                         </li>
                         <li className="flex flex-col">
-                            <span className="text-bold text-white dark:text-algo-black">Treasury</span>
+                            <span className="text-bold text-algo-blue-30 dark:text-algo-black-70">Treasury</span>
                             <span className="flex items-center gap-1">
                                 {(treasury / 1_000_000).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                                 <AlgorandIcon className="fill-white dark:fill-algo-black size-3" />
                             </span>
                         </li>
                         <li className="flex flex-col">
-                            <span className="text-bold text-white dark:text-algo-black">Votes</span>
+                            <span className="text-bold text-algo-blue-30 dark:text-algo-black-70">Votes</span>
                             {votes.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                         </li>
                     </ul>

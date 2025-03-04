@@ -4,7 +4,7 @@ import { TokenIcon } from "../icons/TokenIcon";
 import { cn } from "@/functions/utils";
 
 const detailVariants = cva(
-    "inline-flex items-center text-xs md:text-lg w-32",
+    "inline-flex items-center text-xs md:text-lg",
     {
         variants: {
             variant: {

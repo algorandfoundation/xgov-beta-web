@@ -1,7 +1,5 @@
 import BracketedPhaseDetail from "@/components/BracketedPhaseDetail/BracketedPhaseDetail";
-import DiscussionLink from "@/components/DiscussionLink/DiscussionLink";
 import FocusDetail from "@/components/FocusDetail/FocusDetail";
-import FundingTypeAndTimeDetail from "@/components/FundingTypeAndTimeDetail/FundingTypeAndTimeDetail";
 import FundingTypeDetail from "@/components/FundingTypeDetail/FundingTypeDetail";
 import { BlockIcon } from "@/components/icons/BlockIcon";
 import { Link } from "react-router-dom";
@@ -16,7 +14,6 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
-import UserCircleRow from "@/components/UserCircleRow/UserCircleRow";
 import UserPill from "@/components/UserPill/UserPill";
 import VoteCounter from "@/components/VoteCounter/VoteCounter";
 import { ProposalStatus, ProposalStatusMap, type ProposalBrief, type ProposalInfoCardDetails, type ProposalMainCardDetails } from "@/types/proposals";
@@ -55,10 +52,10 @@ export function ProposalPage() {
                 proposal={proposal.data}
                 pastProposals={pastProposals.data}
             >
-                <div className="flex items-center justify-between lg:gap-10 bg-algo-blue-50 text-white dark:bg-algo-teal-50 mx-4 lg:mx-0 my-4 pr-4 p-2 rounded-3xl">
-                    <RequestedAmountDetail variant='secondary' requestedAmount={proposal.data.requestedAmount} />
-                    <FocusDetail variant='secondary' focus={proposal.data.focus} />
-                    <FundingTypeDetail variant='secondary' fundingType={proposal.data.fundingType} />
+                <div className="flex lg:flex-col items-end justify-between gap-2 text-white lg:-mt-16 mx-4 lg:mx-0 my-4 p-2">
+                    <RequestedAmountDetail requestedAmount={proposal.data.requestedAmount} />
+                    <FocusDetail focus={proposal.data.focus} />
+                    <FundingTypeDetail fundingType={proposal.data.fundingType} />
                 </div>
                 <StatusCard proposal={proposal.data} />
             </ProposalInfo>
@@ -142,7 +139,7 @@ export function StatusCard({ className = '', proposal }: StatusCardProps) {
     const details = statusCardMap[proposal.status];
 
     return (
-        <div className={cn(className, "w-full lg:min-w-[40rem] bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between sm:flex-nowrap relative transition overflow-hidden")}>
+        <div className={cn(className, "w-full lg:min-w-[30rem] xl:min-w-[40rem] bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between sm:flex-nowrap relative transition overflow-hidden")}>
             <div className="w-full px-4 py-5 sm:px-6">
                 <h3 className="text-base font-semibold text-algo-black dark:text-white">{details.header}</h3>
                 <p className="mt-1 text-sm text-algo-black-80 dark:text-algo-black-30">{details.subHeader}</p>

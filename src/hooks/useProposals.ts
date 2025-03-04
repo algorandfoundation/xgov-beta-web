@@ -8,7 +8,7 @@ export function useGetAllProposals() {
     });
 }
 
-export function useProposalsByProposer(address: string | undefined) {
+export function useProposalsByProposer(address: string | null | undefined) {
     return useQuery({
         queryKey: ['getProposalsByProposer', address],
         queryFn: () => getProposalsByProposer(address!),

@@ -5,7 +5,7 @@ import { toggleTheme } from "@/stores/themeStore";
 export function ThemeToggle() {
     return (
         <button
-        className="p-1"
+        className="p-2 hover:bg-white/10 dark:hover:bg-algo-black/10 rounded-md"
             onClick={() => toggleTheme()}
         >
             <SunIcon className="dark:hidden stroke-white dark:stroke-algo-black size-6"/>

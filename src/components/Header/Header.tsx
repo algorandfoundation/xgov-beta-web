@@ -2,6 +2,7 @@ import React from "react";
 import { Link, type LinkProps } from "@/components/Link.tsx";
 import { AlgorandIcon } from "../icons/AlgorandIcon";
 import { Link as RRLink } from "react-router-dom";
+import { cn } from "@/functions/utils";
 
 export type HeaderProps = {
     title?: string;
@@ -27,8 +28,26 @@ export function Header({ path, title = "xGov", LinkComponent = Link, children, M
 
                 <div className="hidden lg:inline-flex items-center gap-2 lg:gap-6">
                     <nav className="hidden md:flex gap-6 font-bold text-lg">
-                        <LinkComponent data-testid="header-docs-link" className={path === '/docs' ? 'text-algo-blue' : ''} to="/docs">Docs</LinkComponent>
-                        <LinkComponent data-testid="header-cohort-link" className={path === '/cohort' ? 'text-algo-blue' : ''} to="/cohort">Cohort</LinkComponent>
+                        <LinkComponent
+                            data-testid="header-docs-link"
+                            className={cn(
+                                path === '/docs' ? 'text-algo-blue' : '',
+                                'px-2 py-1 hover:bg-white/10 dark:hover:bg-algo-black/10 rounded-md'
+                            )}
+                            to="/docs"
+                        >
+                            Docs
+                        </LinkComponent>
+                        <LinkComponent
+                            data-testid="header-cohort-link"
+                            className={cn(
+                                path === '/cohort' ? 'text-algo-blue' : '',
+                                'px-2 py-1 hover:bg-white/10 dark:hover:bg-algo-black/10 rounded-md'
+                            )}
+                            to="/cohort"
+                        >
+                            Cohort
+                        </LinkComponent>
                     </nav>
                     {children}
                 </div>
