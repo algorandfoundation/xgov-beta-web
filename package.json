@@ -8,7 +8,7 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "mock-init": "tsx --env-file=.env.development mock-init.ts",
+    "mock-init": "tsx --env-file=.env.template mock-init.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "test-storybook",

@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import algosdk, {ALGORAND_MIN_TX_FEE} from 'algosdk';
 import {XGovRegistryFactory} from '@algorandfoundation/xgov/registry';
 import type {TransactionSignerAccount} from '@algorandfoundation/algokit-utils/types/account';
@@ -9,7 +10,6 @@ import {CID} from 'multiformats';
 
 import {mockProposals} from "./__fixtures__/proposals";
 
-console.log(process.env)
 const XGOV_FEE = BigInt(1_000_000);
 const PROPOSER_FEE = BigInt(10_000_000);
 const PROPOSAL_FEE = BigInt(100_000_000);
@@ -429,4 +429,22 @@ console.log({
 });
 
 console.log(`Use the following application to interact with the registry:\n`, results.appClient.appId);
-// TODO: just write the file directly
+const envFile = fs.readFileSync('./.env.template', 'utf-8')
+fs.writeFileSync('.env.development', envFile.replace('<REPLACE_WITH_APPLICATION_ID>', results.appClient.appId.toString()), 'utf-8')
+fs.writeFileSync('.deployment.json', JSON.stringify({
+    adminAccount: {
+        secret: algosdk.secretKeyToMnemonic(adminAccount.account.sk),
+        addr: adminAccount.addr,
+    },
+    kycProvider: {
+        secret: algosdk.secretKeyToMnemonic(kycProvider.account.sk),
+        addr: kycProvider.addr,
+    },
+    proposerAccounts: proposerAccounts.map((acct)=>{
+        return {
+            secret: algosdk.secretKeyToMnemonic(acct.account.sk),
+            addr: acct.account.addr,
+        }
+    }),
+    proposalIds,
+}, (_, v) => typeof v === 'bigint' ? v.toString() : v, 2), 'utf-8');

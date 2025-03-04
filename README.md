@@ -25,7 +25,7 @@ Follow the steps below to ensure proper setup.
 
 For the frontend to properly work, you need to have an initialized xGov Registry smart contract deployed on a network. You will also need to specify which algod, indexer and kmd servers it should be pointed towards.
 
-For local development, use the Algokit Localnet. Create a `.env` file at the root of the cloned repository and fill it with the following:
+For local development, use the Algokit Localnet. Create a `.env.development` file at the root of the cloned repository and fill it with the following:
 
 ```bash
 PUBLIC_ALGOD_SERVER=http://localhost
