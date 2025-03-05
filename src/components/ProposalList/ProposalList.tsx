@@ -14,7 +14,7 @@ export function ProposalList({ proposals }: ProposalListProps) {
     }
 
     return (
-        <ul className="flex flex-col gap-4">
+        <ul className="w-full flex flex-col gap-2">
             {proposals.map((proposal) => (
                 <ProposalCard key={proposal.id} proposal={proposal} />
             ))}

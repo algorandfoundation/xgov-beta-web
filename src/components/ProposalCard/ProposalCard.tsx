@@ -1,4 +1,4 @@
-import { FocusMap, isProposalInfoCardDetails, isProposalSummaryCardDetails, ProposalFundingTypeMap, statusToPhase, type ProposalCardDetails, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from "@/types/proposals";
+import { FocusMap, isProposalInfoCardDetails, isProposalSummaryCardDetails, ProposalFundingTypeMap, ProposalStatusMap, type ProposalCardDetails, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from "@/types/proposals";
 import { cn } from "@/functions/utils";
 import { Link } from "@/components/Link";
 import { shortenAddress } from "@/functions/shortening";
@@ -36,19 +36,19 @@ export function ProposalCard({ proposal, path = '', mini = false }: ProposalCard
     // implicitly main card
     const { status, description, team, additionalInfo, pastProposalLinks } = proposal as ProposalMainCardDetails;
 
-    const phase = statusToPhase[status];
+    const phase = ProposalStatusMap[status];
 
     return (
-        <li role="listitem" className="list-none relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
+        <div className="bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between gap-x-6 gap-y-4 p-5 sm:flex-nowrap relative transition overflow-hidden">
             <div className="absolute top-0 right-0 mt-4 mr-4 flex flex-col items-end gap-4">
                 <div>
                     <span className="text-xl">[</span>
                     <span
                         className={cn(
-                            phase === 'draft' ? 'text-algo-black-60' : '',
-                            phase === 'submission' ? 'text-algo-blue dark:text-algo-teal' : '',
-                            phase === 'discussion' ? 'text-algo-blue dark:text-algo-teal' : '',
-                            phase === 'voting' ? 'text-algo-teal' : '',
+                            phase === 'Draft' ? 'text-algo-black-60' : '',
+                            phase === 'Submission' ? 'text-algo-blue dark:text-algo-teal' : '',
+                            phase === 'Discussion' ? 'text-algo-blue dark:text-algo-teal' : '',
+                            phase === 'Voting' ? 'text-algo-teal' : '',
 
                             "p-0.5 px-1 lg:text-lg"
                         )}>
@@ -94,7 +94,7 @@ export function ProposalCard({ proposal, path = '', mini = false }: ProposalCard
                     )
                 }
             </div>
-        </li>
+        </div>
     )
 }
 
@@ -119,15 +119,18 @@ function ProposalSummaryCard({
     }
 }: ProposalSummaryCardProps) {
 
-    const phase = statusToPhase[status];
+    const phase = ProposalStatusMap[status];
 
     return (
-        <li role="listitem" className="list-none relative flex bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
+        <Link
+            to={`/proposal/${Number(id)}`}
+            className="list-none relative flex bg-algo-blue-60 dark:bg-algo-black border-2 border-white dark:border-white text-white dark:text-white p-4 rounded-3xl"
+        >
             <div className="flex-1 flex flex-col justify-center">
                 <h3 className="text-lg text-wrap lg:text-2xl mb-3 lg:mb-6 font-bold">{title}</h3>
-                <p className="text-xl">{FocusMap[focus]}</p>
-                <p className="text-xl">{ProposalFundingTypeMap[fundingType]}</p>
-                <p className="text-xl">{(Number(requestedAmount) / 1_000_000).toLocaleString()} ALGO</p>
+                <p className="text-md lg:text-xl">{FocusMap[focus]}</p>
+                <p className="text-md lg:text-xl">{ProposalFundingTypeMap[fundingType]}</p>
+                <p className="text-md lg:text-xl">{(Number(requestedAmount) / 1_000_000).toLocaleString()} ALGO</p>
             </div>
 
             <div className="flex flex-col items-end">
@@ -150,18 +153,7 @@ function ProposalSummaryCard({
                 </div>
                 <p className="text-lg my-1 mr-2">- {proposer.length === 58 ? shortenAddress(proposer) : proposer}</p>
             </div>
-
-            <Link
-                data-testid="proposol-link"
-                className={cn(
-                    path === `/proposal/${id}` ? 'bg-algo-blue' : '',
-                    "absolute bottom-0 right-0 mb-4 mr-4 text-xl font-semi-bold hover:text-algo-teal dark:hover:text-algo-blue"
-                )}
-                to={`/proposal/${Number(id)}`}
-            >
-                Read More
-            </Link>
-        </li>
+        </Link>
     )
 }
 
@@ -177,7 +169,7 @@ function MyProposalSummaryCard({
     }
 }: ProposalSummaryCardProps) {
 
-    const phase = statusToPhase[status];
+    const phase = ProposalStatusMap[status];
 
     return (
         <li className="list-none bg-white hover:bg-algo-teal-10 dark:hover:bg-algo-blue-50 dark:bg-algo-black border-2 border-algo-black hover:border-algo-teal dark:border-white dark:hover:border-algo-blue-40 text-algo-black dark:text-white rounded-lg max-w-3xl">

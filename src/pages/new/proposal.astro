@@ -1,0 +1,11 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { App } from "src/App";
+
+---
+<Layout>
+    <App
+        client:only
+        path='/new/proposal'
+    />
+</Layout>

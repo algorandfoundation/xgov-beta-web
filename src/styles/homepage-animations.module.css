@@ -1,0 +1,218 @@
+.intro {
+    animation: scaleDownOut 1s ease-in forwards;
+    animation-delay: .6s;
+}
+
+@keyframes scaleDownOut {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(-100%);
+        pointer-events: none;
+    }
+}
+
+.intro img {
+    animation: fadeOut .3s ease forwards;
+    animation-delay: .6s;
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.titleFadeIn {
+    opacity: 0;
+    animation: fadeInUp .6s ease forwards;
+    animation-delay: 1.5s;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.descriptionFadeIn {
+    opacity: 0;
+    animation: fadeInUp .6s ease forwards;
+    animation-delay: 1.5s;
+}
+
+.shapeSlideFadeIn1 {
+    opacity: 0;
+    animation: SlideFadeInToLeftOne 2s ease forwards;
+    animation-delay: 1.5s;
+}
+
+@keyframes SlideFadeInToLeftOne {
+    from {
+        opacity: 0;
+        transform: translateX(45rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(15rem);
+    }
+}
+
+@media screen and (max-width: 768px) {
+    @keyframes SlideFadeInToLeftOne {
+        from {
+            opacity: 0;
+            transform: translateX(-200%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+}
+
+.shapeSlideFadeIn2 {
+    opacity: 0;
+    animation: SlideFadeInToRight 2s ease forwards;
+    animation-delay: 1.5s;
+}
+
+.shapeSlideFadeIn3 {
+    opacity: 0;
+    animation: SlideFadeInToLeft 2s ease forwards;
+    animation-delay: 1.5s;
+}
+
+.shapeSlideFadeIn4 {
+    opacity: 0;
+    animation: SlideFadeInToLeft 2s ease forwards;
+    animation-delay: 1.5s;
+}
+
+.shapeSlideFadeIn5 {
+    opacity: 0;
+    animation: SlideFadeInToRight 2s ease forwards;
+    animation-delay: 1.5s;
+}
+
+@media screen and (max-width: 768px) {
+    .shapeSlideFadeIn5 {
+        opacity: 0;
+        animation: SlideFadeInToRight5 2s ease forwards;
+        animation-delay: 1.5s;
+    }
+    
+    @keyframes SlideFadeInToRight5 {
+        from {
+            opacity: 0;
+            transform: translateX(-200%) translateY(0.5rem);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0) translateY(0.5rem);
+        }
+    }
+}
+
+.shapeSlideFadeIn6 {
+    opacity: 0;
+    animation: SlideFadeInToRight6 2s ease forwards;
+    animation-delay: 1.5s;
+}
+
+@keyframes SlideFadeInToRight6 {
+    from {
+        opacity: 0;
+        transform: translateX(-200%) translateY(0.5rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) translateY(0.5rem);
+    }
+} 
+
+.shapeSlideFadeIn7 {
+    opacity: 0;
+    animation: SlideFadeInToRight7 2s ease forwards;
+    animation-delay: 1.5s;
+}
+
+@keyframes SlideFadeInToRight7 {
+    from {
+        opacity: 0;
+        transform: translateX(-30rem) translateY(-2.5rem) scale(.5);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(1.5rem) translateY(-2.5rem) scale(.5);
+    }
+}
+
+.shapeSlideFadeIn8 {
+    opacity: 0;
+    animation: SlideFadeInToLeft8 2s ease forwards;
+    animation-delay: 1.5s;
+}
+
+@keyframes SlideFadeInToLeft8 {
+    from {
+        opacity: 0;
+        transform: translateX(200%) translateY(5rem) scale(.5);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(6.5rem) translateY(5rem) scale(.5);
+    }
+}
+
+@keyframes SlideFadeInToLeft {
+    from {
+        opacity: 0;
+        transform: translateX(200%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes SlideFadeInToRight {
+    from {
+        opacity: 0;
+        transform: translateX(-200%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.popUpInCohort {
+    animation: popUpInCohort 1s ease forwards;
+    animation-delay: 1.5s;
+    transform: translateY(200%);
+}
+
+@keyframes popUpInCohort {
+    0% {
+        transform: translateY(200%);
+    }
+    98% {
+        transform: translateY(-1%);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}

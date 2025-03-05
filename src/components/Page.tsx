@@ -8,6 +8,7 @@ import { cn } from "@/functions/utils.ts";
 import { ThemeToggle } from "@/components/button/ThemeToggle/ThemeToggle";
 import { Connect } from "@/components/Connect/Connect";
 import { MobileNav } from "@/components/MobileNav/MobileNav";
+import Footer from "./Footer/Footer";
 import { useRegistry } from "src/hooks/useRegistry";
 
 export function DefaultSidebar(){
@@ -18,15 +19,15 @@ export function DefaultSidebar(){
 
 type ContentProps = PropsWithChildren<{ Sidebar?: ComponentType; }>
 
-export function Content({ children, Sidebar = DefaultSidebar }: ContentProps){
+export function Content({ children, Sidebar }: ContentProps){
     return (
         <main className={cn(
             // overlay ? "max-h-full pointer-events-none overflow-hidden" : "",
-            "m-auto p-4 lg:px-10 w-full grid grid-cols-1 lg:grid-cols-2"
+            "m-auto w-full px-2 md:px-4"
         )}>
             {children}
             <div className="justify-self-end">
-                <Sidebar/>
+                { Sidebar && <Sidebar/> }
             </div>
         </main>
     )
@@ -57,7 +58,7 @@ export function Page({
     const { pathname } = useLocation();
     const { wallets, activeAddress, activeWallet } = useWallet();
     const registryGlobalState = useRegistry()
-    
+
     const [showAdmin, setShowAdmin] = useState<boolean>(false);
 
     useEffect(() => {
@@ -93,7 +94,7 @@ export function Page({
                 showAdmin={showAdmin}
                 MobileNav={<MobileNav />}
                 {...headerProps}
-            >                
+            >
                 <Connect
                     path={pathname}
                     wallets={wallets}
@@ -101,11 +102,13 @@ export function Page({
                     activeAddress={activeAddress}
                     activeWallet={activeWallet}
                 />
-                <ThemeToggle />   
+                <ThemeToggle />
             </Header>
             <Content Sidebar={Sidebar}>
                 {children}
             </Content>
+            <Footer />
         </>
     )
 }
+
