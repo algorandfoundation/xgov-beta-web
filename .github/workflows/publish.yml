@@ -1,0 +1,49 @@
+name: Deploy to Cloudflare Pages
+
+# Trigger on push to main branch and pull requests to main
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Include SSH Keys
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.TEMP_DEPLOY_KEY }}
+            ${{ secrets.TEMP_SC_DEPLOY_KEY }}
+
+      # Step 3: Set up Node.js (used by Astro)
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
+      # Step 4: Install dependencies using npm
+      - name: Install dependencies
+        run: npm install
+
+      # Step 5: Build the Astro project
+      - name: Build the project
+        run: npm run build
+
+      # Step 6: Deploy to Cloudflare Pages using wrangler
+      - name: Publish to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: |
+            pages deploy dist --project-name ${{ secrets.CF_PROJECT_NAME }}
