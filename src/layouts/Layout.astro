@@ -1,44 +1,41 @@
 ---
 const title = "xGov";
 import "@/styles/globals.css";
-// import { initializeMockEnvironment, mockProposals } from 'src/algorand/mock-init';
-
-// initializeMockEnvironment(mockProposals);
 ---
 
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="description" content="Astro description" />
-    <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Aeonik font faces -->
-    <!-- slightly broken until we find out if we have Aeonik-Medium fonts since our css refers to it -->
-    <!-- at some point Shane will setup the domain for this: aeonik.applications.algorandfoundtion.tools -->
-    <link
-      href="https://d3qysudl7slyhp.cloudfront.net/stylesheet-family-support.css"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
-      rel="stylesheet"
-    />
-    <script is:inline>
-      // persistent nanoStores need a default value, system preference takes precedence so we check for default
-      const check =
-        localStorage.theme === "dark" ||
-        ((!("theme" in localStorage) || localStorage.theme === "default") &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches);
-      document.documentElement.classList.toggle("dark", check);
-    </script>
-  </head>
-  <body class="bg-white dark:bg-algo-black">
-    <slot />
-  </body>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="Astro description" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<!-- Aeonik font faces -->
+		<link
+			href="https://d3qysudl7slyhp.cloudfront.net/stylesheet-family-support.css"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+			rel="stylesheet"
+		/>
+		<script is:inline>
+			// persistent nanoStores need a default value, system preference takes precedence so we check for default
+			const check =
+				localStorage.theme === 'dark'
+				|| (
+					(!('theme' in localStorage) || localStorage.theme === 'default')
+					&& window.matchMedia('(prefers-color-scheme: dark)').matches
+				);
+			document.documentElement.classList.toggle('dark', check);
+		</script>
+	</head>
+	<body class="bg-white dark:bg-algo-black">
+		<slot />
+	</body>
 </html>
 <style is:global>
   html,

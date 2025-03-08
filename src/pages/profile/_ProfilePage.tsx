@@ -19,7 +19,9 @@ import { Buffer } from 'buffer';
 import { useProposer, useXGov, useRegistry } from "src/hooks/useRegistry";
 import { useProposalsByProposer } from "src/hooks/useProposals";
 import { useNavigate, useParams } from "react-router-dom";
-import ActionButton from "@/components/button/ActionButton/ActionButton";
+import { shortenAddress } from "@/functions/shortening";
+import { Button } from "@/components/ui/button";
+import XGovProposerStatusPill from '@/components/XGovProposerStatusPill/XGovProposerStatusPill';
 
 const title = 'xGov';
 
@@ -62,8 +64,16 @@ export function ProfilePage() {
 
     const [newProposalLoading, setNewProposalLoading] = useState<boolean>(false);
 
-    !activeAddress && navigate('/');
-    activeAddress !== address && navigate(`/profile/${activeAddress}`);
+    // !activeAddress && navigate('/');
+    // activeAddress !== address && navigate(`/profile/${activeAddress}`);
+
+    const validProposer =
+        (
+            proposer?.data
+            && proposer.data.kycStatus
+            && proposer.data.kycExpiring > Date.now()
+        ) || false
+
 
     if (!activeAddress || isLoading) {
         return (
@@ -110,7 +120,7 @@ export function ProfilePage() {
             return
         });
 
-        xgov.refetch();        
+        xgov.refetch();
         setSubscribeXGovLoading(false);
     }
 
@@ -138,7 +148,7 @@ export function ProfilePage() {
             return
         });
 
-        
+
         await proposer.refetch();
         setSetVotingAddressLoading(false);
     }
@@ -245,7 +255,7 @@ export function ProfilePage() {
             setNewProposalLoading(false);
             return
         });
-        
+
         setNewProposalLoading(false);
     }
 
@@ -253,23 +263,30 @@ export function ProfilePage() {
         <Page
             title={title}
             LinkComponent={Link as unknown as ComponentType<LinkProps>}
-            Sidebar={() => <RulesCardAndTitle />}
         >
-            <div>
-                <Breadcrumb className="-mb-[20px]">
+            <div className="relative isolate overflow-hidden bg-white dark:bg-algo-black px-6 lg:px-8 py-24 min-h-[calc(100svh-10.625rem)] lg:overflow-visible">
+                <Breadcrumb>
                     <BreadcrumbList>
                         <BreadcrumbItem>
                             <BreadcrumbLink href="/">Home</BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbPage>Profile</BreadcrumbPage>
+                            <BreadcrumbPage>{(!!address && address === activeAddress) && 'My'} Profile</BreadcrumbPage>
+                        </BreadcrumbItem>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            {
+                                !!address && (
+                                    <>
+                                        <BreadcrumbPage className="hidden md:inline">{address}</BreadcrumbPage>
+                                        <BreadcrumbPage className="inline md:hidden">{shortenAddress(address)}</BreadcrumbPage>
+                                    </>
+                                )
+                            }
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
-                <h1 className="text-3xl lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
-                    My Profile
-                </h1>
                 <ProfileCard
                     activeAddress={activeAddress!}
                     votingAddress={xgov.data?.votingAddress || ''}
@@ -282,22 +299,29 @@ export function ProfilePage() {
                     proposer={proposer.data}
                     subscribeProposer={subscribeProposer}
                     subscribeProposerLoading={subscribeProposerLoading}
-
+                    className="mt-6"
                 />
-                <div className="flex items-center gap-2 mt-16 mb-8">
-                    <h1 className="text-3xl lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold">
-                        My Proposals
-                    </h1>
-                    <ActionButton
-                        type='button'                        
-                        onClick={newProposal}
-                        disabled={!proposer.data?.isProposer}
-                    >
-                        { newProposalLoading ? 'Loading...' : 'New Proposal'}
-                    </ActionButton>
-                </div>
                 {
-                    !!proposals.data && <ProposalList proposals={proposals.data} />
+                    validProposer && (
+                        <>
+                            <div className="flex gap-6">
+                                <XGovProposerStatusPill proposer={proposer.data} />
+                            </div>
+                            <div className="flex items-center gap-2 my-8">
+                                <Button
+                                    size='sm'
+                                    type='button'
+                                    onClick={newProposal}
+                                    disabled={!proposer.data?.isProposer}
+                                >
+                                    {newProposalLoading ? 'Loading...' : 'New Proposal'}
+                                </Button>
+                            </div>
+                            {
+                                !!proposals.data && <ProposalList proposals={proposals.data} />
+                            }
+                        </>
+                    )
                 }
             </div>
         </Page>
