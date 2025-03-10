@@ -15,14 +15,13 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
-import { shortenAddress } from "@/functions/shortening";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useParams } from "react-router-dom";
 import { useProposal, useProposalsByProposer } from "src/hooks/useProposals";
 import { useRegistry } from "src/hooks/useRegistry";
 import UserPill from "@/components/UserPill/UserPill";
 import VoteCounter from "@/components/VoteCounter/VoteCounter";
-import { ProposalStatus, ProposalStatusMap, type ProposalBrief, type ProposalInfoCardDetails, type ProposalMainCardDetails } from "@/types/proposals";
+import { ProposalStatus, ProposalStatusMap, type ProposalBrief, type ProposalMainCardDetails } from "@/types/proposals";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
 import { useState } from "react";

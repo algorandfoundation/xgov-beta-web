@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAllProposals, getProposal, getProposalBrief, getProposalsByProposer } from "src/api/proposals";
+import { getAllProposals, getProposal, getProposalsByProposer } from "src/api/proposals";
 
 export function useGetAllProposals() {
     return useQuery({
@@ -17,7 +17,7 @@ export function useProposalsByProposer(address: string | null | undefined) {
 }
 
 export function useProposal(proposalId: number | null) {
-    return useQuery({ 
+    return useQuery({
         queryKey: ['getProposal', Number(proposalId!)],
         queryFn: () => getProposal(BigInt(proposalId!)),
         enabled: !!proposalId,

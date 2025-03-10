@@ -1,6 +1,6 @@
 import { Page } from "../components/Page";
 import { filterAmountMap, filters, ProposalFilter } from "@/components/ProposalFilter/ProposalFilter";
-import { type ComponentType, useState, useEffect } from "react";
+import { type ComponentType } from "react";
 import { useGetAllProposals } from "src/hooks/useProposals";
 import { Link, type LinkProps } from "../components/Link.tsx";
 import { FocusReverseMap, ProposalFundingTypeReverseMap, ProposalStatusMap, ProposalStatusReverseMap, type ProposalSummaryCardDetails } from "@/types/proposals.ts";

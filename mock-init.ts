@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import algosdk, { ALGORAND_MIN_TX_FEE, Transaction } from 'algosdk';
+import algosdk, { ALGORAND_MIN_TX_FEE } from 'algosdk';
 import { XGovRegistryFactory } from '@algorandfoundation/xgov/registry';
 import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account';
 import { AlgorandClient as algorand } from './src/algorand/algo-client'
