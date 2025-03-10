@@ -29,6 +29,7 @@ import { useState } from "react";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { AlgorandClient as algorand } from 'src/algorand/algo-client';
 import { RegistryClient as registryClient } from "src/algorand/contract-clients";
+import ActionButton from "@/components/button/ActionButton/ActionButton";
 
 
 
@@ -289,17 +290,11 @@ export default function ProposalInfo({ proposal, pastProposals, children }: Prop
                 <div className="lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">
                     <div className="lg:pr-4">
                         <div className="max-w-xl text-lg/8 text-algo-black-70 dark:text-algo-black-30 sm:max-w-lg md:max-w-[unset]">
-                            <p className="mb-8">
-                                <strong className="font-semibold text-algo-black dark:text-white">About the team<br /></strong>
-                                {proposal.team}
-                            </p>
                             {(proposal.proposer == activeAddress) && proposal.status === ProposalStatus.ProposalStatusDraft && (
-                                <button
-                                    className="text-xl font-semi-bold text-algo-teal dark:text-algo-blue"
-                                    onClick={handleOpenFinalizeModal}
-                                >
-                                    Submit for Vote
-                                </button>
+                                <ActionButton
+                                    onClick={handleOpenFinalizeModal} type={undefined} disabled={false}>
+                                    Submit your proposal for vote.
+                                </ActionButton>
                             )}
                             <FinalizeModal
                                 isOpen={isFinalizeModalOpen}
@@ -309,6 +304,10 @@ export default function ProposalInfo({ proposal, pastProposals, children }: Prop
                                 transactionSigner={transactionSigner}
                                 refetcher={refetcher}
                             />
+                            <p className="mb-8">
+                                <strong className="font-semibold text-algo-black dark:text-white">About the team<br /></strong>
+                                {proposal.team}
+                            </p>
                             <p className="mb-4">
                                 <strong className="font-semibold text-algo-black dark:text-white">Additional Info<br /></strong>
                                 {proposal.additionalInfo}
