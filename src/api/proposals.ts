@@ -1,4 +1,4 @@
-import type { ProposalJSON, ProposalMainCardDetails, ProposalSummaryCardDetails } from "@/types/proposals";
+import type { ProposalBrief, ProposalJSON, ProposalMainCardDetails, ProposalStatus, ProposalSummaryCardDetails } from "@/types/proposals";
 import { AppManager } from "@algorandfoundation/algokit-utils/types/app-manager";
 import algosdk from "algosdk";
 import { CID } from "kubo-rpc-client";
@@ -13,8 +13,8 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
         const cid = String(state.cid.value);
 
         let proposer = 'valueRaw' in state.proposer
-        ? algosdk.encodeAddress(state.proposer.valueRaw)
-        : '';
+            ? algosdk.encodeAddress(state.proposer.valueRaw)
+            : '';
 
         return {
             id: data.id,
@@ -71,6 +71,7 @@ export async function getProposal(id: bigint): Promise<ProposalMainCardDetails> 
         proposer,
         fundingType: Number(state['funding_type'].value),
         status: Number(state.status.value),
+        focus: Number(state.focus.value),
         ...proposalJSON
     }
 
@@ -79,4 +80,8 @@ export async function getProposal(id: bigint): Promise<ProposalMainCardDetails> 
 
 export async function getProposalJSON(cid: string): Promise<ProposalJSON> {
     return await (await fetch(`http://${cid}.ipfs.localhost:8080/`)).json() as ProposalJSON;
+}
+
+export async function getProposalBrief(ids: bigint[]): Promise<ProposalBrief[]> {
+    return (await Promise.all(ids.map(id => getProposal(id)))).map(proposal => ({ id: proposal.id, status: proposal.status, title: proposal.title }));
 }

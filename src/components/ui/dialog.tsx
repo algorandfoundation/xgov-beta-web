@@ -39,18 +39,18 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 bg-white dark:border-algo-black dark:bg-algo-black p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+        "fixed left-[50%] top-[50%] z-50 w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 bg-white dark:border-algo-black dark:bg-algo-black p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
         className
       )}
       {...props}
     >
       {children}
-      <AlgorandIcon className="absolute left-4 top-4 fill-algo-teal dark:fill-white size-10" />
+      <AlgorandIcon className="absolute left-[23px] top-[19px] fill-algo-blue dark:fill-algo-teal size-8 md:size-6" />
       <DialogPrimitive.Close
         onClick={() => onCloseClick()}
-        className="absolute right-4 top-4 rounded-sm ring-offset-white focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-white data-[state=open]:text-algo-black dark:ring-offset-slate-950 dark:focus:ring-slate-300 dark:data-[state=open]:bg-algo-black dark:data-[state=open]:text-white"
+        className="absolute right-[14px] top-[14px] p-1 rounded-md hover:bg-algo-black/10 ring-offset-white focus:outline-none focus:ring-2 focus:ring-algo-black/50 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-white data-[state=open]:text-algo-black dark:ring-offset-slate-950 dark:focus:ring-slate-300 dark:data-[state=open]:bg-algo-black dark:data-[state=open]:text-white"
       >
-        <Cross2Icon className="size-10 text-algo-black dark:text-white" />
+        <Cross2Icon className="size-6 text-algo-black dark:text-white" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -107,7 +107,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-slate-500 dark:text-slate-400", className)}
+    className={cn("text-left text-sm text-slate-500 dark:text-slate-400", className)}
     {...props}
   />
 ))

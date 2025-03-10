@@ -12,31 +12,37 @@ import {
 import { useStore } from "@nanostores/react"
 import { $themeStore, toggleTheme } from "@/stores/themeStore"
 import { useWallet } from "@txnlab/use-wallet-react"
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
+import { shortenAddress } from "@/functions/shortening"
+import { useNavigate } from "react-router-dom"
+import { Link } from "../Link"
 
 export function MobileNav({ trigger }: { trigger?: ReactNode }) {
+    const navigate = useNavigate();
     const { wallets, activeAddress, } = useWallet();
     const theme = useStore($themeStore);
 
     const [open, setOpen] = useState(false);
     const [connectDialogOpen, setConnectDialogOpen] = useState(false);
 
+    useEffect(() => {
+        if (!open) {
+            setConnectDialogOpen(false);
+        }
+    }, [open])
+
     return (
-        <Dialog
-            open={open}
-            // reset the modal state when it closes
-            onOpenChange={open => !open && setConnectDialogOpen(false)}
-        >
+        <Dialog open={open}>
             <DialogTrigger asChild>
                 {
                     !trigger ? (
                         <Button
-                            className="lg:hidden border-none shadow-none"
+                            className="lg:hidden border-none shadow-none bg-transparent"
                             variant="outline"
                             size="icon"
                             onClick={() => setOpen(true)}
                         >
-                            <BarsIcon className="size-10 text-algo-black dark:text-white" />
+                            <BarsIcon className="size-10 text-white/70 dark:text-algo-black-70" />
                         </Button>
                     ) : trigger
                 }
@@ -51,17 +57,32 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
                     !connectDialogOpen ? (
                         <nav className="h-full flex flex-col items-start justify-center gap-14">
 
-                            <Button className="text-5xl font-bold" variant="link">Docs</Button>
-                            <Button className="text-5xl font-bold" variant="link">Cohort</Button>
-                            <Button className="text-5xl font-bold" variant="link">Settings</Button>
+                            <Link className="px-4 text-5xl font-bold text-algo-black dark:text-white" to="/">Home</Link>
+                            <Link className="px-4 text-5xl font-bold text-algo-black dark:text-white" to="/docs">Docs</Link>
+                            <Link className="px-4 text-5xl font-bold text-algo-black dark:text-white" to="/cohort">Cohort</Link>
 
                             <Button
                                 className="text-5xl font-bold gap-4"
                                 variant="link"
-                                onClick={() => setConnectDialogOpen(true)}
+                                onClick={() => {
+                                    if (!!activeAddress) {
+                                        navigate(`/profile/${activeAddress}`);
+                                        setOpen(false);
+                                    } else {
+                                        setConnectDialogOpen(true);
+                                    }
+                                }}
                             >
-                                <WalletIcon className="stroke-algo-black dark:stroke-white size-12" />
-                                {true ? 'carl.algo' : !!activeAddress ? activeAddress : 'Connect Wallet'}
+                                {
+                                    !!activeAddress ? (
+                                        'Profile'
+                                    ) : (
+                                        <>
+                                            <WalletIcon className="stroke-algo-black dark:stroke-white size-12" />
+                                            Connect
+                                        </>
+                                    )
+                                }
                             </Button>
 
                             <Button
@@ -89,9 +110,9 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
                                                 setOpen(false);
                                             }}
                                         >
-                                            <div className='bg-algo-black overflow-hidden rounded-full'>
+                                            <div className='bg-algo-black overflow-hidden rounded-2xl'>
                                                 <div className='p-0.5'>
-                                                    <div className="size-14 overflow-hidden rounded-full">
+                                                    <div className="size-14 overflow-hidden rounded-2xl">
                                                         <img
                                                             className="object-cover"
                                                             src={wallet.metadata.icon}

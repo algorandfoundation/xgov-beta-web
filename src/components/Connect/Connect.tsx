@@ -1,5 +1,4 @@
 import { WalletIcon } from "@/components/icons/WalletIcon"
-import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,6 +9,8 @@ import {
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
@@ -18,6 +19,7 @@ import { BaseWallet, type Wallet } from "@txnlab/use-wallet-react"
 import { useState } from "react"
 import { cn } from "@/functions/utils";
 import { Link, useNavigate } from 'react-router-dom'
+import { InfinityMirrorButton } from "../button/InfinityMirrorButton/InfinityMirrorButton"
 
 export interface ConnectProps {
     path: string;
@@ -40,29 +42,29 @@ export function Connect({ path, wallets, activeAddress, activeWallet, nfdName }:
                     path.includes('profile') && navigate('/');
                 }}
             >
-                <Button
+                <InfinityMirrorButton
                     id="connect-button"
-                    className="flex items-center gap-2.5 bg-algo-black dark:bg-white text-lg rounded-md text-white dark:text-algo-black border-none shadow-none p-2 px-4"
+                    className="flex items-center gap-2.5 text-lg rounded-md"
                     variant="default"
                 >
-                    <WalletIcon className="size-6 stroke-white dark:stroke-algo-black stroke-[1.5]" />
+                    <WalletIcon className="size-6 stroke-algo-black group-hover:stroke-white dark:stroke-white dark:group-hover:stroke-algo-black stroke-[1.5]" />
                     {!!nfdName ? nfdName : shortenAddress(activeAddress)}
-                </Button>
+                </InfinityMirrorButton>
             </ConnectDropdown>
         )
     }
 
     return (
         <ConnectDialog open={dialogOpen} setOpen={setOpenDialog} wallets={wallets}>
-            <Button
+            <InfinityMirrorButton
                 id="connect-button"
-                className="flex items-center gap-2.5 bg-algo-black dark:bg-white text-lg rounded-md text-white dark:text-algo-black border-none shadow-none p-2 px-4"
+                className="flex items-center gap-2.5 text-lg rounded-md"
                 variant="default"
                 onClick={() => setOpenDialog(true)}
             >
-                <WalletIcon className="size-6 stroke-white dark:stroke-algo-black stroke-[1.5]" />
+                <WalletIcon className="size-6 stroke-algo-black group-hover:stroke-white dark:stroke-white dark:group-hover:stroke-algo-black stroke-[1.5]" />
                 Connect Wallet
-            </Button>
+            </InfinityMirrorButton>
         </ConnectDialog>
     )
 }
@@ -76,7 +78,7 @@ interface ConnectDropdownProps {
 
 function ConnectDropdown({ activeAddress, children, onLogOut }: ConnectDropdownProps) {
     return (
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
                 {children}
             </DropdownMenuTrigger>
@@ -109,16 +111,21 @@ function ConnectDialog({ open, setOpen, wallets, children }: ConnectDialogProps)
                 {children}
             </DialogTrigger>
             <DialogContent
-                className="h-full w-full"
+                className="sm:max-w-[425px] rounded-lg"
                 onCloseClick={() => setOpen(false)}
             >
-                <DialogTitle className="sr-only">Connect a Wallet</DialogTitle>
-                <ul className="h-full flex flex-col items-start justify-center gap-8">
+                <DialogHeader className="mt-12 flex flex-col items-start gap-2">
+                    <DialogTitle className="dark:text-white">Connect your wallet</DialogTitle>
+                    <DialogDescription>
+                        Choose a wallet to connect & use the xGov app
+                    </DialogDescription>
+                </DialogHeader>
+                <ul className="h-full flex flex-col sm:flex-row sm:flex-wrap items-start justify-center sm:justify-start gap-8 sm:gap-3">
                     {
                         wallets.map((wallet) => (
                             <li key={wallet.id}>
                                 <button
-                                    className="group text-5xl font-bold flex items-center gap-4 h-18 pr-5 pl-1 py-1 hover:bg-algo-teal dark:hover:bg-algo-blue dark:text-white hover:text-white rounded-2xl transition"
+                                    className="group text-5xl sm:text-xl font-bold flex items-center gap-4 h-18 pr-5 pl-1 py-1 sm:py-0.5 sm:bg-algo-blue/10 hover:bg-algo-blue dark:sm:bg-algo-teal/10 dark:hover:bg-algo-teal dark:text-white hover:text-white dark:hover:text-algo-black rounded-2xl transition"
                                     onClick={() => {
                                         setOpen(false);
                                         wallet.connect();
@@ -127,9 +134,9 @@ function ConnectDialog({ open, setOpen, wallets, children }: ConnectDialogProps)
                                     <div
                                         className={cn(
                                             ['exodus', 'lute'].includes(wallet.metadata.name.toLowerCase())
-                                                ? 'bg-algo-black'
+                                                ? 'bg-algo-black p-0.5'
                                                 : '',
-                                            "size-14 overflow-hidden rounded-2xl group-hover:shadow-xl"
+                                            "size-14 sm:size-6 overflow-hidden rounded-2xl group-hover:shadow-xl"
                                         )}
                                     >
                                         <img

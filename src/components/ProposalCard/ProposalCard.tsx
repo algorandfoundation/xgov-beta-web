@@ -1,14 +1,8 @@
-import { FocusMap, isProposalInfoCardDetails, isProposalSummaryCardDetails, ProposalFundingTypeMap, ProposalStatus, statusToPhase, type ProposalCardDetails, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from "@/types/proposals";
+import { FocusMap, isProposalInfoCardDetails, isProposalSummaryCardDetails, ProposalFundingTypeMap, ProposalStatus, ProposalStatusMap, type ProposalCardDetails, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from "@/types/proposals";
 import { cn } from "@/functions/utils";
 import { Link } from "@/components/Link";
 import { shortenAddress } from "@/functions/shortening";
 import { capitalizeFirstLetter } from "@/functions/capitalization";
-import { useState } from "react";
-import { ProposalFactory } from "@algorandfoundation/xgov";
-import { AlgorandClient as algorand } from 'src/algorand/algo-client';
-import { RegistryClient as registryClient } from "src/algorand/contract-clients";
-
-
 
 export interface ProposalCardProps {
     /**
@@ -17,19 +11,13 @@ export interface ProposalCardProps {
     path?: string;
     proposal: ProposalCardDetails;
     mini?: boolean;
-    activeAddress?: string | null;
-    transactionSigner?: any;
-    refetcher?: () => void;
 }
 
 export function ProposalCard({
     proposal,
     path = '',
     mini = false,
-    activeAddress = null,
-    transactionSigner = null,
-    refetcher = () => {}
-}: ProposalCardProps) { 
+}: ProposalCardProps) {
 
     if (isProposalInfoCardDetails(proposal)) {
         return (
@@ -48,9 +36,6 @@ export function ProposalCard({
             <ProposalSummaryCard
                 path={path}
                 proposal={proposal}
-                activeAddress={activeAddress}
-                transactionSigner={transactionSigner}
-                refetcher={refetcher}
             />
         )
     }
@@ -58,19 +43,19 @@ export function ProposalCard({
     // implicitly main card
     const { status, description, team, additionalInfo, pastProposalLinks } = proposal as ProposalMainCardDetails;
 
-    const phase = statusToPhase[status];
+    const phase = ProposalStatusMap[status];
 
     return (
-        <li role="listitem" className="list-none relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
+        <div className="bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between gap-x-6 gap-y-4 p-5 sm:flex-nowrap relative transition overflow-hidden">
             <div className="absolute top-0 right-0 mt-4 mr-4 flex flex-col items-end gap-4">
                 <div>
                     <span className="text-xl">[</span>
                     <span
                         className={cn(
-                            phase === 'draft' ? 'text-algo-black-60' : '',
-                            phase === 'submission' ? 'text-algo-blue dark:text-algo-teal' : '',
-                            phase === 'discussion' ? 'text-algo-blue dark:text-algo-teal' : '',
-                            phase === 'voting' ? 'text-algo-teal' : '',
+                            phase === 'Draft' ? 'text-algo-black-60' : '',
+                            phase === 'Submission' ? 'text-algo-blue dark:text-algo-teal' : '',
+                            phase === 'Discussion' ? 'text-algo-blue dark:text-algo-teal' : '',
+                            phase === 'Voting' ? 'text-algo-teal' : '',
 
                             "p-0.5 px-1 lg:text-lg"
                         )}>
@@ -113,7 +98,7 @@ export function ProposalCard({
                     )
                 }
             </div>
-        </li>
+        </div>
     )
 }
 
@@ -123,9 +108,6 @@ interface ProposalSummaryCardProps {
      */
     path?: string;
     proposal: ProposalSummaryCardDetails;
-    activeAddress: string | null;
-    transactionSigner: any;
-    refetcher: () => void;
 }
 
 function ProposalSummaryCard({
@@ -139,26 +121,16 @@ function ProposalSummaryCard({
         requestedAmount,
         proposer
     },
-    activeAddress,
-    transactionSigner,
-    refetcher,
 }: ProposalSummaryCardProps) {
-    const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
-
-    const phase = statusToPhase[status];
-
-    const handleOpenFinalizeModal = () => {
-        setIsFinalizeModalOpen(true);
-    };
-
-    const handleCloseFinalizeModal = () => {
-        setIsFinalizeModalOpen(false);
-    };
+    const phase = ProposalStatusMap[status];
 
     return (
-        <li role="listitem" className="list-none relative flex bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
+        <Link
+            to={`/proposal/${Number(id)}`}
+            className="list-none relative flex bg-algo-blue-60 dark:bg-algo-black border-2 border-white dark:border-white text-white dark:text-white p-4 rounded-3xl"
+        >
             <div className="flex-1 flex flex-col justify-center">
-                <h3 className="text-lg text-wrap lg:text-2xl mb-3 lg:mb-6 font-bold">{title} {(proposer == activeAddress) && ("🫵")}</h3>
+                <h3 className="text-lg text-wrap lg:text-2xl mb-3 lg:mb-6 font-bold">{title} </h3>
                 <p className="text-xl">{FocusMap[focus]}</p>
                 <p className="text-xl">{ProposalFundingTypeMap[fundingType]}</p>
                 <p className="text-xl">{(Number(requestedAmount) / 1_000_000).toLocaleString()} ALGO</p>
@@ -196,24 +168,8 @@ function ProposalSummaryCard({
                 >
                     Read More
                 </Link>
-                {(proposer == activeAddress) && status === ProposalStatus.ProposalStatusDraft && (
-                    <button
-                        className="text-xl font-semi-bold text-algo-teal dark:text-algo-blue"
-                        onClick={handleOpenFinalizeModal}
-                    >
-                        Submit for Vote
-                    </button>
-                )}
             </div>
-            <FinalizeModal
-                isOpen={isFinalizeModalOpen}
-                onClose={handleCloseFinalizeModal}
-                proposalId={id}
-                activeAddress={activeAddress ?? ''}
-                transactionSigner={transactionSigner}
-                refetcher={refetcher}
-            />
-        </li>
+        </Link >
     )
 }
 
@@ -234,7 +190,7 @@ function MyProposalSummaryCard({
     }
 }: MyProposalSummaryCardProps) {
 
-    const phase = statusToPhase[status];
+    const phase = ProposalStatusMap[status];
 
 
     return (
@@ -299,16 +255,16 @@ function ProposalInfoCard({ proposal: { forumLink, fundingType, focus, openSourc
 
                 {status === ProposalStatus.ProposalStatusBlocked && (
                     <>
-                    <h2 className="text-xl font-bold my-4">VETOED BY XGOV REVIEWER!</h2>
-                    <p className="text-xl font-normal dark:text-algo-blue-10 mb-6 lg:mb-14">Proposal in violation of xGov T&C!</p>
+                        <h2 className="text-xl font-bold my-4">VETOED BY XGOV REVIEWER!</h2>
+                        <p className="text-xl font-normal dark:text-algo-blue-10 mb-6 lg:mb-14">Proposal in violation of xGov T&C!</p>
                     </>
 
                 )}
 
                 {status === ProposalStatus.ProposalStatusReviewed && (
                     <>
-                    <h2 className="text-xl font-bold my-4">xGov Reviewer has reviewed</h2>
-                    <p className="text-xl font-normal dark:text-algo-blue-10 mb-6 lg:mb-14">Proposal conforms with xGov T&C.</p>
+                        <h2 className="text-xl font-bold my-4">xGov Reviewer has reviewed</h2>
+                        <p className="text-xl font-normal dark:text-algo-blue-10 mb-6 lg:mb-14">Proposal conforms with xGov T&C.</p>
                     </>
 
                 )}
@@ -319,79 +275,4 @@ function ProposalInfoCard({ proposal: { forumLink, fundingType, focus, openSourc
             </div>
         </li>
     )
-}
-
-interface FinalizeModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    proposalId: bigint;
-    activeAddress: string | null;
-    transactionSigner: any;
-    refetcher: () => void;
-}
-
-export function FinalizeModal({
-    isOpen,
-    onClose,
-    proposalId,
-    activeAddress,
-    transactionSigner,
-    refetcher,
-}: FinalizeModalProps) {
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-    const handleSubmit = async () => {
-        try {
-            if (!activeAddress || !transactionSigner) {
-                setErrorMessage("Wallet not connected.");
-                return false;
-            }
-
-            const proposalFactory = new ProposalFactory({ algorand });
-            const proposalClient = proposalFactory.getAppClientById({ appId: proposalId });
-
-            const res = await proposalClient.send.finalize({
-                sender: activeAddress,
-                signer: transactionSigner,
-                args: {},
-                appReferences: [registryClient.appId],
-                accountReferences: [activeAddress],
-                extraFee: (1000).microAlgos(),
-            });
-
-            if (res.confirmation.confirmedRound !== undefined && res.confirmation.confirmedRound > 0 && res.confirmation.poolError === '') {
-                console.log('Transaction confirmed');
-                setErrorMessage(null);
-                onClose();
-                refetcher();
-                return true;
-            }
-
-            console.log('Transaction not confirmed');
-            setErrorMessage("Transaction not confirmed.");
-            return false;
-        } catch (error) {
-            console.error('Error during finalize:', error);
-            setErrorMessage("An error occurred calling the proposal contract.");
-            return false;
-        }
-    };
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-algo-black p-4 rounded-lg max-w-lg w-full">
-                <button className="absolute top-2 right-2 text-xl" onClick={onClose}>×</button>
-                <h2 className="text-2xl font-bold mb-4">Submit Proposal for Vote</h2>
-                <p>Are you sure you want to submit this proposal for voting?</p>
-                <p>Once submitted, you cannot edit any further.</p>
-                {errorMessage && <p className="text-red-500">{errorMessage}</p>}
-                <div className="mt-4 flex justify-end gap-2">
-                    <button className="bg-gray-300 dark:bg-gray-700 p-2 rounded" onClick={onClose}>Cancel</button>
-                    <button className="bg-algo-teal dark:bg-algo-blue text-white p-2 rounded" onClick={handleSubmit}>Submit</button>
-                </div>
-            </div>
-        </div>
-    );
 }
