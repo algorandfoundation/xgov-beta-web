@@ -1,4 +1,4 @@
-import { FocusMap, isProposalInfoCardDetails, isProposalSummaryCardDetails, ProposalFundingTypeMap, ProposalStatusMap, type ProposalCardDetails, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from "@/types/proposals";
+import { FocusMap, isProposalInfoCardDetails, isProposalSummaryCardDetails, ProposalFundingTypeMap, ProposalStatus, ProposalStatusMap, type ProposalCardDetails, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from "@/types/proposals";
 import { cn } from "@/functions/utils";
 import { Link } from "@/components/Link";
 import { shortenAddress } from "@/functions/shortening";
@@ -70,9 +70,6 @@ export function ProposalCard({ proposal, path = '', mini = false }: ProposalCard
                 <h2 className="text-3xl font-bold my-4">Additional Info</h2>
                 <p className="text-xl dark:text-algo-blue-10">{additionalInfo}</p>
 
-                {/* <h2 className="text-3xl font-bold my-4">Deliverables</h2>
-                <p className="text-xl dark:text-algo-blue-10">{capitalizeFirstLetter(deliverable)}</p> */}
-
                 {
                     !!pastProposalLinks && !!pastProposalLinks.length && (
                         <>
@@ -120,6 +117,8 @@ function ProposalSummaryCard({
 }: ProposalSummaryCardProps) {
 
     const phase = ProposalStatusMap[status];
+
+    console.log("phase:", status, phase)
 
     return (
         <Link
@@ -171,6 +170,7 @@ function MyProposalSummaryCard({
 
     const phase = ProposalStatusMap[status];
 
+
     return (
         <li className="list-none bg-white hover:bg-algo-teal-10 dark:hover:bg-algo-blue-50 dark:bg-algo-black border-2 border-algo-black hover:border-algo-teal dark:border-white dark:hover:border-algo-blue-40 text-algo-black dark:text-white rounded-lg max-w-3xl">
             <div className="p-2">
@@ -212,7 +212,7 @@ interface ProposalProps {
     proposal: ProposalInfoCardDetails;
 }
 
-function ProposalInfoCard({ proposal: { forumLink, fundingType, focus, openSource, requestedAmount } }: ProposalProps) {
+function ProposalInfoCard({ proposal: { forumLink, fundingType, focus, openSource, requestedAmount, status } }: ProposalProps) {
     return (
         <li role="listitem" className="list-none relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-xl lg:min-w-[36rem]">
             <div className="max-w-3xl">
@@ -230,6 +230,26 @@ function ProposalInfoCard({ proposal: { forumLink, fundingType, focus, openSourc
 
                 <h2 className="text-xl font-bold my-4">Ask</h2>
                 <p className="text-xl font-normal dark:text-algo-blue-10 mb-6 lg:mb-14">{(Number(requestedAmount) / 1_000_000).toLocaleString()} ALGO</p>
+
+                {status === ProposalStatus.ProposalStatusBlocked && (
+                    <>
+                        <h2 className="text-xl font-bold my-4">VETOED BY XGOV REVIEWER!</h2>
+                        <p className="text-xl font-normal dark:text-algo-blue-10 mb-6 lg:mb-14">Proposal in violation of xGov T&C!</p>
+                    </>
+
+                )}
+
+                {status === ProposalStatus.ProposalStatusReviewed && (
+                    <>
+                        <h2 className="text-xl font-bold my-4">xGov Reviewer has reviewed</h2>
+                        <p className="text-xl font-normal dark:text-algo-blue-10 mb-6 lg:mb-14">Proposal conforms with xGov T&C.</p>
+                    </>
+
+                )}
+
+                {status === ProposalStatus.ProposalStatusFunded && (
+                    <h2 className="text-xl font-bold my-4">Proposal funded!</h2>
+                )}
             </div>
         </li>
     )

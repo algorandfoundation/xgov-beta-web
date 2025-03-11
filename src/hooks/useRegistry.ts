@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAllProposers, getGlobalState, getIsProposer, getIsXGov } from "src/api/registry";
+import { getAllProposers, getGlobalState, getIsProposer, getIsXGov, getAllSubscribedXGovs } from "src/api/registry";
 
 export function useRegistry() {
     return useQuery({
@@ -28,5 +28,13 @@ export function useAllProposers() {
     return useQuery({
         queryKey: ['getAllProposers'],
         queryFn: () => getAllProposers(),
+    });
+}
+
+
+export function useAllXGovs() {
+    return useQuery({
+        queryKey: ['getAllSubscribedXGovs'],
+        queryFn: () => getAllSubscribedXGovs(),
     });
 }

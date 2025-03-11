@@ -13,21 +13,13 @@ import { useWallet } from "@txnlab/use-wallet-react";
 
 import { KYCBox } from "./_KYCBox";
 import { RoleList, RoleModal } from "./_RolesSection";
-import { PanelStatistics, type panelStatisticsData } from "./_PanelStatistics"
+import { PanelStatistics } from "./_PanelStatistics"
 import { VotingCohort } from "./_VotingCohort";
 // import { useRegistryClient } from "@/contexts/RegistryClientContext";
 import { RegistryClient as registryClient} from "src/algorand/contract-clients";
 import { useRegistry } from "src/hooks/useRegistry";
 
-// Mock data in frontend
-import { mockProposals } from "@/components/ProposalList/ProposalList.stories.tsx";
-
 const title = 'xGov';
-
-const mockPanelStatisticsData: panelStatisticsData = {
-  xGovs: 10,
-  proposals: mockProposals
-}
 
 export function AdminPage() {
   const { activeAddress, transactionSigner } = useWallet();
@@ -146,7 +138,7 @@ export function AdminPage() {
         {activeAddress ? (
           <>
             <div className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
-              {PanelStatistics(mockPanelStatisticsData)}
+             <PanelStatistics/>
             </div>
             {registryGlobalState.data?.xgovManager && activeAddress === registryGlobalState.data?.xgovManager && (
               <>

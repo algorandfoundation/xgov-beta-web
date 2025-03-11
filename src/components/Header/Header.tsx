@@ -18,7 +18,7 @@ export type HeaderProps = {
     children?: React.ReactNode;
     showAdmin?: boolean;
 }
-export function Header({ path, title = "xGov", LinkComponent = Link, children, MobileNav, showAdmin }: HeaderProps){
+export function Header({ path, title = "xGov", LinkComponent = Link, children, MobileNav, showAdmin }: HeaderProps) {
     return (
         <header
             className="fixed w-full px-2 md:px-4 z-50">
@@ -49,7 +49,16 @@ export function Header({ path, title = "xGov", LinkComponent = Link, children, M
                         >
                             Cohort
                         </LinkComponent>
-                        {showAdmin && <LinkComponent data-testid="header-admin-link" className={path === '/admin' ? 'text-algo-blue' : ''} to="/admin">Admin</LinkComponent>}
+                        {showAdmin &&
+                            <LinkComponent
+                                data-testid="header-admin-link"
+                                className={cn(
+                                    path === '/admin' ? 'text-algo-blue' : '',
+                                    'px-2 py-1 hover:bg-white/10 dark:hover:bg-algo-black/10 rounded-md'
+                                )}
+                                to="/admin"
+                            >Admin
+                            </LinkComponent>}
                     </nav>
                     {children}
                 </div>

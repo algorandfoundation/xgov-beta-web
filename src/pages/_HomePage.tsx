@@ -27,7 +27,7 @@ const proposalFilter = (proposal: ProposalSummaryCardDetails, searchParams: URLS
     filterKeys.forEach((key) => {
         const value = searchParams.get(key) as string;
         if (value) {
-            switch(key) {
+            switch (key) {
                 case 'status':
                     if (proposal.status !== ProposalStatusReverseMap[value]) {
                         passes = false;
@@ -39,7 +39,7 @@ const proposalFilter = (proposal: ProposalSummaryCardDetails, searchParams: URLS
                     }
                     break;
                 case 'amount':
-                    const values = filterAmountMap[value];                        
+                    const values = filterAmountMap[value];
 
                     if (values.length === 1) {
                         if (proposal.requestedAmount < values[0]) {
@@ -49,8 +49,8 @@ const proposalFilter = (proposal: ProposalSummaryCardDetails, searchParams: URLS
                         if (proposal.requestedAmount < values[0] || proposal.requestedAmount > values[1]) {
                             passes = false;
                         }
-                    }                    
-                    break;    
+                    }
+                    break;
                 case 'focus':
                     if (proposal.focus !== FocusReverseMap[value]) {
                         passes = false;
@@ -117,6 +117,12 @@ export default function StackedList({ proposals }: { proposals: ProposalSummaryC
             }) => {
 
                 const phase = ProposalStatusMap[status];
+
+                // Filter out blocked proposals
+                // They will still be visible in the Admin page
+                if (phase == 'Blocked') {
+                    return
+                }
 
                 return (
                     <div

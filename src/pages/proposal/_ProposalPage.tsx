@@ -5,6 +5,8 @@ import { BlockIcon } from "@/components/icons/BlockIcon";
 import { Link } from "react-router-dom";
 import LoraPillLink from "@/components/LoraPillLink/LoraPillLink";
 import { Page } from "@/components/Page";
+import { ProposalCard } from "@/components/ProposalCard/ProposalCard";
+import ProposalReviewerCard from "@/components/ProposalReviewerCard/ProposalReviewerCard";
 import RequestedAmountDetail from "@/components/RequestedAmountDetail/RequestedAmountDetail";
 import {
     Breadcrumb,
@@ -14,25 +16,28 @@ import {
     BreadcrumbPage,
     BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
+import { shortenAddress } from "@/functions/shortening";
+import { useWallet } from "@txnlab/use-wallet-react";
+import { useParams } from "react-router-dom";
+import { useProposal, useProposalsByProposer } from "src/hooks/useProposals";
+import { useRegistry } from "src/hooks/useRegistry";
 import UserPill from "@/components/UserPill/UserPill";
 import VoteCounter from "@/components/VoteCounter/VoteCounter";
 import { ProposalStatus, ProposalStatusMap, type ProposalBrief, type ProposalInfoCardDetails, type ProposalMainCardDetails } from "@/types/proposals";
-import { useParams } from "react-router-dom";
-import { useProposal, useProposalsByProposer } from "src/hooks/useProposals";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
 
 const title = 'xGov';
 
 export function ProposalPage() {
-    // const { activeAddress } = useWallet();
+    const { activeAddress } = useWallet();
+    const registryGlobalState = useRegistry();
     // TODO: Get NFD name using the activeAddress
     const { proposal: proposalId } = useParams();
-    // const proposalId = Number(proposalIdParam);
     const proposal = useProposal(Number(proposalId));
     const pastProposals = useProposalsByProposer(proposal.data?.proposer);
 
-    if (proposal.isLoading) {
+    if (proposal.isLoading || registryGlobalState.isLoading) {
         return <div>Loading...</div>
     }
 
@@ -46,7 +51,19 @@ export function ProposalPage() {
     }
 
     return (
-        <Page title={title}>
+        <Page
+            title={title}
+            Sidebar={() =>
+                <>
+                    {registryGlobalState.data?.xgovReviewer && activeAddress && activeAddress === registryGlobalState.data?.xgovReviewer && (
+                        <ProposalReviewerCard
+                            proposalId={proposal.data.id}
+                            status={proposal.data.status}
+                            refetch={proposal.refetch}
+                        />
+                    )}
+                </>
+            }>
             <ProposalInfo
                 proposalId={proposalId}
                 proposal={proposal.data}
@@ -111,6 +128,13 @@ export const statusCardMap = {
         actionText: '',
         link: ''
     },
+    [ProposalStatus.ProposalStatusReviewed]: {
+        header: 'Proposal has been approved and deemed to conform with the xGov T&C.',
+        subHeader: '',
+        icon: '',
+        actionText: '',
+        link: ''
+    },
     [ProposalStatus.ProposalStatusFunded]: {
         header: 'Proposal Funded!',
         subHeader: '',
@@ -119,7 +143,7 @@ export const statusCardMap = {
         link: ''
     },
     [ProposalStatus.ProposalStatusBlocked]: {
-        header: 'Proposal has been Blocked',
+        header: 'Proposal has been Blocked by xGov Reviewer.',
         subHeader: '',
         icon: '',
         actionText: '',
@@ -136,7 +160,9 @@ export const statusCardMap = {
 
 export function StatusCard({ className = '', proposal }: StatusCardProps) {
 
-    const details = statusCardMap[proposal.status];
+    console.log(proposal.status)
+
+    const details = statusCardMap[proposal.status as keyof typeof statusCardMap];
 
     return (
         <div className={cn(className, "w-full lg:min-w-[30rem] xl:min-w-[40rem] bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between sm:flex-nowrap relative transition overflow-hidden")}>
@@ -155,7 +181,7 @@ export function StatusCard({ className = '', proposal }: StatusCardProps) {
                                         // style={{ background: `linear-gradient(90deg, #2D2DF1 60%, orange 70%, red 80%)` }} harder to do darkmode version
                                         className="w-full rounded-full h-3 bg-[linear-gradient(90deg,#2D2DF1_60%,orange_70%,red_80%)] dark:bg-[linear-gradient(90deg,#17CAC6_10%,orange_30%,red_40%)]"
                                     ></div>
-                                    </div>
+                                </div>
                             )
                             : null
                     }

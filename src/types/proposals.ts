@@ -6,6 +6,7 @@ export enum ProposalStatus {
     ProposalStatusVoting = 25,
     ProposalStatusApproved = 30,
     ProposalStatusRejected = 40,
+    ProposalStatusReviewed = 45,
     ProposalStatusFunded = 50,
     ProposalStatusBlocked = 60,
     ProposalStatusDelete = 70,
@@ -14,27 +15,28 @@ export enum ProposalStatus {
 export type Status = 'Empty' | 'Draft' | 'Final' | 'Voting' | 'Approved' | 'Rejected' | 'Funded' | 'Blocked' | 'Delete';
 
 export const ProposalStatusMap = {
-	[ProposalStatus.ProposalStatusEmpty]: 'Empty',
-	[ProposalStatus.ProposalStatusDraft]: 'Draft',
-	[ProposalStatus.ProposalStatusFinal]: 'Discussion',
-	[ProposalStatus.ProposalStatusVoting]: 'Voting',
-	[ProposalStatus.ProposalStatusApproved]: 'Approved',
-	[ProposalStatus.ProposalStatusRejected]: 'Rejected',
-	[ProposalStatus.ProposalStatusFunded]: 'Funded',
-	[ProposalStatus.ProposalStatusBlocked]: 'Blocked',
-	[ProposalStatus.ProposalStatusDelete]: 'Delete',
+    [ProposalStatus.ProposalStatusEmpty]: 'Empty',
+    [ProposalStatus.ProposalStatusDraft]: 'Draft',
+    [ProposalStatus.ProposalStatusFinal]: 'Discussion',
+    [ProposalStatus.ProposalStatusVoting]: 'Voting',
+    [ProposalStatus.ProposalStatusApproved]: 'Approved',
+    [ProposalStatus.ProposalStatusRejected]: 'Rejected',
+    [ProposalStatus.ProposalStatusReviewed]: 'Reviewed',
+    [ProposalStatus.ProposalStatusFunded]: 'Funded',
+    [ProposalStatus.ProposalStatusBlocked]: 'Blocked',
+    [ProposalStatus.ProposalStatusDelete]: 'Delete',
 }
 
 export const ProposalStatusReverseMap: { [key: string]: ProposalStatus } = {
     'Empty': ProposalStatus.ProposalStatusEmpty,
-	'Draft': ProposalStatus.ProposalStatusDraft,
-	'Discussion': ProposalStatus.ProposalStatusFinal,
-	'Voting': ProposalStatus.ProposalStatusVoting,
-	'Approved': ProposalStatus.ProposalStatusApproved,
-	'Rejected': ProposalStatus.ProposalStatusRejected,
-	'Funded': ProposalStatus.ProposalStatusFunded,
-	'Blocked': ProposalStatus.ProposalStatusBlocked,
-	'Delete': ProposalStatus.ProposalStatusDelete,
+    'Draft': ProposalStatus.ProposalStatusDraft,
+    'Discussion': ProposalStatus.ProposalStatusFinal,
+    'Voting': ProposalStatus.ProposalStatusVoting,
+    'Approved': ProposalStatus.ProposalStatusApproved,
+    'Rejected': ProposalStatus.ProposalStatusRejected,
+    'Funded': ProposalStatus.ProposalStatusFunded,
+    'Blocked': ProposalStatus.ProposalStatusBlocked,
+    'Delete': ProposalStatus.ProposalStatusDelete,
 }
 
 export const ProposalStatusFilterKeys = ['Discussion', 'Voting'];
@@ -49,10 +51,10 @@ export enum ProposalCategory {
 export type Category = 'Null' | 'Small' | 'Medium' | 'Large';
 
 export const ProposalCategoryMap = {
-	[ProposalCategory.ProposalCategoryNull]: 'Null',
-	[ProposalCategory.ProposalCategorySmall]: 'Small',
-	[ProposalCategory.ProposalCategoryMedium]: 'Medium',
-	[ProposalCategory.ProposalCategoryLarge]: 'Large',
+    [ProposalCategory.ProposalCategoryNull]: 'Null',
+    [ProposalCategory.ProposalCategorySmall]: 'Small',
+    [ProposalCategory.ProposalCategoryMedium]: 'Medium',
+    [ProposalCategory.ProposalCategoryLarge]: 'Large',
 }
 
 export const ProposalCategoryReverseMap = {
@@ -71,9 +73,9 @@ export enum ProposalFundingType {
 export type FundingType = 'Null' | 'Proactive' | 'Retroactive';
 
 export const ProposalFundingTypeMap = {
-	[ProposalFundingType.Null]: 'Null',
-	[ProposalFundingType.Proactive]: 'Proactive',
-	[ProposalFundingType.Retroactive]: 'Retroactive',
+    [ProposalFundingType.Null]: 'Null',
+    [ProposalFundingType.Proactive]: 'Proactive',
+    [ProposalFundingType.Retroactive]: 'Retroactive',
 }
 
 export const ProposalFundingTypeReverseMap: { [key: string]: ProposalFundingType } = {
@@ -133,14 +135,34 @@ export interface ProposalJSON {
     forumLink: string;
 }
 
+export const statusToPhase = {
+    [ProposalStatus.ProposalStatusEmpty]: 'null',
+    [ProposalStatus.ProposalStatusDraft]: 'draft',
+    [ProposalStatus.ProposalStatusFinal]: 'discussion',
+    [ProposalStatus.ProposalStatusVoting]: 'voting',
+    [ProposalStatus.ProposalStatusApproved]: 'closure',
+    [ProposalStatus.ProposalStatusRejected]: 'closure',
+    [ProposalStatus.ProposalStatusReviewed]: 'closure',
+    [ProposalStatus.ProposalStatusFunded]: 'closure',
+    [ProposalStatus.ProposalStatusBlocked]: 'closure',
+    [ProposalStatus.ProposalStatusDelete]: 'closure',
+};
+
+export const phaseToText = {
+    submission: 'Submission',
+    discussion: 'Discussion',
+    voting: 'Voting',
+    closure: 'Closure'
+};
+
 export type ProposalCardDetails = ProposalMainCardDetails | ProposalSummaryCardDetails | ProposalInfoCardDetails;
 
 export function isProposalMainCardDetails(details: ProposalCardDetails): details is ProposalMainCardDetails {
-	return !isProposalSummaryCardDetails(details);
+    return !isProposalSummaryCardDetails(details);
 }
 
 export function isProposalSummaryCardDetails(details: ProposalCardDetails): details is ProposalSummaryCardDetails {
-	return (details as ProposalMainCardDetails).forumLink === undefined;
+    return (details as ProposalMainCardDetails).forumLink === undefined;
 }
 
 export function isProposalInfoCardDetails(details: ProposalCardDetails): details is ProposalInfoCardDetails {
@@ -155,14 +177,14 @@ export interface ProposalSummaryCardDetails {
     proposer: string;
     fundingType: ProposalFundingType;
     status: ProposalStatus;
-	focus: ProposalFocus;
+    focus: ProposalFocus;
 }
 
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;
 
 export type ProposalInfoCardDetails = Pick<
     ProposalMainCardDetails,
-    'focus' | 'forumLink' | 'fundingType' | 'openSource' | 'requestedAmount'
+    'focus' | 'forumLink' | 'fundingType' | 'openSource' | 'requestedAmount' | 'status'
 >
 
 export interface ProposalBrief {

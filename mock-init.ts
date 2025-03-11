@@ -1,14 +1,14 @@
 import fs from 'node:fs';
-import algosdk, {ALGORAND_MIN_TX_FEE} from 'algosdk';
-import {XGovRegistryFactory} from '@algorandfoundation/xgov/registry';
-import type {TransactionSignerAccount} from '@algorandfoundation/algokit-utils/types/account';
-import {AlgorandClient as algorand} from './src/algorand/algo-client'
-import {create} from 'kubo-rpc-client';
-import {ProposalFactory} from '@algorandfoundation/xgov';
-import {ProposalStatus as PS} from '@/types/proposals';
-import {CID} from 'multiformats';
+import algosdk, { ALGORAND_MIN_TX_FEE } from 'algosdk';
+import { XGovRegistryFactory } from '@algorandfoundation/xgov/registry';
+import type { TransactionSignerAccount } from '@algorandfoundation/algokit-utils/types/account';
+import { AlgorandClient as algorand } from './src/algorand/algo-client'
+import { create } from 'kubo-rpc-client';
+import { ProposalFactory } from '@algorandfoundation/xgov';
+import { ProposalStatus as PS } from '@/types/proposals';
+import { CID } from 'multiformats';
 
-import {mockProposals} from "./__fixtures__/proposals";
+import { mockProposals } from "./__fixtures__/proposals";
 
 const XGOV_FEE = BigInt(1_000_000);
 const PROPOSER_FEE = BigInt(10_000_000);
@@ -89,9 +89,8 @@ export async function timeWarp(to: number) {
 const ipfsClient = create();
 // Generate admin account (the one that creates the registry)
 const fundAmount = (10).algo();
-const adminAccount = algorand.account.random();
+const adminAccount = await algorand.account.fromKmd('unencrypted-default-wallet');
 console.log('admin account', adminAccount.addr);
-// const dispenser = await algorand.account.fromEnvironment('DEPLOYER')
 const dispenser = await algorand.account.dispenserFromEnvironment();
 
 await algorand.account.ensureFunded(
@@ -117,7 +116,7 @@ await registryClient.appClient.fundAppAccount({
 });
 
 // Generate KYC provider account
-const kycProvider = algorand.account.random();
+const kycProvider = await algorand.account.fromKmd('unencrypted-default-wallet');
 console.log('kyc provider', kycProvider.addr);
 
 await algorand.account.ensureFunded(
@@ -205,7 +204,7 @@ await registryClient.send.declareCommittee({
 })
 
 const committeeMembers = [
-    algorand.account.random()
+    adminAccount
 ];
 
 for (const committeeMember of committeeMembers) {
@@ -247,7 +246,7 @@ const suggestedParams = await algorand.getSuggestedParams();
 
 const oneYearFromNow = await getLatestTimestamp() + 365 * 24 * 60 * 60;
 
-const proposalFactory = new ProposalFactory({algorand});
+const proposalFactory = new ProposalFactory({ algorand });
 
 for (let i = 0; i < mockProposals.length; i++) {
     const account = algorand.account.random();
@@ -323,16 +322,16 @@ for (let i = 0; i < mockProposals.length; i++) {
     proposalIds.push(result.return);
 
     // instance a new proposal client
-    const proposalClient = proposalFactory.getAppClientById({appId: result.return});
+    const proposalClient = proposalFactory.getAppClientById({ appId: result.return });
 
-    const {cid} = await ipfsClient.add(JSON.stringify(
+    const { cid } = await ipfsClient.add(JSON.stringify(
         mockProposals[i].proposalJson,
         (_, value) => (
             typeof value === 'bigint'
                 ? value.toString()
                 : value // return everything else unchanged
         )
-    ), {cidVersion: 1});
+    ), { cidVersion: 1 });
 
     const proposalSubmissionFee = Math.trunc(Number(
         ((mockProposals[i].requestedAmount).algos().microAlgos * BigInt(1_000)) / BigInt(10_000)
@@ -378,9 +377,7 @@ await timeWarp(ts);
 console.log('finished time warp, new ts: ', await getLatestTimestamp());
 
 for (let i = 0; i < mockProposals.length; i++) {
-    // const proposal = mockProposals[i];
-    // if (proposal.status === PS.ProposalStatusFinal) {
-    const proposalClient = proposalFactory.getAppClientById({appId: proposalIds[i]});
+    const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
 
     await proposalClient.send.finalize({
         sender: proposerAccounts[i].addr,
@@ -390,36 +387,86 @@ for (let i = 0; i < mockProposals.length; i++) {
         accountReferences: [adminAccount.addr],
         extraFee: (ALGORAND_MIN_TX_FEE).microAlgos(),
     });
-    // }
 }
 
 for (let i = 0; i < mockProposals.length; i++) {
     const proposal = mockProposals[i];
     if (proposal.status === PS.ProposalStatusVoting) {
-        const proposalClient = proposalFactory.getAppClientById({appId: proposalIds[i]});
+
+        const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
         for (const committeeMember of committeeMembers) {
 
             const addr = algosdk.decodeAddress(committeeMember.addr).publicKey;
 
-            await proposalClient.send.assignVoter({
-                sender: adminAccount.addr,
-                signer: adminAccount.signer,
-                args: {
-                    voter: committeeMember.addr,
-                    votingPower: 10,
-                },
-                appReferences: [registryClient.appId],
-                boxReferences: [
-                    new Uint8Array(Buffer.concat([
-                        Buffer.from('V'),
-                        addr,
-                    ])),
-                ]
-            })
-            console.log('assigned voter');
+            try {
+                await proposalClient.send.assignVoter({
+                    sender: adminAccount.addr,
+                    signer: adminAccount.signer,
+                    args: {
+                        voter: committeeMember.addr,
+                        votingPower: 10,
+                    },
+                    appReferences: [registryClient.appId],
+                    boxReferences: [
+                        new Uint8Array(Buffer.concat([
+                            Buffer.from('V'),
+                            addr,
+                        ])),
+                    ]
+                })
+                console.log('assigned voter');
+            } catch (e) {
+                console.error('Failed to assign voter');
+                process.exit(1);
+            }
         }
     }
 }
+
+// For one proposal, we will have a voting period
+// to make it reviewable by xGov Reviewer
+// Send votes for proposal #0 from admin account
+try {
+    await registryClient.send.voteProposal({
+        sender: adminAccount.addr,
+        signer: adminAccount.signer,
+        args: {
+            proposalId: proposalIds[0],
+            xgovAddress: adminAccount.addr,
+            approvalVotes: 10n,
+            rejectionVotes: 0n,
+        },
+        accountReferences: [adminAccount.addr],
+        appReferences: [proposalIds[0]],
+        boxReferences: [
+            new Uint8Array(Buffer.concat([Buffer.from('x'), algosdk.decodeAddress(adminAccount.addr).publicKey])),
+            {
+                appId: proposalIds[0], name: new Uint8Array(Buffer.concat([Buffer.from('V'),
+                algosdk.decodeAddress(adminAccount.addr).publicKey]))
+            }],
+        extraFee: (ALGORAND_MIN_TX_FEE * 100).microAlgos(),
+    })
+} catch (e) {
+    console.error('Failed to vote proposal');
+    process.exit(1);
+}
+
+// Scrutinize proposal #0's voting
+await proposalFactory.getAppClientById({ appId: proposalIds[0] }).send.scrutiny({
+    sender: adminAccount.addr,
+    signer: adminAccount.signer,
+    args: {},
+    appReferences: [registryClient.appId],
+    accountReferences: [proposerAccounts[0].addr],
+})
+
+// Set admin account as xGov Reviewer to avoid having to click through admin panel
+await registryClient.send.setXgovReviewer({
+    sender: adminAccount.addr,
+    signer: adminAccount.signer,
+    args: [adminAccount.addr],
+});
+
 
 console.log({
     adminAccount,
@@ -440,7 +487,7 @@ fs.writeFileSync('.deployment.json', JSON.stringify({
         secret: algosdk.secretKeyToMnemonic(kycProvider.account.sk),
         addr: kycProvider.addr,
     },
-    proposerAccounts: proposerAccounts.map((acct)=>{
+    proposerAccounts: proposerAccounts.map((acct) => {
         return {
             secret: algosdk.secretKeyToMnemonic(acct.account.sk),
             addr: acct.account.addr,

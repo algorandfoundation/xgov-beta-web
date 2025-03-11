@@ -23,7 +23,7 @@
     "@astrojs/cloudflare": "^12.2.0",
     "@astrojs/react": "^4.1.5",
     "@astrojs/tailwind": "^5.1.4",
-    "@blockshake/defly-connect": "^1.1.6",
+    "@blockshake/defly-connect": "1.1.6",
     "@hookform/resolvers": "^3.10.0",
     "@nanostores/persistent": "^0.10.2",
     "@nanostores/react": "^0.7.3",
