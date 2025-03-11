@@ -17,22 +17,7 @@ export interface MockProposalCreationData {
 
 export const mockProposals: MockProposalCreationData[] = [
     {
-        status: PS.ProposalStatusVoting,
-        title: 'Tealscript interactive developer course Tealscript interactive developer course',
-        proposalJson: {
-            description: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
-            team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
-            additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
-            openSource: true,
-            pastProposalLinks: [],
-            forumLink: 'https://forum.algorand.org/',
-        },
-        fundingType: ProposalFundingType.Proactive,
-        requestedAmount: 30_000,
-        focus: ProposalFocus.FocusEducation,
-    },
-    {
-        status: PS.ProposalStatusFinal,
+        status: PS.ProposalStatusDraft,
         title: 'Auto-Compounding Farms',
         proposalJson: {
             description: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
@@ -48,6 +33,21 @@ export const mockProposals: MockProposalCreationData[] = [
         fundingType: ProposalFundingType.Retroactive,
         requestedAmount: 75_000,
         focus: ProposalFocus.FocusDeFi,
+    },
+    {
+        status: PS.ProposalStatusVoting,
+        title: 'Tealscript interactive developer course Tealscript interactive developer course',
+        proposalJson: {
+            description: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
+            team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
+            additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
+            openSource: true,
+            pastProposalLinks: [],
+            forumLink: 'https://forum.algorand.org/',
+        },
+        fundingType: ProposalFundingType.Proactive,
+        requestedAmount: 30_000,
+        focus: ProposalFocus.FocusEducation,
     },
     {
         status: PS.ProposalStatusVoting,

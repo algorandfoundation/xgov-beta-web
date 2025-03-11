@@ -1,5 +1,4 @@
 import { ChatBubbleLeftIcon } from "../icons/ChatBubbleLeftIcon";
-import { CheckCircleIcon } from "../icons/CheckCircleIcon";
 import { Link } from "../Link";
 
 export default function DiscussionLink({ to }: { to: string }) {

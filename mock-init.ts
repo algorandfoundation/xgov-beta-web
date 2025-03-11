@@ -249,7 +249,17 @@ const oneYearFromNow = await getLatestTimestamp() + 365 * 24 * 60 * 60;
 const proposalFactory = new ProposalFactory({ algorand });
 
 for (let i = 0; i < mockProposals.length; i++) {
-    const account = algorand.account.random();
+
+    let account: TransactionSignerAccount & { account: algosdk.Account; }
+
+    if (i == 0) {
+        // First proposal is by the KMD default account (i.e., adminAccount)
+        account = adminAccount
+    }
+    else {
+        account = algorand.account.random();
+    }
+
     console.log('\nproposer account', account.addr);
 
     await algorand.account.ensureFunded(
@@ -376,7 +386,8 @@ const ts = (await getLatestTimestamp()) + (86400 * 5)
 await timeWarp(ts);
 console.log('finished time warp, new ts: ', await getLatestTimestamp());
 
-for (let i = 0; i < mockProposals.length; i++) {
+// Let's finalize all proposals except the first one, owned by admin
+for (let i = 1; i < mockProposals.length; i++) {
     const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
 
     await proposalClient.send.finalize({
@@ -389,7 +400,7 @@ for (let i = 0; i < mockProposals.length; i++) {
     });
 }
 
-for (let i = 0; i < mockProposals.length; i++) {
+for (let i = 1; i < mockProposals.length; i++) {
     const proposal = mockProposals[i];
     if (proposal.status === PS.ProposalStatusVoting) {
 
@@ -431,17 +442,17 @@ try {
         sender: adminAccount.addr,
         signer: adminAccount.signer,
         args: {
-            proposalId: proposalIds[0],
+            proposalId: proposalIds[1],
             xgovAddress: adminAccount.addr,
             approvalVotes: 10n,
             rejectionVotes: 0n,
         },
         accountReferences: [adminAccount.addr],
-        appReferences: [proposalIds[0]],
+        appReferences: [proposalIds[1]],
         boxReferences: [
             new Uint8Array(Buffer.concat([Buffer.from('x'), algosdk.decodeAddress(adminAccount.addr).publicKey])),
             {
-                appId: proposalIds[0], name: new Uint8Array(Buffer.concat([Buffer.from('V'),
+                appId: proposalIds[1], name: new Uint8Array(Buffer.concat([Buffer.from('V'),
                 algosdk.decodeAddress(adminAccount.addr).publicKey]))
             }],
         extraFee: (ALGORAND_MIN_TX_FEE * 100).microAlgos(),
@@ -452,12 +463,12 @@ try {
 }
 
 // Scrutinize proposal #0's voting
-await proposalFactory.getAppClientById({ appId: proposalIds[0] }).send.scrutiny({
+await proposalFactory.getAppClientById({ appId: proposalIds[1] }).send.scrutiny({
     sender: adminAccount.addr,
     signer: adminAccount.signer,
     args: {},
     appReferences: [registryClient.appId],
-    accountReferences: [proposerAccounts[0].addr],
+    accountReferences: [proposerAccounts[1].addr],
 })
 
 // Set admin account as xGov Reviewer to avoid having to click through admin panel

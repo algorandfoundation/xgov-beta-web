@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
     Form,
     FormControl,
@@ -14,14 +13,12 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
-import { Link } from "react-router-dom";
 import { CheckIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProposalFocus } from "@/types/proposals";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { InfoPopover } from "@/components/InfoPopover/InfoPopover";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
 
 const title = 'xGov';

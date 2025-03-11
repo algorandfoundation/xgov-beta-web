@@ -13,7 +13,11 @@ export interface ProposalCardProps {
     mini?: boolean;
 }
 
-export function ProposalCard({ proposal, path = '', mini = false }: ProposalCardProps) {
+export function ProposalCard({
+    proposal,
+    path = '',
+    mini = false,
+}: ProposalCardProps) {
 
     if (isProposalInfoCardDetails(proposal)) {
         return (
@@ -29,7 +33,10 @@ export function ProposalCard({ proposal, path = '', mini = false }: ProposalCard
         }
 
         return (
-            <ProposalSummaryCard path={path} proposal={proposal} />
+            <ProposalSummaryCard
+                path={path}
+                proposal={proposal}
+            />
         )
     }
 
@@ -113,12 +120,9 @@ function ProposalSummaryCard({
         fundingType,
         requestedAmount,
         proposer
-    }
+    },
 }: ProposalSummaryCardProps) {
-
     const phase = ProposalStatusMap[status];
-
-    console.log("phase:", status, phase)
 
     return (
         <Link
@@ -126,10 +130,10 @@ function ProposalSummaryCard({
             className="list-none relative flex bg-algo-blue-60 dark:bg-algo-black border-2 border-white dark:border-white text-white dark:text-white p-4 rounded-3xl"
         >
             <div className="flex-1 flex flex-col justify-center">
-                <h3 className="text-lg text-wrap lg:text-2xl mb-3 lg:mb-6 font-bold">{title}</h3>
-                <p className="text-md lg:text-xl">{FocusMap[focus]}</p>
-                <p className="text-md lg:text-xl">{ProposalFundingTypeMap[fundingType]}</p>
-                <p className="text-md lg:text-xl">{(Number(requestedAmount) / 1_000_000).toLocaleString()} ALGO</p>
+                <h3 className="text-lg text-wrap lg:text-2xl mb-3 lg:mb-6 font-bold">{title} </h3>
+                <p className="text-xl">{FocusMap[focus]}</p>
+                <p className="text-xl">{ProposalFundingTypeMap[fundingType]}</p>
+                <p className="text-xl">{(Number(requestedAmount) / 1_000_000).toLocaleString()} ALGO</p>
             </div>
 
             <div className="flex flex-col items-end">
@@ -152,10 +156,28 @@ function ProposalSummaryCard({
                 </div>
                 <p className="text-lg my-1 mr-2">- {proposer.length === 58 ? shortenAddress(proposer) : proposer}</p>
             </div>
-        </Link>
+
+            <div className="absolute bottom-0 right-0 mb-4 mr-4 flex flex-col items-center gap-2">
+                <Link
+                    data-testid="proposol-link"
+                    className={cn(
+                        path === `/proposal/${id}` ? 'bg-algo-blue' : '',
+                        "text-xl font-semi-bold hover:text-algo-teal dark:hover:text-algo-blue"
+                    )}
+                    to={`/proposal/${Number(id)}`}
+                >
+                    Read More
+                </Link>
+            </div>
+        </Link >
     )
 }
 
+
+interface MyProposalSummaryCardProps {
+    path?: string;
+    proposal: ProposalSummaryCardDetails;
+}
 
 function MyProposalSummaryCard({
     proposal: {
@@ -166,7 +188,7 @@ function MyProposalSummaryCard({
         fundingType,
         requestedAmount,
     }
-}: ProposalSummaryCardProps) {
+}: MyProposalSummaryCardProps) {
 
     const phase = ProposalStatusMap[status];
 

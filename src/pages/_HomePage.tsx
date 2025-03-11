@@ -1,8 +1,8 @@
-import { Page } from "../components/Page.tsx";
-import { filterAmountMap, filters, ProposalFilter } from "@/components/ProposalFilter/ProposalFilter.tsx";
+import { Page } from "../components/Page";
+import { filterAmountMap, filters, ProposalFilter } from "@/components/ProposalFilter/ProposalFilter";
 import { type ComponentType } from "react";
+import { useGetAllProposals } from "src/hooks/useProposals";
 import { Link, type LinkProps } from "../components/Link.tsx";
-import { useGetAllProposals } from "src/hooks/useProposals.ts";
 import { FocusReverseMap, ProposalFundingTypeReverseMap, ProposalStatusMap, ProposalStatusReverseMap, type ProposalSummaryCardDetails } from "@/types/proposals.ts";
 import { Hero } from "@/components/Hero/Hero.tsx";
 import HeroAnimation from "@/components/HeroAnimation/HeroAnimation.tsx";
@@ -18,6 +18,7 @@ import ProposalListHeader from "@/components/ProposalListHeader/ProposalListHead
 import { useRegistry } from "src/hooks/useRegistry.ts";
 import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton.tsx";
 import { useSearchParams } from "react-router-dom";
+import { useWallet } from "@txnlab/use-wallet-react";
 
 const title = 'Algorand xGov';
 const filterKeys = Object.keys(filters);
@@ -104,6 +105,8 @@ export function HomePage() {
 }
 
 export default function StackedList({ proposals }: { proposals: ProposalSummaryCardDetails[] }) {
+
+    const { activeAddress } = useWallet();
     return (
         <div className="flex flex-col gap-y-4">
             {proposals.map(({
@@ -133,7 +136,7 @@ export default function StackedList({ proposals }: { proposals: ProposalSummaryC
                         <div>
                             <p className=" text-xl font-semibold text-algo-black dark:text-white">
                                 <BracketedPhaseDetail phase={phase} />
-                                &nbsp;&nbsp;{title}
+                                &nbsp;&nbsp;{title} {(proposer == activeAddress) && ("🫵")}
                             </p>
                             <div className="mt-3 hidden md:flex md:items-center gap-4 md:gap-10 text-algo-blue dark:text-algo-teal font-mono">
                                 <UserPill address={proposer} />
