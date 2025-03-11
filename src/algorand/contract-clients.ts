@@ -2,7 +2,7 @@ import { XGovRegistryClient, type TypedGlobalState } from '@algorandfoundation/x
 import { ProposalClient as XGovProposalClient } from '@algorandfoundation/xgov/proposal';
 import { AlgorandClient as algorand } from './algo-client'
 
-export const RegistryAppID: bigint = BigInt(import.meta.env.PUBLIC_REGISTRY_APP_ID);
+export const RegistryAppID: bigint = BigInt(import.meta.env.PUBLIC_REGISTRY_APP_ID || 16324508);
 
 export const RegistryClient = algorand.client.getTypedAppClientById(XGovRegistryClient, { appId: RegistryAppID })
 

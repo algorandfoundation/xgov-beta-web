@@ -8,7 +8,7 @@ export function useGetAllProposals() {
     });
 }
 
-export function useProposalsByProposer(address: string | null) {
+export function useProposalsByProposer(address: string | null | undefined) {
     return useQuery({
         queryKey: ['getProposalsByProposer', address],
         queryFn: () => getProposalsByProposer(address!),
@@ -17,10 +17,9 @@ export function useProposalsByProposer(address: string | null) {
 }
 
 export function useProposal(proposalId: number | null) {
-    return useQuery({ 
+    return useQuery({
         queryKey: ['getProposal', Number(proposalId!)],
         queryFn: () => getProposal(BigInt(proposalId!)),
         enabled: !!proposalId,
     });
-
 }

@@ -1,6 +1,10 @@
 import type { ProposerBoxState } from "@/types/proposer";
 import EditableAddress from "../EditableAddress/EditableAddress";
 import ActionButton from "../button/ActionButton/ActionButton";
+import { cn } from "@/functions/utils";
+import XGovStatusPill from "../XGovStatusPill/XGovStatusPill";
+import XGovProposerStatusPill from "../XGovProposerStatusPill/XGovProposerStatusPill";
+import BecomeAnXGovBannerButton from "../BecomeAnXGovBannerButton/BecomeAnXGovBannerButton";
 
 export interface ProfileCardProps {
     activeAddress: string;
@@ -14,6 +18,7 @@ export interface ProfileCardProps {
     proposer?: { isProposer: boolean } & ProposerBoxState;
     subscribeProposer: () => void;
     subscribeProposerLoading: boolean;
+    className?: string;
 }
 
 export function ProfileCard({
@@ -28,25 +33,27 @@ export function ProfileCard({
     proposer,
     subscribeProposer,
     subscribeProposerLoading,
+    className = '',
 }: ProfileCardProps) {
-    const validKYC =
-        (
-            proposer
-            && proposer.kycStatus
-            && proposer.kycExpiring > Date.now()
-        ) || false
 
     return (
-        <div className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
-            {/* list out details inline sections, address, voting address, xgov status, proposer status */}
-            <div className="max-w-3xl py-10 flex flex-col gap-4">
-                <div>
-                    <h2 className="text-xl py-1 font-bold">Address</h2>
-                    <p className="inline-block p-2 px-3 mt-2 border-2 border-algo-black bg-algo-black dark:border-white dark:bg-white text-white dark:text-algo-blue-50 rounded-lg text-xs sm:text-base font-mono w-full md:w-[36.5rem]">{activeAddress}</p>
+        <div className={cn(className, "relative bg-white dark:bg-algo-black dark:border-white text-algo-black dark:text-white rounded-lg")}>
+            <div className="w-full flex flex-col gap-4">
+                <div className="flex gap-6">
+                    <XGovStatusPill
+                        isXGov={isXGov}
+                        unsubscribeXgov={unsubscribeXgov}
+                        unsubscribeXGovLoading={subscribeXGovLoading}
+                    />
+                    {
+                        !proposer || (proposer?.isProposer && !proposer.kycStatus) && <XGovProposerStatusPill proposer={proposer}/>
+                    }
                 </div>
 
                 {
-                    isXGov && (
+                    !isXGov ? (
+                        <BecomeAnXGovBannerButton onClick={subscribeXgov} disabled={subscribeXGovLoading} />
+                    ) : (
                         <EditableAddress
                             title='Voting Address'
                             defaultValue={votingAddress}
@@ -58,40 +65,6 @@ export function ProfileCard({
 
                 <div>
                     <div className="flex items-center gap-2">
-                        <h2 className="text-xl py-1 font-bold">xGov Status</h2>
-                        {
-                            isXGov
-                                ? <>
-                                    <ActionButton
-                                        type='button'
-                                        onClick={unsubscribeXgov}
-                                        disabled={subscribeXGovLoading}
-                                    >
-                                        {subscribeXGovLoading ? 'Loading...' : 'Remove me from xGov'}
-                                    </ActionButton>
-                                </>
-                                : <>
-                                    <ActionButton
-                                        type='button'
-                                        onClick={subscribeXgov}
-                                        disabled={subscribeXGovLoading}
-                                    >
-                                        {subscribeXGovLoading ? 'Loading...' : 'Become an xGov'}
-                                    </ActionButton>
-                                </>
-                        }
-                    </div>
-                    <p className="text-xl mt-2 dark:text-algo-blue-20">
-                        {isXGov
-                            ? '✅ Active xGov'
-                            : '❌ Not an xGov'
-                        }
-                    </p>
-                </div>
-
-                <div>
-                    <div className="flex items-center gap-2">
-                        <h2 className="text-xl py-1 font-bold">Proposer Status</h2>
                         {
                             !proposer?.isProposer &&
                             <ActionButton
@@ -103,16 +76,6 @@ export function ProfileCard({
                             </ActionButton>
                         }
                     </div>
-                    <p className="text-xl mt-2 dark:text-algo-blue-20">
-                        {!proposer?.isProposer && '❌ Not a Proposer'}
-                        {proposer?.isProposer && !proposer.kycStatus && '🟡 Unverified KYC'}
-                        {proposer?.isProposer
-                            && proposer.kycStatus
-                            && proposer.kycExpiring < Date.now()
-                            && '⏰ Expired KYC'
-                        }
-                        {validKYC && '✅ Active Proposer'}
-                    </p>
                 </div>
             </div>
         </div>

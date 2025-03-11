@@ -1,4 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-  
+
+@media (hover: hover) and (pointer: fine) {
+	*:hover {}
+}
+
+html {
+	scrollbar-color: #2D2DF1 white;
+	scrollbar-width: 6px;
+}
+
+html.dark {
+    scrollbar-color: #17CAC6 #001324;
+    scrollbar-width: 6px;
+}
+
+html::-webkit-scrollbar {
+	background-color: white;
+	width: 6px;
+}
+
+html.dark::-webkit-scrollbar {
+	background-color: #001324;
+	width: 6px;
+}

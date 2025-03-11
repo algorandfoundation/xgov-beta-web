@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import ActionButton from "../button/ActionButton/ActionButton";
+import { Button } from "../ui/button";
 
 export interface EditableAddressProps {
     title: string;
@@ -16,13 +16,14 @@ export default function EditableAddress({ title, defaultValue, loading, onSave }
 
     return (
         <div>
-            <div className="flex items-center gap-2">
-                <h2 className="text-xl py-1 font-bold">{title}</h2>
+            <div className="flex items-center gap-2 pb-1">
+                <h2 className="text-lg py-0.5 font-bold">{title}</h2>
                 {
                     editingVotingAddress
                         ? <>
-                            <ActionButton
-                                type='button'                                
+                            <Button
+                                size='sm'
+                                type='button'
                                 onClick={() => {
                                     if (votingAddressRef?.current?.value) {
                                         onSave(votingAddressRef?.current?.value);
@@ -32,11 +33,13 @@ export default function EditableAddress({ title, defaultValue, loading, onSave }
                                 disabled={loading || !!votingAddressFieldError}
                             >
                                 {loading ? 'Loading...' : 'Save'}
-                            </ActionButton>
+                            </Button>
 
-                            <ActionButton
-                                innerRef={cancelButtonRef}
+                            <Button
+                                ref={cancelButtonRef}
+                                size='sm'
                                 type='button'
+                                variant='ghost'
                                 onClick={() => {
                                     if (votingAddressRef?.current) {
                                         votingAddressRef.current.value = defaultValue;
@@ -48,9 +51,11 @@ export default function EditableAddress({ title, defaultValue, loading, onSave }
                                 disabled={loading}
                             >
                                 {loading ? 'Loading...' : 'Cancel'}
-                            </ActionButton>
+                            </Button>
                         </>
-                        : <ActionButton
+                        : <Button
+                            size='sm'
+                            variant='ghost'
                             type='button'
                             onClick={() => {
                                 setVotingAddressFieldError('');
@@ -65,14 +70,14 @@ export default function EditableAddress({ title, defaultValue, loading, onSave }
                             disabled={loading}
                         >
                             {loading ? 'Loading...' : 'Edit'}
-                        </ActionButton>
+                        </Button>
                 }
             </div>
 
             <input
                 ref={votingAddressRef}
                 name="voting_address"
-                className="p-2 pl-3 mt-2 mb-5 border-2 border-algo-black bg-algo-black dark:border-white dark:bg-white text-white dark:text-algo-blue-50 rounded-lg text-xs sm:text-base font-mono w-full md:w-[36.5rem] focus:outline-none focus:border-algo-teal focus:bg-white focus:text-algo-black dark:focus:bg-algo-black dark:focus:text-white dark:focus:border-white"
+                className="p-2 pl-3 mb-5 border-2 border-algo-black bg-algo-black dark:border-white dark:bg-white text-white dark:text-algo-black rounded-lg text-xs sm:text-base font-mono w-full md:w-[36.5rem] focus:outline-none focus:border-algo-blue focus:bg-white focus:text-algo-black dark:focus:bg-algo-black dark:focus:text-white dark:focus:border-white"
                 defaultValue={defaultValue}
                 onFocus={() => {
                     setVotingAddressFieldError('');
