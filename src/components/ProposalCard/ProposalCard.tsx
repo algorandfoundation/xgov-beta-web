@@ -157,7 +157,7 @@ function ProposalSummaryCard({
                 <p className="text-lg my-1 mr-2">- {proposer.length === 58 ? shortenAddress(proposer) : proposer}</p>
             </div>
 
-            <div className="absolute bottom-0 right-0 mb-4 mr-4 flex flex-col items-center gap-2">
+            <div className="absolute bottom-0 right-0 mb-4 mr-4 flex flex-row items-center gap-2">
                 <Link
                     data-testid="proposol-link"
                     className={cn(

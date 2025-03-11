@@ -2,7 +2,7 @@ import BracketedPhaseDetail from "@/components/BracketedPhaseDetail/BracketedPha
 import FocusDetail from "@/components/FocusDetail/FocusDetail";
 import FundingTypeDetail from "@/components/FundingTypeDetail/FundingTypeDetail";
 import { BlockIcon } from "@/components/icons/BlockIcon";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import LoraPillLink from "@/components/LoraPillLink/LoraPillLink";
 import { Page } from "@/components/Page";
 import ProposalReviewerCard from "@/components/ProposalReviewerCard/ProposalReviewerCard";
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useParams } from "react-router-dom";
-import { useProposal, useProposalsByProposer } from "src/hooks/useProposals";
+import { useGetAllProposals, useProposal, useProposalsByProposer } from "src/hooks/useProposals";
 import { useRegistry } from "src/hooks/useRegistry";
 import UserPill from "@/components/UserPill/UserPill";
 import VoteCounter from "@/components/VoteCounter/VoteCounter";
@@ -41,6 +41,7 @@ export function ProposalPage() {
     const { proposal: proposalId } = useParams();
     const proposal = useProposal(Number(proposalId));
     const pastProposals = useProposalsByProposer(proposal.data?.proposer);
+    const allProposals = useGetAllProposals();
 
     if (proposal.isLoading || registryGlobalState.isLoading) {
         return <div>Loading...</div>
@@ -48,13 +49,26 @@ export function ProposalPage() {
 
     if (proposal.isError) {
         console.log('error', proposal.error);
-        return <div>Error</div>
+        return (
+            <div>
+                <div>Encountered an error: {proposal.error.message}</div>
+                <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    Return to Homepage?
+                </Link>
+            </div>
+        );
     }
 
     if (!proposal.data) {
-        return <div>Proposal not found</div>
+        return (
+            <div>
+                <div>Proposal not found!</div>
+                <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    Return to Homepage?
+                </Link>
+            </div>
+        );
     }
-
     return (
         <Page
             title={title}
@@ -72,6 +86,8 @@ export function ProposalPage() {
             <ProposalInfo
                 proposal={proposal.data}
                 pastProposals={pastProposals.data}
+                refetchProposal={proposal.refetch}
+                refetchAllProposals={allProposals.refetch}
             >
                 <div className="flex lg:flex-col items-end justify-between gap-2 text-white lg:-mt-16 mx-4 lg:mx-0 my-4 p-2">
                     <RequestedAmountDetail requestedAmount={proposal.data.requestedAmount} />
@@ -163,9 +179,6 @@ export const statusCardMap = {
 }
 
 export function StatusCard({ className = '', proposal }: StatusCardProps) {
-
-    console.log(proposal.status)
-
     const details = statusCardMap[proposal.status as keyof typeof statusCardMap];
 
     return (
@@ -204,23 +217,33 @@ export function StatusCard({ className = '', proposal }: StatusCardProps) {
 export interface ProposalInfoProps {
     proposal: ProposalMainCardDetails;
     pastProposals?: ProposalBrief[];
+    refetchProposal: () => void;
+    refetchAllProposals: () => void;
     children: React.ReactNode;
 }
 
-export default function ProposalInfo({ proposal, pastProposals, children }: ProposalInfoProps) {
+export default function ProposalInfo({ proposal, pastProposals, refetchProposal, refetchAllProposals, children }: ProposalInfoProps) {
 
     const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
+    const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+
     const { activeAddress, transactionSigner } = useWallet();
-    const refetcher = useProposal(Number(proposal.id)).refetch;
 
     const phase = ProposalStatusMap[proposal.status];
 
     const handleOpenFinalizeModal = () => {
         setIsFinalizeModalOpen(true);
     };
+    const handleOpenWithdrawModal = () => {
+        setIsWithdrawModalOpen(true);
+    };
 
     const handleCloseFinalizeModal = () => {
         setIsFinalizeModalOpen(false);
+    };
+
+    const handleCloseWithdrawModal = () => {
+        setIsWithdrawModalOpen(false);
     };
 
     return (
@@ -290,19 +313,34 @@ export default function ProposalInfo({ proposal, pastProposals, children }: Prop
                     <div className="lg:pr-4">
                         <div className="max-w-xl text-lg/8 text-algo-black-70 dark:text-algo-black-30 sm:max-w-lg md:max-w-[unset]">
                             {(proposal.proposer == activeAddress) && proposal.status === ProposalStatus.ProposalStatusDraft && (
-                                <ActionButton
-                                    onClick={handleOpenFinalizeModal} type={undefined} disabled={false}>
-                                    Submit your proposal for vote.
-                                </ActionButton>
+                                <div className="flex flex-row items-center gap-2">
+                                    <ActionButton
+                                        onClick={handleOpenWithdrawModal} type={undefined} disabled={false} variant={"destructive"}>
+                                        Withdraw Proposal
+                                    </ActionButton>
+                                    <ActionButton
+                                        onClick={handleOpenFinalizeModal} type={undefined} disabled={false}>
+                                        Submit your proposal for vote.
+                                    </ActionButton>
+                                    <FinalizeModal
+                                        isOpen={isFinalizeModalOpen}
+                                        onClose={handleCloseFinalizeModal}
+                                        proposalId={proposal.id}
+                                        activeAddress={activeAddress}
+                                        transactionSigner={transactionSigner}
+                                        refetchProposal={refetchProposal}
+                                    />
+                                    <WithdrawModal
+                                        isOpen={isWithdrawModalOpen}
+                                        onClose={handleCloseWithdrawModal}
+                                        proposalId={proposal.id}
+                                        activeAddress={activeAddress}
+                                        transactionSigner={transactionSigner}
+                                        refetchProposal={refetchProposal}
+                                        refetchAllProposals={refetchAllProposals}
+                                    />
+                                </div>
                             )}
-                            <FinalizeModal
-                                isOpen={isFinalizeModalOpen}
-                                onClose={handleCloseFinalizeModal}
-                                proposalId={proposal.id}
-                                activeAddress={activeAddress ?? ''}
-                                transactionSigner={transactionSigner}
-                                refetcher={refetcher}
-                            />
                             <p className="mb-8">
                                 <strong className="font-semibold text-algo-black dark:text-white">About the team<br /></strong>
                                 {proposal.team}
@@ -359,7 +397,7 @@ interface FinalizeModalProps {
     proposalId: bigint;
     activeAddress: string | null;
     transactionSigner: any;
-    refetcher: () => void;
+    refetchProposal: () => void;
 }
 
 export function FinalizeModal({
@@ -368,7 +406,7 @@ export function FinalizeModal({
     proposalId,
     activeAddress,
     transactionSigner,
-    refetcher,
+    refetchProposal
 }: FinalizeModalProps) {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -395,7 +433,7 @@ export function FinalizeModal({
                 console.log('Transaction confirmed');
                 setErrorMessage(null);
                 onClose();
-                refetcher();
+                refetchProposal();
                 return true;
             }
 
@@ -422,6 +460,87 @@ export function FinalizeModal({
                 <div className="mt-4 flex justify-end gap-2">
                     <button className="bg-gray-300 dark:bg-gray-700 p-2 rounded" onClick={onClose}>Cancel</button>
                     <button className="bg-algo-teal dark:bg-algo-blue text-white p-2 rounded" onClick={handleSubmit}>Submit</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+interface WithdrawalModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    proposalId: bigint;
+    activeAddress: string | null;
+    transactionSigner: any;
+    refetchProposal: () => void;
+    refetchAllProposals: () => void;
+}
+
+
+export function WithdrawModal({
+    isOpen,
+    onClose,
+    proposalId,
+    activeAddress,
+    transactionSigner,
+    refetchProposal,
+    refetchAllProposals
+}: WithdrawalModalProps) {
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const navigate = useNavigate();
+
+    const handleDrop = async () => {
+        try {
+            if (!activeAddress || !transactionSigner) {
+                setErrorMessage("Wallet not connected.");
+                return false;
+            }
+
+            const proposalFactory = new ProposalFactory({ algorand });
+            const proposalClient = proposalFactory.getAppClientById({ appId: proposalId });
+
+            const res = await proposalClient.send.drop({
+                sender: activeAddress,
+                signer: transactionSigner,
+                args: {},
+                appReferences: [registryClient.appId],
+                accountReferences: [activeAddress],
+                extraFee: (1000).microAlgos(),
+            });
+
+            if (res.confirmation.confirmedRound !== undefined && res.confirmation.confirmedRound > 0 && res.confirmation.poolError === '') {
+                console.log('Transaction confirmed');
+                setErrorMessage(null);
+                onClose();
+                refetchProposal();
+                refetchAllProposals();
+                navigate('/');
+                return true;
+            }
+
+            console.log('Transaction not confirmed');
+            setErrorMessage("Transaction not confirmed.");
+            return false;
+        } catch (error) {
+            console.error('Error during drop:', error);
+            setErrorMessage("An error occurred calling the proposal contract.");
+            return false;
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-algo-black p-4 rounded-lg max-w-lg w-full">
+                <button className="absolute top-2 right-2 text-xl" onClick={onClose}>×</button>
+                <h2 className="text-2xl font-bold mb-4">Withdraw Proposal?</h2>
+                <p>Are you sure you want to withdraw this proposal?</p>
+                <p>Once withdrawn you cannot undo this action.</p>
+                {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+                <div className="mt-4 flex justify-end gap-2">
+                    <button className="bg-gray-300 dark:bg-gray-700 p-2 rounded" onClick={onClose}>Cancel</button>
+                    <button className="bg-algo-teal dark:bg-algo-blue text-white p-2 rounded" onClick={handleDrop}>Withdraw</button>
                 </div>
             </div>
         </div>

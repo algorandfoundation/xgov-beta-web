@@ -3,7 +3,7 @@ import { filterAmountMap, filters, ProposalFilter } from "@/components/ProposalF
 import { type ComponentType } from "react";
 import { useGetAllProposals } from "src/hooks/useProposals";
 import { Link, type LinkProps } from "../components/Link.tsx";
-import { FocusReverseMap, ProposalFundingTypeReverseMap, ProposalStatusMap, ProposalStatusReverseMap, type ProposalSummaryCardDetails } from "@/types/proposals.ts";
+import { FocusReverseMap, ProposalFundingTypeReverseMap, ProposalStatus, ProposalStatusMap, ProposalStatusReverseMap, type ProposalSummaryCardDetails } from "@/types/proposals.ts";
 import { Hero } from "@/components/Hero/Hero.tsx";
 import HeroAnimation from "@/components/HeroAnimation/HeroAnimation.tsx";
 import UserPill from "@/components/UserPill/UserPill.tsx";
@@ -25,6 +25,13 @@ const filterKeys = Object.keys(filters);
 
 const proposalFilter = (proposal: ProposalSummaryCardDetails, searchParams: URLSearchParams): boolean => {
     let passes = true;
+
+    // Exclude proposals with status 0, i.e Empty
+    // Happens if a proposer withdraws their proposal
+    if (proposal.status === 0) {
+        return false;
+    }
+
     filterKeys.forEach((key) => {
         const value = searchParams.get(key) as string;
         if (value) {
