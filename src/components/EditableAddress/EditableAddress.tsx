@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import ActionButton from "../button/ActionButton/ActionButton";
 import { Button } from "../ui/button";
 
 export interface EditableAddressProps {
@@ -24,7 +23,7 @@ export default function EditableAddress({ title, defaultValue, loading, onSave }
                         ? <>
                             <Button
                                 size='sm'
-                                type='button'                                
+                                type='button'
                                 onClick={() => {
                                     if (votingAddressRef?.current?.value) {
                                         onSave(votingAddressRef?.current?.value);

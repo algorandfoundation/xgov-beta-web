@@ -13,8 +13,8 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
         const cid = String(state.cid.value);
 
         let proposer = 'valueRaw' in state.proposer
-        ? algosdk.encodeAddress(state.proposer.valueRaw)
-        : '';
+            ? algosdk.encodeAddress(state.proposer.valueRaw)
+            : '';
 
         return {
             id: data.id,
@@ -75,8 +75,6 @@ export async function getProposal(id: bigint): Promise<ProposalMainCardDetails> 
         ...proposalJSON
     }
 
-    console.log('ret', ret)
-
     return ret
 }
 
@@ -85,5 +83,5 @@ export async function getProposalJSON(cid: string): Promise<ProposalJSON> {
 }
 
 export async function getProposalBrief(ids: bigint[]): Promise<ProposalBrief[]> {
-    return (await Promise.all(ids.map(id => getProposal(id)))).map(proposal => ({  id: proposal.id, status: proposal.status, title: proposal.title }));
+    return (await Promise.all(ids.map(id => getProposal(id)))).map(proposal => ({ id: proposal.id, status: proposal.status, title: proposal.title }));
 }

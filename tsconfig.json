@@ -5,17 +5,8 @@
     "jsxImportSource": "react",
     "baseUrl": ".",
     "paths": {
-      "@/components/*": ["src/components/*"],
-      "@/functions/*": ["src/functions/*"],
-      "@/reactPages/*": ["src/reactPages/*"],
-      "@/providers/*": ["src/providers/*"],
-      "@/stores/*": ["src/stores/*"],
-      "@/stories/*": ["src/stories/*"],
-      "@/types/*": ["src/types/*"],
-      "@/styles/*": ["src/styles/*"],
-      "@/layouts/*": ["src/layouts/*"],
-      "@/pages/*": ["src/pages/*"],
+      "@/*": ["src/*"],
     },
   },
-  "include": ["src/**/*", ".storybook/**/*"],
-} 
+  "include": ["src/**/*", ".storybook/**/*", "mock-init.ts"],
+}

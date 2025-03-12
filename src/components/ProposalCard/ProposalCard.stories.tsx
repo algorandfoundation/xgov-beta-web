@@ -1,43 +1,42 @@
 import type { Meta, StoryObj } from '@storybook/react';
 // import { within, expect } from '@storybook/test';
 
-import { ProposalFocus, ProposalFundingType, ProposalStatus, type ProposalInfoCardDetails, type ProposalMainCardDetails, type ProposalSummaryCardDetails } from '@/types/proposals';
+import { ProposalFocus, ProposalFundingType, ProposalStatus } from '@/types/proposals';
+import type { ProposalInfoCardDetails, ProposalMainCardDetails, ProposalSummaryCardDetails } from '@/types/proposals';
 import { ProposalCard, type ProposalCardProps } from './ProposalCard';
 
-declare global
-{
-    interface BigIntConstructor
-    {
-        toJSON:()=>string;
-    }
+declare global {
+  interface BigIntConstructor {
+    toJSON: () => string;
+  }
 }
 
-BigInt.toJSON = function() { return this.toString(); };
+BigInt.toJSON = function () { return this.toString(); };
 
 export const mockProposal: ProposalMainCardDetails = {
-    id: BigInt(1),
-    title: "Auto-Compounding Farms",
-    cid: "QmQk7wM2J8Gc2e8s9XZ1W5LQJr7d1z2J9",
-    requestedAmount: BigInt(75_000_000_000),
-    proposer: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ',
-    fundingType: ProposalFundingType.Proactive,
-    status: ProposalStatus.ProposalStatusFinal,
-    description: "This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users",
-    // phase: "discussion",
-    // proposer: "CompX",
-    team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
-    additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users ',
-    openSource: true,
-    focus: ProposalFocus.FocusDeFi,
-    deliverables: [
-        { amount: BigInt(75_000_000_000), description: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms.' },
-    ],
-    pastProposalLinks: [
-        BigInt(1),
-        BigInt(2),
-        BigInt(3),
-    ],
-    forumLink: 'https://forum.algorand.org/',
+  id: BigInt(1),
+  title: "Auto-Compounding Farms",
+  cid: "QmQk7wM2J8Gc2e8s9XZ1W5LQJr7d1z2J9",
+  requestedAmount: BigInt(75_000_000_000),
+  proposer: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ',
+  fundingType: ProposalFundingType.Proactive,
+  status: ProposalStatus.ProposalStatusFinal,
+  description: "This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users",
+  // phase: "discussion",
+  // proposer: "CompX",
+  team: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
+  additionalInfo: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users ',
+  openSource: true,
+  focus: ProposalFocus.FocusDeFi,
+  deliverables: [
+    { amount: BigInt(75_000_000_000), description: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms.' },
+  ],
+  pastProposalLinks: [
+    BigInt(1),
+    BigInt(2),
+    BigInt(3),
+  ],
+  forumLink: 'https://forum.algorand.org/',
 };
 
 export const mockProposalInfo: ProposalInfoCardDetails = {
@@ -45,7 +44,8 @@ export const mockProposalInfo: ProposalInfoCardDetails = {
   fundingType: ProposalFundingType.Proactive,
   focus: ProposalFocus.FocusDeFi,
   openSource: true,
-  requestedAmount: BigInt(75_000_000_000),
+  requestedAmount: BigInt(75000000000),
+  status: ProposalStatus.ProposalStatusEmpty
 };
 
 export const mockProposalSummaryCard: ProposalSummaryCardDetails = {
@@ -61,7 +61,7 @@ export const mockProposalSummaryCard: ProposalSummaryCardDetails = {
 
 function ProposalCardWrapper(props: ProposalCardProps) {
   return (
-      <ProposalCard {...props} />
+    <ProposalCard {...props} />
   );
 }
 
@@ -127,4 +127,13 @@ export const MiniProposalSummaryCard: Story = {
     proposal: mockProposalSummaryCard,
     mini: true,
   },
-}
+};
+
+export const FinalizeModalStory: Story = {
+  args: {
+    proposal: {
+      ...mockProposal,
+      status: ProposalStatus.ProposalStatusDraft,
+    },
+  },
+};

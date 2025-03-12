@@ -1,6 +1,6 @@
 import { defineConfig } from 'astro/config';
 import tailwind from "@astrojs/tailwind";
-import node from "@astrojs/node";
+import cloudflare from '@astrojs/cloudflare';
 import react from "@astrojs/react";
 
 // https://astro.build/config
@@ -11,9 +11,7 @@ export default defineConfig({
       global: 'globalThis',
     },
   },
-  adapter: node({
-    mode: 'standalone',
-  }),
+  adapter: cloudflare(),
   integrations: [
     tailwind({
       applyBaseStyles: false,

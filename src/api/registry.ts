@@ -111,3 +111,16 @@ export async function getAllProposers(): Promise<{ [key: string]: ProposerBoxSta
 
     return proposers;
 }
+
+export async function getAllSubscribedXGovs(): Promise<string[]> {
+    const boxes = await algorand.client.algod.getApplicationBoxes(registryAppID).do();
+
+    const xGovBoxes = boxes.boxes.filter((box) => {
+        const boxName = new TextDecoder().decode(box.name);
+        return boxName.startsWith('x');
+    });
+
+    return xGovBoxes.map((box) => {
+        return algosdk.encodeAddress(Buffer.from(box.name.slice(1)));
+    });
+}

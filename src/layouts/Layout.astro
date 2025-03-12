@@ -1,11 +1,8 @@
 ---
 const title = "xGov";
-import '@/styles/globals.css';
-// import { initializeMockEnvironment, mockProposals } from 'src/algorand/mock-init';
-
-// initializeMockEnvironment(mockProposals);
-
+import "@/styles/globals.css";
 ---
+
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
@@ -27,7 +24,7 @@ import '@/styles/globals.css';
 		/>
 		<script is:inline>
 			// persistent nanoStores need a default value, system preference takes precedence so we check for default
-			const check = 
+			const check =
 				localStorage.theme === 'dark'
 				|| (
 					(!('theme' in localStorage) || localStorage.theme === 'default')
@@ -41,15 +38,17 @@ import '@/styles/globals.css';
 	</body>
 </html>
 <style is:global>
-	html,
-	body {
-		font-family: "Aeonik", "Inter", sans-serif;
-		height: 100%;
-	}
+  html,
+  body {
+    font-family: "Aeonik", "Inter", sans-serif;
+    height: 100%;
+  }
 </style>
 <script>
-	import { $themeStore } from "@/stores/themeStore";
+  import { $themeStore } from "@/stores/themeStore";
 
-	const cl = document.documentElement.classList;
-	$themeStore.subscribe((theme) => theme !== 'default' && cl.toggle("dark", theme === "dark"));
+  const cl = document.documentElement.classList;
+  $themeStore.subscribe(
+    (theme) => theme !== "default" && cl.toggle("dark", theme === "dark")
+  );
 </script>
