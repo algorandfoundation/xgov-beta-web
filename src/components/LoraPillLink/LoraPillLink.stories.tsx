@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import LoraPillLink from './LoraPillLink';
-import { BrowserRouter } from 'react-router-dom';
 
 const meta: Meta<typeof LoraPillLink> = {
   title: 'Components/LoraPillLink',
@@ -9,13 +8,6 @@ const meta: Meta<typeof LoraPillLink> = {
     layout: 'centered',
   },
   tags: ['autodocs'],
-  decorators: [
-    (Story) => (
-      <BrowserRouter>
-        <Story />
-      </BrowserRouter>
-    ),
-  ],
 };
 
 export default meta;

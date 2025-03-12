@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import UserPill from './UserPill';
-import { BrowserRouter } from 'react-router-dom';
 
 // Sample Algorand address
 const sampleAddress = 'ALGO...1234';
@@ -12,13 +11,6 @@ const meta: Meta<typeof UserPill> = {
         layout: 'centered',
     },
     tags: ['autodocs'],
-    decorators: [
-        (Story) => (
-            <BrowserRouter>
-                <Story />
-            </BrowserRouter>
-        ),
-    ],
 };
 
 export default meta;

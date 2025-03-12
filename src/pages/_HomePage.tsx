@@ -3,7 +3,7 @@ import { filterAmountMap, filters, ProposalFilter } from "@/components/ProposalF
 import { type ComponentType } from "react";
 import { useGetAllProposals } from "src/hooks/useProposals";
 import { Link, type LinkProps } from "../components/Link.tsx";
-import { FocusReverseMap, ProposalFundingTypeReverseMap, ProposalStatus, ProposalStatusMap, ProposalStatusReverseMap, type ProposalSummaryCardDetails } from "@/types/proposals.ts";
+import { FocusReverseMap, ProposalFundingTypeReverseMap, ProposalStatus, ProposalStatusReverseMap, type ProposalSummaryCardDetails } from "@/types/proposals.ts";
 import { Hero } from "@/components/Hero/Hero.tsx";
 import HeroAnimation from "@/components/HeroAnimation/HeroAnimation.tsx";
 import ProposalListHeader from "@/components/ProposalListHeader/ProposalListHeader.tsx";
@@ -11,17 +11,25 @@ import { useRegistry } from "src/hooks/useRegistry.ts";
 import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton.tsx";
 import { useSearchParams } from "react-router-dom";
 import ProposalList from "@/components/ProposalList/ProposalList.tsx";
-import { useWallet } from "@txnlab/use-wallet-react";
 
 const title = 'Algorand xGov';
+const description = "xGov is a decentralized platform powered by Algorand smart contracts that enables community-driven funding for innovative projects and ideas. Through transparent governance, it empowers the Algorand ecosystem to collectively evaluate and support impactful initiatives.";
+
 const filterKeys = Object.keys(filters);
+const hiddenStatuses = [
+    ProposalStatus.ProposalStatusEmpty,
+    ProposalStatus.ProposalStatusDraft,
+    ProposalStatus.ProposalStatusDelete,
+    ProposalStatus.ProposalStatusRejected,
+    ProposalStatus.ProposalStatusBlocked
+]
 
 const proposalFilter = (proposal: ProposalSummaryCardDetails, searchParams: URLSearchParams): boolean => {
     let passes = true;
 
     // Exclude proposals with status 0, i.e Empty
     // Happens if a proposer withdraws their proposal
-    if (proposal.status === 0) {
+    if (hiddenStatuses.includes(proposal.status)) {
         return false;
     }
 
@@ -68,9 +76,7 @@ export function HomePage() {
     const registry = useRegistry();
     const proposalsQuery = useGetAllProposals();
 
-    const proposals = proposalsQuery.data?.filter(
-        (proposal) => proposalFilter(proposal, searchParams)
-    );
+    const proposals = proposalsQuery.data?.filter((proposal) => proposalFilter(proposal, searchParams));
 
     return (
         <>
@@ -78,7 +84,7 @@ export function HomePage() {
             <Page title={title} LinkComponent={Link as unknown as ComponentType<LinkProps>}>
                 <Hero
                     title={title}
-                    description="xGov is a decentralized platform powered by Algorand smart contracts that enables community-driven funding for innovative projects and ideas. Through transparent governance, it empowers the Algorand ecosystem to collectively evaluate and support impactful initiatives."
+                    description={description}
                     xgovs={4_800}
                     proposals={proposalsQuery.data?.length || 0}
                     treasury={Number(registry.data?.outstandingFunds) || 0}
@@ -101,81 +107,5 @@ export function HomePage() {
                 </div>
             </Page>
         </>
-    )
-}
-
-export default function StackedList({ proposals }: { proposals: ProposalSummaryCardDetails[] }) {
-
-    const { activeAddress } = useWallet();
-    return (
-        <div className="flex flex-col gap-y-4">
-            {proposals.map(({
-                id,
-                title,
-                status,
-                focus,
-                fundingType,
-                requestedAmount,
-                proposer
-            }) => {
-
-                const phase = ProposalStatusMap[status];
-
-                // Filter out blocked proposals
-                // They will still be visible in the Admin page
-                if (phase == 'Blocked') {
-                    return
-                }
-
-                return (
-                    <div
-                        key={id}
-                        className="bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between gap-x-6 gap-y-4 p-5 sm:flex-nowrap relative transition overflow-hidden"
-                    >
-                        <Link className="absolute left-0 top-0 w-full h-full hover:bg-algo-blue/30 dark:hover:bg-algo-teal/30" to={`/proposal/${Number(id)}`}></Link>
-                        <div>
-                            <p className=" text-xl font-semibold text-algo-black dark:text-white">
-                                <BracketedPhaseDetail phase={phase} />
-                                &nbsp;&nbsp;{title} {(proposer == activeAddress) && ("🫵")}
-                            </p>
-                            <div className="mt-3 hidden md:flex md:items-center gap-4 md:gap-10 text-algo-blue dark:text-algo-teal font-mono">
-                                <UserPill address={proposer} />
-                                <RequestedAmountDetail requestedAmount={requestedAmount} />
-                                <FocusDetail focus={focus} />
-                            </div>
-                        </div>
-                        <dl className="flex w-full flex-none justify-between md:gap-x-8 sm:w-auto font-mono">
-                            <div className="mt-3 flex md:hidden flex-col items-start justify-start gap-4 md:gap-10 text-algo-blue dark:text-algo-teal font-mono text-xs">
-                                <UserPill address={proposer} />
-                                <RequestedAmountDetail requestedAmount={requestedAmount} />
-                                <FocusDetail focus={focus} />
-                            </div>
-                            <div className="flex flex-col justify-end items-end gap-4">
-                                <div className="flex items-end gap-4">
-                                    {
-                                        phase === 'Voting' && (
-                                            <>
-                                                <UserCircleRow />
-                                                <VoteCounter />
-                                            </>
-                                        )
-                                    }
-
-                                    {
-                                        phase === 'Discussion' && (
-                                            <>
-                                                <UserCircleRow />
-                                                <DiscussionLink to={`https://forum.algorand.org/`} />
-                                            </>
-                                        )
-                                    }
-                                </div>
-                                <FundingTypeAndTimeDetail fundingType={fundingType} time='2d ago' />
-                            </div>
-                        </dl>
-                    </div>
-                )
-            })}
-        </div>
     )
 }

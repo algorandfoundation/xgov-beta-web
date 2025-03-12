@@ -50,7 +50,7 @@ function ProposalReviewerCard({ proposalId, status, refetch }: { proposalId: big
       <h1 className="text-3xl text-wrap lg:text-4xl max-w-4xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
         xGov Reviewer Panel
       </h1>
-      <li role="listitem" className="list-none relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-xl lg:min-w-[36rem]">
+      <li role="listitem" className="list-none relative bg-algo-blue-20 dark:bg-algo-teal-20 text-algo-black p-4 rounded-lg max-w-xl">
         <div className="max-w-3xl">
           <h2 className="text-xl font-bold mt-2 mb-4">Proposal: {proposalId.toString()}</h2>
           <h2 className="text-xl font-bold mt-2 mb-4">Status: {ProposalStatusMap[status]}</h2>

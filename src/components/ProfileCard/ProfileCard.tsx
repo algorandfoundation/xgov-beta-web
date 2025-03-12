@@ -45,9 +45,7 @@ export function ProfileCard({
                         unsubscribeXgov={unsubscribeXgov}
                         unsubscribeXGovLoading={subscribeXGovLoading}
                     />
-                    {
-                        !proposer || (proposer?.isProposer && !proposer.kycStatus) && <XGovProposerStatusPill proposer={proposer}/>
-                    }
+                    <XGovProposerStatusPill proposer={proposer}/>
                 </div>
 
                 {

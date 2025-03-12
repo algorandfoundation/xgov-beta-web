@@ -1,22 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { userEvent, within, expect, screen } from '@storybook/test';
 import { ProposalFilter, type ProposalFilterProps } from './ProposalFilter';
-import { MemoryRouter } from 'react-router-dom';
 
 // Wrapper is needed because the component uses useSearchParams from react-router-dom
-function ProposalFilterWrapper(props: ProposalFilterProps) {
-  return (
-    <MemoryRouter>
-      <div className="p-6">
-        <ProposalFilter {...props} />
-      </div>
-    </MemoryRouter>
-  );
-}
+// function ProposalFilterWrapper(props: ProposalFilterProps) {
+//   return (
+//       <div className="p-6">
+//         <ProposalFilter {...props} />
+//       </div>
+//   );
+// }
 
 const meta = {
   title: 'Components/ProposalFilter',
-  component: ProposalFilterWrapper,
+  component: ProposalFilter,
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
@@ -46,7 +43,7 @@ const meta = {
     const applyButton = await screen.findByRole('button', { name: 'Apply Filters' });
     await userEvent.click(applyButton);
   },
-} satisfies Meta<typeof ProposalFilterWrapper>;
+} satisfies Meta<typeof ProposalFilter>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

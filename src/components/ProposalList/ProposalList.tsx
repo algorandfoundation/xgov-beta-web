@@ -17,7 +17,6 @@ export default function ProposalList({ proposals }: { proposals: ProposalSummary
     return (
         <div className="flex flex-col gap-y-4">
             {proposals
-                .filter(p => p.status === ProposalStatus.ProposalStatusBlocked)
                 .map(({
                     id,
                     title,

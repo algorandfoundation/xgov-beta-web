@@ -30,8 +30,6 @@ import { AlgorandClient as algorand } from 'src/algorand/algo-client';
 import { RegistryClient as registryClient } from "src/algorand/contract-clients";
 import ActionButton from "@/components/button/ActionButton/ActionButton";
 
-
-
 const title = 'xGov';
 
 export function ProposalPage() {
@@ -72,18 +70,9 @@ export function ProposalPage() {
     return (
         <Page
             title={title}
-            Sidebar={() =>
-                <>
-                    {registryGlobalState.data?.xgovReviewer && activeAddress && activeAddress === registryGlobalState.data?.xgovReviewer && (
-                        <ProposalReviewerCard
-                            proposalId={proposal.data.id}
-                            status={proposal.data.status}
-                            refetch={proposal.refetch}
-                        />
-                    )}
-                </>
-            }>
+        >
             <ProposalInfo
+                xGovReviewer={registryGlobalState.data?.xgovReviewer}
                 proposal={proposal.data}
                 pastProposals={pastProposals.data}
                 refetchProposal={proposal.refetch}
@@ -215,6 +204,7 @@ export function StatusCard({ className = '', proposal }: StatusCardProps) {
 }
 
 export interface ProposalInfoProps {
+    xGovReviewer?: string;
     proposal: ProposalMainCardDetails;
     pastProposals?: ProposalBrief[];
     refetchProposal: () => void;
@@ -222,7 +212,7 @@ export interface ProposalInfoProps {
     children: React.ReactNode;
 }
 
-export default function ProposalInfo({ proposal, pastProposals, refetchProposal, refetchAllProposals, children }: ProposalInfoProps) {
+export default function ProposalInfo({ xGovReviewer, proposal, pastProposals, refetchProposal, refetchAllProposals, children }: ProposalInfoProps) {
 
     const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
     const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
@@ -290,7 +280,21 @@ export default function ProposalInfo({ proposal, pastProposals, refetchProposal,
                 </svg>
             </div>
             <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-6 lg:mx-0 lg:max-w-none lg:grid-cols-2 lg:items-start lg:gap-y-10">
-                <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 pt-6">
+                {
+                    xGovReviewer
+                    && activeAddress
+                    && activeAddress === xGovReviewer
+                    && (
+                        <div className="lg:col-span-2">
+                            <ProposalReviewerCard
+                                proposalId={proposal.id}
+                                status={proposal.status}
+                                refetch={refetchProposal}
+                            />
+                        </div>
+                    )
+                }
+                <div className="lg:col-span-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 pt-6">
                     <div className="lg:pr-4">
                         <div className="sm:max-w-lg md:max-w-[unset]">
                             <p className="text-base/7 text-algo-blue">
@@ -306,10 +310,11 @@ export default function ProposalInfo({ proposal, pastProposals, refetchProposal,
                         </div>
                     </div>
                 </div>
+
                 <div className="-mx-6 lg:flex lg:flex-col lg:items-end lg:fixed lg:right-0 lg:pr-14 lg:pt-14">
                     {children}
                 </div>
-                <div className="lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">
+                <div className="lg:col-span-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">
                     <div className="lg:pr-4">
                         <div className="max-w-xl text-lg/8 text-algo-black-70 dark:text-algo-black-30 sm:max-w-lg md:max-w-[unset]">
                             {(proposal.proposer == activeAddress) && proposal.status === ProposalStatus.ProposalStatusDraft && (
