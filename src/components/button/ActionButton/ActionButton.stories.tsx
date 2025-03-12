@@ -8,6 +8,7 @@ const meta: Meta<typeof ActionButton> = {
 };
 
 export default meta;
+
 type Story = StoryObj<typeof ActionButton>;
 
 export const Default: Story = {

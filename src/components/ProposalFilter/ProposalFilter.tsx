@@ -73,7 +73,7 @@ export function ProposalFilter({ className }: ProposalFilterProps) {
             {
                 searchParams.size > 0 && (
                     <Button
-                        // className="rounded-lg border hover:border-algo-blue dark:hover:border-algo-teal hover:text-algo-blue dark:hover:text-algo-teal"
+                        className="text-algo-blue dark:text-algo-teal"
                         size='sm'
                         variant='ghost'
                         onClick={() => {

@@ -1,7 +1,7 @@
 import { Link, type LinkProps } from "@/components/Link";
 import { Page } from "@/components/Page";
 import { ProfileCard } from "@/components/ProfileCard/ProfileCard";
-import { ProposalList } from "@/components/ProposalList/ProposalList";
+import ProposalList from "@/components/ProposalList/ProposalList";
 import {
     Breadcrumb,
     BreadcrumbItem,

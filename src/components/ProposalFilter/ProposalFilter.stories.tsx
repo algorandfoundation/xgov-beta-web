@@ -1,13 +1,16 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { userEvent, within, expect, screen } from '@storybook/test';
 import { ProposalFilter, type ProposalFilterProps } from './ProposalFilter';
+import { MemoryRouter } from 'react-router-dom';
 
+// Wrapper is needed because the component uses useSearchParams from react-router-dom
 function ProposalFilterWrapper(props: ProposalFilterProps) {
-
   return (
-    <div>
-      <ProposalFilter {...props} onFilterChange={() => {}} />
-    </div>
+    <MemoryRouter>
+      <div className="p-6">
+        <ProposalFilter {...props} />
+      </div>
+    </MemoryRouter>
   );
 }
 
@@ -19,23 +22,29 @@ const meta = {
     layout: 'padded',
   },
   args: {
-    className: 'bg-white dark:bg-algo-black p-4',
+    className: '',
   },
   argTypes: {
     className: {
       control: 'text',
-      description: 'Additional CSS classes to apply to the component',
+      description: 'Additional CSS classes to apply to the filter button',
     },
   },
+  // Test opening the filter dialog and selecting an option
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-
-    const statusDropdown = canvas.getByText('status');
-    await userEvent.click(statusDropdown);
-
-    const discussionOption = await screen.findByText('Discussion');
+    
+    // Open the filter dialog
+    const filterButton = canvas.getByRole('button');
+    await userEvent.click(filterButton);
+    
+    // Find and click on a filter option (e.g., Discussion in the status section)
+    const discussionOption = await screen.findByRole('button', { name: 'Discussion' });
     await userEvent.click(discussionOption);
-    await expect(statusDropdown).toHaveClass('border-algo-teal');
+    
+    // Close the dialog
+    const applyButton = await screen.findByRole('button', { name: 'Apply Filters' });
+    await userEvent.click(applyButton);
   },
 } satisfies Meta<typeof ProposalFilterWrapper>;
 
@@ -44,12 +53,22 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    className: 'bg-white dark:bg-algo-black p-4',
+    className: '',
   },
 };
 
-export const HasSelected: Story = {
+export const DarkMode: Story = {
   args: {
-    className: 'bg-gray-100 dark:bg-gray-800 p-6 rounded-lg',
+    className: '',
   },
+  parameters: {
+    backgrounds: { default: 'dark' },
+  },
+  decorators: [
+    (Story) => (
+      <div className="dark p-6 bg-algo-black-90">
+        <Story />
+      </div>
+    ),
+  ],
 };
