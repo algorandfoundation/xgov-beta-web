@@ -12,7 +12,7 @@ export function ProposalList({ proposals }: ProposalListProps) {
 
   if (filteredProposals.length === 0) {
     return (
-      <p className="text-algo-black dark:text-white">No proposals yet</p>
+      <p className="text-algo-black dark:text-white">No proposals</p>
     )
   }
 

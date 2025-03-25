@@ -2,10 +2,11 @@
 import Layout from "@/layouts/Layout.astro";
 import { App } from "src/App";
 
+const { proposal } = Astro.params;
 ---
 <Layout>
     <App
         client:only
-        path='/new/proposal'
+        path={`/edit/${proposal}`}
     />
 </Layout>

@@ -14,7 +14,8 @@ import { DocsPage } from "@/pages/_DocsPage";
 import { HomePage } from "@/pages/_HomePage";
 import { ProfilePage } from "./pages/profile/_ProfilePage";
 import { ProposalPage } from "@/pages/proposal/_ProposalPage";
-import { NewProposalPage } from './pages/new/_NewProposalPage';
+import { NewProposalPage } from './pages/_NewProposalPage';
+import { EditProposalPage } from './pages/edit/_EditProposalPage';
 
 let walletProviders: SupportedWallet[] = [
     WalletId.DEFLY,
@@ -45,7 +46,8 @@ const routes = [
     { path: '/proposal', element: <HomePage /> },
     { path: '/proposal/:proposal', element: <ProposalPage /> },
     { path: '/profile/:address', element: <ProfilePage /> },
-    { path: '/new/proposal', element: <NewProposalPage /> },
+    { path: '/new', element: <NewProposalPage /> },
+    { path: '/edit/:proposal', element: <EditProposalPage /> }
 ]
 
 const router = typeof window !== 'undefined'
