@@ -13,32 +13,44 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
-import { CheckIcon } from "@radix-ui/react-icons";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ProposalFocus, ProposalFundingType, ProposalStatus, type ProposalSummaryCardDetails } from "@/types/proposals";
+import { ProposalFocus, ProposalFundingType, type ProposalMainCardDetails } from "@/types/proposals";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
 import { cn } from "@/functions/utils";
-import algosdk, { ALGORAND_MIN_TX_FEE } from "algosdk";
+import algosdk from "algosdk";
 import { AlgorandClient as algorand } from '@/algorand/algo-client'
 import { RegistryClient } from "@/algorand/contract-clients";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { PROPOSAL_FEE } from "@/constants";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { CID, create } from "kubo-rpc-client";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
-import { useProposer } from "@/hooks/useRegistry";
-import { useProposalsByProposer } from "@/hooks/useProposals";
+import { useProposal } from "@/hooks/useProposals";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const title = 'xGov';
 const proposalFactory = new ProposalFactory({ algorand })
 const ipfsClient = create('http://localhost:5001/api/v0')
 
 export function EditProposalPage() {
+    const navigate = useNavigate();
     const { proposal: proposalId } = useParams();
+    const { activeAddress, transactionSigner } = useWallet()
+    const { isLoading, data: proposal } = useProposal(Number(proposalId));
+
+    useEffect(() => {
+        if (!isLoading && proposal?.proposer !== activeAddress) {
+            navigate("/")
+        }
+    }, [proposal, activeAddress])
+
+    if (isLoading) {
+        return <div className="flex justify-center py-8">
+            <div className="animate-spin h-8 w-8 border-4 border-algo-blue border-t-transparent rounded-full"></div>
+        </div>
+    }
 
     return (
         <Page title={title}>
@@ -46,7 +58,11 @@ export function EditProposalPage() {
                 <h1 className="my-2 text-pretty text-2xl font-semibold tracking-tight text-algo-black dark:text-white">
                     Editing Proposal {proposalId}
                 </h1>
-                <EditProposalForm proposalId={proposalId} />
+                <EditProposalForm
+                    proposal={proposal}
+                    activeAddress={activeAddress}
+                    transactionSigner={transactionSigner}
+                />
             </div>
         </Page>
     )
@@ -67,65 +83,50 @@ const formSchema = z.object({
     openSource: z.boolean(),
     focus: z.string(),
     fundingType: z.string(),
-    deliverables: z.string(),
-    adoptionMetrics: z.string(),
+    // deliverables: z.string(),
+    adoptionMetrics: z.array(z.string())
+        .refine((val) => val.length > 0, { message: 'Required field' }),
     forumLink: z.string()
         .refine((val) => val !== '', { message: 'Required field' })
         .refine((val) => val.includes('https://forum.algorand.org/t/'))
 })
 
-const editableProposalTypes = [
-    ProposalStatus.ProposalStatusDraft,
-    ProposalStatus.ProposalStatusFinal,
-]
-
 export interface EditProposalFormProps {
-    proposalId: string | undefined;
+    proposal: ProposalMainCardDetails | undefined;
+    activeAddress: string | null;
+    transactionSigner: (txnGroup: algosdk.Transaction[], indexesToSign: number[]) => Promise<Uint8Array[]>
 }
 
-function EditProposalForm({ proposalId }: EditProposalFormProps) {
+function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditProposalFormProps) {
     const navigate = useNavigate();
-    const { activeAddress, transactionSigner } = useWallet()
-    const proposalsData = useProposalsByProposer(activeAddress);
 
-    const editableProposals = !!proposalsData.data && proposalsData.data?.filter(proposal => editableProposalTypes.includes(proposal.status))
-    const currentProposal = !!editableProposals && editableProposals.length > 0 ? editableProposals[0] : null
-    
-    useEffect(() => {
-        if (!proposalsData.isLoading && (!currentProposal || proposalId !== String(currentProposal.id))) {
-            navigate("/")
-        }
-    }, [proposalsData, currentProposal])
-    
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: async () => ({
-            title: currentProposal?.title || '',
-            description: currentProposal?.cid || '', // PLACEHOLDER, SWITCHING TO BOXES
-            requestedAmount: (Number(currentProposal?.requestedAmount) / 1_000_000) || 0,
-            team: currentProposal?.cid || '', // PLACEHOLDER, SWITCHING TO BOXES
-            additionalInfo: currentProposal?.cid || '', // PLACEHOLDER, SWITCHING TO BOXES
+        defaultValues: {
+            title: proposal?.title || '',
+            description: proposal?.description || '',
+            requestedAmount: (Number(proposal?.requestedAmount) / 1_000_000) || 0,
+            team: proposal?.team || '', // PLACEHOLDER, SWITCHING TO BOXES
+            additionalInfo: proposal?.additionalInfo || '', // PLACEHOLDER, SWITCHING TO BOXES
             openSource: true, // PLACEHOLDER, SWITCHING TO BOXES
-            focus: String(currentProposal?.focus) || '',
-            fundingType: String(currentProposal?.fundingType) || '',
-            deliverables: currentProposal?.cid || '', // PLACEHOLDER, SWITCHING TO BOXES    
-            adoptionMetrics: currentProposal?.cid || '', // PLACEHOLDER, SWITCHING TO BOXES
-            forumLink: currentProposal?.cid || '', // PLACEHOLDER, SWITCHING TO BOXES
-        }),
+            focus: String(proposal?.focus) || '0',
+            fundingType: String(proposal?.fundingType) || '',
+            // deliverables: currentProposal?.cid || '', // PLACEHOLDER, SWITCHING TO BOXES
+            adoptionMetrics: proposal?.adoptionMetrics || [], // PLACEHOLDER, SWITCHING TO BOXES
+            forumLink: proposal?.forumLink || '', // PLACEHOLDER, SWITCHING TO BOXES
+        },
         mode: 'onChange',
     })
     const { errors } = form.formState
 
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
 
-        console.log('data', data)
-
         if (!activeAddress) {
             console.error('No active address');
             return;
         }
 
-        if (!currentProposal) {
+        if (!proposal) {
             console.error('No current proposal');
             return;
         }
@@ -133,7 +134,7 @@ function EditProposalForm({ proposalId }: EditProposalFormProps) {
         const suggestedParams = await algorand.getSuggestedParams();
 
         // instance a new proposal client
-        const proposalClient = proposalFactory.getAppClientById({ appId: currentProposal.id });
+        const proposalClient = proposalFactory.getAppClientById({ appId: proposal.id });
 
         const { cid } = await ipfsClient.add(JSON.stringify(
             {
@@ -166,37 +167,37 @@ function EditProposalForm({ proposalId }: EditProposalFormProps) {
 
         try {
             await proposalClient
-            .newGroup()
-            .drop({
-                sender: activeAddress,
-                signer: transactionSigner,
-                args: {},
-                appReferences: [RegistryClient.appId],
-                accountReferences: [activeAddress],
-                extraFee: (1000).microAlgos(),
-            })
-            .submit({
-                sender: activeAddress,
-                signer: transactionSigner,
-                args: {
-                    payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-                        amount: proposalSubmissionFee,
-                        from: activeAddress,
-                        to: proposalClient.appAddress,
-                        suggestedParams,
-                    }),
-                    title: data.title,
-                    cid: CID.asCID(cid)!.bytes,
-                    fundingType: Number(data.fundingType),
-                    requestedAmount,
-                    focus: Number(data.focus),
-                },
-                appReferences: [RegistryClient.appId],
-            })
-            .send()
+                .newGroup()
+                .drop({
+                    sender: activeAddress,
+                    signer: transactionSigner,
+                    args: {},
+                    appReferences: [RegistryClient.appId],
+                    accountReferences: [activeAddress],
+                    extraFee: (1000).microAlgos(),
+                })
+                .submit({
+                    sender: activeAddress,
+                    signer: transactionSigner,
+                    args: {
+                        payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+                            amount: proposalSubmissionFee,
+                            from: activeAddress,
+                            to: proposalClient.appAddress,
+                            suggestedParams,
+                        }),
+                        title: data.title,
+                        cid: CID.asCID(cid)!.bytes,
+                        fundingType: Number(data.fundingType),
+                        requestedAmount,
+                        focus: Number(data.focus),
+                    },
+                    appReferences: [RegistryClient.appId],
+                })
+                .send()
 
             // send user to proposal page
-            navigate(`/proposal/${currentProposal.id}`);
+            navigate(`/proposal/${proposal.id}`);
 
         } catch (e) {
             console.log(e);
@@ -429,6 +430,72 @@ function EditProposalForm({ proposalId }: EditProposalFormProps) {
 
                     <FormField
                         control={form.control}
+                        name="adoptionMetrics"
+                        render={({ field }) => {
+                            const [metricInput, setMetricInput] = useState('');
+
+                            const addMetric = (e: React.KeyboardEvent<HTMLInputElement>) => {
+                                e.preventDefault();
+                                if (metricInput.trim() !== '') {
+                                    const newMetrics = [...field.value, metricInput.trim()];
+                                    field.onChange(newMetrics);
+                                    setMetricInput('');
+                                }
+                            };
+
+                            const removeMetric = (index: number) => {
+                                const newMetrics = field.value.filter((_, i) => i !== index);
+                                field.onChange(newMetrics);
+                            };
+
+                            return (
+                                <FormItem>
+                                    <FormLabel className="dark:text-white">
+                                        Adoption Metrics
+                                        <span className="ml-1 text-red-500">*</span>
+                                    </FormLabel>
+                                    <FormControl>
+                                        <div className="space-y-2">
+                                            <Input
+                                                id="adoption-metrics"
+                                                placeholder="Type a metric and press Enter"
+                                                autoComplete="new-password"
+                                                spellCheck="false"
+                                                value={metricInput}
+                                                onChange={(e) => setMetricInput(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        addMetric(e);
+                                                    }
+                                                }}
+                                            />
+                                            {field.value && field.value.length > 0 && (
+                                                <div className="mt-2 space-y-2">
+                                                    {field.value.map((metric, index) => (
+                                                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 dark:text-algo-black-20 rounded border dark:border-gray-700">
+                                                            <span>{metric}</span>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => removeMetric(index)}
+                                                            >
+                                                                ✕
+                                                            </Button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage>{errors.adoptionMetrics?.message}</FormMessage>
+                                </FormItem>
+                            );
+                        }}
+                    />
+
+                    <FormField
+                        control={form.control}
                         name="requestedAmount"
                         render={({ field }) => (
                             <FormItem>
@@ -464,6 +531,6 @@ function EditProposalForm({ proposalId }: EditProposalFormProps) {
                     </div>
                 </form>
             </Form>
-        </div>
+        </div >
     )
 }

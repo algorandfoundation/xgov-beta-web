@@ -28,10 +28,9 @@ import { PROPOSAL_FEE } from "@/constants";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { CID, create } from "kubo-rpc-client";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
-import { useProposer } from "@/hooks/useRegistry";
 import { useProposalsByProposer } from "@/hooks/useProposals";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const title = 'xGov';
 const proposalFactory = new ProposalFactory({ algorand })
@@ -86,8 +85,9 @@ const formSchema = z.object({
     openSource: z.boolean(),
     focus: z.string(),
     fundingType: z.string(),
-    deliverables: z.string(),
-    adoptionMetrics: z.string(),
+    // deliverables: z.string(),
+    adoptionMetrics: z.array(z.string())
+        .refine((val) => val.length > 0, { message: 'Required field' }),
     forumLink: z.string()
         .refine((val) => val !== '', { message: 'Required field' })
         .refine((val) => val.includes('https://forum.algorand.org/t/'))
@@ -102,10 +102,7 @@ const activeProposalTypes = [
 function NewProposalForm() {
     const navigate = useNavigate();
     const { activeAddress, transactionSigner } = useWallet()
-    // const proposer = useProposer(activeAddress);
     const proposalsData = useProposalsByProposer(activeAddress);
-
-    console.log('proposalsData.data', proposalsData.data)
 
     const emptyProposals = !!proposalsData.data && proposalsData.data?.filter(proposal => proposal.status === ProposalStatus.ProposalStatusEmpty)
     const emptyProposal = emptyProposals && emptyProposals.length > 0 && emptyProposals[0]
@@ -130,8 +127,8 @@ function NewProposalForm() {
             openSource: true,
             focus: '',
             fundingType: String(ProposalFundingType.Retroactive),
-            deliverables: '',
-            adoptionMetrics: '',
+            // deliverables: '',
+            adoptionMetrics: [],
             forumLink: '',
         },
         mode: 'onChange',
@@ -140,8 +137,6 @@ function NewProposalForm() {
     const { errors } = form.formState
 
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
-
-        console.log('data', data)
 
         if (!activeAddress) {
             console.error('No active address');
@@ -179,13 +174,13 @@ function NewProposalForm() {
                 console.error('Failed to create proposal');
                 return
             }
-    
+
             // Store proposal ID if available
             if (!result.return) {
                 console.error('Proposal creation failed');
                 return
             }
-    
+
             console.log(`\nNew Proposal: ${result.return}\n`)
             appId = result.return;
         } else {
@@ -201,7 +196,7 @@ function NewProposalForm() {
                 team: data.team,
                 additionalInfo: data.additionalInfo,
                 openSource: data.openSource,
-                // adoptionMetrics: ['1000 users', '1000 transactions'],
+                adoptionMetrics: data.adoptionMetrics,
                 forumLink: data.forumLink,
             },
             (_, value) => (
@@ -475,6 +470,72 @@ function NewProposalForm() {
                                 <FormMessage>{errors.fundingType?.message}</FormMessage>
                             </FormItem>
                         )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="adoptionMetrics"
+                        render={({ field }) => {
+                            const [metricInput, setMetricInput] = useState('');
+
+                            const addMetric = (e: React.KeyboardEvent<HTMLInputElement>) => {
+                                e.preventDefault();
+                                if (metricInput.trim() !== '') {
+                                    const newMetrics = [...field.value, metricInput.trim()];
+                                    field.onChange(newMetrics);
+                                    setMetricInput('');
+                                }
+                            };
+
+                            const removeMetric = (index: number) => {
+                                const newMetrics = field.value.filter((_, i) => i !== index);
+                                field.onChange(newMetrics);
+                            };
+
+                            return (
+                                <FormItem>
+                                    <FormLabel className="dark:text-white">
+                                        Adoption Metrics
+                                        <span className="ml-1 text-red-500">*</span>
+                                    </FormLabel>
+                                    <FormControl>
+                                        <div className="space-y-2">
+                                            <Input
+                                                id="adoption-metrics"
+                                                placeholder="Type a metric and press Enter"
+                                                autoComplete="new-password"
+                                                spellCheck="false"
+                                                value={metricInput}
+                                                onChange={(e) => setMetricInput(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        addMetric(e);
+                                                    }
+                                                }}
+                                            />
+                                            {field.value && field.value.length > 0 && (
+                                                <div className="mt-2 space-y-2">
+                                                    {field.value.map((metric, index) => (
+                                                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 dark:text-algo-black-20 rounded border dark:border-gray-700">
+                                                            <span>{metric}</span>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => removeMetric(index)}
+                                                            >
+                                                                ✕
+                                                            </Button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage>{errors.adoptionMetrics?.message}</FormMessage>
+                                </FormItem>
+                            );
+                        }}
                     />
 
                     <FormField
