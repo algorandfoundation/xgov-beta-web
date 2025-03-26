@@ -104,7 +104,7 @@ export const Empty: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const p = await canvas.findByRole('paragraph');
-    expect(p).toHaveTextContent('No proposals yet');
+    expect(p).toHaveTextContent('No proposals');
   },
 };
 
