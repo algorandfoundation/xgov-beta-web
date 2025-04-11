@@ -14,6 +14,7 @@ import { useState, type ComponentType } from "react";
 import { AlgorandClient as algorand } from "src/algorand/algo-client";
 import { useProposer } from "src/hooks/useRegistry";
 import { RegistryClient as registryClient } from "src/algorand/contract-clients";
+import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
 
 const title = 'xGov';
 
@@ -93,7 +94,8 @@ export function BecomeProposerPage() {
           Become A Proposer
         </h1>
 
-        {isLoading && (<div>Loading...</div>)}
+        {isLoading && <LoadingSpinner />}
+
         {!isLoading && (
           <>
             {errorMessage && (

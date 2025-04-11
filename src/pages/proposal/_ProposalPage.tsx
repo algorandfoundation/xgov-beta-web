@@ -21,18 +21,34 @@ import { useGetAllProposals, useProposal, useProposalsByProposer } from "src/hoo
 import { useRegistry } from "src/hooks/useRegistry";
 import UserPill from "@/components/UserPill/UserPill";
 import VoteCounter from "@/components/VoteCounter/VoteCounter";
-import { ProposalStatus, ProposalStatusMap, type ProposalBrief, type ProposalMainCardDetails } from "@/types/proposals";
+import { ProposalCategory, ProposalStatus, ProposalStatusMap, type ProposalBrief, type ProposalMainCardDetails } from "@/types/proposals";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
 import { useState } from "react";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { AlgorandClient as algorand } from 'src/algorand/algo-client';
 import { RegistryClient as registryClient } from "src/algorand/contract-clients";
-import ActionButton from "@/components/button/ActionButton/ActionButton";
-
-
+import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton";
+import { Button } from "@/components/ui/button";
+import { SquarePenIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useTimeLeft } from "@/hooks/useTimeLeft";
+import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
 
 const title = 'xGov';
+
+function getDiscussionDuration(category: ProposalCategory, durations: [bigint, bigint, bigint, bigint]): bigint {
+    switch (category) {
+        case ProposalCategory.ProposalCategorySmall:
+            return durations[0];
+        case ProposalCategory.ProposalCategoryMedium:
+            return durations[1];
+        case ProposalCategory.ProposalCategoryLarge:
+            return durations[2];
+        default:
+            return BigInt(0);
+    }
+}
 
 export function ProposalPage() {
     const { activeAddress } = useWallet();
@@ -44,7 +60,7 @@ export function ProposalPage() {
     const allProposals = useGetAllProposals();
 
     if (proposal.isLoading || registryGlobalState.isLoading) {
-        return <div>Loading...</div>
+        return <LoadingSpinner />
     }
 
     if (proposal.isError) {
@@ -52,6 +68,18 @@ export function ProposalPage() {
         return (
             <div>
                 <div>Encountered an error: {proposal.error.message}</div>
+                <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    Return to Homepage?
+                </Link>
+            </div>
+        );
+    }
+
+    if (registryGlobalState.isError) {
+        console.log('error', proposal.error);
+        return (
+            <div>
+                <div>Encountered an error: {registryGlobalState.error.message}</div>
                 <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline">
                     Return to Homepage?
                 </Link>
@@ -69,6 +97,21 @@ export function ProposalPage() {
             </div>
         );
     }
+
+    if (!registryGlobalState.data) {
+        return (
+            <div>
+                <div>Something went wrong</div>
+                <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    Return to Homepage?
+                </Link>
+            </div>
+        );
+    }
+
+    const discussionDuration = Date.now() - (proposal.data?.submissionTime * 1000);
+    const minimumDiscussionDuration = getDiscussionDuration(proposal.data?.category, registryGlobalState.data?.discussionDuration) * 1000n;
+
     return (
         <Page
             title={title}
@@ -86,15 +129,19 @@ export function ProposalPage() {
             <ProposalInfo
                 proposal={proposal.data}
                 pastProposals={pastProposals.data}
-                refetchProposal={proposal.refetch}
-                refetchAllProposals={allProposals.refetch}
             >
                 <div className="flex lg:flex-col items-end justify-between gap-2 text-white lg:-mt-16 mx-4 lg:mx-0 my-4 p-2">
                     <RequestedAmountDetail requestedAmount={proposal.data.requestedAmount} />
                     <FocusDetail focus={proposal.data.focus} />
                     <FundingTypeDetail fundingType={proposal.data.fundingType} />
                 </div>
-                <StatusCard proposal={proposal.data} />
+                <StatusCard
+                    proposal={proposal.data}
+                    refetchProposal={proposal.refetch}
+                    refetchAllProposals={allProposals.refetch}
+                    discussionDuration={discussionDuration}
+                    minimumDiscussionDuration={minimumDiscussionDuration}
+                />
             </ProposalInfo>
         </Page >
     )
@@ -103,6 +150,10 @@ export function ProposalPage() {
 export interface StatusCardProps {
     className?: string;
     proposal: ProposalMainCardDetails;
+    refetchProposal: () => void;
+    refetchAllProposals: () => void;
+    discussionDuration: number;
+    minimumDiscussionDuration: bigint;
 }
 
 export const statusCardMap = {
@@ -114,14 +165,14 @@ export const statusCardMap = {
         link: ''
     },
     [ProposalStatus.ProposalStatusDraft]: {
-        header: 'This proposal is still a draft',
-        subHeader: '',
-        icon: '',
-        actionText: '',
+        header: 'Proposal is being discussed',
+        subHeader: 'Take part in the discussion and help shape public sentiment on this proposal.',
+        icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
+        actionText: 'View the discussion',
         link: ''
     },
     [ProposalStatus.ProposalStatusFinal]: {
-        header: 'Proposal is still being discussed',
+        header: 'Proposal is being discussed',
         subHeader: 'Take part in the discussion and help shape public sentiment on this proposal.',
         icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
         actionText: 'View the discussion',
@@ -178,14 +229,33 @@ export const statusCardMap = {
     },
 }
 
-export function StatusCard({ className = '', proposal }: StatusCardProps) {
+export function StatusCard({ className = '', proposal, refetchProposal, refetchAllProposals, discussionDuration, minimumDiscussionDuration }: StatusCardProps) {
+    const navigate = useNavigate();
+    const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
+    const [isDropModalOpen, setIsDropModalOpen] = useState(false);
+
+    const { activeAddress, transactionSigner } = useWallet();
+
+    const finalizable = discussionDuration > minimumDiscussionDuration;
+    const [days, hours, minutes] = useTimeLeft(Date.now() + (Number(minimumDiscussionDuration) - discussionDuration));
+    const remainingTime = `${days}d ${hours}h ${minutes}m remaining`;
+
     const details = statusCardMap[proposal.status as keyof typeof statusCardMap];
+
+    if (proposal.status === ProposalStatus.ProposalStatusDraft) {
+        details.subHeader = `Discussion is ongoing (${remainingTime}), take part and help shape public sentiment on this proposal.`;
+    }
+
+    if (!finalizable && proposal.proposer === activeAddress) {
+        details.header = 'Your proposal is in the drafting & discussion phase';
+        details.icon = <SquarePenIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />;
+    }
 
     return (
         <div className={cn(className, "w-full lg:min-w-[30rem] xl:min-w-[40rem] bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between sm:flex-nowrap relative transition overflow-hidden")}>
             <div className="w-full px-4 py-5 sm:px-6">
                 <h3 className="text-base font-semibold text-algo-black dark:text-white">{details.header}</h3>
-                <p className="mt-1 text-sm text-algo-black-80 dark:text-algo-black-30">{details.subHeader}</p>
+                <p className="mt-1 text-wrap text-sm text-algo-black-80 dark:text-algo-black-30">{details.subHeader}</p>
                 <div className="flex flex-col items-center justify-center gap-10 w-full h-96">
                     {details.icon}
 
@@ -208,6 +278,59 @@ export function StatusCard({ className = '', proposal }: StatusCardProps) {
                             {details.actionText}
                         </Link>
                     )}
+
+                    {
+                        proposal.status === ProposalStatus.ProposalStatusDraft &&
+                        proposal.proposer === activeAddress && (
+                            <div className="flex gap-4 items-center">
+                                <Button
+                                    onClick={() => setIsDropModalOpen(true)}
+                                    type='button'
+                                    variant='ghost'
+                                >
+                                    Delete
+                                </Button>
+
+                                <Button
+                                    onClick={() => {
+                                        navigate(`/edit/${proposal.id}`);
+                                    }}
+                                    type='button'
+                                    variant='ghost'
+                                >
+                                    Edit
+                                </Button>
+
+                                <InfinityMirrorButton
+                                    onClick={() => setIsFinalizeModalOpen(true)}
+                                    type='button'
+                                    variant='secondary'
+                                    disabled={!finalizable}
+                                    disabledMessage={finalizable ? undefined : `Discussion is ongoing. ${remainingTime}`}
+                                >
+                                    Submit
+                                </InfinityMirrorButton>
+
+                                <FinalizeModal
+                                    isOpen={isFinalizeModalOpen}
+                                    onClose={() => setIsFinalizeModalOpen(false)}
+                                    proposalId={proposal.id}
+                                    activeAddress={activeAddress}
+                                    transactionSigner={transactionSigner}
+                                    refetchProposal={refetchProposal}
+                                />
+                                <DropModal
+                                    isOpen={isDropModalOpen}
+                                    onClose={() => setIsDropModalOpen(false)}
+                                    proposalId={proposal.id}
+                                    activeAddress={activeAddress}
+                                    transactionSigner={transactionSigner}
+                                    refetchProposal={refetchProposal}
+                                    refetchAllProposals={refetchAllProposals}
+                                />
+                            </div>
+                        )
+                    }
                 </div>
             </div>
         </div>
@@ -217,34 +340,12 @@ export function StatusCard({ className = '', proposal }: StatusCardProps) {
 export interface ProposalInfoProps {
     proposal: ProposalMainCardDetails;
     pastProposals?: ProposalBrief[];
-    refetchProposal: () => void;
-    refetchAllProposals: () => void;
     children: React.ReactNode;
 }
 
-export default function ProposalInfo({ proposal, pastProposals, refetchProposal, refetchAllProposals, children }: ProposalInfoProps) {
-
-    const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
-    const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
-
-    const { activeAddress, transactionSigner } = useWallet();
+export default function ProposalInfo({ proposal, pastProposals, children }: ProposalInfoProps) {
 
     const phase = ProposalStatusMap[proposal.status];
-
-    const handleOpenFinalizeModal = () => {
-        setIsFinalizeModalOpen(true);
-    };
-    const handleOpenWithdrawModal = () => {
-        setIsWithdrawModalOpen(true);
-    };
-
-    const handleCloseFinalizeModal = () => {
-        setIsFinalizeModalOpen(false);
-    };
-
-    const handleCloseWithdrawModal = () => {
-        setIsWithdrawModalOpen(false);
-    };
 
     return (
         <div className="relative isolate overflow-hidden bg-white dark:bg-algo-black px-6 lg:px-8 py-24 min-h-[calc(100svh-10.625rem)] lg:overflow-visible">
@@ -297,7 +398,7 @@ export default function ProposalInfo({ proposal, pastProposals, refetchProposal,
                                 <BracketedPhaseDetail phase={phase} />
                             </p>
                             <h1 className="mt-2 text-pretty text-4xl font-semibold tracking-tight text-algo-black dark:text-white sm:text-5xl">
-                                {proposal.title} {(proposal.proposer == activeAddress) && ("🫵")}
+                                {proposal.title}
                             </h1>
 
                             <p className="mt-6 text-xl/8 text-algo-black-70 dark:text-algo-black-30">
@@ -312,35 +413,6 @@ export default function ProposalInfo({ proposal, pastProposals, refetchProposal,
                 <div className="lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">
                     <div className="lg:pr-4">
                         <div className="max-w-xl text-lg/8 text-algo-black-70 dark:text-algo-black-30 sm:max-w-lg md:max-w-[unset]">
-                            {(proposal.proposer == activeAddress) && proposal.status === ProposalStatus.ProposalStatusDraft && (
-                                <div className="flex flex-row items-center gap-2">
-                                    <ActionButton
-                                        onClick={handleOpenWithdrawModal} type={undefined} disabled={false} variant={"destructive"}>
-                                        Withdraw Proposal
-                                    </ActionButton>
-                                    <ActionButton
-                                        onClick={handleOpenFinalizeModal} type={undefined} disabled={false}>
-                                        Submit your proposal for vote.
-                                    </ActionButton>
-                                    <FinalizeModal
-                                        isOpen={isFinalizeModalOpen}
-                                        onClose={handleCloseFinalizeModal}
-                                        proposalId={proposal.id}
-                                        activeAddress={activeAddress}
-                                        transactionSigner={transactionSigner}
-                                        refetchProposal={refetchProposal}
-                                    />
-                                    <WithdrawModal
-                                        isOpen={isWithdrawModalOpen}
-                                        onClose={handleCloseWithdrawModal}
-                                        proposalId={proposal.id}
-                                        activeAddress={activeAddress}
-                                        transactionSigner={transactionSigner}
-                                        refetchProposal={refetchProposal}
-                                        refetchAllProposals={refetchAllProposals}
-                                    />
-                                </div>
-                            )}
                             <p className="mb-8">
                                 <strong className="font-semibold text-algo-black dark:text-white">About the team<br /></strong>
                                 {proposal.team}
@@ -349,9 +421,22 @@ export default function ProposalInfo({ proposal, pastProposals, refetchProposal,
                                 <strong className="font-semibold text-algo-black dark:text-white">Additional Info<br /></strong>
                                 {proposal.additionalInfo}
                             </p>
-                            <div className="text-base inline-flex items-center justify-between gap-3 mt-2 mb-6 p-1 pr-4">
-                                {/* <div className="w-full text-base inline-flex items-center justify-between gap-4 bg-algo-blue dark:bg-algo-teal-30 my-4 p-1 pr-4 rounded-3xl"> */}
+                            {
+                                !!proposal.adoptionMetrics && (
+                                    <div className="mb-4">
+                                        <strong className="font-semibold text-algo-black dark:text-white">Adoption Metrics<br /></strong>
+                                        <ul className="flex flex-wrap mt-2 gap-4">
+                                            {proposal.adoptionMetrics.map((metric, index) => (
+                                                <li key={index} className=" bg-algo-blue-10 rounded-md py-1 px-2">
+                                                    {metric}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )
+                            }
 
+                            <div className="text-base inline-flex items-center justify-between gap-3 mt-2 mb-6 p-1 pr-4">
                                 <UserPill
                                     variant='secondary'
                                     address={proposal.proposer}
@@ -369,7 +454,6 @@ export default function ProposalInfo({ proposal, pastProposals, refetchProposal,
                                                 return (
                                                     <li
                                                         key={pastProposal.id}
-                                                        // className="truncate"
                                                         className="bg-algo-blue-10 dark:bg-algo-black-90 border-l-4 border-b-[3px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-x-xl rounded-2xl flex flex-wrap items-center justify-between gap-x-6 gap-y-4 p-2.5 sm:flex-nowrap relative transition overflow-hidden text-wrap"
                                                     >
                                                         <Link className="absolute left-0 top-0 w-full h-full hover:bg-algo-blue/30 dark:hover:bg-algo-teal/30" to={`/proposal/${Number(pastProposal.id)}`}></Link>
@@ -447,26 +531,36 @@ export function FinalizeModal({
         }
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-algo-black p-4 rounded-lg max-w-lg w-full">
-                <button className="absolute top-2 right-2 text-xl" onClick={onClose}>×</button>
-                <h2 className="text-2xl font-bold mb-4">Submit Proposal for Vote</h2>
-                <p>Are you sure you want to submit this proposal for voting?</p>
-                <p>Once submitted, you cannot edit any further.</p>
+        <Dialog open={isOpen}>
+            <DialogContent
+                className="w-full h-full sm:h-auto sm:max-w-[425px] sm:rounded-lg"
+                onCloseClick={onClose}
+            >
+                <DialogHeader className="mt-12 flex flex-col items-start gap-2">
+                    <DialogTitle className="dark:text-white">Submit Proposal?</DialogTitle>
+                    <DialogDescription>
+                        Are you sure you want to submit this proposal?
+                    </DialogDescription>
+                </DialogHeader>
                 {errorMessage && <p className="text-red-500">{errorMessage}</p>}
-                <div className="mt-4 flex justify-end gap-2">
-                    <button className="bg-gray-300 dark:bg-gray-700 p-2 rounded" onClick={onClose}>Cancel</button>
-                    <button className="bg-algo-teal dark:bg-algo-blue text-white p-2 rounded" onClick={handleSubmit}>Submit</button>
-                </div>
-            </div>
-        </div>
+                <DialogFooter className="mt-8">
+                    <Button
+                        variant='ghost'
+                        onClick={onClose}
+                    >
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSubmit}>
+                        Submit
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 
-interface WithdrawalModalProps {
+interface DropModalProps {
     isOpen: boolean;
     onClose: () => void;
     proposalId: bigint;
@@ -476,8 +570,7 @@ interface WithdrawalModalProps {
     refetchAllProposals: () => void;
 }
 
-
-export function WithdrawModal({
+export function DropModal({
     isOpen,
     onClose,
     proposalId,
@@ -485,7 +578,7 @@ export function WithdrawModal({
     transactionSigner,
     refetchProposal,
     refetchAllProposals
-}: WithdrawalModalProps) {
+}: DropModalProps) {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const navigate = useNavigate();
 
@@ -528,21 +621,34 @@ export function WithdrawModal({
         }
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-algo-black p-4 rounded-lg max-w-lg w-full">
-                <button className="absolute top-2 right-2 text-xl" onClick={onClose}>×</button>
-                <h2 className="text-2xl font-bold mb-4">Withdraw Proposal?</h2>
-                <p>Are you sure you want to withdraw this proposal?</p>
-                <p>Once withdrawn you cannot undo this action.</p>
+        <Dialog open={isOpen}>
+            <DialogContent
+                className="w-full h-full sm:h-auto sm:max-w-[425px] sm:rounded-lg"
+                onCloseClick={onClose}
+            >
+                <DialogHeader className="mt-12 flex flex-col items-start gap-2">
+                    <DialogTitle className="dark:text-white">Delete Proposal?</DialogTitle>
+                    <DialogDescription>
+                        Are you sure you want to delete this proposal? This action cannot be undone.
+                    </DialogDescription>
+                </DialogHeader>
                 {errorMessage && <p className="text-red-500">{errorMessage}</p>}
-                <div className="mt-4 flex justify-end gap-2">
-                    <button className="bg-gray-300 dark:bg-gray-700 p-2 rounded" onClick={onClose}>Cancel</button>
-                    <button className="bg-algo-teal dark:bg-algo-blue text-white p-2 rounded" onClick={handleDrop}>Withdraw</button>
-                </div>
-            </div>
-        </div>
+                <DialogFooter className="mt-8">
+                    <Button
+                        variant='ghost'
+                        onClick={onClose}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        variant='destructive'
+                        onClick={handleDrop}
+                    >
+                        Delete
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }

@@ -1,4 +1,4 @@
-import type { ProposalBrief, ProposalJSON, ProposalMainCardDetails, ProposalStatus, ProposalSummaryCardDetails } from "@/types/proposals";
+import type { ProposalBrief, ProposalJSON, ProposalMainCardDetails, ProposalSummaryCardDetails } from "@/types/proposals";
 import { AppManager } from "@algorandfoundation/algokit-utils/types/app-manager";
 import algosdk from "algosdk";
 import { CID } from "kubo-rpc-client";
@@ -25,6 +25,8 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
             fundingType: Number(state['funding_type'].value),
             status: Number(state.status.value),
             focus: Number(state.focus.value),
+            category: Number(state['funding_category'].value),
+            submissionTime: Number(state['submission_timestamp'].value),
         }
     }));
 }
@@ -72,6 +74,8 @@ export async function getProposal(id: bigint): Promise<ProposalMainCardDetails> 
         fundingType: Number(state['funding_type'].value),
         status: Number(state.status.value),
         focus: Number(state.focus.value),
+        category: Number(state['funding_category'].value),
+        submissionTime: Number(state['submission_timestamp'].value),
         ...proposalJSON
     }
 

@@ -18,6 +18,7 @@ import { VotingCohort } from "./_VotingCohort";
 // import { useRegistryClient } from "@/contexts/RegistryClientContext";
 import { RegistryClient as registryClient} from "src/algorand/contract-clients";
 import { useRegistry } from "src/hooks/useRegistry";
+import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
 
 const title = 'xGov';
 
@@ -116,7 +117,7 @@ export function AdminPage() {
   };
 
   if (registryGlobalState.isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   return (

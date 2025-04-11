@@ -6,7 +6,15 @@ services:
       - ./ipfs_staging:/export
       - ./ipfs_data:/data/ipfs
     ports:
-      - "4040:4001"
-      - "4040:4001/udp"
-      - "127.0.0.1:8081:8080"
-      - "127.0.0.1:5001:5001"
+      - "4003:4001"
+      - "4003:4001/udp"
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:5001:5001"  # Changed to expose the API port properly
+    entrypoint: >
+      /bin/sh -c "
+        ipfs init || true &&
+        ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '[\"*\"]' &&
+        ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '[\"GET\", \"POST\", \"PUT\", \"DELETE\", \"OPTIONS\"]' &&
+        ipfs config --json API.HTTPHeaders.Access-Control-Allow-Headers '[\"X-Requested-With\", \"Content-Type\", \"User-Agent\", \"Authorization\"]' &&
+        ipfs daemon --migrate=true
+      "

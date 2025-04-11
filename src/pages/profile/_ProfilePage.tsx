@@ -22,29 +22,24 @@ import { useNavigate, useParams } from "react-router-dom";
 import { shortenAddress } from "@/functions/shortening";
 import { Button } from "@/components/ui/button";
 import XGovProposerStatusPill from '@/components/XGovProposerStatusPill/XGovProposerStatusPill';
+import { ProposalStatus } from "@/types/proposals";
+import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton";
+import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
 
 const title = 'xGov';
 
-function RulesCard() {
-    return (
-        <div className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-xl lg:min-w-[36rem]">
-            <div className="max-w-3xl min-h-[36rem]">
-                <h2 className="text-xl font-bold mt-2 mb-4">Platform Rules</h2>
-            </div>
-        </div>
-    )
-}
-
-function RulesCardAndTitle() {
-    return (
-        <>
-            <h1 className="text-3xl text-wrap lg:text-4xl max-w-4xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
-                Rules
-            </h1>
-            <RulesCard />
-        </>
-    )
-}
+const activeStatuses = [
+    // ProposalStatus.ProposalStatusEmpty,
+    ProposalStatus.ProposalStatusDraft,
+    ProposalStatus.ProposalStatusFinal,
+    ProposalStatus.ProposalStatusVoting,
+    ProposalStatus.ProposalStatusApproved,
+    ProposalStatus.ProposalStatusRejected,
+    ProposalStatus.ProposalStatusReviewed,
+    // ProposalStatus.ProposalStatusFunded,
+    ProposalStatus.ProposalStatusBlocked,
+    ProposalStatus.ProposalStatusDelete,
+]
 
 export function ProfilePage() {
     const navigate = useNavigate();
@@ -53,32 +48,28 @@ export function ProfilePage() {
     const registry = useRegistry();
     const xgov = useXGov(activeAddress);
     const proposer = useProposer(activeAddress);
-    const proposals = useProposalsByProposer(activeAddress);
+    const proposalsData = useProposalsByProposer(activeAddress);
 
-    const isLoading = registry.isLoading || xgov.isLoading || proposer.isLoading || proposals.isLoading;
-    const isError = registry.isError || xgov.isError || proposer.isError || proposals.isError;
+    const isLoading = registry.isLoading || xgov.isLoading || proposer.isLoading || proposalsData.isLoading;
+    const isError = registry.isError || xgov.isError || proposer.isError || proposalsData.isError;
 
     const [subscribeXGovLoading, setSubscribeXGovLoading] = useState<boolean>(false);
     const [setVotingAddressLoading, setSetVotingAddressLoading] = useState<boolean>(false);
     const [subscribeProposerLoading, setSubscribeProposerLoading] = useState<boolean>(false);
 
-    const [newProposalLoading, setNewProposalLoading] = useState<boolean>(false);
-
-    // !activeAddress && navigate('/');
-    // activeAddress !== address && navigate(`/profile/${activeAddress}`);
-
     const validProposer =
         (
             proposer?.data
             && proposer.data.kycStatus
-            && proposer.data.kycExpiring > Date.now()
+            && proposer.data.kycExpiring > (Date.now() / 1000)
         ) || false
 
+    const hasCurrentProposal = proposalsData.data?.some(proposal => activeStatuses.includes(proposal.status))
+
+    const proposals = proposalsData.data?.filter(proposal => proposal.status !== ProposalStatus.ProposalStatusEmpty);
 
     if (!activeAddress || isLoading) {
-        return (
-            <div>Loading...</div>
-        )
+        return <LoadingSpinner />
     }
 
     if (isError) {
@@ -218,47 +209,6 @@ export function ProfilePage() {
         setSubscribeProposerLoading(false);
     }
 
-    const newProposal = async () => {
-        if (!activeAddress) return;
-
-        setNewProposalLoading(true);
-
-        const suggestedParams = await algorand.getSuggestedParams();
-
-        const proposalFee = registry.data?.proposalFee;
-
-        if (!proposalFee) {
-            throw new Error('Proposal fee not found');
-        }
-
-        const payment = makePaymentTxnWithSuggestedParamsFromObject({
-            from: activeAddress,
-            to: algosdk.getApplicationAddress(RegistryAppID),
-            amount: proposalFee,
-            suggestedParams,
-        });
-
-        await RegistryClient.send.openProposal({
-            sender: activeAddress,
-            signer: transactionSigner,
-            args: { payment },
-            boxReferences: [
-                new Uint8Array(
-                    Buffer.concat([
-                        Buffer.from('p'),
-                        algosdk.decodeAddress(activeAddress).publicKey
-                    ])
-                ),
-            ]
-        }).catch((e: Error) => {
-            console.error(`Error calling the contract: ${e.message}`)
-            setNewProposalLoading(false);
-            return
-        });
-
-        setNewProposalLoading(false);
-    }
-
     return (
         <Page
             title={title}
@@ -272,7 +222,7 @@ export function ProfilePage() {
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbPage>{(!!address && address === activeAddress) && 'My'} Profile</BreadcrumbPage>
+                            <BreadcrumbPage>{(!!address && address === activeAddress) && 'My '}Profile</BreadcrumbPage>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
@@ -304,21 +254,16 @@ export function ProfilePage() {
                 {
                     validProposer && (
                         <>
-                            <div className="flex gap-6">
+                            <div className="flex gap-6 mb-4">
                                 <XGovProposerStatusPill proposer={proposer.data} />
-                            </div>
-                            <div className="flex items-center gap-2 my-8">
-                                <Button
-                                    size='sm'
-                                    type='button'
-                                    onClick={newProposal}
-                                    disabled={!proposer.data?.isProposer}
-                                >
-                                    {newProposalLoading ? 'Loading...' : 'New Proposal'}
-                                </Button>
+                                <Link to='/new'>
+                                    <InfinityMirrorButton variant='secondary'>
+                                        New Proposal
+                                    </InfinityMirrorButton>
+                                </Link>
                             </div>
                             {
-                                !!proposals.data && <ProposalList proposals={proposals.data} />
+                                !!proposals && <ProposalList proposals={proposals} />
                             }
                         </>
                     )

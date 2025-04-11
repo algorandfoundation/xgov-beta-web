@@ -2,6 +2,7 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "src/functions/utils"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 const buttonVariants = cva(
     "flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 dark:focus-visible:ring-slate-300",
@@ -89,22 +90,37 @@ export interface ButtonProps
     VariantProps<typeof buttonVariants> {
     asChild?: boolean
     rings?: number
+    disabledMessage?: string
 }
 
 const InfinityMirrorButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ className, variant, size, asChild = false, rings = 4, ...props }, ref) => {
+    ({ className, variant, size, asChild = false, rings = 4, disabled, disabledMessage, ...props }, ref) => {
         const Comp = asChild ? Slot : "button"
         return (
-            <div className="group relative">
-                {Array.from({ length: rings }).map((_, i) => (
-                    <Ring key={i} index={i} variant={variant} rings={rings} />
-                ))}
-                <Comp
-                    className={cn(buttonVariants({ variant, size, className }), "relative z-10")}
-                    ref={ref}
-                    {...props}
-                />
-            </div>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                    <div className="group relative">
+                        {!disabled && Array.from({ length: rings }).map((_, i) => (
+                            <Ring key={i} index={i} variant={variant} rings={rings} />
+                        ))}
+                        <Comp
+                            className={cn(buttonVariants({ variant, size, className }), "relative z-10")}
+                            ref={ref}
+                            disabled={disabled}
+                            {...props}
+                        />
+                    </div>
+                    </TooltipTrigger>
+                    {
+                        disabled && (
+                            <TooltipContent>
+                                <p className="text-lg">{disabledMessage}</p>
+                            </TooltipContent>
+                        )
+                    }
+                </Tooltip>
+            </TooltipProvider>
 
         )
     }

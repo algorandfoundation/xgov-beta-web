@@ -94,7 +94,7 @@ export function HomePage() {
                 <div className="mt-10">
                     <ProposalListHeader title="Active Proposals">
                         <ProposalFilter />
-                        <Link to='/new/proposal'>
+                        <Link to='/new'>
                             <InfinityMirrorButton variant='secondary'>
                                 New Proposal
                             </InfinityMirrorButton>

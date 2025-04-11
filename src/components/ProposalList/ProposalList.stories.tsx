@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { within, expect } from '@storybook/test';
 
-import { ProposalFocus, ProposalFundingType, ProposalStatus, type ProposalSummaryCardDetails } from '@/types/proposals';
+import { ProposalCategory, ProposalFocus, ProposalFundingType, ProposalStatus, type ProposalSummaryCardDetails } from '@/types/proposals';
 import { ProposalList, type ProposalListProps } from './ProposalList';
 
 export const mockProposals: ProposalSummaryCardDetails[] = [
@@ -14,6 +14,8 @@ export const mockProposals: ProposalSummaryCardDetails[] = [
       fundingType: ProposalFundingType.Retroactive,
       requestedAmount: BigInt(75_000_000_000),
       proposer: "compx.algo",
+      submissionTime: Date.now(),
+      category: ProposalCategory.ProposalCategoryNull,
   },
   {
       id: BigInt(2),
@@ -24,6 +26,8 @@ export const mockProposals: ProposalSummaryCardDetails[] = [
       fundingType: ProposalFundingType.Proactive,
       requestedAmount: BigInt(30_000_000_000),
       proposer: "agorapp.algo",
+      submissionTime: Date.now(),
+      category: ProposalCategory.ProposalCategoryNull,
   },
   {
       id: BigInt(3),
@@ -34,6 +38,8 @@ export const mockProposals: ProposalSummaryCardDetails[] = [
       fundingType: ProposalFundingType.Retroactive,
       requestedAmount: BigInt(75_000_000_000),
       proposer: "txnlab.algo",
+      submissionTime: Date.now(),
+      category: ProposalCategory.ProposalCategoryNull,
   },
   {
       id: BigInt(4),
@@ -44,6 +50,8 @@ export const mockProposals: ProposalSummaryCardDetails[] = [
       fundingType: ProposalFundingType.Proactive,
       requestedAmount: BigInt(50_000_000_000),
       proposer: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ',
+      submissionTime: Date.now(),
+      category: ProposalCategory.ProposalCategoryNull,
   },
   {
       id: BigInt(5),
@@ -54,6 +62,8 @@ export const mockProposals: ProposalSummaryCardDetails[] = [
       fundingType: ProposalFundingType.Retroactive,
       requestedAmount: BigInt(100_000_000_000),
       proposer: "swapx.algo",
+      submissionTime: Date.now(),
+      category: ProposalCategory.ProposalCategoryNull,
   },
 ];
 
@@ -104,7 +114,7 @@ export const Empty: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const p = await canvas.findByRole('paragraph');
-    expect(p).toHaveTextContent('No proposals yet');
+    expect(p).toHaveTextContent('No proposals');
   },
 };
 
