@@ -165,10 +165,10 @@ export const statusCardMap = {
         link: ''
     },
     [ProposalStatus.ProposalStatusDraft]: {
-        header: 'This proposal is in the drafting & discussion phase',
-        subHeader: '',
-        icon: <SquarePenIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
-        actionText: '',
+        header: 'Proposal is being discussed',
+        subHeader: 'Take part in the discussion and help shape public sentiment on this proposal.',
+        icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
+        actionText: 'View the discussion',
         link: ''
     },
     [ProposalStatus.ProposalStatusFinal]: {
@@ -242,15 +242,20 @@ export function StatusCard({ className = '', proposal, refetchProposal, refetchA
 
     const details = statusCardMap[proposal.status as keyof typeof statusCardMap];
 
-    if (!finalizable) {
-        details.subHeader = `Discussion is ongoing. ${remainingTime}`;
+    if (proposal.status === ProposalStatus.ProposalStatusDraft) {
+        details.subHeader = `Discussion is ongoing (${remainingTime}), take part and help shape public sentiment on this proposal.`;
+    }
+
+    if (!finalizable && proposal.proposer === activeAddress) {
+        details.header = 'Your proposal is in the drafting & discussion phase';
+        details.icon = <SquarePenIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />;
     }
 
     return (
         <div className={cn(className, "w-full lg:min-w-[30rem] xl:min-w-[40rem] bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between sm:flex-nowrap relative transition overflow-hidden")}>
             <div className="w-full px-4 py-5 sm:px-6">
                 <h3 className="text-base font-semibold text-algo-black dark:text-white">{details.header}</h3>
-                <p className="mt-1 text-sm text-algo-black-80 dark:text-algo-black-30">{details.subHeader}</p>
+                <p className="mt-1 text-wrap text-sm text-algo-black-80 dark:text-algo-black-30">{details.subHeader}</p>
                 <div className="flex flex-col items-center justify-center gap-10 w-full h-96">
                     {details.icon}
 
@@ -275,7 +280,8 @@ export function StatusCard({ className = '', proposal, refetchProposal, refetchA
                     )}
 
                     {
-                        proposal.status === ProposalStatus.ProposalStatusDraft && (
+                        proposal.status === ProposalStatus.ProposalStatusDraft &&
+                        proposal.proposer === activeAddress && (
                             <div className="flex gap-4 items-center">
                                 <Button
                                     onClick={() => setIsDropModalOpen(true)}
