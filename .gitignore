@@ -2,7 +2,7 @@
 .wrangler
 
 # build output
-dist/
+dist
 coverage
 
 # generated types

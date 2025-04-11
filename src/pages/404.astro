@@ -1,0 +1,13 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Page from "@/layouts/Page.astro";
+import ErrorCard from "@/components/ErrorCard.astro";
+---
+
+<Layout title={"Not Found"}>
+  <Page>
+    <div class="flex flex-col items-center justify-center flex-1 h-full">
+      <ErrorCard message="Page not found" />
+    </div>
+  </Page>
+</Layout>

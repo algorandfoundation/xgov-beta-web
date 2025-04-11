@@ -1,7 +1,5 @@
-import React, { useRef } from 'react';
+import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import Ajv from 'ajv';
-import { schema } from '@/types/voting_cohort';
 
 export interface UploadJSONButtonProps {
   setJsonData: (data: any) => void;
@@ -11,46 +9,47 @@ export interface UploadJSONButtonProps {
   disabled?: boolean;
 }
 
-const ajv = new Ajv();
-const validate = ajv.compile(schema);
-
-export function UploadJSONButton({ setJsonData, setErrorMessage, setFileName, setFile, disabled }: UploadJSONButtonProps) {
+export function UploadJSONButton({
+  setJsonData,
+  setErrorMessage,
+  setFileName,
+  setFile,
+  disabled,
+}: UploadJSONButtonProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files && event.target.files[0];
-    if (file && file.type === 'application/json') {
+    if (file && file.type === "application/json") {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
           if (e.target && e.target.result) {
             const json = JSON.parse(e.target.result as string);
-            const valid = validate(json);
-            if (valid) {
-              setJsonData(json);
-              setFileName(file.name);
-              console.log(json);
-              setErrorMessage(null);
-              setFile(file)
-
-            } else {
-              console.error('Wrong JSON schema:', validate.errors);
-              setErrorMessage('Wrong JSON schema. Not a valid xGov Committee cohort file.');
-              setFileName(null);
-              setFile(null);
-            }
+            setJsonData(json);
+            setFileName(file.name);
+            console.log(json);
+            setErrorMessage(null);
+            setFile(file);
+          } else {
+            console.error("Error reading file");
+            setErrorMessage("Error reading file. Please try again.");
+            setFileName(null);
+            setFile(null);
           }
         } catch (error) {
-          console.error('Error parsing JSON:', error);
-          setErrorMessage('Error parsing JSON file. Please upload a valid JSON file.');
+          console.error("Error parsing JSON:", error);
+          setErrorMessage(
+            "Error parsing JSON file. Please upload a valid JSON file.",
+          );
           setFileName(null);
           setFile(null);
         }
       };
       reader.readAsText(file);
     } else {
-      console.error('Please upload a valid JSON file.');
-      setErrorMessage('Please upload a valid JSON file.');
+      console.error("Please upload a valid JSON file.");
+      setErrorMessage("Please upload a valid JSON file.");
       setFileName(null);
       setFile(null);
     }

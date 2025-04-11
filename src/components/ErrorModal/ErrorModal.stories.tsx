@@ -1,30 +1,30 @@
-import type { Meta, StoryFn } from '@storybook/react';
-import ErrorModal, { type ErrorModalProps } from './ErrorModal';
+import type { Meta, StoryFn } from "@storybook/react";
+import { ErrorModal, type ErrorModalProps } from "./ErrorModal";
 
 const meta: Meta<typeof ErrorModal> = {
-  title: 'Components/ErrorModal',
+  title: "Components/ErrorModal",
   component: ErrorModal,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
   args: {
     isOpen: true,
-    message: 'An error has occurred.',
-    onClose: () => alert('Close button clicked'),
+    message: "An error has occurred.",
+    onClose: () => alert("Close button clicked"),
   },
   argTypes: {
     isOpen: {
-      control: 'boolean',
-      description: 'Whether the modal is open',
+      control: "boolean",
+      description: "Whether the modal is open",
     },
     message: {
-      control: 'text',
-      description: 'The error message to display',
+      control: "text",
+      description: "The error message to display",
     },
     onClose: {
       control: undefined,
-      description: 'Function to call when the close button is clicked',
+      description: "Function to call when the close button is clicked",
     },
   },
 };
@@ -36,6 +36,6 @@ const Template: StoryFn<ErrorModalProps> = (args) => <ErrorModal {...args} />;
 export const Default = Template.bind({});
 Default.args = {
   isOpen: true,
-  message: 'An error has occurred.',
-  onClose: () => alert('Close button clicked'),
+  message: "An error has occurred.",
+  onClose: () => alert("Close button clicked"),
 };

@@ -1,0 +1,23 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Page from "@/layouts/Page.astro";
+import ErrorCard from "@/components/ErrorCard.astro";
+interface Props {
+  error: any;
+}
+
+const { error } = Astro.props;
+
+const DEFAULT_MESSAGE = "An error occurred";
+
+const message =
+  import.meta.env.MODE === "development"
+    ? error?.message || DEFAULT_MESSAGE
+    : DEFAULT_MESSAGE;
+---
+
+<Layout title={error?.name || "Error"}>
+  <Page class="w-full">
+    <ErrorCard title={error.name} message={message} />
+  </Page>
+</Layout>

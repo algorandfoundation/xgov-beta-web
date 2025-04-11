@@ -1,7 +1,43 @@
 ---
+import { getAllProposals } from "@/api";
+
 import Layout from "@/layouts/Layout.astro";
-import { App } from "../App.tsx"
+import Page from "@/layouts/Page.astro";
+
+import { HeroAnimation } from "@/components/HeroAnimation/HeroAnimation";
+import { Hero } from "@/components/Hero/Hero";
+import { ProposalListHeader } from "@/components/ProposalListHeader/ProposalListHeader";
+import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton";
+
+import { StackedListIsland, ProposalFilter } from "@/recipes";
+
+const title = "Algorand xGov";
+
+let proposals = await getAllProposals();
 ---
+
 <Layout>
-	<App client:only path="/"/>
+  <HeroAnimation />
+  <Page>
+    <Hero
+      slot="hero"
+      title={title}
+      description="xGov is a decentralized platform powered by Algorand smart contracts that enables community-driven funding for innovative projects and ideas. Through transparent governance, it empowers the Algorand ecosystem to collectively evaluate and support impactful initiatives."
+      xgovs={4_800}
+      proposals={proposals.length}
+      treasury={0}
+      votes={8_329}
+    />
+    <ProposalListHeader title="Active Proposals">
+      <ProposalFilter client:only="react" />
+      <a href="/new">
+        <InfinityMirrorButton variant="secondary">
+          New Proposal
+        </InfinityMirrorButton>
+      </a>
+    </ProposalListHeader>
+    <div class="flex flex-col gap-y-4">
+      <StackedListIsland client:only="react" proposals={proposals} />
+    </div>
+  </Page>
 </Layout>

@@ -1,41 +1,51 @@
 ---
-const title = "xGov";
 import "@/styles/globals.css";
+import { Devtools } from "@/components/Devtools";
+import { ClientRouter } from "astro:transitions";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+// Get the title from the props
+const { title } = Astro.props;
+const _title = title ? `${title} | ` : "";
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="description" content="Astro description" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{title}</title>
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<!-- Aeonik font faces -->
-		<link
-			href="https://d3qysudl7slyhp.cloudfront.net/stylesheet-family-support.css"
-			rel="stylesheet"
-		/>
-		<link
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
-			rel="stylesheet"
-		/>
-		<script is:inline>
-			// persistent nanoStores need a default value, system preference takes precedence so we check for default
-			const check =
-				localStorage.theme === 'dark'
-				|| (
-					(!('theme' in localStorage) || localStorage.theme === 'default')
-					&& window.matchMedia('(prefers-color-scheme: dark)').matches
-				);
-			document.documentElement.classList.toggle('dark', check);
-		</script>
-	</head>
-	<body class="bg-white dark:bg-algo-black">
-		<slot />
-	</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Astro description" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{`${_title}xGov`}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Aeonik font faces -->
+    <link
+      href="https://d3qysudl7slyhp.cloudfront.net/stylesheet-family-support.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline>
+      // persistent nanoStores need a default value, system preference takes precedence so we check for default
+      const check =
+        localStorage.theme === "dark" ||
+        ((!("theme" in localStorage) || localStorage.theme === "default") &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.classList.toggle("dark", check);
+    </script>
+    <ClientRouter />
+  </head>
+  <body class="bg-white dark:bg-algo-black text-algo-black dark:text-white">
+    <slot />
+    <Devtools client:load />
+  </body>
 </html>
 <style is:global>
   html,
@@ -43,12 +53,31 @@ import "@/styles/globals.css";
     font-family: "Aeonik", "Inter", sans-serif;
     height: 100%;
   }
+  body {
+    overflow-y: scroll;
+  }
 </style>
 <script>
   import { $themeStore } from "@/stores/themeStore";
 
   const cl = document.documentElement.classList;
   $themeStore.subscribe(
-    (theme) => theme !== "default" && cl.toggle("dark", theme === "dark")
+    (theme) => theme !== "default" && cl.toggle("dark", theme === "dark"),
   );
+
+  document.addEventListener("astro:before-swap", (event) => {
+    // Pass the incoming document to set the theme on it
+    event.newDocument.documentElement.classList.toggle(
+      "dark",
+      $themeStore.get() === "dark",
+    );
+  });
+
+  (function () {
+    const originalReplaceState = history.replaceState;
+    history.replaceState = function (...args) {
+      originalReplaceState.apply(this, args);
+      window.dispatchEvent(new CustomEvent("search"));
+    };
+  })();
 </script>

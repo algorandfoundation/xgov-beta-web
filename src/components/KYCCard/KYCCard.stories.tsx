@@ -1,31 +1,32 @@
-import type { Meta, StoryFn } from '@storybook/react';
-import KYCCard, { type KYCCardProps } from './KYCCard';
-import type { ProposerBoxState } from '@/types/proposer'
+import type { Meta, StoryFn } from "@storybook/react";
+import { KYCCard, type KYCCardProps } from "./KYCCard";
+import type { ProposerBoxState } from "@/api";
 
 const meta: Meta<typeof KYCCard> = {
-  title: 'Components/KYCCard',
+  title: "Components/KYCCard",
   component: KYCCard,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   parameters: {
-    layout: 'padded',
+    layout: "padded",
   },
   args: {
-    proposalAddress: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ',
+    proposalAddress:
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ",
     values: [false, false, BigInt(0).toString()] as unknown as ProposerBoxState,
     callSetProposerKYC: async () => true,
   },
   argTypes: {
     proposalAddress: {
-      control: 'text',
-      description: 'The address associated with the KYC card',
+      control: "text",
+      description: "The address associated with the KYC card",
     },
     values: {
-      control: 'object',
-      description: 'The KYC status and expiration date of the address',
+      control: "object",
+      description: "The KYC status and expiration date of the address",
     },
     callSetProposerKYC: {
       control: undefined,
-      description: 'Function to set the KYC status',
+      description: "Function to set the KYC status",
     },
   },
 };
@@ -36,17 +37,28 @@ const Template: StoryFn<KYCCardProps> = (args: any) => <KYCCard {...args} />;
 
 export const mockKYCBoxData = [
   {
-    proposalAddress: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ",
+    proposalAddress:
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ",
     values: [false, false, BigInt(0).toString()] as unknown as ProposerBoxState,
   },
   {
-    proposalAddress: "B243SD5USOH4DMV55K7SOOHXJQ3LUUVIQJOFXM7QIVEKUGCPKM6Q2B5PCA",
-    values: [true, true, BigInt(Math.floor(Date.now() / 1000)).toString()] as unknown as ProposerBoxState,
+    proposalAddress:
+      "B243SD5USOH4DMV55K7SOOHXJQ3LUUVIQJOFXM7QIVEKUGCPKM6Q2B5PCA",
+    values: [
+      true,
+      true,
+      BigInt(Math.floor(Date.now() / 1000)).toString(),
+    ] as unknown as ProposerBoxState,
   },
   {
-    proposalAddress: "FU56YMMJFRODITZMI7JPOSVHRJ5QBJBSN5TZTE724MOSLAPCK7OGQ2HFRQ",
-    values: [true, true, BigInt(Math.floor(new Date(3000, 0, 1).getTime() / 1000)).toString()] as unknown as ProposerBoxState,
-  }
+    proposalAddress:
+      "FU56YMMJFRODITZMI7JPOSVHRJ5QBJBSN5TZTE724MOSLAPCK7OGQ2HFRQ",
+    values: [
+      true,
+      true,
+      BigInt(Math.floor(new Date(3000, 0, 1).getTime() / 1000)).toString(),
+    ] as unknown as ProposerBoxState,
+  },
 ];
 
 export const Default = Template.bind({});

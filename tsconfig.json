@@ -5,8 +5,8 @@
     "jsxImportSource": "react",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-    },
+      "@/*": ["src/*"]
+    }
   },
-  "include": ["src/**/*", ".storybook/**/*", "mock-init.ts"],
+  "include": ["src/**/*", ".storybook/**/*", "mock-init.ts"]
 }
