@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 // import { within, expect } from '@storybook/test';
 
-import { ProposalFocus, ProposalFundingType, ProposalStatus } from '@/types/proposals';
+import { ProposalCategory, ProposalFocus, ProposalFundingType, ProposalStatus } from '@/types/proposals';
 import type { ProposalInfoCardDetails, ProposalMainCardDetails, ProposalSummaryCardDetails } from '@/types/proposals';
 import { ProposalCard, type ProposalCardProps } from './ProposalCard';
 
@@ -37,6 +37,8 @@ export const mockProposal: ProposalMainCardDetails = {
     BigInt(3),
   ],
   forumLink: 'https://forum.algorand.org/',
+  submissionTime: Date.now(),
+  category: ProposalCategory.ProposalCategoryNull,
 };
 
 export const mockProposalInfo: ProposalInfoCardDetails = {
@@ -57,6 +59,8 @@ export const mockProposalSummaryCard: ProposalSummaryCardDetails = {
   fundingType: ProposalFundingType.Proactive,
   status: ProposalStatus.ProposalStatusFinal,
   focus: ProposalFocus.FocusDeFi,
+  submissionTime: Date.now(),
+  category: ProposalCategory.ProposalCategoryNull,
 }
 
 function ProposalCardWrapper(props: ProposalCardProps) {
