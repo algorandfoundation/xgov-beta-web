@@ -29,6 +29,8 @@ import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
 import { useProposal } from "@/hooks/useProposals";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
+import { InfoPopover } from "@/components/InfoPopover/InfoPopover";
 
 const title = 'xGov';
 const proposalFactory = new ProposalFactory({ algorand })
@@ -47,9 +49,7 @@ export function EditProposalPage() {
     }, [proposal, activeAddress])
 
     if (isLoading) {
-        return <div className="flex justify-center py-8">
-            <div className="animate-spin h-8 w-8 border-4 border-algo-blue border-t-transparent rounded-full"></div>
-        </div>
+        return <LoadingSpinner />;
     }
 
     return (
@@ -106,14 +106,14 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
             title: proposal?.title || '',
             description: proposal?.description || '',
             requestedAmount: (Number(proposal?.requestedAmount) / 1_000_000) || 0,
-            team: proposal?.team || '', // PLACEHOLDER, SWITCHING TO BOXES
-            additionalInfo: proposal?.additionalInfo || '', // PLACEHOLDER, SWITCHING TO BOXES
-            openSource: true, // PLACEHOLDER, SWITCHING TO BOXES
+            team: proposal?.team || '',
+            additionalInfo: proposal?.additionalInfo || '',
+            openSource: true,
             focus: String(proposal?.focus) || '0',
             fundingType: String(proposal?.fundingType) || '',
-            // deliverables: currentProposal?.cid || '', // PLACEHOLDER, SWITCHING TO BOXES
-            adoptionMetrics: proposal?.adoptionMetrics || [], // PLACEHOLDER, SWITCHING TO BOXES
-            forumLink: proposal?.forumLink || '', // PLACEHOLDER, SWITCHING TO BOXES
+            // deliverables: currentProposal?.cid || '',
+            adoptionMetrics: proposal?.adoptionMetrics || [],
+            forumLink: proposal?.forumLink || '',
         },
         mode: 'onChange',
     })
@@ -142,7 +142,7 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
                 team: data.team,
                 additionalInfo: data.additionalInfo,
                 openSource: data.openSource,
-                // adoptionMetrics: ['1000 users', '1000 transactions'],
+                adoptionMetrics: data.adoptionMetrics,
                 forumLink: data.forumLink,
             },
             (_, value) => (
@@ -217,13 +217,15 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
                             <FormItem>
                                 <FormLabel className="dark:text-white">
                                     Title
-                                    <span className="ml-1 text-red-500">*</span>
+                                    <span className="ml-0.5 text-red-500">*</span>
+                                    <InfoPopover className='mx-1.5 relative top-0.5 sm:mx-1 sm:top-0' label="Owner account">
+                                        A short title of your proposal encompassing the main idea.
+                                    </InfoPopover>
                                 </FormLabel>
                                 <FormControl>
                                     <Input
                                         id="proposal-title"
                                         placeholder="Enter the title of your proposal"
-                                        autoComplete="new-password"
                                         spellCheck="false"
                                         {...field}
                                     />
@@ -240,19 +242,21 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
                             <FormItem>
                                 <FormLabel className="dark:text-white">
                                     Forum Link
-                                    <span className="ml-1 text-red-500">*</span>
+                                    <span className="ml-0.5 text-red-500">*</span>
+                                    <InfoPopover className='mx-1.5 relative top-0.5 sm:mx-1 sm:top-0' label="Owner account">
+                                        A link to the Algorand forum where the proposal can be discussed.
+                                    </InfoPopover>
                                 </FormLabel>
                                 <FormControl>
                                     <Input
                                         id="proposal-forum-link"
-                                        placeholder="Enter the title of your proposal"
-                                        autoComplete="new-password"
+                                        placeholder="Enter the forum link for discussion"
                                         spellCheck="false"
                                         {...field}
                                     />
                                 </FormControl>
                                 <FormDescription>
-                                    Paste the link to the algorand forum discussion where xGovs can partake in discussion for this proposal.
+                                    Paste the link to the Algorand forum discussion where xGovs can partake in discussion for this proposal.
                                 </FormDescription>
                                 <FormMessage>{errors.forumLink?.message}</FormMessage>
                             </FormItem>
@@ -266,14 +270,16 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
                             <FormItem>
                                 <FormLabel className="dark:text-white">
                                     Description
-                                    <span className="ml-1 text-red-500">*</span>
+                                    <span className="ml-0.5 text-red-500">*</span>
+                                    <InfoPopover className='mx-1.5 relative top-0.5 sm:mx-1 sm:top-0' label="Owner account">
+                                        A description of your proposal.
+                                    </InfoPopover>
                                 </FormLabel>
                                 <FormControl>
                                     <Textarea
                                         className="min-h-40"
                                         id="proposal-description"
                                         placeholder="Describe your proposal"
-                                        autoComplete="new-password"
                                         spellCheck="false"
                                         {...field}
                                     />
@@ -290,14 +296,16 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
                             <FormItem>
                                 <FormLabel className="dark:text-white">
                                     About the team
-                                    <span className="ml-1 text-red-500">*</span>
+                                    <span className="ml-0.5 text-red-500">*</span>
+                                    <InfoPopover className='mx-1.5 relative top-0.5 sm:mx-1 sm:top-0' label="Owner account">
+                                        All relevant information about the team behind the proposal.
+                                    </InfoPopover>
                                 </FormLabel>
                                 <FormControl>
                                     <Textarea
                                         className="min-h-40"
                                         id="proposal-team"
                                         placeholder="Who you are, what you've done"
-                                        autoComplete="new-password"
                                         spellCheck="false"
                                         {...field}
                                     />
@@ -314,14 +322,16 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
                             <FormItem>
                                 <FormLabel className="dark:text-white">
                                     Additional Info
-                                    <span className="ml-1 text-red-500">*</span>
+                                    <span className="ml-0.5 text-red-500">*</span>
+                                    <InfoPopover className='mx-1.5 relative top-0.5 sm:mx-1 sm:top-0' label="Owner account">
+                                        Additional details about the proposal users may find helpful in deciding to vote.
+                                    </InfoPopover>
                                 </FormLabel>
                                 <FormControl>
                                     <Textarea
                                         className="min-h-40"
                                         id="additional-info"
                                         placeholder="Any extra information you want to provide"
-                                        autoComplete="new-password"
                                         spellCheck="false"
                                         {...field}
                                     />
@@ -338,7 +348,10 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
                             <FormItem>
                                 <FormLabel className="dark:text-white">
                                     License
-                                    <span className="ml-1 text-red-500">*</span>
+                                    <span className="ml-0.5 text-red-500">*</span>
+                                    <InfoPopover className='mx-1.5 relative top-0.5 sm:mx-1 sm:top-0' label="Owner account">
+                                        For the time being all Proposals are required to be open source.
+                                    </InfoPopover>
                                 </FormLabel>
 
                                 <Select
@@ -368,7 +381,10 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
                             <FormItem>
                                 <FormLabel className="dark:text-white">
                                     Focus
-                                    <span className="ml-1 text-red-500">*</span>
+                                    <span className="ml-0.5 text-red-500">*</span>
+                                    <InfoPopover className='mx-1.5 relative top-0.5 sm:mx-1 sm:top-0' label="Owner account">
+                                        The category most relevant to your proposal.
+                                    </InfoPopover>
                                 </FormLabel>
 
                                 <Select onValueChange={field.onChange} defaultValue={field.value}
@@ -404,7 +420,10 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
                             <FormItem>
                                 <FormLabel className="dark:text-white">
                                     Funding Type
-                                    <span className="ml-1 text-red-500">*</span>
+                                    <span className="ml-0.5 text-red-500">*</span>
+                                    <InfoPopover className='mx-1.5 relative top-0.5 sm:mx-1 sm:top-0' label="Owner account">
+                                        For the time being only Retroactive funding is available.
+                                    </InfoPopover>
                                 </FormLabel>
 
                                 <Select
@@ -434,8 +453,12 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
                         render={({ field }) => {
                             const [metricInput, setMetricInput] = useState('');
 
-                            const addMetric = (e: React.KeyboardEvent<HTMLInputElement>) => {
+                            const addMetricFromEvent = (e: React.KeyboardEvent<HTMLInputElement>) => {
                                 e.preventDefault();
+                                addMetric()
+                            };
+
+                            const addMetric = () => {
                                 if (metricInput.trim() !== '') {
                                     const newMetrics = [...field.value, metricInput.trim()];
                                     field.onChange(newMetrics);
@@ -452,23 +475,42 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
                                 <FormItem>
                                     <FormLabel className="dark:text-white">
                                         Adoption Metrics
-                                        <span className="ml-1 text-red-500">*</span>
+                                        <span className="ml-0.5 text-red-500">*</span>
+                                        <InfoPopover className='mx-1.5 relative top-0.5 sm:mx-1 sm:top-0' label="Owner account">
+                                            Quick metrics about the adoption of your work that can be used to measure success & ecosystem relevancy for the funds being requested.
+                                        </InfoPopover>
                                     </FormLabel>
                                     <FormControl>
                                         <div className="space-y-2">
-                                            <Input
-                                                id="adoption-metrics"
-                                                placeholder="Type a metric and press Enter"
-                                                autoComplete="new-password"
-                                                spellCheck="false"
-                                                value={metricInput}
-                                                onChange={(e) => setMetricInput(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        addMetric(e);
-                                                    }
-                                                }}
-                                            />
+                                            <div className="relative">
+                                                <Input
+                                                    id="adoption-metrics"
+                                                    placeholder="Type a metric and press Enter"
+                                                    spellCheck="false"
+                                                    value={metricInput}
+                                                    onChange={(e) => setMetricInput(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            addMetricFromEvent(e);
+                                                        }
+                                                    }}
+                                                />
+                                                {
+                                                    metricInput && (
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            className="absolute right-[2px] top-1/2 transform -translate-y-1/2 scale-90"
+                                                            onClick={() => {
+                                                                addMetric();
+                                                            }}
+                                                        >
+                                                            Add
+                                                        </Button>
+                                                    )
+                                                }
+                                            </div>
+
                                             {field.value && field.value.length > 0 && (
                                                 <div className="mt-2 space-y-2">
                                                     {field.value.map((metric, index) => (
@@ -499,9 +541,12 @@ function EditProposalForm({ proposal, activeAddress, transactionSigner }: EditPr
                         name="requestedAmount"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="dark:text-white" htmlFor="amount-requested">
+                                <FormLabel className="dark:text-white">
                                     Amount Requested
-                                    <span className="ml-1 text-red-500">*</span>
+                                    <span className="ml-0.5 text-red-500">*</span>
+                                    <InfoPopover className='mx-1.5 relative top-0.5 sm:mx-1 sm:top-0' label="Owner account">
+                                        The amount of Algo being requested for the proposal.
+                                    </InfoPopover>
                                 </FormLabel>
                                 <FormControl>
                                     <div className="relative">

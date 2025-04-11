@@ -5,6 +5,7 @@ import type { ProposerBoxState } from 'src/types/proposer';
 import { RegistryClient as registryClient } from "src/algorand/contract-clients";
 import { useAllProposers } from "src/hooks/useRegistry";
 import { FaSync } from 'react-icons/fa';
+import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
 
 export interface KYCData {
   address: string;
@@ -77,7 +78,7 @@ export const KYCBox = ({ kycProvider, activeAddress, transactionSigner }: { kycP
   }
 
   if (allProposers.isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   // Filter proposerBoxes based on the filter criteria

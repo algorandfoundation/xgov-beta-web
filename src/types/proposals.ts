@@ -178,6 +178,9 @@ export interface ProposalSummaryCardDetails {
     fundingType: ProposalFundingType;
     status: ProposalStatus;
     focus: ProposalFocus;
+    category: ProposalCategory;
+    submissionTime: number;
+    // adoptionMetrics?: string[];
 }
 
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;

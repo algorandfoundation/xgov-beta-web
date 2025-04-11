@@ -21,20 +21,34 @@ import { useGetAllProposals, useProposal, useProposalsByProposer } from "src/hoo
 import { useRegistry } from "src/hooks/useRegistry";
 import UserPill from "@/components/UserPill/UserPill";
 import VoteCounter from "@/components/VoteCounter/VoteCounter";
-import { ProposalStatus, ProposalStatusMap, type ProposalBrief, type ProposalMainCardDetails } from "@/types/proposals";
+import { ProposalCategory, ProposalStatus, ProposalStatusMap, type ProposalBrief, type ProposalMainCardDetails } from "@/types/proposals";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
 import { useState } from "react";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { AlgorandClient as algorand } from 'src/algorand/algo-client';
 import { RegistryClient as registryClient } from "src/algorand/contract-clients";
-import ActionButton from "@/components/button/ActionButton/ActionButton";
 import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton";
 import { Button } from "@/components/ui/button";
 import { SquarePenIcon } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useTimeLeft } from "@/hooks/useTimeLeft";
+import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
 
 const title = 'xGov';
+
+function getDiscussionDuration(category: ProposalCategory, durations: [bigint, bigint, bigint, bigint]): bigint {
+    switch (category) {
+        case ProposalCategory.ProposalCategorySmall:
+            return durations[0];
+        case ProposalCategory.ProposalCategoryMedium:
+            return durations[1];
+        case ProposalCategory.ProposalCategoryLarge:
+            return durations[2];
+        default:
+            return BigInt(0);
+    }
+}
 
 export function ProposalPage() {
     const { activeAddress } = useWallet();
@@ -46,7 +60,7 @@ export function ProposalPage() {
     const allProposals = useGetAllProposals();
 
     if (proposal.isLoading || registryGlobalState.isLoading) {
-        return <div>Loading...</div>
+        return <LoadingSpinner />
     }
 
     if (proposal.isError) {
@@ -54,6 +68,18 @@ export function ProposalPage() {
         return (
             <div>
                 <div>Encountered an error: {proposal.error.message}</div>
+                <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    Return to Homepage?
+                </Link>
+            </div>
+        );
+    }
+
+    if (registryGlobalState.isError) {
+        console.log('error', proposal.error);
+        return (
+            <div>
+                <div>Encountered an error: {registryGlobalState.error.message}</div>
                 <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline">
                     Return to Homepage?
                 </Link>
@@ -71,6 +97,21 @@ export function ProposalPage() {
             </div>
         );
     }
+
+    if (!registryGlobalState.data) {
+        return (
+            <div>
+                <div>Something went wrong</div>
+                <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    Return to Homepage?
+                </Link>
+            </div>
+        );
+    }
+
+    const discussionDuration = Date.now() - (proposal.data?.submissionTime * 1000);
+    const minimumDiscussionDuration = getDiscussionDuration(proposal.data?.category, registryGlobalState.data?.discussionDuration) * 1000n;
+
     return (
         <Page
             title={title}
@@ -98,6 +139,8 @@ export function ProposalPage() {
                     proposal={proposal.data}
                     refetchProposal={proposal.refetch}
                     refetchAllProposals={allProposals.refetch}
+                    discussionDuration={discussionDuration}
+                    minimumDiscussionDuration={minimumDiscussionDuration}
                 />
             </ProposalInfo>
         </Page >
@@ -109,6 +152,8 @@ export interface StatusCardProps {
     proposal: ProposalMainCardDetails;
     refetchProposal: () => void;
     refetchAllProposals: () => void;
+    discussionDuration: number;
+    minimumDiscussionDuration: bigint;
 }
 
 export const statusCardMap = {
@@ -120,7 +165,7 @@ export const statusCardMap = {
         link: ''
     },
     [ProposalStatus.ProposalStatusDraft]: {
-        header: 'This proposal is still in draft',
+        header: 'This proposal is in the drafting & discussion phase',
         subHeader: '',
         icon: <SquarePenIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
         actionText: '',
@@ -184,22 +229,22 @@ export const statusCardMap = {
     },
 }
 
-export function StatusCard({ className = '', proposal, refetchProposal, refetchAllProposals }: StatusCardProps) {
+export function StatusCard({ className = '', proposal, refetchProposal, refetchAllProposals, discussionDuration, minimumDiscussionDuration }: StatusCardProps) {
     const navigate = useNavigate();
     const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
     const [isDropModalOpen, setIsDropModalOpen] = useState(false);
 
     const { activeAddress, transactionSigner } = useWallet();
 
+    const finalizable = discussionDuration > minimumDiscussionDuration;
+    const [days, hours, minutes] = useTimeLeft(Date.now() + (Number(minimumDiscussionDuration) - discussionDuration));
+    const remainingTime = `${days}d ${hours}h ${minutes}m remaining`;
+
     const details = statusCardMap[proposal.status as keyof typeof statusCardMap];
 
-    const handleOpenFinalizeModal = () => {
-        setIsFinalizeModalOpen(true);
-    };
-
-    const handleCloseFinalizeModal = () => {
-        setIsFinalizeModalOpen(false);
-    };
+    if (!finalizable) {
+        details.subHeader = `Discussion is ongoing. ${remainingTime}`;
+    }
 
     return (
         <div className={cn(className, "w-full lg:min-w-[30rem] xl:min-w-[40rem] bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between sm:flex-nowrap relative transition overflow-hidden")}>
@@ -254,13 +299,15 @@ export function StatusCard({ className = '', proposal, refetchProposal, refetchA
                                     onClick={() => setIsFinalizeModalOpen(true)}
                                     type='button'
                                     variant='secondary'
+                                    disabled={!finalizable}
+                                    disabledMessage={finalizable ? undefined : `Discussion is ongoing. ${remainingTime}`}
                                 >
                                     Submit
                                 </InfinityMirrorButton>
 
                                 <FinalizeModal
                                     isOpen={isFinalizeModalOpen}
-                                    onClose={handleCloseFinalizeModal}
+                                    onClose={() => setIsFinalizeModalOpen(false)}
                                     proposalId={proposal.id}
                                     activeAddress={activeAddress}
                                     transactionSigner={transactionSigner}
@@ -368,6 +415,21 @@ export default function ProposalInfo({ proposal, pastProposals, children }: Prop
                                 <strong className="font-semibold text-algo-black dark:text-white">Additional Info<br /></strong>
                                 {proposal.additionalInfo}
                             </p>
+                            {
+                                !!proposal.adoptionMetrics && (
+                                    <div className="mb-4">
+                                        <strong className="font-semibold text-algo-black dark:text-white">Adoption Metrics<br /></strong>
+                                        <ul className="flex flex-wrap mt-2 gap-4">
+                                            {proposal.adoptionMetrics.map((metric, index) => (
+                                                <li key={index} className=" bg-algo-blue-10 rounded-md py-1 px-2">
+                                                    {metric}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )
+                            }
+
                             <div className="text-base inline-flex items-center justify-between gap-3 mt-2 mb-6 p-1 pr-4">
                                 <UserPill
                                     variant='secondary'
@@ -472,7 +534,7 @@ export function FinalizeModal({
                 <DialogHeader className="mt-12 flex flex-col items-start gap-2">
                     <DialogTitle className="dark:text-white">Submit Proposal?</DialogTitle>
                     <DialogDescription>
-                    Are you sure you want to submit this proposal? 
+                        Are you sure you want to submit this proposal?
                     </DialogDescription>
                 </DialogHeader>
                 {errorMessage && <p className="text-red-500">{errorMessage}</p>}

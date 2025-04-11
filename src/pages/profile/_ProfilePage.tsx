@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import XGovProposerStatusPill from '@/components/XGovProposerStatusPill/XGovProposerStatusPill';
 import { ProposalStatus } from "@/types/proposals";
 import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton";
+import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
 
 const title = 'xGov';
 
@@ -68,9 +69,7 @@ export function ProfilePage() {
     const proposals = proposalsData.data?.filter(proposal => proposal.status !== ProposalStatus.ProposalStatusEmpty);
 
     if (!activeAddress || isLoading) {
-        return (
-            <div>Loading...</div>
-        )
+        return <LoadingSpinner />
     }
 
     if (isError) {
