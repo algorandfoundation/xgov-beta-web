@@ -6,8 +6,9 @@ import { ProposalClient as XGovProposalClient } from "@algorandfoundation/xgov/p
 import { algorand } from "./algo-client";
 import {env} from '@/constants'
 
+const DEFAULT_REGISTRY_APP_ID = 16324508;
 export const RegistryAppID: bigint = BigInt(
-  env.PUBLIC_REGISTRY_APP_ID || 16324508,
+  env.PUBLIC_REGISTRY_APP_ID !== '<REPLACE_WITH_APPLICATION_ID>' ? env.PUBLIC_REGISTRY_APP_ID || DEFAULT_REGISTRY_APP_ID : DEFAULT_REGISTRY_APP_ID,
 );
 
 export const registryClient = algorand.client.getTypedAppClientById(

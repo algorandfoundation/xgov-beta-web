@@ -2,10 +2,10 @@ import fs from "node:fs";
 import algosdk, { ALGORAND_MIN_TX_FEE } from "algosdk";
 import { XGovRegistryFactory } from "@algorandfoundation/xgov/registry";
 import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
-import { algorand } from "@/api";
+import { algorand } from "@/api/algorand";
 import { create } from "kubo-rpc-client";
 import { ProposalFactory } from "@algorandfoundation/xgov";
-import { ProposalStatus as PS } from "@/api";
+import { ProposalStatus as PS } from "@/api/types";
 import { CID } from "multiformats";
 
 import { mockProposals } from "./__fixtures__/proposals";

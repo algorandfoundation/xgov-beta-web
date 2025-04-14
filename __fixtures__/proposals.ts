@@ -4,7 +4,7 @@ import {
   type ProposalJSON,
   type ProposalStatus,
   ProposalStatus as PS,
-} from "@/api";
+} from "@/api/types";
 
 export interface MockProposalCreationData {
   status: ProposalStatus;
