@@ -1,4 +1,5 @@
 import type { TypedGlobalState } from "@algorandfoundation/xgov/registry";
+import {env} from '@/constants'
 import algosdk, {
   ABIType,
   ALGORAND_MIN_TX_FEE,
@@ -9,8 +10,8 @@ import algosdk, {
 import type { ProposerBoxState } from "./types";
 import { algod, algorand, RegistryAppID, registryClient } from "./algorand";
 
-console.log("registry app id", import.meta.env.PUBLIC_REGISTRY_APP_ID);
-const registryAppID: number = import.meta.env.PUBLIC_REGISTRY_APP_ID;
+console.log("registry app id", env.PUBLIC_REGISTRY_APP_ID);
+const registryAppID: number = env.PUBLIC_REGISTRY_APP_ID;
 
 import { Buffer } from "buffer";
 if (globalThis.Buffer === undefined) {

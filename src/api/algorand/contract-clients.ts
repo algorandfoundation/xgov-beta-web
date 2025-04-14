@@ -4,9 +4,10 @@ import {
 } from "@algorandfoundation/xgov/registry";
 import { ProposalClient as XGovProposalClient } from "@algorandfoundation/xgov/proposal";
 import { algorand } from "./algo-client";
+import {env} from '@/constants'
 
 export const RegistryAppID: bigint = BigInt(
-  import.meta.env.PUBLIC_REGISTRY_APP_ID || 16324508,
+  env.PUBLIC_REGISTRY_APP_ID || 16324508,
 );
 
 export const registryClient = algorand.client.getTypedAppClientById(

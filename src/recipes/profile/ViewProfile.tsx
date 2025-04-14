@@ -41,6 +41,7 @@ const activeStatuses = [
   ProposalStatus.ProposalStatusDelete,
 ];
 export function ProfilePageIsland({ address }: { address: string }) {
+  console.log(address)
   return (
     <UseQuery>
       <UseWallet>
@@ -53,9 +54,9 @@ export function ProfilePageIsland({ address }: { address: string }) {
 export function ProfilePageController({ address }: { address: string }) {
   const { transactionSigner, activeAddress } = useWallet();
   const registry = useRegistry();
-  const xgov = useXGov(activeAddress);
-  const proposer = useProposer(activeAddress);
-  const proposalsData = useProposalsByProposer(activeAddress);
+  const xgov = useXGov(address || activeAddress);
+  const proposer = useProposer(address || activeAddress);
+  const proposalsData = useProposalsByProposer(address || activeAddress);
 
   const isLoading =
     registry.isLoading ||
@@ -89,7 +90,7 @@ export function ProfilePageController({ address }: { address: string }) {
     (proposal) => proposal.status !== ProposalStatus.ProposalStatusEmpty,
   );
 
-  if (!activeAddress || isLoading) {
+  if (!address || !activeAddress || isLoading) {
     return <LoadingSpinner />;
   }
 
@@ -115,9 +116,9 @@ export function ProfilePage({
   transactionSigner: TransactionSigner;
 }) {
   const registry = useRegistry();
-  const xgov = useXGov(activeAddress);
-  const proposer = useProposer(activeAddress);
-  const proposalsData = useProposalsByProposer(activeAddress);
+  const xgov = useXGov(address || activeAddress);
+  const proposer = useProposer(address || activeAddress);
+  const proposalsData = useProposalsByProposer(address || activeAddress);
 
   const isLoading =
     registry.isLoading ||
@@ -151,7 +152,7 @@ export function ProfilePage({
     (proposal) => proposal.status !== ProposalStatus.ProposalStatusEmpty,
   );
 
-  if (!activeAddress || isLoading) {
+  if (!address || !activeAddress || isLoading) {
     return <LoadingSpinner />;
   }
 
@@ -277,7 +278,7 @@ export function ProfilePage({
         votingAddress={xgov.data?.votingAddress || ""}
         setVotingAddress={setVotingAddress}
         setVotingAddressLoading={setVotingAddressLoading}
-        isXGov={xgov.data?.isXGov || false}
+        isXGov={(address === activeAddress && xgov.data?.isXGov) || true}
         subscribeXgov={subscribeXgov}
         unsubscribeXgov={unsubscribeXgov}
         subscribeXGovLoading={subscribeXGovLoading}
