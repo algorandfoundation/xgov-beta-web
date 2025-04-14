@@ -6,7 +6,11 @@ export interface ErrorModalProps {
   message: string;
 }
 
-const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, onClose, message }) => {
+export const ErrorModal: React.FC<ErrorModalProps> = ({
+  isOpen,
+  onClose,
+  message,
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -26,5 +30,3 @@ const ErrorModal: React.FC<ErrorModalProps> = ({ isOpen, onClose, message }) => 
     </div>
   );
 };
-
-export default ErrorModal;

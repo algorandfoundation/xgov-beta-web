@@ -1,13 +1,22 @@
 import { CheckIcon, XIcon } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 export interface XGovStatusPillProps {
-    isXGov: boolean;
-    unsubscribeXgov: () => void;
-    unsubscribeXGovLoading: boolean;
+  isXGov: boolean;
+  unsubscribeXgov: () => void;
+  unsubscribeXGovLoading: boolean;
 }
 
-export default function XGovStatusPill({ isXGov, unsubscribeXgov, unsubscribeXGovLoading }: XGovStatusPillProps) {
+export default function XGovStatusPill({
+  isXGov,
+  unsubscribeXgov,
+  unsubscribeXGovLoading,
+}: XGovStatusPillProps) {
     return (
         <DropdownMenu modal={false}>
             <DropdownMenuTrigger disabled={!isXGov} asChild>

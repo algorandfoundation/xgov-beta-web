@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ 18.x, 20.x, 21.x ]
+        node-version: [18.x, 20.x, 21.x]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
       - name: Install Astro
         run: npm install -g astro
       - name: Install Dependencies
@@ -39,6 +39,7 @@ jobs:
           npx concurrently -k -s first -n "SB,TEST" -c "magenta,blue" \
             "npx http-server storybook-static --port 6006" \
             "npx wait-on http://127.0.0.1:6006 && npm run coverage"
+
 #      TODO: Publish Coverage Reports
 #      - name: Publish code coverage
 #        if: matrix.node-version == '22.x'

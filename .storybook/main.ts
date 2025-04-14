@@ -1,5 +1,5 @@
 import type { StorybookConfig } from "@storybook/react-vite";
-import tsconfigPaths from 'vite-tsconfig-paths';
+import tsconfigPaths from "vite-tsconfig-paths";
 import { mergeConfig } from "vite";
 
 const config: StorybookConfig = {
@@ -10,7 +10,7 @@ const config: StorybookConfig = {
     "@storybook/addon-essentials",
     "@chromatic-com/storybook",
     "@storybook/addon-interactions",
-    '@storybook/addon-coverage',
+    "@storybook/addon-coverage",
   ],
   framework: {
     name: "@storybook/react-vite",
@@ -18,10 +18,8 @@ const config: StorybookConfig = {
   },
   viteFinal(config) {
     return mergeConfig(config, {
-      plugins: [
-        tsconfigPaths()
-      ]
-    })
-  }
+      plugins: [tsconfigPaths()],
+    });
+  },
 };
 export default config;

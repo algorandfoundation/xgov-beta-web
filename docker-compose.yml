@@ -9,7 +9,7 @@ services:
       - "4003:4001"
       - "4003:4001/udp"
       - "127.0.0.1:8080:8080"
-      - "127.0.0.1:5001:5001"  # Changed to expose the API port properly
+      - "127.0.0.1:5001:5001" # Changed to expose the API port properly
     entrypoint: >
       /bin/sh -c "
         ipfs init || true &&

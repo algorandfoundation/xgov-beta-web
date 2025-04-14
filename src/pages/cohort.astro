@@ -1,7 +1,34 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { App } from "src/App";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import Page from "../layouts/Page.astro";
+const title = "xGov";
 ---
+
 <Layout>
-    <App client:only path="/cohort"/>
+  <Page title={title} path="/">
+    <Breadcrumb slot="breadcrumb">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>Cohorts</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+    <h1
+      class="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8"
+    >
+      Cohorts
+    </h1>
+  </Page>
 </Layout>
