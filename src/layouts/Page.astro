@@ -1,0 +1,28 @@
+---
+import Header from "@/layouts/shell/Header.astro";
+import Content from "@/layouts/shell/Content.astro";
+import Footer from "@/layouts/shell/Footer.astro";
+
+import { ThemeToggle } from "@/components/button/ThemeToggle/ThemeToggle";
+import { ConnectIsland } from "@/components/Connect/Connect.island";
+
+const path = Astro.url.pathname;
+---
+
+<div class="flex flex-col min-h-screen">
+  <Header path={path}>
+    <ConnectIsland client:only="react" path={path} />
+    <ThemeToggle client:load />
+  </Header>
+  <Content class="flex-1 flex flex-col">
+    <slot name="hero" />
+    <div
+      class="relative isolate overflow-hidden bg-white dark:bg-algo-black px-2 lg:px-8 lg:pt-6 lg:overflow-visible h-full"
+    >
+      <slot name="breadcrumb" />
+      <slot />
+    </div>
+    <slot name="sidebar" />
+  </Content>
+  <Footer />
+</div>

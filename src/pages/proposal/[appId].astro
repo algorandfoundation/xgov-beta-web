@@ -1,0 +1,84 @@
+---
+import { getProposal, getProposalsByProposer, getGlobalState } from "@/api";
+
+import Layout from "@/layouts/Layout.astro";
+import Page from "@/layouts/Page.astro";
+
+import { ReviewerCardIsland } from "../../components/ProposalReviewerCard/ProposalReviewerCard";
+import { RequestedAmountDetail } from "../../components/RequestedAmountDetail/RequestedAmountDetail";
+import { FocusDetail } from "../../components/FocusDetail/FocusDetail";
+import { FundingTypeDetail } from "../../components/FundingTypeDetail/FundingTypeDetail";
+
+import { StatusCardIsland, ProposalInfo } from "@/recipes";
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { LoraPillLink } from "@/components/LoraPillLink/LoraPillLink";
+
+interface Props {
+  appId: string;
+}
+
+const { appId } = Astro.params;
+
+if (!appId) {
+  const error = await fetch(`${Astro.url}/404`);
+  return new Response(error.body, {
+    headers: error.headers,
+    status: 404,
+    statusText: "Not Found",
+  });
+}
+
+const registryGlobalState = await getGlobalState();
+
+const proposal = await getProposal(BigInt(appId)).catch(() => {
+  return null;
+});
+if (!proposal || !registryGlobalState) {
+  return Astro.redirect("/404");
+}
+const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
+  (p) => p.id !== proposal.id,
+);
+---
+
+<Layout title={proposal.title} description={proposal.description}>
+  <Page>
+    <ReviewerCardIsland slot="sidebar" client:load proposal={proposal} />
+    <Breadcrumb slot="breadcrumb">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage className="flex items-center gap-2">
+            Proposal
+            <LoraPillLink id={proposal.id} />
+          </BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+    <ProposalInfo proposal={proposal} pastProposals={pastProposals}>
+      <div
+        class="flex lg:flex-col items-end justify-between gap-2 text-white lg:-mt-16 mx-4 lg:mx-0 my-4 p-2"
+      >
+        <RequestedAmountDetail requestedAmount={proposal.requestedAmount} />
+        <FocusDetail focus={proposal.focus} />
+        <FundingTypeDetail fundingType={proposal.fundingType} />
+      </div>
+      <StatusCardIsland
+        client:only="react"
+        registry={registryGlobalState}
+        proposal={proposal}
+      />
+    </ProposalInfo>
+  </Page>
+</Layout>
