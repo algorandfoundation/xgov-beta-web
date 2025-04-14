@@ -3,7 +3,7 @@ import { filterAmountMap, filters, ProposalFilter } from "@/components/ProposalF
 import { type ComponentType } from "react";
 import { useGetAllProposals } from "src/hooks/useProposals";
 import { Link, type LinkProps } from "../components/Link.tsx";
-import { FocusReverseMap, ProposalFundingTypeReverseMap, ProposalStatus, ProposalStatusMap, ProposalStatusReverseMap, type ProposalSummaryCardDetails } from "@/types/proposals.ts";
+import { FocusReverseMap, ProposalFundingTypeReverseMap, ProposalStatusMap, ProposalStatusReverseMap, type ProposalSummaryCardDetails } from "@/types/proposals.ts";
 import { Hero } from "@/components/Hero/Hero.tsx";
 import HeroAnimation from "@/components/HeroAnimation/HeroAnimation.tsx";
 import UserPill from "@/components/UserPill/UserPill.tsx";
@@ -123,7 +123,9 @@ export default function StackedList({ proposals }: { proposals: ProposalSummaryC
                 focus,
                 fundingType,
                 requestedAmount,
-                proposer
+                proposer,
+                approvals,
+                rejections
             }) => {
 
                 const phase = ProposalStatusMap[status];
@@ -163,7 +165,10 @@ export default function StackedList({ proposals }: { proposals: ProposalSummaryC
                                         phase === 'Voting' && (
                                             <>
                                                 <UserCircleRow />
-                                                <VoteCounter />
+                                                <VoteCounter
+                                                    up={Number(approvals)}
+                                                    down={Number(rejections)}
+                                                />
                                             </>
                                         )
                                     }

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useParams } from "react-router-dom";
-import { useGetAllProposals, useProposal, useProposalsByProposer } from "src/hooks/useProposals";
+import { useGetAllProposals, useProposal, useProposalsByProposer, useVoterBox } from "src/hooks/useProposals";
 import { useRegistry } from "src/hooks/useRegistry";
 import UserPill from "@/components/UserPill/UserPill";
 import VoteCounter from "@/components/VoteCounter/VoteCounter";
@@ -30,10 +30,16 @@ import { AlgorandClient as algorand } from 'src/algorand/algo-client';
 import { RegistryClient as registryClient } from "src/algorand/contract-clients";
 import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton";
 import { Button } from "@/components/ui/button";
-import { SquarePenIcon } from "lucide-react";
+import { Check, CheckIcon, SquarePenIcon, XIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTimeLeft } from "@/hooks/useTimeLeft";
 import LoadingSpinner from "@/components/LoadingSpinner/LoadingSpinner";
+import VoteBar from "@/components/VoteBar/VoteBar";
+import algosdk from "algosdk";
+import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
+import QuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill";
+import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill";
+import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
 
 const title = 'xGov';
 
@@ -50,12 +56,43 @@ function getDiscussionDuration(category: ProposalCategory, durations: [bigint, b
     }
 }
 
+function getXGovThreshold(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): bigint {
+    switch (category) {
+        case ProposalCategory.ProposalCategorySmall:
+            return thresholds[0];
+        case ProposalCategory.ProposalCategoryMedium:
+            return thresholds[1];
+        case ProposalCategory.ProposalCategoryLarge:
+            return thresholds[2];
+        default:
+            return BigInt(0);
+    }
+}
+
+function getVoteThreshold(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): bigint {
+    switch (category) {
+        case ProposalCategory.ProposalCategorySmall:
+            return thresholds[0];
+        case ProposalCategory.ProposalCategoryMedium:
+            return thresholds[1];
+        case ProposalCategory.ProposalCategoryLarge:
+            return thresholds[2];
+        default:
+            return BigInt(0);
+    }
+}
+
+function getVotingDuration(category: ProposalCategory, durations: [bigint, bigint, bigint, bigint]): bigint {
+    return 0n
+}
+
 export function ProposalPage() {
     const { activeAddress } = useWallet();
     const registryGlobalState = useRegistry();
     // TODO: Get NFD name using the activeAddress
     const { proposal: proposalId } = useParams();
     const proposal = useProposal(Number(proposalId));
+    const voterInfo = useVoterBox(Number(proposalId), activeAddress);
     const pastProposals = useProposalsByProposer(proposal.data?.proposer);
     const allProposals = useGetAllProposals();
 
@@ -109,8 +146,12 @@ export function ProposalPage() {
         );
     }
 
-    const discussionDuration = Date.now() - (proposal.data?.submissionTime * 1000);
-    const minimumDiscussionDuration = getDiscussionDuration(proposal.data?.category, registryGlobalState.data?.discussionDuration) * 1000n;
+    const discussionDuration = Date.now() - (Number(proposal.data?.submissionTs) * 1000);
+    const minimumDiscussionDuration = getDiscussionDuration(proposal.data?.fundingCategory, registryGlobalState.data?.discussionDuration) * 1000n;
+
+    const xgovQuorum = getXGovThreshold
+    const voteQuorum = getVoteThreshold(proposal.data?.fundingCategory, registryGlobalState.data?.quorum);
+    // const minVoters = (proposal.data?.committeeMembers * voteQuorum) / 10_000n
 
     return (
         <Page
@@ -141,6 +182,7 @@ export function ProposalPage() {
                     refetchAllProposals={allProposals.refetch}
                     discussionDuration={discussionDuration}
                     minimumDiscussionDuration={minimumDiscussionDuration}
+                    voterInfo={voterInfo.data}
                 />
             </ProposalInfo>
         </Page >
@@ -154,6 +196,7 @@ export interface StatusCardProps {
     refetchAllProposals: () => void;
     discussionDuration: number;
     minimumDiscussionDuration: bigint;
+    voterInfo?: { votes: bigint; voted: boolean; } | undefined;
 }
 
 export const statusCardMap = {
@@ -180,7 +223,7 @@ export const statusCardMap = {
     },
     [ProposalStatus.ProposalStatusVoting]: {
         header: 'Vote on this proposal',
-        subHeader: 'Vote on this proposal to help fund it.',
+        subHeader: 'Vote on this proposal.',
         icon: <BlockIcon className="size-18 stroke-algo-blue dark:stroke-algo-teal" />,
         actionText: 'You\'re not eligible to vote',
         link: ''
@@ -229,7 +272,15 @@ export const statusCardMap = {
     },
 }
 
-export function StatusCard({ className = '', proposal, refetchProposal, refetchAllProposals, discussionDuration, minimumDiscussionDuration }: StatusCardProps) {
+export function StatusCard({
+    className = '',
+    proposal,
+    refetchProposal,
+    refetchAllProposals,
+    discussionDuration,
+    minimumDiscussionDuration,
+    voterInfo
+}: StatusCardProps) {
     const navigate = useNavigate();
     const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
     const [isDropModalOpen, setIsDropModalOpen] = useState(false);
@@ -246,9 +297,63 @@ export function StatusCard({ className = '', proposal, refetchProposal, refetchA
         details.subHeader = `Discussion is ongoing (${remainingTime}), take part and help shape public sentiment on this proposal.`;
     }
 
+    if (
+        proposal.status === ProposalStatus.ProposalStatusVoting &&
+        !!voterInfo && voterInfo.votes > 0n
+    ) {
+        if (!voterInfo.voted) {
+            details.actionText = '';
+        } else {
+            details.actionText = 'You have already voted';
+        }
+    }
+
     if (!finalizable && proposal.proposer === activeAddress) {
         details.header = 'Your proposal is in the drafting & discussion phase';
         details.icon = <SquarePenIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />;
+    }
+
+    const voteProposal = async (approve: boolean) => {
+        if (!activeAddress || !transactionSigner) {
+            console.log('Wallet not connected');
+            return false;
+        }
+
+        if (!voterInfo) {
+            console.log('Voter info not found');
+            return false;
+        }
+
+        const addr = algosdk.decodeAddress(activeAddress).publicKey;
+        const xgovBoxName = new Uint8Array(Buffer.concat([Buffer.from('x'), addr]));
+        const voterBoxName = new Uint8Array(Buffer.concat([Buffer.from('V'), addr]));
+
+        const res = await registryClient.send.voteProposal({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: {
+                proposalId: proposal.id,
+                xgovAddress: activeAddress,
+                approvalVotes: approve ? voterInfo.votes : 0n,
+                rejectionVotes: approve ? 0n : voterInfo.votes,
+            },
+            appReferences: [proposal.id],
+            accountReferences: [activeAddress],
+            boxReferences: [
+                xgovBoxName,
+                { appId: proposal.id, name: voterBoxName }
+            ],
+            extraFee: (1000).microAlgos(),
+        });
+
+        if (res.confirmation.confirmedRound !== undefined && res.confirmation.confirmedRound > 0 && res.confirmation.poolError === '') {
+            console.log('Transaction confirmed');
+            refetchProposal();
+            return true;
+        }
+
+        console.log('Transaction not confirmed');
+        return false;
     }
 
     return (
@@ -261,23 +366,63 @@ export function StatusCard({ className = '', proposal, refetchProposal, refetchA
 
                     {
                         proposal.status === ProposalStatus.ProposalStatusVoting
-                            ? (
+                        && (
+                            <>
                                 <div className="w-full flex flex-col items-center justify-center gap-4">
-                                    <VoteCounter />
-                                    <div
-                                        // style={{ background: `linear-gradient(90deg, #2D2DF1 60%, orange 70%, red 80%)` }} harder to do darkmode version
-                                        className="w-full rounded-full h-3 bg-[linear-gradient(90deg,#2D2DF1_60%,orange_70%,red_80%)] dark:bg-[linear-gradient(90deg,#17CAC6_10%,orange_30%,red_40%)]"
-                                    ></div>
+                                    <VoteCounter
+                                        up={Number(proposal.approvals)}
+                                        down={Number(proposal.rejections)}
+                                    />
+                                    <div className="flex gap-2">
+                                        <XGovQuorumMetPill approved={true} quorumRequirement={10} label="xgov quorum met" />
+                                        <VoteQuorumMetPill approved={false} quorumRequirement={10} label="vote quorum met" />
+                                        <MajorityApprovedPill approved={true} label="majority approved" />
+                                    </div>
+                                    <VoteBar
+                                        total={Number(proposal.committeeVotes)}
+                                        approvals={Number(proposal.approvals)}
+                                        rejections={Number(proposal.rejections)}
+                                        nulls={Number(proposal.nulls)}
+                                    />
+                                    {/* <VoteBar
+                                        total={150}
+                                        approvals={69}
+                                        rejections={30}
+                                        nulls={10}
+                                    /> */}
                                 </div>
-                            )
-                            : null
+                                {
+                                    !voterInfo || (!!voterInfo && voterInfo.votes > 0n && !voterInfo.voted)
+                                    && (
+                                        <div className="flex gap-4 items-center">
+                                            <Button
+                                                type='button'
+                                                onClick={() => voteProposal(true)}
+                                            >
+                                                Approve
+                                            </Button>
+
+                                            <Button
+                                                type='button'
+                                                variant='destructive'
+                                                onClick={() => voteProposal(false)}
+                                            >
+                                                Reject
+                                            </Button>
+                                        </div>
+                                    )
+                                }
+                            </>
+                        )
                     }
 
-                    {details.actionText && (
-                        <Link to={details.link} className="mt-2 px-4 py-2 bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-md hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50">
-                            {details.actionText}
-                        </Link>
-                    )}
+                    {
+                        details.actionText && (
+                            <Link to={details.link} className="mt-2 px-4 py-2 bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-md hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50">
+                                {details.actionText}
+                            </Link>
+                        )
+                    }
 
                     {
                         proposal.status === ProposalStatus.ProposalStatusDraft &&

@@ -1,3 +1,4 @@
+import type { ProposalTypedGlobalState } from "@algorandfoundation/xgov";
 
 export enum ProposalStatus {
     ProposalStatusEmpty = 0,
@@ -169,18 +170,12 @@ export function isProposalInfoCardDetails(details: ProposalCardDetails): details
     return (details as ProposalMainCardDetails).id === undefined;
 }
 
-export interface ProposalSummaryCardDetails {
+export type ProposalSummaryCardDetails = Omit<ProposalTypedGlobalState, 'fundingType' | 'status' | 'focus' | 'fundingCategory'> & {
     id: bigint;
-    title: string;
-    cid: string;
-    requestedAmount: bigint;
-    proposer: string;
     fundingType: ProposalFundingType;
     status: ProposalStatus;
     focus: ProposalFocus;
-    category: ProposalCategory;
-    submissionTime: number;
-    // adoptionMetrics?: string[];
+    fundingCategory: ProposalCategory;
 }
 
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;

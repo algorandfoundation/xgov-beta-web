@@ -1,34 +1,72 @@
-import type { ProposalBrief, ProposalJSON, ProposalMainCardDetails, ProposalSummaryCardDetails } from "@/types/proposals";
+import type { ProposalBrief, ProposalCategory, ProposalFocus, ProposalFundingType, ProposalJSON, ProposalMainCardDetails, ProposalStatus, ProposalSummaryCardDetails } from "@/types/proposals";
+import type { AppState } from "@algorandfoundation/algokit-utils/types/app";
 import { AppManager } from "@algorandfoundation/algokit-utils/types/app-manager";
-import algosdk from "algosdk";
+import algosdk, { ABIType } from "algosdk";
 import { CID } from "kubo-rpc-client";
 import { AlgorandClient as algorand } from "src/algorand/algo-client";
 import { getProposalClientById, RegistryClient } from "src/algorand/contract-clients";
 
+function existsAndValue(appState: AppState, key: string): boolean {
+    return key in appState && 'value' in appState[key];
+}
+
 export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
-    const response = await algorand.client.algod.accountInformation(RegistryClient.appAddress).do();
-    return await Promise.all(response['created-apps'].map(async (data: any): Promise<ProposalSummaryCardDetails> => {
-        const state = AppManager.decodeAppState(data.params['global-state'])
+    try {
+        const response = await algorand.client.algod.accountInformation(RegistryClient.appAddress).do();
+        console.log("Account info received, processing apps...");
+        
+        return await Promise.all(response['created-apps'].map(async (data: any): Promise<ProposalSummaryCardDetails> => {
+            try {
+                const state = AppManager.decodeAppState(data.params['global-state']);
+                
+                let cid: Uint8Array<ArrayBufferLike> = new Uint8Array();
+                if (state.cid && 'valueRaw' in state.cid) {
+                    cid = state.cid.valueRaw;
+                }
 
-        const cid = String(state.cid.value);
+                let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
+                if (state['committee_id'] && 'valueRaw' in state['committee_id']) {
+                    committeeId = state['committee_id'].valueRaw;
+                }
 
-        let proposer = 'valueRaw' in state.proposer
-            ? algosdk.encodeAddress(state.proposer.valueRaw)
-            : '';
+                let proposer = '';
+                if (state.proposer && 'valueRaw' in state.proposer) {
+                    proposer = algosdk.encodeAddress(state.proposer.valueRaw);
+                }
 
-        return {
-            id: data.id,
-            title: String(state.title.value),
-            cid,
-            requestedAmount: BigInt(state['requested_amount'].value),
-            proposer,
-            fundingType: Number(state['funding_type'].value),
-            status: Number(state.status.value),
-            focus: Number(state.focus.value),
-            category: Number(state['funding_category'].value),
-            submissionTime: Number(state['submission_timestamp'].value),
-        }
-    }));
+                return {
+                    id: data.id,
+                    title: existsAndValue(state, 'title') ? String(state.title.value) : '',
+                    cid,
+                    requestedAmount: existsAndValue(state, 'requested_amount') ? BigInt(state['requested_amount'].value) : 0n,
+                    proposer,
+                    fundingType: existsAndValue(state, 'funding_type') ? Number(state['funding_type'].value) as ProposalFundingType : 0,
+                    status: existsAndValue(state, 'status') ? Number(state.status.value) as ProposalStatus : 0,
+                    focus: existsAndValue(state, 'focus') ? Number(state.focus.value) as ProposalFocus : 0,
+                    fundingCategory: existsAndValue(state, 'funding_category') ? Number(state['funding_category'].value) as ProposalCategory : 0,
+                    submissionTs: existsAndValue(state, 'submission_timestamp') ? BigInt(state['submission_timestamp'].value) : 0n,
+                    approvals: existsAndValue(state, 'approvals') ? BigInt(state.approvals.value) : 0n,
+                    rejections: existsAndValue(state, 'rejections') ? BigInt(state.rejections.value) : 0n,
+                    nulls: existsAndValue(state, 'nulls') ? BigInt(state.nulls.value) : 0n,
+                    committeeVotes: existsAndValue(state, 'committee_votes') ? BigInt(state['committee_votes'].value) : 0n,
+                    registryAppId: existsAndValue(state, 'registry_app_id') ? BigInt(state['registry_app_id'].value) : 0n,
+                    finalizationTs: existsAndValue(state, 'finalization_timestamp') ? BigInt(state['finalization_timestamp'].value) : 0n,
+                    voteOpenTs: existsAndValue(state, 'vote_opening_timestamp') ? BigInt(state['vote_opening_timestamp'].value) : 0n,
+                    lockedAmount: existsAndValue(state, 'locked_amount') ? BigInt(state['locked_amount'].value) : 0n,
+                    committeeId,
+                    committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
+                    votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
+                    coolDownStartTs: existsAndValue(state, 'cool_down_start_ts') ? BigInt(state['cool_down_start_ts'].value) : 0n
+                }
+            } catch (error) {
+                console.error('Error processing app data:', error);
+                throw error;
+            }
+        }));
+    } catch (error) {
+        console.error('Error getting all proposals:', error);
+        throw error;
+    }
 }
 
 export async function getProposalsByProposer(address: string): Promise<ProposalSummaryCardDetails[]> {
@@ -40,7 +78,6 @@ export async function getProposal(id: bigint): Promise<ProposalMainCardDetails> 
 
     const results = await Promise.allSettled([
         algorand.client.algod.getApplicationByID(Number(id)).do(),
-        // .accountInformation(proposalClient.appAddress).do(),
         proposalClient.appClient.getGlobalState(),
     ])
 
@@ -58,28 +95,49 @@ export async function getProposal(id: bigint): Promise<ProposalMainCardDetails> 
         throw new Error('CID not found');
     }
 
-    const cid = CID.decode(state.cid.valueRaw)
-    const proposalJSON = await getProposalJSON(cid.toString());
+    const decodedCID = CID.decode(state.cid.valueRaw)
+    const proposalJSON = await getProposalJSON(decodedCID.toString());
 
-    const proposer = 'valueRaw' in state.proposer
-        ? algosdk.encodeAddress(state.proposer.valueRaw)
-        : '';
-
-    const ret = {
-        id: data.id,
-        title: String(state.title.value),
-        cid: cid.toString(),
-        requestedAmount: BigInt(state['requested_amount'].value),
-        proposer,
-        fundingType: Number(state['funding_type'].value),
-        status: Number(state.status.value),
-        focus: Number(state.focus.value),
-        category: Number(state['funding_category'].value),
-        submissionTime: Number(state['submission_timestamp'].value),
-        ...proposalJSON
+    let cid: Uint8Array<ArrayBufferLike> = new Uint8Array();
+    if (state.cid && 'valueRaw' in state.cid) {
+        cid = state.cid.valueRaw;
     }
 
-    return ret
+    let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
+    if (state['committee_id'] && 'valueRaw' in state['committee_id']) {
+        committeeId = state['committee_id'].valueRaw;
+    }
+
+    let proposer = '';
+    if (state.proposer && 'valueRaw' in state.proposer) {
+        proposer = algosdk.encodeAddress(state.proposer.valueRaw);
+    }
+
+    return {
+        id: data.id,
+        title: existsAndValue(state, 'title') ? String(state.title.value) : '',
+        cid,
+        requestedAmount: existsAndValue(state, 'requested_amount') ? BigInt(state['requested_amount'].value) : 0n,
+        proposer,
+        fundingType: existsAndValue(state, 'funding_type') ? Number(state['funding_type'].value) as ProposalFundingType : 0,
+        status: existsAndValue(state, 'status') ? Number(state.status.value) as ProposalStatus : 0,
+        focus: existsAndValue(state, 'focus') ? Number(state.focus.value) as ProposalFocus : 0,
+        fundingCategory: existsAndValue(state, 'funding_category') ? Number(state['funding_category'].value) as ProposalCategory : 0,
+        submissionTs: existsAndValue(state, 'submission_timestamp') ? BigInt(state['submission_timestamp'].value) : 0n,
+        approvals: existsAndValue(state, 'approvals') ? BigInt(state.approvals.value) : 0n,
+        rejections: existsAndValue(state, 'rejections') ? BigInt(state.rejections.value) : 0n,
+        nulls: existsAndValue(state, 'nulls') ? BigInt(state.nulls.value) : 0n,
+        committeeVotes: existsAndValue(state, 'committee_votes') ? BigInt(state['committee_votes'].value) : 0n,
+        registryAppId: existsAndValue(state, 'registry_app_id') ? BigInt(state['registry_app_id'].value) : 0n,
+        finalizationTs: existsAndValue(state, 'finalization_timestamp') ? BigInt(state['finalization_timestamp'].value) : 0n,
+        voteOpenTs: existsAndValue(state, 'vote_opening_timestamp') ? BigInt(state['vote_opening_timestamp'].value) : 0n,
+        lockedAmount: existsAndValue(state, 'locked_amount') ? BigInt(state['locked_amount'].value) : 0n,
+        committeeId,
+        committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
+        votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
+        coolDownStartTs: existsAndValue(state, 'cool_down_start_ts') ? BigInt(state['cool_down_start_ts'].value) : 0n,
+        ...proposalJSON
+    }
 }
 
 export async function getProposalJSON(cid: string): Promise<ProposalJSON> {
@@ -88,4 +146,32 @@ export async function getProposalJSON(cid: string): Promise<ProposalJSON> {
 
 export async function getProposalBrief(ids: bigint[]): Promise<ProposalBrief[]> {
     return (await Promise.all(ids.map(id => getProposal(id)))).map(proposal => ({ id: proposal.id, status: proposal.status, title: proposal.title }));
+}
+
+export async function getVoterBox(id: bigint, address: string): Promise<{ votes: bigint, voted: boolean }> {
+    const addr = algosdk.decodeAddress(address).publicKey;
+    const voterBoxName = new Uint8Array(Buffer.concat([Buffer.from('V'), addr]));
+
+    try {
+        const voterBoxValue = await algorand.app.getBoxValueFromABIType({
+            appId: id,
+            boxName: voterBoxName,
+            type: ABIType.from('(uint64,bool)')
+        });
+
+        if (!Array.isArray(voterBoxValue)) {
+            throw new Error('Voter box value is not an array');
+        }
+        
+        return {
+            votes: voterBoxValue[0] as bigint,
+            voted: voterBoxValue[1] as boolean
+        };
+    } catch (error) {
+        console.error('getting voter box value:', error);
+        return {
+            votes: BigInt(0),
+            voted: false
+        };
+    }
 }
