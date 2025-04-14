@@ -148,7 +148,7 @@ export async function getProposal(
  */
 export async function getProposalJSON(cid: string): Promise<ProposalJSON> {
   return (await (
-    await fetch(`http://${cid}.ipfs.localhost:8080/`)
+    await fetch(`http://127.0.0.1:8080/ipfs/${cid}`)
   ).json()) as ProposalJSON;
 }
 
