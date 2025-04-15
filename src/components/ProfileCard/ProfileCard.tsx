@@ -2,9 +2,9 @@ import type { ProposerBoxState } from "@/api";
 import { EditableAddress } from "../EditableAddress/EditableAddress";
 import { ActionButton } from "../button/ActionButton/ActionButton";
 import { cn } from "@/functions";
-import { XGovStatusPill } from "../XGovStatusPill/XGovStatusPill";
 import { XGovProposerStatusPill } from "../XGovProposerStatusPill/XGovProposerStatusPill";
 import { BecomeAnXGovBannerButton } from "../BecomeAnXGovBannerButton/BecomeAnXGovBannerButton";
+import XGovStatusPill from "../XGovStatusPill/XGovStatusPill";
 
 export interface ProfileCardProps {
   activeAddress: string;
