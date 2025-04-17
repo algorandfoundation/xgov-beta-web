@@ -134,8 +134,8 @@ export function StackedList({
                     <>
                       <UserCircleRow />
                       <VoteCounter
-                        up={Number(approvals)}
-                        down={Number(rejections)}
+                        approvals={Number(approvals)}
+                        rejections={Number(rejections)}
                       />
                     </>
                   )}

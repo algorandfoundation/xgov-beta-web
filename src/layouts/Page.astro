@@ -14,10 +14,10 @@ const path = Astro.url.pathname;
     <ConnectIsland client:only="react" path={path} />
     <ThemeToggle client:load />
   </Header>
-  <Content class="flex-1 flex flex-col">
+  <Content>
     <slot name="hero" />
     <div
-      class="relative isolate overflow-hidden bg-white dark:bg-algo-black lg:pt-6 lg:overflow-visible h-full"
+      class="relative isolate overflow-hidden bg-white dark:bg-algo-black pt-24 lg:overflow-visible h-full"
     >
       <slot name="breadcrumb" />
       <slot />

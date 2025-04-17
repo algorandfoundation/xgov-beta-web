@@ -259,17 +259,47 @@ export async function getProposalBrief(
 export function getDiscussionDuration(
   category: ProposalCategory,
   durations: [bigint, bigint, bigint, bigint],
-): bigint {
+): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return durations[0];
+      return Number(durations[0]);
     case ProposalCategory.ProposalCategoryMedium:
-      return durations[1];
+      return Number(durations[1]);
     case ProposalCategory.ProposalCategoryLarge:
-      return durations[2];
+      return Number(durations[2]);
     default:
-      return BigInt(0);
+      return 0;
   }
+}
+
+export function getXGovQuorum(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): number {
+  switch (category) {
+      case ProposalCategory.ProposalCategorySmall:
+          return Number(thresholds[0]) / 10;
+      case ProposalCategory.ProposalCategoryMedium:
+          return Number(thresholds[1]) / 10;
+      case ProposalCategory.ProposalCategoryLarge:
+          return Number(thresholds[2]) / 10;
+      default:
+          return 0;
+  }
+}
+
+export function getVoteQuorum(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): number {
+  switch (category) {
+      case ProposalCategory.ProposalCategorySmall:
+          return Number(thresholds[0]) / 10;
+      case ProposalCategory.ProposalCategoryMedium:
+          return Number(thresholds[1]) / 10;
+      case ProposalCategory.ProposalCategoryLarge:
+          return Number(thresholds[2]) / 10;
+      default:
+          return 0;
+  }
+}
+
+export function getVotingDuration(category: ProposalCategory, durations: [bigint, bigint, bigint, bigint]): number {
+  return 0
 }
 
 export type SubmitProps = {

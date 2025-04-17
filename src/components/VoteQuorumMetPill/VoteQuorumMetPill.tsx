@@ -29,7 +29,7 @@ export default function VoteQuorumMetPill({ approved, className, label, quorumRe
                                 </div>
                             )
                     }
-                    <h2 className="text-xs font-bold">
+                    <h2 className="[font-size:0.5rem] md:text-xs font-bold">
                         Vote Quorum
                     </h2>
                 </div>

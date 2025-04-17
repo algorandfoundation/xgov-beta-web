@@ -11,7 +11,7 @@ const buttonVariants = cva(
         default:
           "bg-algo-blue text-white border border-algo-blue hover:bg-white hover:text-algo-black dark:bg-algo-teal dark:text-algo-black dark:border-algo-teal dark:hover:bg-algo-black dark:hover:text-white",
         destructive:
-          "bg-red-600 text-white border border-red-600 hover:bg-white hover:text-algo-black dark:bg-red-800 dark:text-algo-black dark:border-red-800 dark:hover:bg-algo-black dark:hover:text-white",
+          "bg-red-600 text-white border border-red-600 hover:bg-white hover:text-algo-black dark:bg-red-800 dark:text-white dark:border-red-800 dark:hover:bg-algo-black dark:hover:text-white",
         outline:
           "border border-slate-200 bg-white hover:bg-algo-black-20 hover:text-slate-900 dark:border-slate-800 dark:bg-transparent dark:hover:bg-slate-800 dark:hover:text-slate-50",
         secondary:

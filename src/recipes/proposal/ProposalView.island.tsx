@@ -7,6 +7,7 @@ type ViewProposalProps = {
   proposal: ProposalMainCardDetails;
   registry: TypedGlobalState;
 };
+
 export function ViewProposalController({
   registry,
   proposal,
@@ -20,13 +21,16 @@ export function ViewProposalController({
   const _discussionDuration = Date.now() - Number(_proposal.submissionTs) * 1000;
   const _minimumDiscussionDuration =
     getDiscussionDuration(proposal.fundingCategory, _registry.discussionDuration) *
-    1000n;
+    1000;
 
   return (
     <StatusCard
       proposal={_proposal}
-      discussionDuration={Number(_discussionDuration)}
+      discussionDuration={_discussionDuration}
       minimumDiscussionDuration={_minimumDiscussionDuration}
+      quorums={_registry.quorum}
+      weightedQuorums={_registry.weightedQuorum}
+      votingDurations={_registry.votingDuration}
     />
   );
 }

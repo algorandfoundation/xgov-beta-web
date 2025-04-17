@@ -1,5 +1,6 @@
 // Add a small blur amount (adjustable as needed)
-const blurAmount = 8; // Smaller value for better handling of edge cases
+const blurAmount = 4; // Smaller value for better handling of edge cases
+const minBlurAmount = 2; // Minimum blur amount to ensure smooth transitions
 
 export default function VoteBar({ approvals, rejections, nulls, total }: { approvals: number; rejections: number; nulls: number, total: number }) {
     // Calculate total votes
@@ -21,8 +22,8 @@ export default function VoteBar({ approvals, rejections, nulls, total }: { appro
     
     if (approvals === 0 && rejections === 0) {
         // Only nulls - solid orange (was red before)
-        gradientStyle = `linear-gradient(90deg, orange 0%, orange 100%)`;
-        darkGradientStyle = `linear-gradient(90deg, orange 0%, orange 100%)`;
+        gradientStyle = `linear-gradient(90deg, black 0%, black 100%)`;
+        darkGradientStyle = `linear-gradient(90deg, black 0%, black 100%)`;
     } else if (approvals === 0 && nulls === 0) {
         // Only rejections - solid red
         gradientStyle = `linear-gradient(90deg, red 0%, red 100%)`;
@@ -40,13 +41,13 @@ export default function VoteBar({ approvals, rejections, nulls, total }: { appro
         );
         
         // Use dynamic blur (smaller for small segments)
-        const adjustedBlur = Math.min(blurAmount, minSegmentSize / 2);
+        const adjustedBlur = Math.max(minBlurAmount, Math.min(blurAmount, minSegmentSize / 2));
         
         if (approvals === 0) {
             // No approvals - start with orange (nulls)
             gradientStyle = `linear-gradient(90deg, 
-                orange 0%, 
-                orange ${Math.max(0, nullsPercent - adjustedBlur)}%, 
+                black 0%, 
+                black ${Math.max(0, nullsPercent - adjustedBlur)}%, 
                 red ${Math.min(100, nullsPercent + adjustedBlur)}%, 
                 red 100%)`;
             darkGradientStyle = gradientStyle;
@@ -55,13 +56,13 @@ export default function VoteBar({ approvals, rejections, nulls, total }: { appro
             gradientStyle = `linear-gradient(90deg, 
                 #2D2DF1 0%, 
                 #2D2DF1 ${Math.max(0, approvalsPercent - adjustedBlur)}%, 
-                orange ${Math.min(100, approvalsPercent + adjustedBlur)}%, 
-                orange 100%)`;
+                black ${Math.min(100, approvalsPercent + adjustedBlur)}%, 
+                black 100%)`;
             darkGradientStyle = `linear-gradient(90deg, 
                 #17CAC6 0%, 
                 #17CAC6 ${Math.max(0, approvalsPercent - adjustedBlur)}%, 
-                orange ${Math.min(100, approvalsPercent + adjustedBlur)}%, 
-                orange 100%)`;
+                black ${Math.min(100, approvalsPercent + adjustedBlur)}%, 
+                black 100%)`;
         } else if (nulls === 0) {
             // No nulls - transition directly from blue to red
             gradientStyle = `linear-gradient(90deg, 
@@ -79,15 +80,15 @@ export default function VoteBar({ approvals, rejections, nulls, total }: { appro
             gradientStyle = `linear-gradient(90deg, 
                 #2D2DF1 0%, 
                 #2D2DF1 ${Math.max(0, approvalsPercent - adjustedBlur)}%, 
-                orange ${Math.min(100, approvalsPercent + adjustedBlur)}%, 
-                orange ${Math.max(0, nullsPercent - adjustedBlur)}%, 
+                black ${Math.min(100, approvalsPercent + adjustedBlur)}%, 
+                black ${Math.max(0, nullsPercent - adjustedBlur)}%, 
                 red ${Math.min(100, nullsPercent + adjustedBlur)}%, 
                 red 100%)`;
             darkGradientStyle = `linear-gradient(90deg, 
                 #17CAC6 0%, 
                 #17CAC6 ${Math.max(0, approvalsPercent - adjustedBlur)}%, 
-                orange ${Math.min(100, approvalsPercent + adjustedBlur)}%, 
-                orange ${Math.max(0, nullsPercent - adjustedBlur)}%, 
+                black ${Math.min(100, approvalsPercent + adjustedBlur)}%, 
+                black ${Math.max(0, nullsPercent - adjustedBlur)}%, 
                 red ${Math.min(100, nullsPercent + adjustedBlur)}%, 
                 red 100%)`;
         }

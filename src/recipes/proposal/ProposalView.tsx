@@ -14,6 +14,9 @@ import {
   ProposalStatusMap,
   type ProposalBrief,
   type ProposalMainCardDetails,
+  getXGovQuorum,
+  getVoteQuorum,
+  getVotingDuration,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -35,129 +38,161 @@ import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill"
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
 import VoteBar from "@/components/VoteBar/VoteBar";
 import algosdk from "algosdk";
-import { useProposal } from "@/hooks";
+import { useProposal, useVoterBox } from "@/hooks";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 
-export interface StatusCardProps {
-  className?: string;
-  proposal: ProposalMainCardDetails;
-  discussionDuration: number;
-  minimumDiscussionDuration: bigint;
-  voterInfo?: { votes: bigint; voted: boolean; } | undefined;
-}
-
-export const statusCardMap = {
+export const defaultsStatusCardMap = {
   [ProposalStatus.ProposalStatusEmpty]: {
     header: 'This proposal is empty',
     subHeader: '',
+    sideHeader: '',
     icon: '',
-    actionText: '',
-    link: ''
+    action: '',
   },
   [ProposalStatus.ProposalStatusDraft]: {
     header: 'Proposal is being discussed',
     subHeader: 'Take part in the discussion and help shape public sentiment on this proposal.',
+    sideHeader: '',
     icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
-    actionText: 'View the discussion',
-    link: ''
+    action: 'View the discussion',
   },
   [ProposalStatus.ProposalStatusFinal]: {
     header: 'Proposal is being discussed',
     subHeader: 'Take part in the discussion and help shape public sentiment on this proposal.',
+    sideHeader: '',
     icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
-    actionText: 'View the discussion',
-    link: ''
+    action: 'View the discussion',
   },
   [ProposalStatus.ProposalStatusVoting]: {
     header: 'Vote on this proposal',
     subHeader: 'Vote on this proposal.',
-    icon: <BlockIcon className="size-18 stroke-algo-blue dark:stroke-algo-teal" />,
-    actionText: 'You\'re not eligible to vote',
-    link: ''
+    sideHeader: '',
+    icon: '',
+    action: 'You\'re not eligible to vote',
   },
   [ProposalStatus.ProposalStatusApproved]: {
     header: 'Proposal Approved!',
     subHeader: '',
+    sideHeader: '',
     icon: '',
-    actionText: '',
-    link: ''
+    action: '',
   },
   [ProposalStatus.ProposalStatusRejected]: {
     header: 'Proposal has been rejected',
     subHeader: '',
+    sideHeader: '',
     icon: '',
-    actionText: '',
-    link: ''
+    action: '',
   },
   [ProposalStatus.ProposalStatusReviewed]: {
     header: 'Proposal has been approved and deemed to conform with the xGov T&C.',
     subHeader: '',
+    sideHeader: '',
     icon: '',
-    actionText: '',
-    link: ''
+    action: '',
   },
   [ProposalStatus.ProposalStatusFunded]: {
     header: 'Proposal Funded!',
     subHeader: '',
+    sideHeader: '',
     icon: '',
-    actionText: '',
-    link: ''
+    action: '',
   },
   [ProposalStatus.ProposalStatusBlocked]: {
     header: 'Proposal has been Blocked by xGov Reviewer.',
     subHeader: '',
+    sideHeader: '',
     icon: '',
-    actionText: '',
-    link: ''
+    action: '',
   },
   [ProposalStatus.ProposalStatusDelete]: {
     header: 'Proposal has been deleted',
     subHeader: '',
+    sideHeader: '',
     icon: '',
-    actionText: '',
-    link: ''
+    action: '',
   },
 }
 
-export function StatusCard({
+interface StatusCardTemplateProps {
+  className?: string;
+  header?: string;
+  subHeader?: ReactNode;
+  sideHeader?: string;
+  icon?: ReactNode;
+  action?: ReactNode;
+}
+
+function StatusCardTemplate({
+  className = '',
+  header,
+  subHeader,
+  sideHeader,
+  icon,
+  action
+}: StatusCardTemplateProps) {
+  return (
+    <div
+      className={cn(
+        className,
+        "w-full lg:min-w-[30rem] xl:min-w-[40rem] bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-50 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between sm:flex-nowrap relative transition overflow-hidden",
+      )}
+    >
+      <div className="w-full px-4 py-5 sm:px-6">
+        <div className="w-full flex items-center justify-between">
+          <h3 className="text-base font-semibold text-algo-black dark:text-white">
+            {header}
+          </h3>
+
+          <p>{sideHeader}</p>
+        </div>
+
+        <p className="mt-1 text-wrap text-sm text-algo-black-80 dark:text-algo-black-30">
+          {subHeader}
+        </p>
+        <div className="flex flex-col items-center justify-center gap-10 w-full h-96">
+          {icon}
+          {action}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface DiscussionStatusCardProps {
+  className?: string;
+  proposal: ProposalMainCardDetails;
+  discussionDuration: number;
+  minimumDiscussionDuration: number;
+}
+
+function DiscussionStatusCard({
   className = "",
   proposal,
   discussionDuration,
   minimumDiscussionDuration,
-  voterInfo,
-}: StatusCardProps) {
+}: DiscussionStatusCardProps) {
+  const { activeAddress, transactionSigner } = useWallet();
   const proposalQuery = useProposal(proposal.id, proposal);
 
   const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
   const [isDropModalOpen, setIsDropModalOpen] = useState(false);
 
-  const { activeAddress, transactionSigner } = useWallet();
-
   const finalizable = discussionDuration > minimumDiscussionDuration;
-  const [days, hours, minutes] = useTimeLeft(
+  const [days, hours, minutes, seconds] = useTimeLeft(
     Date.now() + (Number(minimumDiscussionDuration) - discussionDuration),
   );
-  const remainingTime = `${days}d ${hours}h ${minutes}m remaining`;
+  let remainingTime = `${days}d ${hours}h ${minutes}m ${seconds}s remaining`;
 
-  const details = statusCardMap[proposal.status as keyof typeof statusCardMap];
-
-  if (proposal.status === ProposalStatus.ProposalStatusDraft) {
-    details.subHeader = `Discussion is ongoing (${remainingTime}), take part and help shape public sentiment on this proposal.`;
-  }
-
-  if (
-    proposal.status === ProposalStatus.ProposalStatusVoting &&
-    !!voterInfo && voterInfo.votes > 0n
-  ) {
-    if (!voterInfo.voted) {
-      details.actionText = '';
-    } else {
-      details.actionText = 'You have already voted';
-    }
-  }
-
+  let header = 'Proposal is being discussed';
+  let icon = <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />;
   if (!finalizable && proposal.proposer === activeAddress) {
-    details.header = "Your proposal is in the drafting & discussion phase";
-    details.icon = (
+    header = "Your proposal is in the drafting & discussion phase";
+    icon = (
       <SquarePenIcon
         aria-hidden="true"
         className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white"
@@ -165,7 +200,143 @@ export function StatusCard({
     );
   }
 
-  const voteProposal = async (approve: boolean) => {
+  let action = (
+    <Link
+      to={proposal.forumLink}
+      className="mt-2 px-4 py-2 bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-md hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50"
+    >
+      View the discussion
+    </Link>
+  )
+
+  if (proposal.proposer === activeAddress) {
+    action = (
+      <div className="flex gap-4 items-center">
+        <Button
+          onClick={() => setIsDropModalOpen(true)}
+          type="button"
+          variant="ghost"
+        >
+          Delete
+        </Button>
+
+        <Button
+          onClick={() => {
+            navigate(`/edit/${proposal.id}`);
+          }}
+          type="button"
+          variant="ghost"
+        >
+          Edit
+        </Button>
+
+        <InfinityMirrorButton
+          onClick={() => setIsFinalizeModalOpen(true)}
+          type="button"
+          variant="secondary"
+          disabled={!finalizable}
+          disabledMessage={
+            finalizable
+              ? undefined
+              : `Discussion is ongoing. ${remainingTime}`
+          }
+        >
+          Submit
+        </InfinityMirrorButton>
+
+        <FinalizeModal
+          isOpen={isFinalizeModalOpen}
+          onClose={() => setIsFinalizeModalOpen(false)}
+          proposalId={proposal.id}
+          refetchProposal={() => proposalQuery.refetch()}
+          activeAddress={activeAddress}
+          transactionSigner={transactionSigner}
+        />
+        <DropModal
+          isOpen={isDropModalOpen}
+          onClose={() => setIsDropModalOpen(false)}
+          proposalId={proposal.id}
+          refetchAllProposals={() => { }}
+          refetchProposal={() => proposalQuery.refetch()}
+          activeAddress={activeAddress}
+          transactionSigner={transactionSigner}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <StatusCardTemplate
+      className={className}
+      header={header}
+      subHeader="Discussion is ongoing, take part and help shape public sentiment on this proposal."
+      sideHeader={remainingTime}
+      icon={icon}
+      action={action}
+    />
+  )
+}
+
+interface VotingStatusCardProps {
+  className?: string;
+  proposal: ProposalMainCardDetails;
+  quorums: [bigint, bigint, bigint];
+  weightedQuorums: [bigint, bigint, bigint];
+  votingDurations: [bigint, bigint, bigint, bigint];
+}
+
+const votesExceededMessage = "Total votes used exceeds available votes";
+
+function VotingStatusCard({
+  className = "",
+  proposal,
+  quorums,
+  weightedQuorums,
+  votingDurations,
+}: VotingStatusCardProps) {
+  const { activeAddress, transactionSigner } = useWallet();
+  const proposalQuery = useProposal(proposal.id, proposal);
+  const voterInfoQuery = useVoterBox(Number(proposal.id), activeAddress);
+
+  const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
+  const [votesExceeded, setVotesExceeded] = useState(false);
+
+  const voterInfo = voterInfoQuery.data || undefined;
+  const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
+
+  const xgovQuorum = getXGovQuorum(proposal.fundingCategory, quorums);
+  const voteQuorum = getVoteQuorum(proposal.fundingCategory, weightedQuorums);
+  const votingDuration = Date.now() - Number(proposal.voteOpenTs) * 1000;
+  const minimumVotingDuration = getVotingDuration(proposal.fundingCategory, votingDurations);
+
+  const [days, hours, minutes, seconds] = useTimeLeft(
+    Date.now() + (minimumVotingDuration - votingDuration),
+  );
+  const remainingTime = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+  const votingSchema = z.object({
+    approvals: z.number().min(0, { message: "Must be a positive number" }),
+    rejections: z.number().min(0, { message: "Must be a positive number" }),
+    nulls: z.number().min(0, { message: "Must be a positive number" }),
+  }).superRefine((data, ctx) => {
+    const totalVotes = data.approvals + data.rejections + data.nulls;
+    setVotesExceeded(totalVotes > Number(voterInfo?.votes));
+  });
+
+  const form = useForm<z.infer<typeof votingSchema>>({
+    resolver: zodResolver(votingSchema),
+    defaultValues: {
+      approvals: 0,
+      rejections: 0,
+      nulls: 0,
+    },
+    mode: "onChange",
+  });
+  const { errors } = form.formState;
+  console.log('errors', errors);
+  const usedFormVotes = form.watch("approvals") + form.watch("rejections") + form.watch("nulls");
+
+  const voteProposal = async (approvals: number, rejections: number) => {
     if (!activeAddress || !transactionSigner) {
       console.log('Wallet not connected');
       return false;
@@ -186,8 +357,8 @@ export function StatusCard({
       args: {
         proposalId: proposal.id,
         xgovAddress: activeAddress,
-        approvalVotes: approve ? voterInfo.votes : 0n,
-        rejectionVotes: approve ? 0n : voterInfo.votes,
+        approvalVotes: approvals,
+        rejectionVotes: rejections,
       },
       appReferences: [proposal.id],
       accountReferences: [activeAddress],
@@ -201,6 +372,7 @@ export function StatusCard({
     if (res.confirmation.confirmedRound !== undefined && res.confirmation.confirmedRound > 0 && res.confirmation.poolError === '') {
       console.log('Transaction confirmed');
       proposalQuery.refetch();
+      voterInfoQuery.refetch();
       return true;
     }
 
@@ -208,142 +380,266 @@ export function StatusCard({
     return false;
   }
 
-  return (
-    <div
-      className={cn(
-        className,
-        "w-full lg:min-w-[30rem] xl:min-w-[40rem] bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between sm:flex-nowrap relative transition overflow-hidden",
-      )}
+  const onSubmit = async (data: z.infer<typeof votingSchema>) => {
+    await voteProposal(data.approvals, data.rejections);
+  }
+
+  let subheader = (
+    <Button
+      className="-ml-4"
+      variant='link'
+      onClick={() => setMode(mode === 'simple' ? 'advanced' : 'simple')}
     >
-      <div className="w-full px-4 py-5 sm:px-6">
-        <h3 className="text-base font-semibold text-algo-black dark:text-white">
-          {details.header}
-        </h3>
-        <p className="mt-1 text-wrap text-sm text-algo-black-80 dark:text-algo-black-30">
-          {details.subHeader}
-        </p>
-        <div className="flex flex-col items-center justify-center gap-10 w-full h-96">
-          {details.icon}
+      {mode === 'simple' ? 'Advanced' : 'Simple'} Mode
+    </Button>
+  )
 
-          {
-            proposal.status === ProposalStatus.ProposalStatusVoting
-            && (
-              <>
-                <div className="w-full flex flex-col items-center justify-center gap-4">
-                  <VoteCounter
-                    up={Number(proposal.approvals)}
-                    down={Number(proposal.rejections)}
-                  />
-                  <div className="flex gap-2">
-                    <XGovQuorumMetPill approved={true} quorumRequirement={10} label="xgov quorum met" />
-                    <VoteQuorumMetPill approved={false} quorumRequirement={10} label="vote quorum met" />
-                    <MajorityApprovedPill approved={true} label="majority approved" />
-                  </div>
-                  <VoteBar
-                    total={Number(proposal.committeeVotes)}
-                    approvals={Number(proposal.approvals)}
-                    rejections={Number(proposal.rejections)}
-                    nulls={Number(proposal.nulls)}
-                  />
-                  {/* <VoteBar
-                    total={150}
-                    approvals={69}
-                    rejections={30}
-                    nulls={10}
-                  /> */}
-                </div>
-                {
-                  !voterInfo || (!!voterInfo && voterInfo.votes > 0n && !voterInfo.voted)
-                  && (
-                    <div className="flex gap-4 items-center">
-                      <Button
-                        type='button'
-                        onClick={() => voteProposal(true)}
-                      >
-                        Approve
-                      </Button>
-
-                      <Button
-                        type='button'
-                        variant='destructive'
-                        onClick={() => voteProposal(false)}
-                      >
-                        Reject
-                      </Button>
-                    </div>
-                  )
-                }
-              </>
-            )
-          }
-
-          {details.actionText && (
-            <Link
-              to={details.link}
-              className="mt-2 px-4 py-2 bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-md hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50"
-            >
-              {details.actionText}
-            </Link>
-          )}
-
-          {proposal.status === ProposalStatus.ProposalStatusDraft &&
-            proposal.proposer === activeAddress && (
-              <div className="flex gap-4 items-center">
-                <Button
-                  onClick={() => setIsDropModalOpen(true)}
-                  type="button"
-                  variant="ghost"
-                >
-                  Delete
-                </Button>
-
-                <Button
-                  onClick={() => {
-                    navigate(`/edit/${proposal.id}`);
-                  }}
-                  type="button"
-                  variant="ghost"
-                >
-                  Edit
-                </Button>
-
-                <InfinityMirrorButton
-                  onClick={() => setIsFinalizeModalOpen(true)}
-                  type="button"
-                  variant="secondary"
-                  disabled={!finalizable}
-                  disabledMessage={
-                    finalizable
-                      ? undefined
-                      : `Discussion is ongoing. ${remainingTime}`
-                  }
-                >
-                  Submit
-                </InfinityMirrorButton>
-
-                <FinalizeModal
-                  isOpen={isFinalizeModalOpen}
-                  onClose={() => setIsFinalizeModalOpen(false)}
-                  proposalId={proposal.id}
-                  refetchProposal={() => { }}
-                  activeAddress={activeAddress}
-                  transactionSigner={transactionSigner}
-                />
-                <DropModal
-                  isOpen={isDropModalOpen}
-                  onClose={() => setIsDropModalOpen(false)}
-                  proposalId={proposal.id}
-                  refetchAllProposals={() => { }}
-                  refetchProposal={() => { }}
-                  activeAddress={activeAddress}
-                  transactionSigner={transactionSigner}
-                />
-              </div>
-            )}
-        </div>
+  let baseAction = (
+    <div className="w-full flex flex-col items-center justify-center gap-4">
+      <VoteCounter
+        approvals={Number(proposal.approvals)}
+        rejections={Number(proposal.rejections)}
+        nulls={Number(proposal.nulls)}
+      />
+      <div className="flex gap-2">
+        <XGovQuorumMetPill
+          approved={Number(proposal.votedMembers) > Number(proposal.committeeMembers) * (xgovQuorum / 100)}
+          quorumRequirement={xgovQuorum}
+          label="xgov quorum met"
+        />
+        <VoteQuorumMetPill
+          approved={totalVotes > Number(proposal.committeeVotes) * (voteQuorum / 100)}
+          quorumRequirement={voteQuorum}
+          label="vote quorum met"
+        />
+        <MajorityApprovedPill
+          approved={proposal.approvals > proposal.rejections}
+          label="majority approved"
+        />
       </div>
+      <VoteBar
+        total={Number(proposal.committeeVotes)}
+        approvals={Number(proposal.approvals)}
+        rejections={Number(proposal.rejections)}
+        nulls={Number(proposal.nulls)}
+      />
     </div>
-  );
+  )
+
+  let action = (
+    <>
+      {baseAction}
+      <p className="h-9 px-4 py-2">You are not eligible to vote</p>
+    </>
+  )
+
+  if (!!voterInfo && voterInfo.votes > 0n) {
+    if (voterInfo.voted) {
+      subheader = <></>
+      action = (
+        <>
+          {baseAction}
+          <p className="h-9 px-4 py-2">You Voted!</p>
+        </>
+      )
+    } else {
+      if (mode === 'simple') {
+        action = (
+          <>
+            {baseAction}
+            <div className="flex gap-4 items-center">
+              <Button
+                type='button'
+                onClick={() => voteProposal(Number(voterInfo.votes), 0)}
+              >
+                Approve
+              </Button>
+
+              <Button
+                type='button'
+                variant='destructive'
+                onClick={() => voteProposal(0, Number(voterInfo.votes))}
+              >
+                Reject
+              </Button>
+            </div>
+          </>
+        )
+      } else {
+        action = (
+          <>
+            {baseAction}
+            <div className="w-full px-4 flex flex-col items-center gap-2">
+              <Form {...form}>
+                {
+                  (votesExceeded || errors.approvals?.message || errors.rejections?.message || errors.nulls?.message)
+                    ? <FormMessage>
+                        {votesExceeded ? votesExceededMessage : ""}
+                        {errors.approvals?.message || errors.rejections?.message || errors.nulls?.message}
+                    </FormMessage>
+                    : <p className="text-[0.8rem] font-medium">{usedFormVotes}/{voterInfo.votes.toString()} Votes used</p>
+                }
+                <form onSubmit={form.handleSubmit(onSubmit)} className="w-full  flex items-end justify-around">
+                  <FormField
+                    control={form.control}
+                    name="approvals"
+                    render={({ field }) => (
+                      <FormItem className="w-16">
+                        <FormLabel className="dark:text-white">
+                          Approvals
+                          <span className="ml-0.5 text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            id="vote-approvals"
+                            className={!!errors.approvals?.message ? "border-red-500" : ""}
+                            placeholder="0"
+                            type="number"
+                            onFocus={(e) => e.target.select()}
+                            onChange={(e) =>
+                              field.onChange(e.target.valueAsNumber || 0)
+                            }
+                            value={field.value}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="nulls"
+                    render={({ field }) => (
+                      <FormItem className="w-16">
+                        <FormLabel className="dark:text-white">
+                          Abstains
+                          <span className="ml-0.5 text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            id="vote-abstains"
+                            className={!!errors.nulls?.message ? "border-red-500" : ""}
+                            placeholder="0"
+                            type="number"
+                            onFocus={(e) => e.target.select()}
+                            onChange={(e) =>
+                              field.onChange(e.target.valueAsNumber || 0)
+                            }
+                            value={field.value}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="rejections"
+                    render={({ field }) => (
+                      <FormItem className="w-16">
+                        <FormLabel className="dark:text-white">
+                          Rejections
+                          <span className="ml-0.5 text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            id="vote-rejections"
+                            className={!!errors.rejections?.message ? "border-red-500" : ""}
+                            placeholder="0"
+                            type="number"
+                            onFocus={(e) => e.target.select()}
+                            onChange={(e) =>
+                              field.onChange(e.target.valueAsNumber || 0)
+                            }
+                            value={field.value}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button
+                    type='submit'
+                    disabled={votesExceeded}
+                  >
+                    Submit
+                  </Button>
+                </form>
+              </Form>
+            </div >
+          </>
+        )
+      }
+    }
+  }
+
+  return (
+    <StatusCardTemplate
+      className={className}
+      header="Vote on this proposal"
+      subHeader={subheader}
+      sideHeader={remainingTime}
+      icon={<BlockIcon className="size-18 stroke-algo-blue dark:stroke-algo-teal" />}
+      action={action}
+    />
+  )
+}
+
+export interface StatusCardProps {
+  className?: string;
+  proposal: ProposalMainCardDetails;
+  discussionDuration: number;
+  minimumDiscussionDuration: number;
+  quorums: [bigint, bigint, bigint];
+  weightedQuorums: [bigint, bigint, bigint];
+  votingDurations: [bigint, bigint, bigint, bigint];
+}
+
+export function StatusCard({
+  className = "",
+  proposal,
+  discussionDuration,
+  minimumDiscussionDuration,
+  quorums,
+  weightedQuorums,
+  votingDurations,
+}: StatusCardProps) {
+
+  if (proposal.status === ProposalStatus.ProposalStatusDraft) {
+    return <DiscussionStatusCard
+      className={className}
+      proposal={proposal}
+      discussionDuration={discussionDuration}
+      minimumDiscussionDuration={minimumDiscussionDuration}
+    />
+  }
+
+  if (proposal.status === ProposalStatus.ProposalStatusVoting) {
+    return <VotingStatusCard
+      className={className}
+      proposal={proposal}
+      quorums={quorums}
+      weightedQuorums={weightedQuorums}
+      votingDurations={votingDurations}
+    />
+  }
+
+  const defaults = defaultsStatusCardMap[proposal.status];
+
+  return <StatusCardTemplate
+    className={className}
+    header={defaults.header}
+    subHeader={defaults.subHeader}
+    sideHeader={defaults.sideHeader}
+    icon={defaults.icon}
+    action={defaults.action}
+  />
 }
 
 export interface ProposalInfoProps {
@@ -414,7 +710,7 @@ export function ProposalInfo({
             </div>
           </div>
         </div>
-        <div className="-mx-6 lg:flex lg:flex-col lg:items-end lg:fixed lg:right-0 lg:pr-14 lg:pt-14">
+        <div className="lg:flex lg:flex-col lg:items-end lg:fixed lg:right-0 lg:pr-8 lg:pt-14">
           {children}
         </div>
         <div className="lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">
