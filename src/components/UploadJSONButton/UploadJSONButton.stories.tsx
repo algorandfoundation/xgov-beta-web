@@ -1,15 +1,18 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { UploadJSONButton, type UploadJSONButtonProps } from './UploadJSONButton';
+import type { Meta, StoryObj } from "@storybook/react";
+import {
+  UploadJSONButton,
+  type UploadJSONButtonProps,
+} from "./UploadJSONButton";
 
 const meta: Meta<typeof UploadJSONButton> = {
-  title: 'Components/UploadJSONButton',
+  title: "Components/UploadJSONButton",
   component: UploadJSONButton,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
   argTypes: {
-    setJsonData: { action: 'setJsonData' },
+    setJsonData: { action: "setJsonData" },
   },
 };
 
@@ -19,6 +22,6 @@ type Story = StoryObj<UploadJSONButtonProps>;
 
 export const Default: Story = {
   args: {
-    setJsonData: (data: any) => console.log('JSON Data:', data),
+    setJsonData: (data: any) => console.log("JSON Data:", data),
   },
 };

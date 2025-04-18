@@ -1,0 +1,17 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Page from "@/layouts/Page.astro";
+
+import { ProposalCreateIsland } from "@/recipes";
+---
+
+<Layout>
+  <Page>
+    <div class="max-w-7xl mx-auto">
+      <h1 class="my-2 text-pretty text-2xl font-semibold tracking-tight">
+        New Proposal
+      </h1>
+      <ProposalCreateIsland client:load />
+    </div>
+  </Page>
+</Layout>

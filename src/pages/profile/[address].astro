@@ -1,9 +1,0 @@
----
-import Layout from "@/layouts/Layout.astro";
-import { App } from "src/App";
-
-const { address } = Astro.params;
----
-<Layout>
-    <App client:only path={`/profile/${address}`}/>
-</Layout>

@@ -1,12 +1,12 @@
 export const AlgorandIcon = (props: any) => (
-    <svg
-        viewBox="0 0 198 198"
-        width="198"
-        height="198"
-        fill="currentColor"
-        xmlns="http://www.w3.org/2000/svg"
-        {...props}
-    >
-        <path d="M197.5 197.6H166.7L146.6 123L103.4 197.6H68.9L135.6 82.1L124.8 41.8L34.8 197.6H0.299988L114.4 0H144.7L157.8 49.2H189L167.8 86.2L197.5 197.6Z"/>
-    </svg>
-)
+  <svg
+    viewBox="0 0 198 198"
+    width="198"
+    height="198"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path d="M197.5 197.6H166.7L146.6 123L103.4 197.6H68.9L135.6 82.1L124.8 41.8L34.8 197.6H0.299988L114.4 0H144.7L157.8 49.2H189L167.8 86.2L197.5 197.6Z" />
+  </svg>
+);

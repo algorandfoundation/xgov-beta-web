@@ -1,0 +1,41 @@
+---
+import { getGlobalState, getProposal } from "@/api";
+
+import Layout from "@/layouts/Layout.astro";
+import Page from "@/layouts/Page.astro";
+
+import { EditProposalIsland } from "@/recipes";
+
+interface Props {
+  appId: string;
+}
+
+const { appId } = Astro.params;
+
+if (typeof appId !== "string") {
+  return Astro.redirect("/");
+}
+
+const registryGlobalState = await getGlobalState();
+
+const proposal = await getProposal(BigInt(appId)).catch(() => {
+  return null;
+});
+if (!proposal) {
+  return Astro.redirect("/404");
+}
+---
+
+<Layout>
+  <Page>
+    <div class="max-w-7xl mx-auto">
+      <h1
+        class="my-2 text-pretty text-2xl font-semibold tracking-tight text-algo-black dark:text-white"
+      >
+        Editing Proposal {proposal.id}
+      </h1>
+
+      <EditProposalIsland client:load proposal={proposal} />
+    </div>
+  </Page>
+</Layout>

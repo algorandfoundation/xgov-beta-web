@@ -1,0 +1,86 @@
+---
+import { isValidAddress } from "algosdk";
+import Layout from "@/layouts/Layout.astro";
+import Page from "@/layouts/Page.astro";
+
+import { shortenAddress } from "@/functions";
+import { getNonFungibleDomainName } from "@/api";
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+import { ProfilePageIsland } from "@/recipes";
+
+interface Props {
+  query: string;
+}
+const { query } = Astro.params;
+
+if (!query || (!query.includes(".algo") && !isValidAddress(query))) {
+  const error = await fetch(`${Astro.url}/404`);
+  return new Response(error.body, {
+    headers: error.headers,
+    status: 404,
+    statusText: "Not Found",
+  });
+}
+
+let isNfd = false;
+let address = query;
+if (query.includes(".algo")) {
+  try {
+    await getNonFungibleDomainName(query).then((name) => {
+      isNfd = true;
+      address = name;
+    });
+  } catch (e) {
+    console.log(e);
+    const error = await fetch(`${Astro.url}/404`);
+    return new Response(error.body, {
+      headers: error.headers,
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
+}
+---
+
+<Layout>
+  <Page>
+    <Breadcrumb slot="breadcrumb">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage
+            >{!!address && address === address && "My "}Profile</BreadcrumbPage
+          >
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          {
+            !!address && (
+              <>
+                <BreadcrumbPage className="hidden md:inline">
+                  {isNfd ? query : address}
+                </BreadcrumbPage>
+                <BreadcrumbPage className="inline md:hidden">
+                  {isNfd ? query : shortenAddress(address)}
+                </BreadcrumbPage>
+              </>
+            )
+          }
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+    <ProfilePageIsland client:only="react" address={address} />
+  </Page>
+</Layout>

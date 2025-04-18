@@ -1,8 +1,30 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import { App } from "src/App";
+import Page from "@/layouts/Page.astro";
+import { AdminPageIsland } from "@/recipes/admin";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 ---
 
 <Layout>
-  <App client:only path="/admin" />
+  <Page>
+    <Breadcrumb slot="breadcrumb">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>Admin</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+    <AdminPageIsland client:only="react" />
+  </Page>
 </Layout>

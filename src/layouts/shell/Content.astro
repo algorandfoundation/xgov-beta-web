@@ -1,0 +1,10 @@
+---
+import { cn } from "@/functions/utils";
+---
+
+<main class={cn("m-auto w-full px-2 md:px-4 flex-1")}>
+  <slot />
+  <div class={cn("justify-self-end")}>
+    <slot name="sidebar" />
+  </div>
+</main>

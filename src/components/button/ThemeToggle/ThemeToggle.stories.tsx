@@ -1,18 +1,18 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { userEvent, within } from '@storybook/test';
-import { ThemeToggle } from './ThemeToggle';
+import type { Meta, StoryObj } from "@storybook/react";
+import { userEvent, within } from "@storybook/test";
+import { ThemeToggle } from "./ThemeToggle";
 
 const meta = {
-  title: 'Components/ThemeToggle',
+  title: "Components/ThemeToggle",
   component: ThemeToggle,
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   parameters: {
-    layout: 'centered',
+    layout: "centered",
   },
   argTypes: {}, // No props for this component
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const toggleButton = canvas.getByRole('button');
+    const toggleButton = canvas.getByRole("button");
     await userEvent.click(toggleButton);
     // Note: In a real scenario, this click would toggle the theme
     // For Storybook, we're just demonstrating the interaction
@@ -25,7 +25,7 @@ type Story = StoryObj<typeof meta>;
 export const LightMode: Story = {
   parameters: {
     backgrounds: {
-      default: 'light',
+      default: "light",
     },
   },
 };
@@ -33,7 +33,7 @@ export const LightMode: Story = {
 export const DarkMode: Story = {
   parameters: {
     backgrounds: {
-      default: 'dark',
+      default: "dark",
     },
   },
   decorators: [

@@ -1,15 +1,23 @@
-import { useState, useEffect, type ChangeEvent } from 'react';
-import { cn } from 'src/functions/utils';
-import ErrorModal from '@/components/ErrorModal/ErrorModal';
-import type { ProposerBoxState } from '@/types/proposer';
+import { useState, useEffect, type ChangeEvent } from "react";
+import { cn } from "@/functions";
+import { ErrorModal } from "@/components/ErrorModal/ErrorModal";
+import type { ProposerBoxState } from "@/api";
 
 export interface KYCCardProps {
   proposalAddress: string;
   values: ProposerBoxState;
-  callSetProposerKYC: (proposalAddress: string, status: boolean, expiration: number) => Promise<boolean>;
+  callSetProposerKYC: (
+    proposalAddress: string,
+    status: boolean,
+    expiration: number,
+  ) => Promise<boolean>;
 }
 
-export function KYCCard({ proposalAddress, values, callSetProposerKYC }: KYCCardProps) {
+export function KYCCard({
+  proposalAddress,
+  values,
+  callSetProposerKYC,
+}: KYCCardProps) {
   const kyc_status = values.kycStatus;
   const expiry_date = Number(values.kycExpiring);
 
@@ -23,7 +31,9 @@ export function KYCCard({ proposalAddress, values, callSetProposerKYC }: KYCCard
   const [currentExpiryDate, setCurrentExpiryDate] = useState(expiry_date);
 
   useEffect(() => {
-    setIsExpired(currentExpiryDate ? Date.now() > currentExpiryDate * 1000 : false);
+    setIsExpired(
+      currentExpiryDate ? Date.now() > currentExpiryDate * 1000 : false,
+    );
   }, [currentExpiryDate]);
 
   const handleApprove = (date: Date) => {
@@ -98,8 +108,12 @@ export function KYCCard({ proposalAddress, values, callSetProposerKYC }: KYCCard
       <div className="card-content flex items-center">
         <span
           className={cn(
-            'text-sm font-semibold',
-            isExpired ? 'text-yellow-500' : currentKYCStatus ? 'text-green-500' : 'text-red-500'
+            "text-sm font-semibold",
+            isExpired
+              ? "text-yellow-500"
+              : currentKYCStatus
+                ? "text-green-500"
+                : "text-red-500",
           )}
         >
           {proposalAddress}
@@ -108,7 +122,11 @@ export function KYCCard({ proposalAddress, values, callSetProposerKYC }: KYCCard
           className="ml-auto px-2 py-1.5 text-sm rounded-sm outline-none focus:bg-white dark:focus:bg-algo-black-90"
           onClick={handleButtonClick}
         >
-          {isExpired ? 'KYC Expired.' : currentKYCStatus ? 'Disqualify KYC?' : 'Approve KYC?'}
+          {isExpired
+            ? "KYC Expired."
+            : currentKYCStatus
+              ? "Disqualify KYC?"
+              : "Approve KYC?"}
         </button>
         {showDatePicker && (
           <input
@@ -129,7 +147,11 @@ export function KYCCard({ proposalAddress, values, callSetProposerKYC }: KYCCard
             <div className="flex justify-end">
               <button
                 className="mr-2 px-4 py-2 bg-red-500 text-white rounded"
-                onClick={selectedDate && Date.now() > selectedDate.getTime() ? handleConfirmExpiredKYC : handleDisqualify}
+                onClick={
+                  selectedDate && Date.now() > selectedDate.getTime()
+                    ? handleConfirmExpiredKYC
+                    : handleDisqualify
+                }
               >
                 Yes
               </button>
@@ -151,5 +173,3 @@ export function KYCCard({ proposalAddress, values, callSetProposerKYC }: KYCCard
     </div>
   );
 }
-
-export default KYCCard;
