@@ -3,6 +3,7 @@ import {
   getAllProposals,
   getProposal,
   getProposalsByProposer,
+  getVoterBox,
   type ProposalMainCardDetails,
 } from "@/api";
 import type { ProposalSummaryCardDetails } from "@/api";
@@ -42,4 +43,12 @@ export function useProposal(
     staleTime: 100,
     enabled: !!proposalId,
   });
+}
+
+export function useVoterBox(proposalId: number | null, activeAddress: string | null) {
+    return useQuery({
+        queryKey: ['getVoterBox', Number(proposalId!), activeAddress],
+        queryFn: () => getVoterBox(BigInt(proposalId!), activeAddress!),
+        enabled: !!proposalId && !!activeAddress,
+    });
 }

@@ -1,8 +1,8 @@
-import { AppManager } from "@algorandfoundation/algokit-utils/types/app-manager";
-import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
-import algosdk, { ALGORAND_MIN_TX_FEE, type TransactionSigner } from "algosdk";
-import { CID } from "kubo-rpc-client";
 
+import type { AppState } from "@algorandfoundation/algokit-utils/types/app";
+import { AppManager } from "@algorandfoundation/algokit-utils/types/app-manager";
+import algosdk, { ABIType, ALGORAND_MIN_TX_FEE, type TransactionSigner } from "algosdk";
+import { CID } from "kubo-rpc-client";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 
 import {
@@ -12,6 +12,7 @@ import {
   ProposalFundingType,
   type ProposalJSON,
   type ProposalMainCardDetails,
+  ProposalStatus,
   type ProposalSummaryCardDetails,
 } from "@/api/types";
 
@@ -23,8 +24,13 @@ import {
 
 import { PROPOSAL_FEE } from "@/constants.ts";
 import { ipfsClient } from "@/api/ipfs.ts";
+import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
 
 export const proposalFactory = new ProposalFactory({ algorand });
+
+function existsAndValue(appState: AppState, key: string): boolean {
+  return key in appState && 'value' in appState[key];
+}
 
 /**
  * Retrieves all proposals from a specific registry app on the Algorand blockchain.
@@ -37,36 +43,62 @@ export const proposalFactory = new ProposalFactory({ algorand });
  *         funding type, status, focus, category, and submission time.
  */
 export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
-  const response = await algorand.client.algod
-    .accountInformation(registryClient.appAddress)
-    .do();
-  return await Promise.all(
-    response["created-apps"].map(
-      async (data: any): Promise<ProposalSummaryCardDetails> => {
-        const state = AppManager.decodeAppState(data.params["global-state"]);
+  try {
+    const response = await algorand.client.algod.accountInformation(registryClient.appAddress).do();
+    console.log("Account info received, processing apps...");
 
-        const cid = String(state.cid.value);
+    return await Promise.all(response['created-apps'].map(async (data: any): Promise<ProposalSummaryCardDetails> => {
+      try {
+        const state = AppManager.decodeAppState(data.params['global-state']);
 
-        let proposer =
-          "valueRaw" in state.proposer
-            ? algosdk.encodeAddress(state.proposer.valueRaw)
-            : "";
+        let cid: Uint8Array<ArrayBufferLike> = new Uint8Array();
+        if (state.cid && 'valueRaw' in state.cid) {
+          cid = state.cid.valueRaw;
+        }
+
+        let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
+        if (state['committee_id'] && 'valueRaw' in state['committee_id']) {
+          committeeId = state['committee_id'].valueRaw;
+        }
+
+        let proposer = '';
+        if (state.proposer && 'valueRaw' in state.proposer) {
+          proposer = algosdk.encodeAddress(state.proposer.valueRaw);
+        }
 
         return {
           id: data.id,
-          title: String(state.title.value),
+          title: existsAndValue(state, 'title') ? String(state.title.value) : '',
           cid,
-          requestedAmount: BigInt(state["requested_amount"].value),
+          requestedAmount: existsAndValue(state, 'requested_amount') ? BigInt(state['requested_amount'].value) : 0n,
           proposer,
-          fundingType: Number(state["funding_type"].value),
-          status: Number(state.status.value),
-          focus: Number(state.focus.value),
-          category: Number(state["funding_category"].value),
-          submissionTime: Number(state["submission_timestamp"].value),
-        };
-      },
-    ),
-  );
+          fundingType: existsAndValue(state, 'funding_type') ? Number(state['funding_type'].value) as ProposalFundingType : 0,
+          status: existsAndValue(state, 'status') ? Number(state.status.value) as ProposalStatus : 0,
+          focus: existsAndValue(state, 'focus') ? Number(state.focus.value) as ProposalFocus : 0,
+          fundingCategory: existsAndValue(state, 'funding_category') ? Number(state['funding_category'].value) as ProposalCategory : 0,
+          submissionTs: existsAndValue(state, 'submission_timestamp') ? BigInt(state['submission_timestamp'].value) : 0n,
+          approvals: existsAndValue(state, 'approvals') ? BigInt(state.approvals.value) : 0n,
+          rejections: existsAndValue(state, 'rejections') ? BigInt(state.rejections.value) : 0n,
+          nulls: existsAndValue(state, 'nulls') ? BigInt(state.nulls.value) : 0n,
+          committeeVotes: existsAndValue(state, 'committee_votes') ? BigInt(state['committee_votes'].value) : 0n,
+          registryAppId: existsAndValue(state, 'registry_app_id') ? BigInt(state['registry_app_id'].value) : 0n,
+          finalizationTs: existsAndValue(state, 'finalization_timestamp') ? BigInt(state['finalization_timestamp'].value) : 0n,
+          voteOpenTs: existsAndValue(state, 'vote_opening_timestamp') ? BigInt(state['vote_opening_timestamp'].value) : 0n,
+          lockedAmount: existsAndValue(state, 'locked_amount') ? BigInt(state['locked_amount'].value) : 0n,
+          committeeId,
+          committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
+          votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
+          coolDownStartTs: existsAndValue(state, 'cool_down_start_ts') ? BigInt(state['cool_down_start_ts'].value) : 0n
+        }
+      } catch (error) {
+        console.error('Error processing app data:', error);
+        throw error;
+      }
+    }));
+  } catch (error) {
+    console.error('Error getting all proposals:', error);
+    throw error;
+  }
 }
 
 /**
@@ -97,9 +129,8 @@ export async function getProposal(
 
   const results = await Promise.allSettled([
     algorand.client.algod.getApplicationByID(Number(id)).do(),
-    // .accountInformation(proposalClient.appAddress).do(),
     proposalClient.appClient.getGlobalState(),
-  ]);
+  ])
 
   const data = results[0].status === "fulfilled" ? results[0].value : null;
   if (!data || data.params.creator !== registryClient.appAddress) {
@@ -115,29 +146,49 @@ export async function getProposal(
     throw new Error("CID not found");
   }
 
-  const cid = CID.decode(state.cid.valueRaw);
-  const proposalJSON = await getProposalJSON(cid.toString());
+  const decodedCID = CID.decode(state.cid.valueRaw)
+  const proposalJSON = await getProposalJSON(decodedCID.toString());
 
-  const proposer =
-    "valueRaw" in state.proposer
-      ? algosdk.encodeAddress(state.proposer.valueRaw)
-      : "";
+  let cid: Uint8Array<ArrayBufferLike> = new Uint8Array();
+  if (state.cid && 'valueRaw' in state.cid) {
+    cid = state.cid.valueRaw;
+  }
 
-  const ret = {
+  let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
+  if (state['committee_id'] && 'valueRaw' in state['committee_id']) {
+    committeeId = state['committee_id'].valueRaw;
+  }
+
+  let proposer = '';
+  if (state.proposer && 'valueRaw' in state.proposer) {
+    proposer = algosdk.encodeAddress(state.proposer.valueRaw);
+  }
+
+  return {
     id: data.id,
-    title: String(state.title.value),
-    cid: cid.toString(),
-    requestedAmount: BigInt(state["requested_amount"].value),
+    title: existsAndValue(state, 'title') ? String(state.title.value) : '',
+    cid,
+    requestedAmount: existsAndValue(state, 'requested_amount') ? BigInt(state['requested_amount'].value) : 0n,
     proposer,
-    fundingType: Number(state["funding_type"].value),
-    status: Number(state.status.value),
-    focus: Number(state.focus.value),
-    category: Number(state["funding_category"].value),
-    submissionTime: Number(state["submission_timestamp"].value),
-    ...proposalJSON,
-  };
-
-  return ret;
+    fundingType: existsAndValue(state, 'funding_type') ? Number(state['funding_type'].value) as ProposalFundingType : 0,
+    status: existsAndValue(state, 'status') ? Number(state.status.value) as ProposalStatus : 0,
+    focus: existsAndValue(state, 'focus') ? Number(state.focus.value) as ProposalFocus : 0,
+    fundingCategory: existsAndValue(state, 'funding_category') ? Number(state['funding_category'].value) as ProposalCategory : 0,
+    submissionTs: existsAndValue(state, 'submission_timestamp') ? BigInt(state['submission_timestamp'].value) : 0n,
+    approvals: existsAndValue(state, 'approvals') ? BigInt(state.approvals.value) : 0n,
+    rejections: existsAndValue(state, 'rejections') ? BigInt(state.rejections.value) : 0n,
+    nulls: existsAndValue(state, 'nulls') ? BigInt(state.nulls.value) : 0n,
+    committeeVotes: existsAndValue(state, 'committee_votes') ? BigInt(state['committee_votes'].value) : 0n,
+    registryAppId: existsAndValue(state, 'registry_app_id') ? BigInt(state['registry_app_id'].value) : 0n,
+    finalizationTs: existsAndValue(state, 'finalization_timestamp') ? BigInt(state['finalization_timestamp'].value) : 0n,
+    voteOpenTs: existsAndValue(state, 'vote_opening_timestamp') ? BigInt(state['vote_opening_timestamp'].value) : 0n,
+    lockedAmount: existsAndValue(state, 'locked_amount') ? BigInt(state['locked_amount'].value) : 0n,
+    committeeId,
+    committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
+    votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
+    coolDownStartTs: existsAndValue(state, 'cool_down_start_ts') ? BigInt(state['cool_down_start_ts'].value) : 0n,
+    ...proposalJSON
+  }
 }
 
 /**
@@ -152,6 +203,33 @@ export async function getProposalJSON(cid: string): Promise<ProposalJSON> {
   ).json()) as ProposalJSON;
 }
 
+export async function getVoterBox(id: bigint, address: string): Promise<{ votes: bigint, voted: boolean }> {
+  const addr = algosdk.decodeAddress(address).publicKey;
+  const voterBoxName = new Uint8Array(Buffer.concat([Buffer.from('V'), addr]));
+
+  try {
+    const voterBoxValue = await algorand.app.getBoxValueFromABIType({
+      appId: id,
+      boxName: voterBoxName,
+      type: ABIType.from('(uint64,bool)')
+    });
+
+    if (!Array.isArray(voterBoxValue)) {
+      throw new Error('Voter box value is not an array');
+    }
+
+    return {
+      votes: voterBoxValue[0] as bigint,
+      voted: voterBoxValue[1] as boolean
+    };
+  } catch (error) {
+    console.error('getting voter box value:', error);
+    return {
+      votes: BigInt(0),
+      voted: false
+    };
+  }
+}
 /**
  * Fetches brief information about proposals based on their IDs.
  *
@@ -181,17 +259,47 @@ export async function getProposalBrief(
 export function getDiscussionDuration(
   category: ProposalCategory,
   durations: [bigint, bigint, bigint, bigint],
-): bigint {
+): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return durations[0];
+      return Number(durations[0]);
     case ProposalCategory.ProposalCategoryMedium:
-      return durations[1];
+      return Number(durations[1]);
     case ProposalCategory.ProposalCategoryLarge:
-      return durations[2];
+      return Number(durations[2]);
     default:
-      return BigInt(0);
+      return 0;
   }
+}
+
+export function getXGovQuorum(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): number {
+  switch (category) {
+      case ProposalCategory.ProposalCategorySmall:
+          return Number(thresholds[0]) / 10;
+      case ProposalCategory.ProposalCategoryMedium:
+          return Number(thresholds[1]) / 10;
+      case ProposalCategory.ProposalCategoryLarge:
+          return Number(thresholds[2]) / 10;
+      default:
+          return 0;
+  }
+}
+
+export function getVoteQuorum(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): number {
+  switch (category) {
+      case ProposalCategory.ProposalCategorySmall:
+          return Number(thresholds[0]) / 10;
+      case ProposalCategory.ProposalCategoryMedium:
+          return Number(thresholds[1]) / 10;
+      case ProposalCategory.ProposalCategoryLarge:
+          return Number(thresholds[2]) / 10;
+      default:
+          return 0;
+  }
+}
+
+export function getVotingDuration(category: ProposalCategory, durations: [bigint, bigint, bigint, bigint]): number {
+  return 0
 }
 
 export type SubmitProps = {

@@ -1,3 +1,5 @@
+import type { ProposalTypedGlobalState } from "@algorandfoundation/xgov";
+
 export enum ProposalStatus {
   ProposalStatusEmpty = 0,
   ProposalStatusDraft = 10,
@@ -149,7 +151,7 @@ export interface ProposalJSON {
   }[];
   // applicable for retroactive proposals
   adoptionMetrics?: string[];
-  pastProposalLinks: bigint[];
+  pastProposalLinks?: bigint[];
   forumLink: string;
 }
 
@@ -196,18 +198,12 @@ export function isProposalInfoCardDetails(
   return (details as ProposalMainCardDetails).id === undefined;
 }
 
-export interface ProposalSummaryCardDetails {
-  id: bigint;
-  title: string;
-  cid: string;
-  requestedAmount: bigint;
-  proposer: string;
-  fundingType: ProposalFundingType;
-  status: ProposalStatus;
-  focus: ProposalFocus;
-  category: ProposalCategory;
-  submissionTime: number;
-  // adoptionMetrics?: string[];
+export type ProposalSummaryCardDetails = Omit<ProposalTypedGlobalState, 'fundingType' | 'status' | 'focus' | 'fundingCategory'> & {
+    id: bigint;
+    fundingType: ProposalFundingType;
+    status: ProposalStatus;
+    focus: ProposalFocus;
+    fundingCategory: ProposalCategory;
 }
 
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;
