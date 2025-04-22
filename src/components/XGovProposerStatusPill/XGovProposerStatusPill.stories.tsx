@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import XGovProposerStatusPill from './XGovProposerStatusPill';
+import {XGovProposerStatusPill} from './XGovProposerStatusPill';
 
 const MAX_UINT64 = BigInt('18446744073709551615');
 

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import BecomeAnXGovBannerButton from './BecomeAnXGovBannerButton';
+import {BecomeAnXGovBannerButton} from './BecomeAnXGovBannerButton';
 
 const meta = {
     title: 'Components/BecomeAnXGovBannerButton',

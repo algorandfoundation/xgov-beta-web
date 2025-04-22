@@ -1,16 +1,55 @@
 import type { TypedGlobalState } from "@algorandfoundation/xgov/registry";
-import { type ProposalMainCardDetails, getDiscussionDuration } from "@/api";
-import { useProposal, UseQuery, useRegistry, UseWallet } from "@/hooks";
-import { StatusCard } from "@/recipes";
+import { type ProposalMainCardDetails, type ProposalSummaryCardDetails, getDiscussionDuration } from "@/api";
+import { useProposal, useProposalsByProposer, UseQuery, useRegistry, UseWallet } from "@/hooks";
+import { ProposalInfo, StatusCard } from "@/recipes";
+import { useWallet } from "@txnlab/use-wallet-react";
 
-type ViewProposalProps = {
+type ProposalInfoControllerProps = {
+  xGovReviewer?: string;
+  proposal: ProposalMainCardDetails;
+  pastProposals: ProposalSummaryCardDetails[];
+  children: React.ReactNode;
+};
+
+export function ProposalInfoController({ xGovReviewer, proposal, pastProposals, children }: ProposalInfoControllerProps) {
+  const { activeAddress } = useWallet();
+  const proposalQuery = useProposal(proposal.id, proposal);
+  const pastProposalsQuery = useProposalsByProposer(activeAddress, pastProposals);
+  
+  const _proposal = proposalQuery.data || proposal;
+  const _pastProposals = pastProposalsQuery.data || pastProposals;
+
+  return (
+    <ProposalInfo
+      activeAddress={activeAddress}
+      xGovReviewer={xGovReviewer}
+      proposal={_proposal}
+      pastProposals={_pastProposals}
+    >
+      {children}
+    </ProposalInfo>
+  )
+}
+
+export function ProposalInfoIsland(props: ProposalInfoControllerProps) {
+  return (
+    <UseQuery>
+      <UseWallet>
+        <ProposalInfoController {...props} />
+      </UseWallet>
+    </UseQuery>
+  );
+}
+
+type StatusCardControllerProps = {
   proposal: ProposalMainCardDetails;
   registry: TypedGlobalState;
 };
-export function ViewProposalController({
+
+export function StatusCardController({
   registry,
   proposal,
-}: ViewProposalProps) {
+}: StatusCardControllerProps) {
   const registryQuery = useRegistry(registry);
   const proposalQuery = useProposal(proposal.id, proposal);
 
@@ -31,11 +70,11 @@ export function ViewProposalController({
   );
 }
 
-export function StatusCardIsland(props: ViewProposalProps) {
+export function StatusCardIsland(props: StatusCardControllerProps) {
   return (
     <UseQuery>
       <UseWallet>
-        <ViewProposalController {...props} />
+        <StatusCardController {...props} />
       </UseWallet>
     </UseQuery>
   );

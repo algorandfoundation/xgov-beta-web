@@ -9,6 +9,7 @@ import {
 } from "@/api";
 import { ALGORAND_MIN_TX_FEE } from "algosdk";
 import { UseWallet } from "@/hooks/useWallet.tsx";
+import { useProposal } from "@/hooks";
 
 export function ReviewerCardIsland({
   proposal,
@@ -29,6 +30,8 @@ export function ProposalReviewerCard({
   status: ProposalStatus;
 }) {
   const { activeAddress, transactionSigner } = useWallet();
+  const proposalQuery = useProposal(proposalId);
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleReviewBlock = async (bool: boolean) => {
@@ -59,7 +62,7 @@ export function ProposalReviewerCard({
       ) {
         console.log("Transaction confirmed");
         setErrorMessage(null);
-        // refetch(); // Update
+        proposalQuery.refetch();
         return true;
       }
 
@@ -80,7 +83,7 @@ export function ProposalReviewerCard({
       </h1>
       <li
         role="listitem"
-        className="list-none relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-xl lg:min-w-[36rem]"
+        className="list-none relative bg-algo-blue-20 dark:bg-algo-teal-20 text-algo-black p-4 rounded-lg max-w-xl"
       >
         <div className="max-w-3xl">
           <h2 className="text-xl font-bold mt-2 mb-4">

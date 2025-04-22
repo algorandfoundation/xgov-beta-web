@@ -20,7 +20,7 @@ export function useGetAllProposals(proposals?: ProposalSummaryCardDetails[]) {
 
 export function useProposalsByProposer(
   address: string | null | undefined,
-  proposals?: ProposalMainCardDetails[],
+  proposals?: ProposalSummaryCardDetails[],
 ) {
   return useQuery({
     queryKey: ["getProposalsByProposer", address],

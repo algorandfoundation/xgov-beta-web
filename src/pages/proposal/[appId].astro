@@ -9,7 +9,7 @@ import { RequestedAmountDetail } from "../../components/RequestedAmountDetail/Re
 import { FocusDetail } from "../../components/FocusDetail/FocusDetail";
 import { FundingTypeDetail } from "../../components/FundingTypeDetail/FundingTypeDetail";
 
-import { StatusCardIsland, ProposalInfo } from "@/recipes";
+import { StatusCardIsland, ProposalInfoIsland } from "@/recipes";
 
 import {
   Breadcrumb,
@@ -66,7 +66,12 @@ const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
-    <ProposalInfo proposal={proposal} pastProposals={pastProposals}>
+    <ProposalInfoIsland
+      client:only="react"
+      xGovReviewer={registryGlobalState.xgovReviewer}
+      proposal={proposal}
+      pastProposals={pastProposals}
+    >
       <div
         class="flex lg:flex-col items-end justify-between gap-2 text-white lg:-mt-16 mx-4 lg:mx-0 my-4 p-2"
       >
@@ -79,6 +84,6 @@ const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
         registry={registryGlobalState}
         proposal={proposal}
       />
-    </ProposalInfo>
+    </ProposalInfoIsland>
   </Page>
 </Layout>

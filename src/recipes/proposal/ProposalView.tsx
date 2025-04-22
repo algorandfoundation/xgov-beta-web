@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { useTimeLeft } from "@/hooks/useTimeLeft";
 import { Link } from "@/components/Link";
+import { ProposalReviewerCard } from "@/components/ProposalReviewerCard/ProposalReviewerCard";
 
 export interface StatusCardProps {
   className?: string;
@@ -234,7 +235,7 @@ export function StatusCard({
                   isOpen={isFinalizeModalOpen}
                   onClose={() => setIsFinalizeModalOpen(false)}
                   proposalId={proposal.id}
-                  refetchProposal={() => {}}
+                  refetchProposal={() => { }}
                   activeAddress={activeAddress}
                   transactionSigner={transactionSigner}
                 />
@@ -242,8 +243,8 @@ export function StatusCard({
                   isOpen={isDropModalOpen}
                   onClose={() => setIsDropModalOpen(false)}
                   proposalId={proposal.id}
-                  refetchAllProposals={() => {}}
-                  refetchProposal={() => {}}
+                  refetchAllProposals={() => { }}
+                  refetchProposal={() => { }}
                   activeAddress={activeAddress}
                   transactionSigner={transactionSigner}
                 />
@@ -256,12 +257,16 @@ export function StatusCard({
 }
 
 export interface ProposalInfoProps {
+  activeAddress: string | null;
+  xGovReviewer?: string;
   proposal: ProposalMainCardDetails;
   pastProposals?: ProposalBrief[];
   children?: ReactNode;
 }
 
 export function ProposalInfo({
+  activeAddress,
+  xGovReviewer,
   proposal,
   pastProposals,
   children,
@@ -307,7 +312,21 @@ export function ProposalInfo({
         </svg>
       </div>
       <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-6 lg:mx-0 lg:max-w-none lg:grid-cols-2 lg:items-start lg:gap-y-10">
-        <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 pt-6">
+        {
+          xGovReviewer
+          && activeAddress
+          && activeAddress === xGovReviewer
+          && (
+            <div className="lg:col-span-2">
+              <ProposalReviewerCard
+                proposalId={proposal.id}
+                status={proposal.status}
+              />
+            </div>
+          )
+        }
+
+        <div className="lg:col-span-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 pt-6">
           <div className="lg:pr-4">
             <div className="sm:max-w-lg md:max-w-[unset]">
               <p className="text-base/7 text-algo-blue">
@@ -326,7 +345,7 @@ export function ProposalInfo({
         <div className="-mx-6 lg:flex lg:flex-col lg:items-end lg:fixed lg:right-0 lg:pr-14 lg:pt-14">
           {children}
         </div>
-        <div className="lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">
+        <div className="lg:col-span-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">
           <div className="lg:pr-4">
             <div className="max-w-xl text-lg/8 text-algo-black-70 dark:text-algo-black-30 sm:max-w-lg md:max-w-[unset]">
               <p className="mb-8">

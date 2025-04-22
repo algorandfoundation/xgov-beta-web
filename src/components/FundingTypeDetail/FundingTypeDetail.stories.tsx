@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import FundingTypeDetail from './FundingTypeDetail';
-import { ProposalFundingType } from '@/types/proposals';
+import {FundingTypeDetail} from './FundingTypeDetail';
+import { ProposalFundingType } from '@/api/types/proposals';
 
 const meta: Meta<typeof FundingTypeDetail> = {
   title: 'Components/FundingTypeDetail',

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import LoraPillLink from './LoraPillLink';
+import {LoraPillLink} from './LoraPillLink';
 
 const meta: Meta<typeof LoraPillLink> = {
   title: 'Components/LoraPillLink',

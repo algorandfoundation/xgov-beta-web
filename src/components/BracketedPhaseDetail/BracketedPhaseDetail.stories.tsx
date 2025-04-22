@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import BracketedPhaseDetail from './BracketedPhaseDetail';
+import {BracketedPhaseDetail} from './BracketedPhaseDetail';
 
 const meta = {
     title: 'Components/BracketedPhaseDetail',

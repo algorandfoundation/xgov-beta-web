@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import DiscussionLink from './DiscussionLink';
+import {DiscussionLink} from './DiscussionLink';
 
 const meta = {
     title: 'Components/DiscussionLink',

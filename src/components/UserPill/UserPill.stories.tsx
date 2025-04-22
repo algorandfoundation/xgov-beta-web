@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import UserPill from './UserPill';
+import {UserPill} from './UserPill';
 
 // Sample Algorand address
 const sampleAddress = 'ALGO...1234';
