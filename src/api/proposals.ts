@@ -2,7 +2,6 @@
 import type { AppState } from "@algorandfoundation/algokit-utils/types/app";
 import { AppManager } from "@algorandfoundation/algokit-utils/types/app-manager";
 import algosdk, { ABIType, ALGORAND_MIN_TX_FEE, type TransactionSigner } from "algosdk";
-import { CID } from "kubo-rpc-client";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 
 import {
@@ -10,7 +9,6 @@ import {
   ProposalCategory,
   ProposalFocus,
   ProposalFundingType,
-  type ProposalJSON,
   type ProposalMainCardDetails,
   ProposalStatus,
   type ProposalSummaryCardDetails,
@@ -23,10 +21,11 @@ import {
 } from "@/api/algorand";
 
 import { PROPOSAL_FEE } from "@/constants.ts";
-import { ipfsClient } from "@/api/ipfs.ts";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
 
 export const proposalFactory = new ProposalFactory({ algorand });
+
+export const metadataBoxName = new Uint8Array(Buffer.from("M"));
 
 function existsAndValue(appState: AppState, key: string): boolean {
   return key in appState && 'value' in appState[key];
@@ -69,7 +68,6 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
         return {
           id: data.id,
           title: existsAndValue(state, 'title') ? String(state.title.value) : '',
-          cid,
           requestedAmount: existsAndValue(state, 'requested_amount') ? BigInt(state['requested_amount'].value) : 0n,
           proposer,
           fundingType: existsAndValue(state, 'funding_type') ? Number(state['funding_type'].value) as ProposalFundingType : 0,
@@ -130,6 +128,7 @@ export async function getProposal(
   const results = await Promise.allSettled([
     algorand.client.algod.getApplicationByID(Number(id)).do(),
     proposalClient.appClient.getGlobalState(),
+    algorand.app.getBoxValue(id, new Uint8Array(Buffer.from("M"))),
   ])
 
   const data = results[0].status === "fulfilled" ? results[0].value : null;
@@ -142,17 +141,14 @@ export async function getProposal(
     throw new Error("Proposal state not found");
   }
 
-  if (!("valueRaw" in state.cid)) {
-    throw new Error("CID not found");
+  const metadata = results[2].status === "fulfilled" ? results[2].value : null;
+  if (!metadata) {
+    throw new Error("Proposal metadata not found");
   }
 
-  const decodedCID = CID.decode(state.cid.valueRaw)
-  const proposalJSON = await getProposalJSON(decodedCID.toString());
+  console.log("Proposal metadata:", metadata);
 
-  let cid: Uint8Array<ArrayBufferLike> = new Uint8Array();
-  if (state.cid && 'valueRaw' in state.cid) {
-    cid = state.cid.valueRaw;
-  }
+  const proposalMetadata = JSON.parse(Buffer.from(metadata).toString());
 
   let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
   if (state['committee_id'] && 'valueRaw' in state['committee_id']) {
@@ -167,7 +163,6 @@ export async function getProposal(
   return {
     id: data.id,
     title: existsAndValue(state, 'title') ? String(state.title.value) : '',
-    cid,
     requestedAmount: existsAndValue(state, 'requested_amount') ? BigInt(state['requested_amount'].value) : 0n,
     proposer,
     fundingType: existsAndValue(state, 'funding_type') ? Number(state['funding_type'].value) as ProposalFundingType : 0,
@@ -187,20 +182,8 @@ export async function getProposal(
     committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
     votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
     coolDownStartTs: existsAndValue(state, 'cool_down_start_ts') ? BigInt(state['cool_down_start_ts'].value) : 0n,
-    ...proposalJSON
+    ...proposalMetadata
   }
-}
-
-/**
- * Fetches and parses the proposal JSON from a given IPFS content identifier (CID).
- *
- * @param cid - The content identifier (CID) used to fetch the proposal JSON from IPFS.
- * @return A promise that resolves to the parsed ProposalJSON object.
- */
-export async function getProposalJSON(cid: string): Promise<ProposalJSON> {
-  return (await (
-    await fetch(`http://127.0.0.1:8080/ipfs/${cid}`)
-  ).json()) as ProposalJSON;
 }
 
 export async function getVoterBox(id: bigint, address: string): Promise<{ votes: bigint, voted: boolean }> {
@@ -274,27 +257,27 @@ export function getDiscussionDuration(
 
 export function getXGovQuorum(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): number {
   switch (category) {
-      case ProposalCategory.ProposalCategorySmall:
-          return Number(thresholds[0]) / 10;
-      case ProposalCategory.ProposalCategoryMedium:
-          return Number(thresholds[1]) / 10;
-      case ProposalCategory.ProposalCategoryLarge:
-          return Number(thresholds[2]) / 10;
-      default:
-          return 0;
+    case ProposalCategory.ProposalCategorySmall:
+      return Number(thresholds[0]) / 10;
+    case ProposalCategory.ProposalCategoryMedium:
+      return Number(thresholds[1]) / 10;
+    case ProposalCategory.ProposalCategoryLarge:
+      return Number(thresholds[2]) / 10;
+    default:
+      return 0;
   }
 }
 
 export function getVoteQuorum(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): number {
   switch (category) {
-      case ProposalCategory.ProposalCategorySmall:
-          return Number(thresholds[0]) / 10;
-      case ProposalCategory.ProposalCategoryMedium:
-          return Number(thresholds[1]) / 10;
-      case ProposalCategory.ProposalCategoryLarge:
-          return Number(thresholds[2]) / 10;
-      default:
-          return 0;
+    case ProposalCategory.ProposalCategorySmall:
+      return Number(thresholds[0]) / 10;
+    case ProposalCategory.ProposalCategoryMedium:
+      return Number(thresholds[1]) / 10;
+    case ProposalCategory.ProposalCategoryLarge:
+      return Number(thresholds[2]) / 10;
+    default:
+      return 0;
   }
 }
 
@@ -363,21 +346,24 @@ export async function createProposal(
   // instance a new proposal client
   const proposalClient = proposalFactory.getAppClientById({ appId });
 
-  const { cid } = await ipfsClient.add(
-    JSON.stringify(
-      {
-        description: data.description,
-        team: data.team,
-        additionalInfo: data.additionalInfo,
-        openSource: data.openSource,
-        adoptionMetrics: data.adoptionMetrics,
-        forumLink: data.forumLink,
-      },
-      (_, value) =>
-        typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
-    ),
-    { cidVersion: 1 },
-  );
+  const metadata = new Uint8Array(Buffer.from(JSON.stringify(
+    {
+      description: data.description,
+      team: data.team,
+      additionalInfo: data.additionalInfo,
+      openSource: data.openSource,
+      adoptionMetrics: data.adoptionMetrics,
+      forumLink: data.forumLink,
+    },
+    (_, value) =>
+      typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
+  )))
+
+  let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
+  for (let j = 0; j < metadata.length; j += 2042) {
+    const chunk = metadata.slice(j, j + 2042);
+    chunkedMetadata.push(chunk);
+  }
 
   const requestedAmount = AlgoAmount.Algos(
     BigInt(data.requestedAmount),
@@ -389,29 +375,47 @@ export async function createProposal(
 
   console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
   console.log(`Title: ${data.title}\n`);
-  console.log(`Cid: ${cid.toString()}\n`);
   console.log(`Funding Type: ${data.fundingType}\n`);
   console.log(`Requested Amount: ${requestedAmount}\n`);
   console.log(`Focus: ${data.focus}\n\n`);
 
-  await proposalClient.send.submit({
-    sender: address,
-    signer: transactionSigner,
-    args: {
-      payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-        amount: proposalSubmissionFee,
-        from: address,
-        to: proposalClient.appAddress,
-        suggestedParams,
-      }),
-      title: data.title,
-      cid: CID.asCID(cid)!.bytes,
-      fundingType: Number(data.fundingType),
-      requestedAmount,
-      focus: Number(data.focus),
-    },
-    appReferences: [registryClient.appId],
-  });
+  const submitGroup = proposalClient
+    .newGroup()
+    .submit({
+      sender: address,
+      signer: transactionSigner,
+      args: {
+        payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+          amount: proposalSubmissionFee,
+          from: address,
+          to: proposalClient.appAddress,
+          suggestedParams,
+        }),
+        title: data.title,
+        fundingType: Number(data.fundingType),
+        requestedAmount,
+        focus: Number(data.focus),
+      },
+      appReferences: [registryClient.appId],
+    });
+
+  chunkedMetadata.map((chunk, index) => {
+    submitGroup.uploadMetadata({
+      sender: address,
+      signer: transactionSigner,
+      args: {
+        payload: chunk,
+        isFirstInGroup: index === 0,
+      },
+      appReferences: [registryClient.appId],
+      boxReferences: [metadataBoxName]
+    })
+  })
+
+  console.log('metadata.length', metadata.length);
+
+  await submitGroup.send()
+
   console.log("Proposal submitted");
   return appId;
 }
@@ -429,21 +433,24 @@ export async function updateProposal(
     appId: proposal.id,
   });
 
-  const { cid } = await ipfsClient.add(
-    JSON.stringify(
-      {
-        description: data.description,
-        team: data.team,
-        additionalInfo: data.additionalInfo,
-        openSource: data.openSource,
-        adoptionMetrics: data.adoptionMetrics,
-        forumLink: data.forumLink,
-      },
-      (_, value) =>
-        typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
-    ),
-    { cidVersion: 1 },
-  );
+  const metadata = new Uint8Array(Buffer.from(JSON.stringify(
+    {
+      description: data.description,
+      team: data.team,
+      additionalInfo: data.additionalInfo,
+      openSource: data.openSource,
+      adoptionMetrics: data.adoptionMetrics,
+      forumLink: data.forumLink,
+    },
+    (_, value) =>
+      typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
+  )))
+
+  let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
+  for (let j = 0; j < metadata.length; j += 2042) {
+    const chunk = metadata.slice(j, j + 2042);
+    chunkedMetadata.push(chunk);
+  }
 
   const requestedAmount = AlgoAmount.Algos(
     BigInt(data.requestedAmount),
@@ -455,40 +462,55 @@ export async function updateProposal(
 
   console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
   console.log(`Title: ${data.title}\n`);
-  console.log(`Cid: ${cid.toString()}\n`);
   console.log(`Funding Type: ${data.fundingType}\n`);
   console.log(`Requested Amount: ${requestedAmount}\n`);
   console.log(`Focus: ${data.focus}\n\n`);
 
-  await proposalClient
-    .newGroup()
-    .drop({
-      sender: activeAddress,
-      signer: transactionSigner,
-      args: {},
-      appReferences: [registryClient.appId],
-      accountReferences: [activeAddress],
-      extraFee: (1000).microAlgos(),
-    })
-    .submit({
+  const resubmitGroup = proposalClient.newGroup()
+  const metadataOnlyChange = data.title === proposal.title && Number(data.fundingType) === proposal.fundingType && requestedAmount === proposal.requestedAmount && Number(data.focus) === proposal.focus;
+  if (!metadataOnlyChange) {
+    resubmitGroup
+      .drop({
+        sender: activeAddress,
+        signer: transactionSigner,
+        args: {},
+        appReferences: [registryClient.appId],
+        accountReferences: [activeAddress],
+        extraFee: (1000).microAlgos(),
+      })
+      .submit({
+        sender: activeAddress,
+        signer: transactionSigner,
+        args: {
+          payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+            amount: proposalSubmissionFee,
+            from: activeAddress,
+            to: proposalClient.appAddress,
+            suggestedParams,
+          }),
+          title: data.title,
+          fundingType: Number(data.fundingType),
+          requestedAmount,
+          focus: Number(data.focus),
+        },
+        appReferences: [registryClient.appId],
+      })
+  }
+
+  chunkedMetadata.map((chunk, index) => {
+    resubmitGroup.uploadMetadata({
       sender: activeAddress,
       signer: transactionSigner,
       args: {
-        payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-          amount: proposalSubmissionFee,
-          from: activeAddress,
-          to: proposalClient.appAddress,
-          suggestedParams,
-        }),
-        title: data.title,
-        cid: CID.asCID(cid)!.bytes,
-        fundingType: Number(data.fundingType),
-        requestedAmount,
-        focus: Number(data.focus),
+        payload: chunk,
+        isFirstInGroup: index === 0,
       },
       appReferences: [registryClient.appId],
+      boxReferences: [metadataBoxName],
     })
-    .send();
+  })
+
+  await resubmitGroup.send()
 
   return proposal.id;
 }

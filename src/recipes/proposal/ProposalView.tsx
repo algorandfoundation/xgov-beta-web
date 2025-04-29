@@ -17,6 +17,7 @@ import {
   getXGovQuorum,
   getVoteQuorum,
   getVotingDuration,
+  metadataBoxName,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -827,6 +828,7 @@ export function FinalizeModal({
         args: {},
         appReferences: [registryClient.appId],
         accountReferences: [activeAddress],
+        boxReferences: [metadataBoxName],
         extraFee: (1000).microAlgos(),
       });
 

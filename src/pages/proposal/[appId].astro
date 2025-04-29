@@ -38,7 +38,8 @@ if (!appId) {
 
 const registryGlobalState = await getGlobalState();
 
-const proposal = await getProposal(BigInt(appId)).catch(() => {
+const proposal = await getProposal(BigInt(appId)).catch((e) => {
+  console.error(e)
   return null;
 });
 if (!proposal || !registryGlobalState) {

@@ -4,7 +4,6 @@ import { FaTimes } from "react-icons/fa"; // Importing Font Awesome Times icon
 import { UploadJSONButton } from "@/components/UploadJSONButton/UploadJSONButton";
 import type { CommitteeCohort } from "@/api";
 import { registryClient } from "@/api";
-import { cidFromFile, cidStringToUInt8Array } from "@/api";
 
 export function VotingCohort() {
   const [jsonData, setJsonData] = useState<CommitteeCohort | null>(null);
@@ -12,7 +11,6 @@ export function VotingCohort() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [fileCID, setFileCID] = useState<string | null>(null);
   const [committeeDeclared, setCommitteeDeclared] = useState<boolean>(false);
 
   const [votingCohortNumber, setVotingCohortNumber] = useState<number | null>(
@@ -33,29 +31,12 @@ export function VotingCohort() {
     }
   }, [jsonData]);
 
-  useEffect(() => {
-    const calculateCID = async () => {
-      if (file) {
-        try {
-          const cid = await cidFromFile(file);
-          setFileCID(cid.toString());
-        } catch (error) {
-          console.error("Error calculating CID:", error);
-          setErrorMessage("Error calculating CID. Please try again.");
-        }
-      }
-    };
-
-    calculateCID();
-  }, [file]);
-
   const handleClearJsonData = () => {
     setJsonData(null);
     setErrorMessage(null);
     setSuccessMessage(null);
     setFileName(null);
     setFile(null);
-    setFileCID(null);
     setVotingCohortNumber(null);
     setVotingCohortVotePower(null);
     setCommitteeDeclared(false);
@@ -66,14 +47,15 @@ export function VotingCohort() {
       return false;
     }
 
-    if (!fileCID || !votingCohortNumber || !votingCohortVotePower) {
+    if (!votingCohortNumber || !votingCohortVotePower) {
       return false;
     }
 
     try {
-      const votingCohortCID = cidStringToUInt8Array(fileCID);
+      // TODO: complete this with the correct hash of the committee file after getting clarity on how were approaching this
+      const committeeId = new Uint8Array(Buffer.from("voting-cohort"));
       const res = await registryClient.send.declareCommittee({
-        args: [votingCohortCID, votingCohortNumber, votingCohortVotePower],
+        args: [committeeId, votingCohortNumber, votingCohortVotePower],
         sender: activeAddress,
         signer: transactionSigner,
       });
@@ -135,13 +117,6 @@ export function VotingCohort() {
             </button>
           </div>
         )}
-        {fileCID && (
-          <div className="mt-4">
-            <p>
-              <strong>CID V1:</strong> {fileCID}
-            </p>
-          </div>
-        )}
         {votingCohortNumber !== null && (
           <div className="mt-4">
             <p>
@@ -156,7 +131,7 @@ export function VotingCohort() {
             </p>
           </div>
         )}
-        {fileCID && votingCohortNumber && votingCohortVotePower && (
+        {votingCohortNumber && votingCohortVotePower && (
           <button
             onClick={handleDeclareCommitteeCall}
             disabled={committeeDeclared}

@@ -88,27 +88,6 @@ Now the xGov Registry should be in a good state.
 
 Rather than following the (potentially out-of-date) manual flow above, feel free to call the mock-init.ts script.
 
-The script relies on there being an IPFS server.
-The [kubo-rpc-client](https://www.npmjs.com/package/kubo-rpc-client) NPM package has a default URL setting of
-`http://localhost:5001/api/v0` so you will need to setup an IPFS server.
-
-A `docker-compose.yml` file has been created for that purpose.
-
-First, create the following directories in the root of the repository:
-
-```bash
-mkdir ipfs_staging
-mkdir ipfs_data
-```
-
-Then, spin up the docker container:
-
-```bash
-docker-compose up -d
-```
-
-Finally, run the script:
-
 ```bash
 npm run mock-init
 ```
