@@ -1,6 +1,7 @@
 import {
   FocusReverseMap,
   ProposalFundingTypeReverseMap,
+  ProposalStatus,
   ProposalStatusMap,
   ProposalStatusReverseMap,
   type ProposalSummaryCardDetails,
@@ -27,7 +28,10 @@ export const proposalFilter = (
 
   // Exclude proposals with status 0, i.e Empty
   // Happens if a proposer withdraws their proposal
-  if (proposal.status === 0) {
+  if (
+    proposal.status === 0 ||
+    proposal.status === ProposalStatus.ProposalStatusDelete
+  ) {
     return false;
   }
 

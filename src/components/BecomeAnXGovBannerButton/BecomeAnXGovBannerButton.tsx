@@ -9,7 +9,7 @@ export interface BecomeAnXGovBannerButtonProps {
 
 export function BecomeAnXGovBannerButton({
   rings = 10,
-  amplifier = 10,
+  amplifier = 60,
   onClick,
   disabled = false,
 }: BecomeAnXGovBannerButtonProps) {
@@ -26,9 +26,9 @@ export function BecomeAnXGovBannerButton({
             <AlgoShapeIcon10
               key={i}
               style={{
-                height: `${i * amplifier + 10}rem`,
-                width: `${i * amplifier + 10}rem`,
-                translate: `-${i + 1}rem -${i + 1}rem`,
+                height: `${i * amplifier + 60}rem`,
+                width: `${i * amplifier + 60}rem`,
+                translate: `-${i * 10}rem -${i + 10}rem`,
               }}
               className="absolute stroke-white group-hover:stroke-algo-blue dark:stroke-algo-black dark:group-hover:stroke-algo-teal stroke-[2px]"
             />

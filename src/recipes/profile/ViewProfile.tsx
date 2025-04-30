@@ -278,7 +278,7 @@ export function ProfilePage({
         votingAddress={xgov.data?.votingAddress || ""}
         setVotingAddress={setVotingAddress}
         setVotingAddressLoading={setVotingAddressLoading}
-        isXGov={(address === activeAddress && xgov.data?.isXGov) || true}
+        isXGov={(address === activeAddress && xgov.data?.isXGov) || false}
         subscribeXgov={subscribeXgov}
         unsubscribeXgov={unsubscribeXgov}
         subscribeXGovLoading={subscribeXGovLoading}
