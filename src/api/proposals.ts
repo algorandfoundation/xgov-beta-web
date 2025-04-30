@@ -422,7 +422,7 @@ export async function createProposal(
         isFirstInGroup: index === 0,
       },
       appReferences: [registryClient.appId],
-      boxReferences: [metadataBoxName]
+      boxReferences: [metadataBoxName, metadataBoxName]
     })
   })
 
@@ -523,7 +523,7 @@ export async function updateProposal(
         isFirstInGroup: index === 0,
       },
       appReferences: [registryClient.appId],
-      boxReferences: [metadataBoxName],
+      boxReferences: [metadataBoxName, metadataBoxName],
     })
   })
 
