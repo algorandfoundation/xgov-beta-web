@@ -385,7 +385,6 @@ for (let i = 0; i < mockProposals.length; i++) {
             suggestedParams,
           }),
           title: mockProposals[i].title,
-          // cid: CID.asCID(cid)!.bytes,
           fundingType: mockProposals[i].fundingType,
           requestedAmount: mockProposals[i].requestedAmount.algos().microAlgos,
           focus: mockProposals[i].focus,

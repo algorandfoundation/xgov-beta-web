@@ -474,8 +474,8 @@ function VotingStatusCard({
                 {
                   (votesExceeded || errors.approvals?.message || errors.rejections?.message || errors.nulls?.message)
                     ? <FormMessage>
-                        {votesExceeded ? votesExceededMessage : ""}
-                        {errors.approvals?.message || errors.rejections?.message || errors.nulls?.message}
+                      {votesExceeded ? votesExceededMessage : ""}
+                      {errors.approvals?.message || errors.rejections?.message || errors.nulls?.message}
                     </FormMessage>
                     : <p className="text-[0.8rem] font-medium">{usedFormVotes}/{voterInfo.votes.toString()} Votes used</p>
                 }
@@ -912,19 +912,100 @@ export function DropModal({
         appId: proposalId,
       });
 
-      const res = await proposalClient.send.drop({
-        sender: activeAddress,
-        signer: transactionSigner,
-        args: {},
-        appReferences: [registryClient.appId],
-        accountReferences: [activeAddress],
-        extraFee: (1000).microAlgos(),
-      });
+      const res = await proposalClient
+        .newGroup()
+        .uploadMetadata({
+          sender: activeAddress,
+          signer: transactionSigner,
+          args: {
+            payload: new Uint8Array(Buffer.from("M")),
+            isFirstInGroup: true
+          },
+          appReferences: [registryClient.appId],
+          boxReferences: [
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+          ]
+        })
+        .uploadMetadata({
+          sender: activeAddress,
+          signer: transactionSigner,
+          args: {
+            payload: new Uint8Array(Buffer.from("M")),
+            isFirstInGroup: false
+          },
+          appReferences: [registryClient.appId],
+          boxReferences: [
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+          ],
+        })
+        .uploadMetadata({
+          sender: activeAddress,
+          signer: transactionSigner,
+          args: {
+            payload: new Uint8Array(Buffer.from("M")),
+            isFirstInGroup: false
+          },
+          appReferences: [registryClient.appId],
+          boxReferences: [
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+          ],
+          note: '1'
+        })
+        .uploadMetadata({
+          sender: activeAddress,
+          signer: transactionSigner,
+          args: {
+            payload: new Uint8Array(Buffer.from("M")),
+            isFirstInGroup: false
+          },
+          appReferences: [registryClient.appId],
+          boxReferences: [
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+          ],
+          note: '2'
+        })
+        .drop({
+          sender: activeAddress,
+          signer: transactionSigner,
+          args: {},
+          appReferences: [registryClient.appId],
+          accountReferences: [activeAddress],
+          boxReferences: [
+            new Uint8Array(Buffer.from("M")),
+            new Uint8Array(Buffer.from("M")),
+          ],
+          extraFee: (1000).microAlgos(),
+        })
+        .send()
 
       if (
-        res.confirmation.confirmedRound !== undefined &&
-        res.confirmation.confirmedRound > 0 &&
-        res.confirmation.poolError === ""
+        res.confirmations[4].confirmedRound !== undefined &&
+        res.confirmations[4].confirmedRound > 0 &&
+        res.confirmations[4].poolError === ""
       ) {
         console.log("Transaction confirmed");
         setErrorMessage(null);
