@@ -25,7 +25,6 @@ import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
 
 export const proposalFactory = new ProposalFactory({ algorand });
 
-export const metadataBoxName = new Uint8Array(Buffer.from("M"));
 
 function existsAndValue(appState: AppState, key: string): boolean {
   return key in appState && 'value' in appState[key];
@@ -148,7 +147,12 @@ export async function getProposal(
 
   console.log("Proposal metadata:", metadata);
 
-  const proposalMetadata = JSON.parse(Buffer.from(metadata).toString());
+  let proposalMetadata;
+  try {
+    proposalMetadata = JSON.parse(Buffer.from(metadata).toString());
+  } catch (e: any) {
+    throw new Error("Failed to parse proposal metadata: " + e);
+  }
 
   let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
   if (state['committee_id'] && 'valueRaw' in state['committee_id']) {
@@ -282,7 +286,16 @@ export function getVoteQuorum(category: ProposalCategory, thresholds: [bigint, b
 }
 
 export function getVotingDuration(category: ProposalCategory, durations: [bigint, bigint, bigint, bigint]): number {
-  return 0
+  switch (category) {
+    case ProposalCategory.ProposalCategorySmall:
+      return Number(durations[0]);
+    case ProposalCategory.ProposalCategoryMedium:
+      return Number(durations[1]);
+    case ProposalCategory.ProposalCategoryLarge:
+      return Number(durations[2]);
+    default:
+      return 0;
+  }
 }
 
 export type SubmitProps = {
@@ -310,6 +323,7 @@ export async function createProposal(
   const proposerBoxName = new Uint8Array(
     Buffer.concat([Buffer.from("p"), addr]),
   );
+  const metadataBoxName = new Uint8Array(Buffer.from("M"));
 
   const suggestedParams = await algorand.getSuggestedParams();
 
@@ -427,6 +441,7 @@ export async function updateProposal(
   proposal: ProposalSummaryCardDetails,
 ) {
   const suggestedParams = await algorand.getSuggestedParams();
+  const metadataBoxName = new Uint8Array(Buffer.from("M"))
 
   // instance a new proposal client
   const proposalClient = proposalFactory.getAppClientById({
@@ -467,34 +482,36 @@ export async function updateProposal(
   console.log(`Focus: ${data.focus}\n\n`);
 
   const resubmitGroup = proposalClient.newGroup()
+  
   const metadataOnlyChange = data.title === proposal.title && Number(data.fundingType) === proposal.fundingType && requestedAmount === proposal.requestedAmount && Number(data.focus) === proposal.focus;
   if (!metadataOnlyChange) {
-    resubmitGroup
-      .drop({
-        sender: activeAddress,
-        signer: transactionSigner,
-        args: {},
-        appReferences: [registryClient.appId],
-        accountReferences: [activeAddress],
-        extraFee: (1000).microAlgos(),
-      })
-      .submit({
-        sender: activeAddress,
-        signer: transactionSigner,
-        args: {
-          payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-            amount: proposalSubmissionFee,
-            from: activeAddress,
-            to: proposalClient.appAddress,
-            suggestedParams,
-          }),
-          title: data.title,
-          fundingType: Number(data.fundingType),
-          requestedAmount,
-          focus: Number(data.focus),
-        },
-        appReferences: [registryClient.appId],
-      })
+    alert("These changes will require a resubmission of the proposal. Coming soon.");
+    // resubmitGroup
+    //   .drop({
+    //     sender: activeAddress,
+    //     signer: transactionSigner,
+    //     args: {},
+    //     appReferences: [registryClient.appId],
+    //     accountReferences: [activeAddress],
+    //     extraFee: (1000).microAlgos(),
+    //   })
+    //   .submit({
+    //     sender: activeAddress,
+    //     signer: transactionSigner,
+    //     args: {
+    //       payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    //         amount: proposalSubmissionFee,
+    //         from: activeAddress,
+    //         to: proposalClient.appAddress,
+    //         suggestedParams,
+    //       }),
+    //       title: data.title,
+    //       fundingType: Number(data.fundingType),
+    //       requestedAmount,
+    //       focus: Number(data.focus),
+    //     },
+    //     appReferences: [registryClient.appId],
+    //   })
   }
 
   chunkedMetadata.map((chunk, index) => {

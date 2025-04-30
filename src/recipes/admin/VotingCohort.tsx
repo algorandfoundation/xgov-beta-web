@@ -4,6 +4,7 @@ import { FaTimes } from "react-icons/fa"; // Importing Font Awesome Times icon
 import { UploadJSONButton } from "@/components/UploadJSONButton/UploadJSONButton";
 import type { CommitteeCohort } from "@/api";
 import { registryClient } from "@/api";
+import * as crypto from 'crypto';
 
 export function VotingCohort() {
   const [jsonData, setJsonData] = useState<CommitteeCohort | null>(null);
@@ -45,15 +46,23 @@ export function VotingCohort() {
   const handleDeclareCommitteeCall = async () => {
     if (!activeAddress || !registryClient) {
       return false;
-    }
+    } 
 
     if (!votingCohortNumber || !votingCohortVotePower) {
       return false;
     }
 
+    if (!file) {
+      return false;
+    }
+
     try {
-      // TODO: complete this with the correct hash of the committee file after getting clarity on how were approaching this
-      const committeeId = new Uint8Array(Buffer.from("voting-cohort"));
+      const contents = await file.text();
+      const fileHash = crypto.createHash('sha512-256').update(contents).digest();
+      const concatenated = Buffer.concat([Buffer.from('arc0034'), fileHash]);
+      const committeeId = new Uint8Array(
+        crypto.createHash('sha512-256').update(concatenated).digest()
+      );
       const res = await registryClient.send.declareCommittee({
         args: [committeeId, votingCohortNumber, votingCohortVotePower],
         sender: activeAddress,

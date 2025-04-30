@@ -17,7 +17,6 @@ import {
   getXGovQuorum,
   getVoteQuorum,
   getVotingDuration,
-  metadataBoxName,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -334,7 +333,7 @@ function VotingStatusCard({
     mode: "onChange",
   });
   const { errors } = form.formState;
-  console.log('errors', errors);
+
   const usedFormVotes = form.watch("approvals") + form.watch("rejections") + form.watch("nulls");
 
   const voteProposal = async (approvals: number, rejections: number) => {
@@ -828,7 +827,7 @@ export function FinalizeModal({
         args: {},
         appReferences: [registryClient.appId],
         accountReferences: [activeAddress],
-        boxReferences: [metadataBoxName],
+        boxReferences: [new Uint8Array(Buffer.from("M"))],
         extraFee: (1000).microAlgos(),
       });
 
