@@ -374,8 +374,8 @@ export async function createProposal(
   )))
 
   let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
-  for (let j = 0; j < metadata.length; j += 2042) {
-    const chunk = metadata.slice(j, j + 2042);
+  for (let j = 0; j < metadata.length; j += 2041) {
+    const chunk = metadata.slice(j, j + 2041);
     chunkedMetadata.push(chunk);
   }
 
@@ -462,8 +462,8 @@ export async function updateProposal(
   )))
 
   let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
-  for (let j = 0; j < metadata.length; j += 2042) {
-    const chunk = metadata.slice(j, j + 2042);
+  for (let j = 0; j < metadata.length; j += 2041) {
+    const chunk = metadata.slice(j, j + 2041);
     chunkedMetadata.push(chunk);
   }
 
