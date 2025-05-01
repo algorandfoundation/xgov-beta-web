@@ -3,11 +3,8 @@ import algosdk, { ALGORAND_MIN_TX_FEE } from "algosdk";
 import { XGovRegistryFactory } from "@algorandfoundation/xgov/registry";
 import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 import { algorand } from "@/api/algorand";
-import { create } from "kubo-rpc-client";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { ProposalStatus as PS } from "@/api/types";
-import { CID } from "multiformats";
-
 import { mockProposals } from "./__fixtures__/proposals";
 import {
   COOL_DOWN_DURATION,
@@ -81,7 +78,6 @@ export async function timeWarp(to: number) {
   await algorand.client.algod.setBlockOffsetTimestamp(0).do();
 }
 
-const ipfsClient = create();
 // Generate admin account (the one that creates the registry)
 const fundAmount = (10).algo();
 const adminAccount = await algorand.account.fromKmd(
@@ -238,7 +234,7 @@ await registryClient.send.declareCommittee({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: {
-    cid: new Uint8Array(Buffer.from('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')),
+    committeeId: new Uint8Array(Buffer.from('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')),
     size: committeeMembers.length,
     votes: committeeVotesSum,
   },
@@ -258,6 +254,8 @@ const suggestedParams = await algorand.getSuggestedParams();
 const oneYearFromNow = (await getLatestTimestamp()) + 365 * 24 * 60 * 60;
 
 const proposalFactory = new ProposalFactory({ algorand });
+
+const metadataBoxName = new Uint8Array(Buffer.from("M"))
 
 for (let i = 0; i < mockProposals.length; i++) {
   let account: TransactionSignerAccount & { account: algosdk.Account };
@@ -347,13 +345,16 @@ for (let i = 0; i < mockProposals.length; i++) {
     appId: result.return,
   });
 
-  const { cid } = await ipfsClient.add(
-    JSON.stringify(
-      mockProposals[i].proposalJson,
-      (_, value) => (typeof value === "bigint" ? value.toString() : value), // return everything else unchanged
-    ),
-    { cidVersion: 1 },
-  );
+  const metadata = new Uint8Array(Buffer.from(JSON.stringify(
+    mockProposals[i].proposalJson,
+    (_, value) => (typeof value === "bigint" ? value.toString() : value), // return everything else unchanged
+  )));
+
+  let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
+  for (let j = 0; j < metadata.length; j += 2041) {
+    const chunk = metadata.slice(j, j + 2041);
+    chunkedMetadata.push(chunk);
+  }
 
   const proposalSubmissionFee = Math.trunc(
     Number(
@@ -364,7 +365,6 @@ for (let i = 0; i < mockProposals.length; i++) {
 
   console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
   console.log(`Title: ${mockProposals[i].title}\n`);
-  console.log(`Cid: ${cid.toString()}\n`);
   console.log(`Funding Type: ${mockProposals[i].fundingType}\n`);
   console.log(
     `Requested Amount: ${mockProposals[i].requestedAmount.algos().microAlgos}\n`,
@@ -372,24 +372,40 @@ for (let i = 0; i < mockProposals.length; i++) {
   console.log(`Focus: ${mockProposals[i].focus}\n\n`);
 
   try {
-    await proposalClient.send.submit({
-      sender: account.addr,
-      signer: account.signer,
-      args: {
-        payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-          amount: proposalSubmissionFee,
-          from: account.addr,
-          to: proposalClient.appAddress,
-          suggestedParams,
-        }),
-        title: mockProposals[i].title,
-        cid: CID.asCID(cid)!.bytes,
-        fundingType: mockProposals[i].fundingType,
-        requestedAmount: mockProposals[i].requestedAmount.algos().microAlgos,
-        focus: mockProposals[i].focus,
-      },
-      appReferences: [registryClient.appId],
-    });
+    const submitGroup = proposalClient
+      .newGroup()
+      .submit({
+        sender: account.addr,
+        signer: account.signer,
+        args: {
+          payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+            amount: proposalSubmissionFee,
+            from: account.addr,
+            to: proposalClient.appAddress,
+            suggestedParams,
+          }),
+          title: mockProposals[i].title,
+          fundingType: mockProposals[i].fundingType,
+          requestedAmount: mockProposals[i].requestedAmount.algos().microAlgos,
+          focus: mockProposals[i].focus,
+        },
+        appReferences: [registryClient.appId],
+      })
+
+    chunkedMetadata.map((chunk, index) => {
+      submitGroup.uploadMetadata({
+        sender: account.addr,
+        signer: account.signer,
+        args: {
+          payload: chunk,
+          isFirstInGroup: index === 0,
+        },
+        appReferences: [registryClient.appId],
+        boxReferences: [metadataBoxName, metadataBoxName]
+      });
+    })
+
+    await submitGroup.send()
   } catch (e) {
     console.log(e);
 
@@ -415,6 +431,7 @@ for (let i = 1; i < mockProposals.length; i++) {
     args: {},
     appReferences: [registryClient.appId],
     accountReferences: [adminAccount.addr],
+    boxReferences: [metadataBoxName],
     extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
   });
 }
