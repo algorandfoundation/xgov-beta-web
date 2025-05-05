@@ -318,7 +318,7 @@ function VotingStatusCard({
     approvals: z.number().min(0, { message: "Must be a positive number" }),
     rejections: z.number().min(0, { message: "Must be a positive number" }),
     nulls: z.number().min(0, { message: "Must be a positive number" }),
-  }).superRefine((data, ctx) => {
+  }).superRefine((data) => {
     const totalVotes = data.approvals + data.rejections + data.nulls;
     setVotesExceeded(totalVotes > Number(voterInfo?.votes));
   });

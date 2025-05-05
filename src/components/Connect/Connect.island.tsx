@@ -1,4 +1,3 @@
-import React from "react";
 import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
 

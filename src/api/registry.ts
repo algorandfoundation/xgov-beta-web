@@ -151,13 +151,14 @@ export async function getAllSubscribedXGovs(): Promise<string[]> {
 export async function signup(
   address: string,
   transactionSigner: TransactionSigner,
+  amount: bigint,
 ) {
   const suggestedParams = await algorand.getSuggestedParams();
 
   const payment = makePaymentTxnWithSuggestedParamsFromObject({
     from: address,
     to: algosdk.getApplicationAddress(RegistryAppID),
-    amount: 10_000_000,
+    amount,
     suggestedParams,
   });
 

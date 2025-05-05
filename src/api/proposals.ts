@@ -37,7 +37,7 @@ function existsAndValue(appState: AppState, key: string): boolean {
  * decodes the global state of each application, and returns an array of proposal summary details.
  *
  * @return A promise that resolves to an array of objects containing
- *         summarized details of each proposal, including id, title, CID, requested amount, proposer address,
+ *         summarized details of each proposal, including id, title, requested amount, proposer address,
  *         funding type, status, focus, category, and submission time.
  */
 export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
@@ -48,11 +48,6 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
     return await Promise.all(response['created-apps'].map(async (data: any): Promise<ProposalSummaryCardDetails> => {
       try {
         const state = AppManager.decodeAppState(data.params['global-state']);
-
-        let cid: Uint8Array<ArrayBufferLike> = new Uint8Array();
-        if (state.cid && 'valueRaw' in state.cid) {
-          cid = state.cid.valueRaw;
-        }
 
         let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
         if (state['committee_id'] && 'valueRaw' in state['committee_id']) {
@@ -298,20 +293,6 @@ export function getVotingDuration(category: ProposalCategory, durations: [bigint
   }
 }
 
-export type SubmitProps = {
-  appId: bigint;
-  cid: Uint8Array;
-  data: {
-    title: string;
-    fundingType: ProposalFundingType;
-    requestedAmount: bigint | number;
-    focus: ProposalFocus;
-  };
-  submissionFee: bigint | number;
-  address: string;
-  transactionSigner: TransactionSigner;
-};
-
 export async function createProposal(
   address: string,
   data: any,
@@ -440,7 +421,7 @@ export async function updateProposal(
   transactionSigner: TransactionSigner,
   proposal: ProposalSummaryCardDetails,
 ) {
-  const suggestedParams = await algorand.getSuggestedParams();
+  // const suggestedParams = await algorand.getSuggestedParams();
   const metadataBoxName = new Uint8Array(Buffer.from("M"))
 
   // instance a new proposal client

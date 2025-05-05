@@ -7,7 +7,6 @@ import { BecomeAnXGovBannerButton } from "../BecomeAnXGovBannerButton/BecomeAnXG
 import XGovStatusPill from "../XGovStatusPill/XGovStatusPill";
 
 export interface ProfileCardProps {
-  activeAddress: string;
   votingAddress: string;
   setVotingAddress: (votingAddress: string) => void;
   setVotingAddressLoading: boolean;
@@ -22,7 +21,6 @@ export interface ProfileCardProps {
 }
 
 export function ProfileCard({
-  activeAddress,
   votingAddress,
   setVotingAddress,
   setVotingAddressLoading,

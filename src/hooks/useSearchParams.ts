@@ -25,7 +25,7 @@ export function useSearchParamsObserver(
   }, [callback]);
 }
 
-export function useSearchParams(options?: { replace?: boolean }) {
+export function useSearchParams() {
   const [params, setParams] = useState<URLSearchParams>(
     () =>
       new URLSearchParams(
