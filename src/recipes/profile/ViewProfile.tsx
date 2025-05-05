@@ -259,10 +259,10 @@ export function ProfilePage({
     setSubscribeXGovLoading(false);
   };
 
-  const subscribeProposer = async () => {
+  const subscribeProposer = async (amount: bigint) => {
     setSubscribeProposerLoading(true);
 
-    await signup(activeAddress, transactionSigner).catch((e: Error) => {
+    await signup(activeAddress, transactionSigner, amount).catch((e: Error) => {
       console.error(`Error calling the contract: ${e.message}`);
       setSubscribeProposerLoading(false);
       return;
@@ -271,6 +271,7 @@ export function ProfilePage({
     await proposer.refetch();
     setSubscribeProposerLoading(false);
   };
+
   return (
     <>
       <ProfileCard
@@ -283,7 +284,7 @@ export function ProfilePage({
         unsubscribeXgov={unsubscribeXgov}
         subscribeXGovLoading={subscribeXGovLoading}
         proposer={proposer.data}
-        subscribeProposer={subscribeProposer}
+        subscribeProposer={() => subscribeProposer(registry.data?.proposerFee!)}
         subscribeProposerLoading={subscribeProposerLoading}
         className="mt-6"
       />
