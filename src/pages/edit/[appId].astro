@@ -16,8 +16,6 @@ if (typeof appId !== "string") {
   return Astro.redirect("/");
 }
 
-const registryGlobalState = await getGlobalState();
-
 const proposal = await getProposal(BigInt(appId)).catch(() => {
   return null;
 });

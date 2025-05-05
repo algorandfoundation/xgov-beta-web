@@ -7,7 +7,7 @@ import { ConnectIsland } from "@/components/Connect/Connect.island.tsx";
 import { signup } from "@/api/registry.ts";
 import { UseQuery } from "@/hooks/useQuery.tsx";
 import { UseWallet } from "@/hooks/useWallet.tsx";
-import { useProposer } from "@/hooks/useRegistry.ts";
+import { useProposer, useRegistry } from "@/hooks/useRegistry.ts";
 
 /**
  * SignupIsland is a function component that sets up the signup process within the application.
@@ -37,16 +37,15 @@ export function SignupIsland() {
 export function SignupController() {
   const [error, setError] = useState<string | null>(null);
   const { activeAddress, transactionSigner } = useWallet();
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch,
-    error: qError,
-  } = useProposer(activeAddress);
+  const registry = useRegistry();
+  const proposer = useProposer(activeAddress);
+
+  const isError = registry.isError || proposer.isError;
+  const qError = registry.error || proposer.error;
+  const isLoading = registry.isLoading || proposer.isLoading;
 
   if (error || isError) {
-    return <p>{isError ? qError.message : error}</p>;
+    return <p>{isError ? qError!.message : error}</p>;
   }
 
   if (isLoading) {
@@ -64,10 +63,10 @@ export function SignupController() {
 
   return (
     <Signup
-      isRegistered={data?.isProposer || false}
+      isRegistered={proposer.data?.isProposer || false}
       onSignup={() =>
-        signup(activeAddress as string, transactionSigner)
-          .then(() => refetch())
+        signup(activeAddress as string, transactionSigner, registry?.data?.proposerFee!)
+          .then(() => proposer.refetch())
           .catch((e) => setError(e.message))
       }
     />

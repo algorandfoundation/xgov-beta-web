@@ -69,26 +69,26 @@ export function ProfilePageController({ address }: { address: string }) {
     proposer.isError ||
     proposalsData.isError;
 
-  const [subscribeXGovLoading, setSubscribeXGovLoading] =
-    useState<boolean>(false);
-  const [setVotingAddressLoading, setSetVotingAddressLoading] =
-    useState<boolean>(false);
-  const [subscribeProposerLoading, setSubscribeProposerLoading] =
-    useState<boolean>(false);
+  // const [subscribeXGovLoading, setSubscribeXGovLoading] =
+  //   useState<boolean>(false);
+  // const [setVotingAddressLoading, setSetVotingAddressLoading] =
+  //   useState<boolean>(false);
+  // const [subscribeProposerLoading, setSubscribeProposerLoading] =
+  //   useState<boolean>(false);
 
-  const validProposer =
-    (proposer?.data &&
-      proposer.data.kycStatus &&
-      proposer.data.kycExpiring > Date.now() / 1000) ||
-    false;
+  // const validProposer =
+  //   (proposer?.data &&
+  //     proposer.data.kycStatus &&
+  //     proposer.data.kycExpiring > Date.now() / 1000) ||
+  //   false;
 
-  const hasCurrentProposal = proposalsData.data?.some((proposal) =>
-    activeStatuses.includes(proposal.status),
-  );
+  // const hasCurrentProposal = proposalsData.data?.some((proposal) =>
+  //   activeStatuses.includes(proposal.status),
+  // );
 
-  const proposals = proposalsData.data?.filter(
-    (proposal) => proposal.status !== ProposalStatus.ProposalStatusEmpty,
-  );
+  // const proposals = proposalsData.data?.filter(
+  //   (proposal) => proposal.status !== ProposalStatus.ProposalStatusEmpty,
+  // );
 
   if (!address || !activeAddress || isLoading) {
     return <LoadingSpinner />;
@@ -275,7 +275,6 @@ export function ProfilePage({
   return (
     <>
       <ProfileCard
-        activeAddress={activeAddress!}
         votingAddress={xgov.data?.votingAddress || ""}
         setVotingAddress={setVotingAddress}
         setVotingAddressLoading={setVotingAddressLoading}
