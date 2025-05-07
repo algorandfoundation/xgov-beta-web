@@ -30,15 +30,18 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { proposalFormSchema } from "@/recipes/proposal/form/ProposalForm.schema.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 
 export function ProposalForm({
   type,
   onSubmit,
   proposal,
+  createProposalPending,
 }: {
   type: "edit" | "create";
   proposal?: ProposalMainCardDetails;
   onSubmit: (data: z.infer<typeof proposalFormSchema>) => void;
+  createProposalPending: boolean;
 }) {
   const form = useForm<z.infer<typeof proposalFormSchema>>({
     resolver: zodResolver(proposalFormSchema),
@@ -497,8 +500,14 @@ export function ProposalForm({
           />
 
           <div className="flex items-center justify-end">
-            <Button type="submit">
-              {type === "edit" ? "Save as Draft" : "Save"}
+            <Button type="submit" disabled={createProposalPending}>
+              {
+                createProposalPending ? (
+                  <div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>
+                ) : type === "edit"
+                  ? "Save as Draft"
+                  : "Save"
+              }
             </Button>
           </div>
         </form>

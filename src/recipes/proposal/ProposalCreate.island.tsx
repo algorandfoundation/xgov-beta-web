@@ -1,8 +1,8 @@
-import { useProposalsByProposer, UseQuery, UseWallet } from "@/hooks";
+import { useProposalsByProposer, UseQuery, useRegistry, UseWallet } from "@/hooks";
 import { ProposalForm, proposalFormSchema } from "@/recipes";
 import { createProposal, ProposalStatus } from "@/api";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { z } from "zod";
 export function ProposalCreateIsland() {
@@ -23,7 +23,9 @@ const activeProposalTypes = [
 
 export function ProposalCreate() {
   const { activeAddress, transactionSigner } = useWallet();
+  const registry = useRegistry();
   const proposalsData = useProposalsByProposer(activeAddress);
+  const [createProposalPending, setCreateProposalPending] = useState(false);
 
   const emptyProposals =
     !!proposalsData.data &&
@@ -55,12 +57,20 @@ export function ProposalCreate() {
           console.error("No active address");
           return;
         }
+
+        if (!registry.data?.proposalCommitmentBps) {
+          console.error("No proposal commitment bps");
+          return;
+        }
+
         try {
           const appId = await createProposal(
             activeAddress,
             data,
             transactionSigner,
             emptyProposal,
+            registry.data?.proposalCommitmentBps,
+            setCreateProposalPending
           );
           navigate(`/proposal/${appId}`);
         } catch (e) {
@@ -68,6 +78,7 @@ export function ProposalCreate() {
           console.error("Failed to create proposal");
         }
       }}
+      createProposalPending={createProposalPending}
     />
   );
 }

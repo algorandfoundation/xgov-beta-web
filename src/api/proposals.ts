@@ -298,7 +298,10 @@ export async function createProposal(
   data: any,
   transactionSigner: TransactionSigner,
   emptyProposal: ProposalSummaryCardDetails | null,
+  bps: bigint,
+  setCreateProposalPending: (pending: boolean) => void, 
 ) {
+  setCreateProposalPending(true);
   const proposalFee = PROPOSAL_FEE.microAlgo();
   const addr = algosdk.decodeAddress(address).publicKey;
   const proposerBoxName = new Uint8Array(
@@ -329,6 +332,7 @@ export async function createProposal(
     // Store proposal ID if available
     if (!result.return) {
       console.error("Proposal creation failed");
+      setCreateProposalPending(false);
       return;
     }
 
@@ -365,7 +369,7 @@ export async function createProposal(
   ).microAlgos;
 
   const proposalSubmissionFee = Math.trunc(
-    Number((requestedAmount * BigInt(1_000)) / BigInt(10_000)),
+    Number((requestedAmount * bps) / BigInt(10_000)),
   );
 
   console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
@@ -412,6 +416,7 @@ export async function createProposal(
   await submitGroup.send()
 
   console.log("Proposal submitted");
+  setCreateProposalPending(false);
   return appId;
 }
 
