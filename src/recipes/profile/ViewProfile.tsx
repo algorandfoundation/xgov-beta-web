@@ -144,9 +144,9 @@ export function ProfilePage({
       proposer.data.kycExpiring > Date.now() / 1000) ||
     false;
 
-  const hasCurrentProposal = proposalsData.data?.some((proposal) =>
-    activeStatuses.includes(proposal.status),
-  );
+  // const hasCurrentProposal = proposalsData.data?.some((proposal) =>
+  //   activeStatuses.includes(proposal.status),
+  // );
 
   const proposals = proposalsData.data?.filter(
     (proposal) => proposal.status !== ProposalStatus.ProposalStatusEmpty,
@@ -163,12 +163,18 @@ export function ProfilePage({
   const subscribeXgov = async () => {
     setSubscribeXGovLoading(true);
 
+    if (!registry.data?.xgovFee) {
+      console.error("xgovFee is not set");
+      setSubscribeXGovLoading(false);
+      return;
+    }
+
     const suggestedParams = await algorand.getSuggestedParams();
 
     const payment = makePaymentTxnWithSuggestedParamsFromObject({
       from: activeAddress,
       to: algosdk.getApplicationAddress(RegistryAppID),
-      amount: 1_000_000,
+      amount: registry.data?.xgovFee,
       suggestedParams,
     });
 
