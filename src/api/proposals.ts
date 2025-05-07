@@ -22,6 +22,7 @@ import {
 
 import { PROPOSAL_FEE } from "@/constants.ts";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
+import { set } from "astro:schema";
 
 export const proposalFactory = new ProposalFactory({ algorand });
 
@@ -425,7 +426,10 @@ export async function updateProposal(
   data: any,
   transactionSigner: TransactionSigner,
   proposal: ProposalSummaryCardDetails,
+  bps: bigint,
+  setCreateProposalPending: (pending: boolean) => void,
 ) {
+  setCreateProposalPending(true);
   // const suggestedParams = await algorand.getSuggestedParams();
   const metadataBoxName = new Uint8Array(Buffer.from("M"))
 
@@ -458,7 +462,7 @@ export async function updateProposal(
   ).microAlgos;
 
   const proposalSubmissionFee = Math.trunc(
-    Number((requestedAmount * BigInt(1_000)) / BigInt(10_000)),
+    Number((requestedAmount * bps) / BigInt(10_000)),
   );
 
   console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
@@ -472,6 +476,8 @@ export async function updateProposal(
   const metadataOnlyChange = data.title === proposal.title && Number(data.fundingType) === proposal.fundingType && requestedAmount === proposal.requestedAmount && Number(data.focus) === proposal.focus;
   if (!metadataOnlyChange) {
     alert("These changes will require a resubmission of the proposal. Coming soon.");
+    setCreateProposalPending(false);
+    return
     // resubmitGroup
     //   .drop({
     //     sender: activeAddress,
@@ -514,6 +520,9 @@ export async function updateProposal(
   })
 
   await resubmitGroup.send()
+
+  console.log("Proposal updated");
+  setCreateProposalPending(false);
 
   return proposal.id;
 }

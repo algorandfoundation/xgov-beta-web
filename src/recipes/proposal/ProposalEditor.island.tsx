@@ -4,7 +4,8 @@ import { z } from "zod";
 
 import { updateProposal, type ProposalMainCardDetails } from "@/api";
 import { proposalFormSchema, ProposalForm } from "@/recipes";
-import { UseWallet } from "@/hooks";
+import { useRegistry, UseWallet } from "@/hooks";
+import { useState } from "react";
 
 export type EditProposalProps = {
   proposal?: ProposalMainCardDetails;
@@ -23,6 +24,9 @@ export function EditProposalForm({
   proposal?: ProposalMainCardDetails;
 }) {
   const { activeAddress, transactionSigner } = useWallet();
+  const registry = useRegistry();
+  const [createProposalPending, setCreateProposalPending] = useState(false);
+
   return (
     <ProposalForm
       type="edit"
@@ -38,14 +42,27 @@ export function EditProposalForm({
           return;
         }
 
+        if (!registry.data?.proposalCommitmentBps) {
+          console.error("No proposal commitment bps");
+          return;
+        }
+
         try{
-          await updateProposal(activeAddress, data, transactionSigner, proposal)
+          await updateProposal(
+            activeAddress,
+            data,
+            transactionSigner,
+            proposal,
+            registry.data?.proposalCommitmentBps,
+            setCreateProposalPending
+          );
           navigate(`/proposal/${proposal.id}`);
         } catch (e) {
           console.error(e);
           console.error("Failed to update proposal");
         }
       }}
+      createProposalPending={createProposalPending}
     />
   );
 }
