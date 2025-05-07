@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { updateProposal, type ProposalMainCardDetails } from "@/api";
 import { proposalFormSchema, ProposalForm } from "@/recipes";
-import { useRegistry, UseWallet } from "@/hooks";
+import { UseQuery, useRegistry, UseWallet } from "@/hooks";
 import { useState } from "react";
 
 export type EditProposalProps = {
@@ -13,7 +13,9 @@ export type EditProposalProps = {
 export function EditProposalIsland({ proposal }: EditProposalProps) {
   return (
     <UseWallet>
+      <UseQuery>
       <EditProposalForm proposal={proposal} />
+      </UseQuery>
     </UseWallet>
   );
 }
