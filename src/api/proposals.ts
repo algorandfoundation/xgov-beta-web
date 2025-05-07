@@ -22,7 +22,6 @@ import {
 
 import { PROPOSAL_FEE } from "@/constants.ts";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
-import { set } from "astro:schema";
 
 export const proposalFactory = new ProposalFactory({ algorand });
 

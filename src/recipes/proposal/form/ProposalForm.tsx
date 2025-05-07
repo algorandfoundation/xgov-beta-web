@@ -30,7 +30,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { proposalFormSchema } from "@/recipes/proposal/form/ProposalForm.schema.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 
 export function ProposalForm({
   type,

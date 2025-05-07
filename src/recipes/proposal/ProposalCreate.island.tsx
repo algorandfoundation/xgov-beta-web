@@ -5,6 +5,7 @@ import { useWallet } from "@txnlab/use-wallet-react";
 import { useEffect, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { z } from "zod";
+
 export function ProposalCreateIsland() {
   return (
     <UseQuery>
