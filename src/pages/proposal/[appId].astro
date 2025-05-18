@@ -38,7 +38,8 @@ if (!appId) {
 
 const registryGlobalState = await getGlobalState();
 
-const proposal = await getProposal(BigInt(appId)).catch(() => {
+const proposal = await getProposal(BigInt(appId)).catch((e) => {
+  console.error(e)
   return null;
 });
 if (!proposal || !registryGlobalState) {
@@ -51,7 +52,11 @@ const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
 
 <Layout title={proposal.title} description={proposal.description}>
   <Page>
-    <ReviewerCardIsland slot="sidebar" client:load proposal={proposal} />
+    <ReviewerCardIsland
+      slot="sidebar"
+      client:load
+      proposal={proposal}
+    />
     <Breadcrumb slot="breadcrumb">
       <BreadcrumbList>
         <BreadcrumbItem>
@@ -73,7 +78,7 @@ const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
       pastProposals={pastProposals}
     >
       <div
-        class="flex lg:flex-col items-end justify-between gap-2 text-white lg:-mt-16 mx-4 lg:mx-0 my-4 p-2"
+        class="flex lg:flex-col items-end justify-between gap-2 text-white lg:-mt-16 mx-4 lg:mx-0 my-4 py-2"
       >
         <RequestedAmountDetail requestedAmount={proposal.requestedAmount} />
         <FocusDetail focus={proposal.focus} />

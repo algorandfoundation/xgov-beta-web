@@ -58,8 +58,8 @@ export default {
           to: { height: "0" },
         },
         "mass-scale": {
-          from: { transform: "scale(0)" },
-          to: { transform: "scale(20)" },
+          from: { transform: "scale3d(0,0,0)" },
+          to: { transform: "scale3d(1,1,1)" },
         },
       },
       animation: {

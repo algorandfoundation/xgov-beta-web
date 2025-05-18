@@ -62,7 +62,7 @@ export const KYCBox = ({
       return false;
     }
 
-    const addr = decodeAddress(activeAddress).publicKey;
+    const addr = decodeAddress(proposalAddress).publicKey;
     const proposerBoxName = new Uint8Array(
       Buffer.concat([Buffer.from("p"), addr]),
     );

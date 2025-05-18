@@ -1,5 +1,7 @@
 export const env = import.meta?.env ? import.meta.env : process.env;
 
+export const FEE_SINK = 'A7NMWS3NT3IUDMLVO26ULGXGIIOUQ3ND2TXSER6EBGRZNOBOUIQXHIBGDE'
+
 export const XGOV_FEE = BigInt(1_000_000);
 export const PROPOSER_FEE = BigInt(10_000_000);
 export const PROPOSAL_FEE = BigInt(100_000_000);

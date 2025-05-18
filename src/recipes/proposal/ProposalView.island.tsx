@@ -46,7 +46,7 @@ type StatusCardControllerProps = {
   registry: TypedGlobalState;
 };
 
-export function StatusCardController({
+export function ViewProposalController({
   registry,
   proposal,
 }: StatusCardControllerProps) {
@@ -56,16 +56,19 @@ export function StatusCardController({
   const _proposal = proposalQuery.data || proposal;
   const _registry = registryQuery.data || registry;
 
-  const _discussionDuration = Date.now() - _proposal.submissionTime * 1000;
+  const _discussionDuration = Date.now() - Number(_proposal.submissionTs) * 1000;
   const _minimumDiscussionDuration =
-    getDiscussionDuration(proposal.category, _registry.discussionDuration) *
-    1000n;
+    getDiscussionDuration(proposal.fundingCategory, _registry.discussionDuration) *
+    1000;
 
   return (
     <StatusCard
       proposal={_proposal}
-      discussionDuration={Number(_discussionDuration)}
+      discussionDuration={_discussionDuration}
       minimumDiscussionDuration={_minimumDiscussionDuration}
+      quorums={_registry.quorum}
+      weightedQuorums={_registry.weightedQuorum}
+      votingDurations={_registry.votingDuration}
     />
   );
 }
@@ -74,7 +77,7 @@ export function StatusCardIsland(props: StatusCardControllerProps) {
   return (
     <UseQuery>
       <UseWallet>
-        <StatusCardController {...props} />
+        <ViewProposalController {...props} />
       </UseWallet>
     </UseQuery>
   );

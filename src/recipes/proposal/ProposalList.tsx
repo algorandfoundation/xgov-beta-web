@@ -1,6 +1,7 @@
 import {
   FocusReverseMap,
   ProposalFundingTypeReverseMap,
+  ProposalStatus,
   ProposalStatusMap,
   ProposalStatusReverseMap,
   type ProposalSummaryCardDetails,
@@ -10,13 +11,13 @@ import { UserPill } from "@/components/UserPill/UserPill.tsx";
 import { RequestedAmountDetail } from "@/components/RequestedAmountDetail/RequestedAmountDetail.tsx";
 import { FocusDetail } from "@/components/FocusDetail/FocusDetail.tsx";
 import { UserCircleRow } from "@/components/UserCircleRow/UserCircleRow.tsx";
-import { VoteCounter } from "@/components/VoteCounter/VoteCounter.tsx";
 import { DiscussionLink } from "@/components/DiscussionLink/DiscussionLink.tsx";
 import { FundingTypeAndTimeDetail } from "@/components/FundingTypeAndTimeDetail/FundingTypeAndTimeDetail.tsx";
 import {
   filterAmountMap,
   filters,
 } from "@/recipes/proposal/list/ProposalFilter.tsx";
+import VoteCounter from "@/components/VoteCounter/VoteCounter";
 const filterKeys = Object.keys(filters);
 
 export const proposalFilter = (
@@ -27,7 +28,10 @@ export const proposalFilter = (
 
   // Exclude proposals with status 0, i.e Empty
   // Happens if a proposer withdraws their proposal
-  if (proposal.status === 0) {
+  if (
+    proposal.status === 0 ||
+    proposal.status === ProposalStatus.ProposalStatusDelete
+  ) {
     return false;
   }
 
@@ -90,6 +94,8 @@ export function StackedList({
           fundingType,
           requestedAmount,
           proposer,
+          approvals,
+          rejections
         } = proposal;
 
         const phase = ProposalStatusMap[status];
@@ -131,7 +137,10 @@ export function StackedList({
                   {phase === "Voting" && (
                     <>
                       <UserCircleRow />
-                      <VoteCounter />
+                      <VoteCounter
+                        approvals={Number(approvals)}
+                        rejections={Number(rejections)}
+                      />
                     </>
                   )}
 

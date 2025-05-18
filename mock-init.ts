@@ -3,11 +3,8 @@ import algosdk, { ALGORAND_MIN_TX_FEE } from "algosdk";
 import { XGovRegistryFactory } from "@algorandfoundation/xgov/registry";
 import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 import { algorand } from "@/api/algorand";
-import { create } from "kubo-rpc-client";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { ProposalStatus as PS } from "@/api/types";
-import { CID } from "multiformats";
-
 import { mockProposals } from "./__fixtures__/proposals";
 import {
   COOL_DOWN_DURATION,
@@ -81,7 +78,6 @@ export async function timeWarp(to: number) {
   await algorand.client.algod.setBlockOffsetTimestamp(0).do();
 }
 
-const ipfsClient = create();
 // Generate admin account (the one that creates the registry)
 const fundAmount = (10).algo();
 const adminAccount = await algorand.account.fromKmd(
@@ -180,17 +176,29 @@ await registryClient.send.setCommitteePublisher({
   },
 });
 
-await registryClient.send.declareCommittee({
-  sender: adminAccount.addr,
+const admin: TransactionSignerAccount & { account: algosdk.Account; } = {
+  addr: adminAccount.addr,
   signer: adminAccount.signer,
-  args: {
-    cid: new Uint8Array(Buffer.from("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
-    size: 1,
-    votes: 10,
-  },
-});
+  account: adminAccount.account,
+}
 
-const committeeMembers = [adminAccount];
+const committeeMembers: (TransactionSignerAccount & { account: algosdk.Account; })[] = [
+  admin,
+];
+
+const committeeVotes: number[] = [100];
+let committeeVotesSum = 100;
+
+for (let i = 0; i < 100; i++) {
+  const randomAccount = algorand.account.random();
+  console.log('committee member', randomAccount.addr);
+  committeeMembers.push(randomAccount);
+  const votingPower = Math.floor(Math.random() * 1_000);
+  committeeVotes.push(votingPower);
+  committeeVotesSum += votingPower;
+}
+
+console.log('Total committee votes sum:', committeeVotesSum);
 
 for (const committeeMember of committeeMembers) {
   await algorand.account.ensureFunded(
@@ -222,6 +230,16 @@ for (const committeeMember of committeeMembers) {
   });
 }
 
+await registryClient.send.declareCommittee({
+  sender: adminAccount.addr,
+  signer: adminAccount.signer,
+  args: {
+    committeeId: new Uint8Array(Buffer.from('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')),
+    size: committeeMembers.length,
+    votes: committeeVotesSum,
+  },
+})
+
 // Generate and setup mock proposer accounts
 const proposerAccounts: (TransactionSignerAccount & {
   account: algosdk.Account;
@@ -236,6 +254,8 @@ const suggestedParams = await algorand.getSuggestedParams();
 const oneYearFromNow = (await getLatestTimestamp()) + 365 * 24 * 60 * 60;
 
 const proposalFactory = new ProposalFactory({ algorand });
+
+const metadataBoxName = new Uint8Array(Buffer.from("M"))
 
 for (let i = 0; i < mockProposals.length; i++) {
   let account: TransactionSignerAccount & { account: algosdk.Account };
@@ -325,24 +345,26 @@ for (let i = 0; i < mockProposals.length; i++) {
     appId: result.return,
   });
 
-  const { cid } = await ipfsClient.add(
-    JSON.stringify(
-      mockProposals[i].proposalJson,
-      (_, value) => (typeof value === "bigint" ? value.toString() : value), // return everything else unchanged
-    ),
-    { cidVersion: 1 },
-  );
+  const metadata = new Uint8Array(Buffer.from(JSON.stringify(
+    mockProposals[i].proposalJson,
+    (_, value) => (typeof value === "bigint" ? value.toString() : value), // return everything else unchanged
+  )));
+
+  let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
+  for (let j = 0; j < metadata.length; j += 2041) {
+    const chunk = metadata.slice(j, j + 2041);
+    chunkedMetadata.push(chunk);
+  }
 
   const proposalSubmissionFee = Math.trunc(
     Number(
       (mockProposals[i].requestedAmount.algos().microAlgos * BigInt(1_000)) /
-        BigInt(10_000),
+      BigInt(10_000),
     ),
   );
 
   console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
   console.log(`Title: ${mockProposals[i].title}\n`);
-  console.log(`Cid: ${cid.toString()}\n`);
   console.log(`Funding Type: ${mockProposals[i].fundingType}\n`);
   console.log(
     `Requested Amount: ${mockProposals[i].requestedAmount.algos().microAlgos}\n`,
@@ -350,24 +372,40 @@ for (let i = 0; i < mockProposals.length; i++) {
   console.log(`Focus: ${mockProposals[i].focus}\n\n`);
 
   try {
-    await proposalClient.send.submit({
-      sender: account.addr,
-      signer: account.signer,
-      args: {
-        payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-          amount: proposalSubmissionFee,
-          from: account.addr,
-          to: proposalClient.appAddress,
-          suggestedParams,
-        }),
-        title: mockProposals[i].title,
-        cid: CID.asCID(cid)!.bytes,
-        fundingType: mockProposals[i].fundingType,
-        requestedAmount: mockProposals[i].requestedAmount.algos().microAlgos,
-        focus: mockProposals[i].focus,
-      },
-      appReferences: [registryClient.appId],
-    });
+    const submitGroup = proposalClient
+      .newGroup()
+      .submit({
+        sender: account.addr,
+        signer: account.signer,
+        args: {
+          payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+            amount: proposalSubmissionFee,
+            from: account.addr,
+            to: proposalClient.appAddress,
+            suggestedParams,
+          }),
+          title: mockProposals[i].title,
+          fundingType: mockProposals[i].fundingType,
+          requestedAmount: mockProposals[i].requestedAmount.algos().microAlgos,
+          focus: mockProposals[i].focus,
+        },
+        appReferences: [registryClient.appId],
+      })
+
+    chunkedMetadata.map((chunk, index) => {
+      submitGroup.uploadMetadata({
+        sender: account.addr,
+        signer: account.signer,
+        args: {
+          payload: chunk,
+          isFirstInGroup: index === 0,
+        },
+        appReferences: [registryClient.appId],
+        boxReferences: [metadataBoxName, metadataBoxName]
+      });
+    })
+
+    await submitGroup.send()
   } catch (e) {
     console.log(e);
 
@@ -393,18 +431,29 @@ for (let i = 1; i < mockProposals.length; i++) {
     args: {},
     appReferences: [registryClient.appId],
     accountReferences: [adminAccount.addr],
+    boxReferences: [metadataBoxName],
     extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
   });
 }
 
+
 for (let i = 1; i < mockProposals.length; i++) {
   const proposal = mockProposals[i];
   if (proposal.status === PS.ProposalStatusVoting) {
-    const proposalClient = proposalFactory.getAppClientById({
-      appId: proposalIds[i],
-    });
-    for (const committeeMember of committeeMembers) {
+
+    console.log(`Proposal ${i}`);
+
+    const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
+
+    for (let j = 0; j < committeeMembers.length; j++) {
+      const committeeMember = committeeMembers[j];
+      const votes = committeeVotes[j];
+
       const addr = algosdk.decodeAddress(committeeMember.addr).publicKey;
+
+      console.log('Committee member: ', committeeMember.addr);
+      console.log('    voting power: ', votes);
+      console.log('           index: ', j);
 
       try {
         await proposalClient.send.assignVoter({
@@ -412,19 +461,66 @@ for (let i = 1; i < mockProposals.length; i++) {
           signer: adminAccount.signer,
           args: {
             voter: committeeMember.addr,
-            votingPower: 10,
+            votingPower: votes,
           },
           appReferences: [registryClient.appId],
           boxReferences: [
-            new Uint8Array(Buffer.concat([Buffer.from("V"), addr])),
-          ],
-        });
-        console.log("assigned voter");
+            new Uint8Array(Buffer.concat([
+              Buffer.from('V'),
+              addr,
+            ])),
+          ]
+        })
+        console.log('assigned voter');
       } catch (e) {
-        console.error("Failed to assign voter");
+        console.error('Failed to assign voter');
         process.exit(1);
       }
     }
+  }
+}
+
+for (let i = 1; i < 10; i++) {
+
+  let randomCutOff = Math.random() * committeeMembers.length
+  if (i === 1) {
+    randomCutOff = committeeMembers.length - 1
+  }
+
+  const lean = Math.random()
+
+  for (let j = 1; j < committeeMembers.length; j++) {
+    if (j > randomCutOff) {
+      break;
+    }
+
+    const potentialVotingPower = committeeVotes[j]
+    const actualVotingPower = Number(Math.floor(Math.random() * potentialVotingPower));
+
+    let approve = Math.random() > lean
+    if (i === 1) {
+      approve = true
+    }
+
+    await registryClient.send.voteProposal({
+      sender: committeeMembers[j].addr,
+      signer: committeeMembers[j].signer,
+      args: {
+        proposalId: proposalIds[i],
+        xgovAddress: committeeMembers[j].addr,
+        approvalVotes: approve ? actualVotingPower : 0n,
+        rejectionVotes: approve ? 0n : actualVotingPower,
+      },
+      accountReferences: [committeeMembers[j].addr],
+      appReferences: [proposalIds[i]],
+      boxReferences: [
+        new Uint8Array(Buffer.concat([Buffer.from('x'), algosdk.decodeAddress(committeeMembers[j].addr).publicKey])),
+        {
+          appId: proposalIds[i], name: new Uint8Array(Buffer.concat([Buffer.from('V'),
+          algosdk.decodeAddress(committeeMembers[j].addr).publicKey]))
+        }],
+      extraFee: (ALGORAND_MIN_TX_FEE * 100).microAlgos(),
+    })
   }
 }
 
@@ -476,7 +572,8 @@ await proposalFactory
     args: {},
     appReferences: [registryClient.appId],
     accountReferences: [proposerAccounts[1].addr],
-  });
+    extraFee: (1000).microAlgo()
+  })
 
 // Set admin account as xGov Reviewer to avoid having to click through admin panel
 await registryClient.send.setXgovReviewer({
