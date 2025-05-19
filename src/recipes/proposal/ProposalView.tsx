@@ -912,93 +912,111 @@ export function DropModal({
         appId: proposalId,
       });
 
-      const res = await proposalClient
+      let grp = (
+        await (
+          await proposalClient
+            .newGroup()
+            .uploadMetadata({
+              sender: activeAddress,
+              signer: transactionSigner,
+              args: {
+                payload: new Uint8Array(Buffer.from("M")),
+                isFirstInGroup: true
+              },
+              appReferences: [registryClient.appId],
+              boxReferences: [
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+              ]
+            })
+            .uploadMetadata({
+              sender: activeAddress,
+              signer: transactionSigner,
+              args: {
+                payload: new Uint8Array(Buffer.from("M")),
+                isFirstInGroup: false
+              },
+              appReferences: [registryClient.appId],
+              boxReferences: [
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+              ],
+            })
+            .uploadMetadata({
+              sender: activeAddress,
+              signer: transactionSigner,
+              args: {
+                payload: new Uint8Array(Buffer.from("M")),
+                isFirstInGroup: false
+              },
+              appReferences: [registryClient.appId],
+              boxReferences: [
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+              ],
+              note: '1'
+            })
+            .uploadMetadata({
+              sender: activeAddress,
+              signer: transactionSigner,
+              args: {
+                payload: new Uint8Array(Buffer.from("M")),
+                isFirstInGroup: false
+              },
+              appReferences: [registryClient.appId],
+              boxReferences: [
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+                new Uint8Array(Buffer.from("M")),
+              ],
+              note: '2'
+            })
+            .composer()
+        ).build()
+      ).transactions
+
+      grp = grp.map((txn) => { txn.txn.group = undefined; return txn })
+
+      const addr = algosdk.decodeAddress(activeAddress).publicKey;
+      const proposerBoxName = new Uint8Array(Buffer.concat([Buffer.from('p'), addr]));
+
+      const res = await registryClient
         .newGroup()
-        .uploadMetadata({
+        .addTransaction(grp[0].txn, grp[0].signer)
+        .addTransaction(grp[1].txn, grp[1].signer)
+        .addTransaction(grp[2].txn, grp[2].signer)
+        .addTransaction(grp[3].txn, grp[3].signer)
+        .dropProposal({
           sender: activeAddress,
           signer: transactionSigner,
-          args: {
-            payload: new Uint8Array(Buffer.from("M")),
-            isFirstInGroup: true
-          },
-          appReferences: [registryClient.appId],
-          boxReferences: [
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-          ]
-        })
-        .uploadMetadata({
-          sender: activeAddress,
-          signer: transactionSigner,
-          args: {
-            payload: new Uint8Array(Buffer.from("M")),
-            isFirstInGroup: false
-          },
-          appReferences: [registryClient.appId],
-          boxReferences: [
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-          ],
-        })
-        .uploadMetadata({
-          sender: activeAddress,
-          signer: transactionSigner,
-          args: {
-            payload: new Uint8Array(Buffer.from("M")),
-            isFirstInGroup: false
-          },
-          appReferences: [registryClient.appId],
-          boxReferences: [
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-          ],
-          note: '1'
-        })
-        .uploadMetadata({
-          sender: activeAddress,
-          signer: transactionSigner,
-          args: {
-            payload: new Uint8Array(Buffer.from("M")),
-            isFirstInGroup: false
-          },
-          appReferences: [registryClient.appId],
-          boxReferences: [
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-          ],
-          note: '2'
-        })
-        .drop({
-          sender: activeAddress,
-          signer: transactionSigner,
-          args: {},
+          args: { proposalId },
           appReferences: [registryClient.appId],
           accountReferences: [activeAddress],
           boxReferences: [
+            proposerBoxName,
             new Uint8Array(Buffer.from("M")),
             new Uint8Array(Buffer.from("M")),
           ],
-          extraFee: (1000).microAlgos(),
+          extraFee: (2000).microAlgos(),
         })
         .send()
 
