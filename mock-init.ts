@@ -148,8 +148,6 @@ await registryClient.send.configXgovRegistry({
         VOTING_DURATION_LARGE,
         VOTING_DURATION_XLARGE,
       ],
-      coolDownDuration: COOL_DOWN_DURATION,
-      staleProposalDuration: STALE_PROPOSAL_DURATION,
       quorum: [QUORUM_SMALL, QUORUM_MEDIUM, QUORUM_LARGE],
       weightedQuorum: [
         WEIGHTED_QUORUM_SMALL,

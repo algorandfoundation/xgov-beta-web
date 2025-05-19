@@ -80,7 +80,6 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
           committeeId,
           committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
           votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
-          coolDownStartTs: existsAndValue(state, 'cool_down_start_ts') ? BigInt(state['cool_down_start_ts'].value) : 0n
         }
       } catch (error) {
         console.error('Error processing app data:', error);
@@ -180,7 +179,6 @@ export async function getProposal(
     committeeId,
     committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
     votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
-    coolDownStartTs: existsAndValue(state, 'cool_down_start_ts') ? BigInt(state['cool_down_start_ts'].value) : 0n,
     ...proposalMetadata
   }
 }
@@ -450,9 +448,12 @@ export async function updateProposal(
       typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
   )))
 
+  const slices = Math.ceil(metadata.length / 2041);
+  const chunkSize = (slices >= 5) ? 2041 : Math.ceil(metadata.length / 5);
+
   let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
-  for (let j = 0; j < metadata.length; j += 2041) {
-    const chunk = metadata.slice(j, j + 2041);
+  for (let j = 0; j < metadata.length; j += chunkSize) {
+    const chunk = metadata.slice(j, j + chunkSize);
     chunkedMetadata.push(chunk);
   }
 
@@ -506,6 +507,7 @@ export async function updateProposal(
   }
 
   chunkedMetadata.map((chunk, index) => {
+    console.log('chunk', chunk);
     resubmitGroup.uploadMetadata({
       sender: activeAddress,
       signer: transactionSigner,
@@ -514,7 +516,7 @@ export async function updateProposal(
         isFirstInGroup: index === 0,
       },
       appReferences: [registryClient.appId],
-      boxReferences: [metadataBoxName, metadataBoxName],
+      boxReferences: [metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName],
     })
   })
 
