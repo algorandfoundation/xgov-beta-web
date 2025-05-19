@@ -912,7 +912,7 @@ export function DropModal({
         appId: proposalId,
       });
 
-      const res = await proposalClient
+      let grp = (await (await proposalClient
         .newGroup()
         .uploadMetadata({
           sender: activeAddress,
@@ -987,18 +987,31 @@ export function DropModal({
             new Uint8Array(Buffer.from("M")),
           ],
           note: '2'
-        })
-        .drop({
+        }).composer()).build()).transactions
+
+      grp = grp.map((txn) => { txn.txn.group = undefined; return txn })
+
+      const addr = algosdk.decodeAddress(activeAddress).publicKey;
+      const proposerBoxName = new Uint8Array(Buffer.concat([Buffer.from('p'), addr]));
+
+      const res = await registryClient
+        .newGroup()
+        .addTransaction(grp[0].txn, grp[0].signer)
+        .addTransaction(grp[1].txn, grp[1].signer)
+        .addTransaction(grp[2].txn, grp[2].signer)
+        .addTransaction(grp[3].txn, grp[3].signer)
+        .dropProposal({
           sender: activeAddress,
           signer: transactionSigner,
-          args: {},
+          args: { proposalId },
           appReferences: [registryClient.appId],
           accountReferences: [activeAddress],
           boxReferences: [
+            proposerBoxName,
             new Uint8Array(Buffer.from("M")),
             new Uint8Array(Buffer.from("M")),
           ],
-          extraFee: (1000).microAlgos(),
+          extraFee: (2000).microAlgos(),
         })
         .send()
 
