@@ -28,18 +28,20 @@ import {
 } from "@/hooks";
 import { StackedList } from "@/recipes";
 
-const activeStatuses = [
-  // ProposalStatus.ProposalStatusEmpty,
-  ProposalStatus.ProposalStatusDraft,
-  ProposalStatus.ProposalStatusFinal,
-  ProposalStatus.ProposalStatusVoting,
-  ProposalStatus.ProposalStatusApproved,
-  ProposalStatus.ProposalStatusRejected,
-  ProposalStatus.ProposalStatusReviewed,
-  // ProposalStatus.ProposalStatusFunded,
-  ProposalStatus.ProposalStatusBlocked,
-  ProposalStatus.ProposalStatusDelete,
-];
+// const activeStatuses = [
+//   // ProposalStatus.ProposalStatusEmpty,
+//   ProposalStatus.ProposalStatusDraft,
+//   ProposalStatus.ProposalStatusFinal,
+//   ProposalStatus.ProposalStatusVoting,
+//   ProposalStatus.ProposalStatusApproved,
+//   ProposalStatus.ProposalStatusRejected,
+//   ProposalStatus.ProposalStatusReviewed,
+//   // ProposalStatus.ProposalStatusFunded,
+//   ProposalStatus.ProposalStatusBlocked,
+//   ProposalStatus.ProposalStatusDelete,
+// ];
+
+
 export function ProfilePageIsland({ address }: { address: string }) {
   console.log(address)
   return (
