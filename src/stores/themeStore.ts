@@ -2,7 +2,7 @@ import { persistentAtom } from "@nanostores/persistent";
 
 export const $themeStore = persistentAtom<"light" | "dark" | "default">(
   "theme",
-  "default",
+  "light",
 );
 
 export function toggleTheme() {

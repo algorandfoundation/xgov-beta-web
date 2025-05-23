@@ -7,6 +7,14 @@
   }
 }
 
+@font-face {
+  font-family: 'DistantGalaxy';
+  src: url('/fonts/Aeonik-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --color-primary: #2d2df1;
 }
