@@ -22,6 +22,7 @@ import {
 
 import { PROPOSAL_FEE } from "@/constants.ts";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
+import { data } from "autoprefixer";
 
 export const proposalFactory = new ProposalFactory({ algorand });
 
@@ -68,6 +69,7 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
         }
 
         return {
+          coolDownStartTs: 0n,
           id: data.id,
           title: existsAndValue(state, 'title') ? String(state.title.value) : '',
           requestedAmount: existsAndValue(state, 'requested_amount') ? BigInt(state['requested_amount'].value) : 0n,
@@ -88,7 +90,7 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
           committeeId,
           committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
           votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
-          forumLink: proposalMetadata.forumLink,
+          forumLink: proposalMetadata.forumLink
         }
       } catch (error) {
         console.error('Error processing app data:', error);
@@ -307,7 +309,7 @@ export async function createProposal(
   transactionSigner: TransactionSigner,
   emptyProposal: ProposalSummaryCardDetails | null,
   bps: bigint,
-  setCreateProposalPending: (pending: boolean) => void, 
+  setCreateProposalPending: (pending: boolean) => void,
 ) {
   setCreateProposalPending(true);
   const proposalFee = PROPOSAL_FEE.microAlgo();
@@ -479,7 +481,7 @@ export async function updateProposal(
   console.log(`Focus: ${data.focus}\n\n`);
 
   const resubmitGroup = proposalClient.newGroup()
-  
+
   const metadataOnlyChange = data.title === proposal.title && Number(data.fundingType) === proposal.fundingType && requestedAmount === proposal.requestedAmount && Number(data.focus) === proposal.focus;
   if (!metadataOnlyChange) {
     alert("These changes will require a resubmission of the proposal. Coming soon.");

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import UserCircleRow from './UserCircleRow';
+import { UserCircleRow } from "./UserCircleRow";
 
 const meta: Meta<typeof UserCircleRow> = {
   title: 'Components/UserCircleRow',

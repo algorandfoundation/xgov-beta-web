@@ -135,26 +135,28 @@ await registryClient.send.configXgovRegistry({
       maxRequestedAmount: [
         MAX_REQUESTED_AMOUNT_SMALL,
         MAX_REQUESTED_AMOUNT_MEDIUM,
-        MAX_REQUESTED_AMOUNT_LARGE,
+        MAX_REQUESTED_AMOUNT_LARGE
       ],
       discussionDuration: [
         DISCUSSION_DURATION_SMALL,
         DISCUSSION_DURATION_MEDIUM,
         DISCUSSION_DURATION_LARGE,
-        DISCUSSION_DURATION_XLARGE,
+        DISCUSSION_DURATION_XLARGE
       ],
       votingDuration: [
         VOTING_DURATION_SMALL,
         VOTING_DURATION_MEDIUM,
         VOTING_DURATION_LARGE,
-        VOTING_DURATION_XLARGE,
+        VOTING_DURATION_XLARGE
       ],
       quorum: [QUORUM_SMALL, QUORUM_MEDIUM, QUORUM_LARGE],
       weightedQuorum: [
         WEIGHTED_QUORUM_SMALL,
         WEIGHTED_QUORUM_MEDIUM,
-        WEIGHTED_QUORUM_LARGE,
+        WEIGHTED_QUORUM_LARGE
       ],
+      coolDownDuration: 0n,
+      staleProposalDuration: 0n
     },
   },
 });

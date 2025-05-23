@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import FocusDetail from './FocusDetail';
-import { ProposalFocus } from '@/types/proposals';
+import { FocusDetail } from "./FocusDetail";
+import { ProposalFocus } from '@/api';
 
 const meta: Meta<typeof FocusDetail> = {
   title: 'Components/FocusDetail',

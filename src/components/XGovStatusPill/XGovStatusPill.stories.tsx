@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {XGovStatusPill} from './XGovStatusPill';
+import XGovStatusPill from './XGovStatusPill';
 
 const meta: Meta<typeof XGovStatusPill> = {
   title: 'Components/XGovStatusPill',

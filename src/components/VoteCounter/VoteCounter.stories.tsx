@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import {VoteCounter} from './VoteCounter';
+import VoteCounter from './VoteCounter';
 
 const meta: Meta<typeof VoteCounter> = {
   title: 'Components/VoteCounter',
@@ -81,15 +81,15 @@ export const CustomizableVotes: Story = {
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-4">
         <span className="text-sm text-algo-black-60 dark:text-white/60 w-32">Popular:</span>
-        <VoteCounter />
+        <VoteCounter approvals={0} rejections={0} />
       </div>
       <div className="flex items-center gap-4">
         <span className="text-sm text-algo-black-60 dark:text-white/60 w-32">Controversial:</span>
-        <VoteCounter />
+        <VoteCounter approvals={0} rejections={0} />
       </div>
       <div className="flex items-center gap-4">
         <span className="text-sm text-algo-black-60 dark:text-white/60 w-32">New:</span>
-        <VoteCounter />
+        <VoteCounter approvals={0} rejections={0} />
       </div>
     </div>
   ),

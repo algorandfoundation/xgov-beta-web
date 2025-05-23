@@ -9,6 +9,7 @@ import { PanelStatistics } from "./PanelStatistics";
 import { registryClient } from "@/api";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 import { UseQuery, UseWallet, useRegistry } from "@/hooks";
+import type { TypedGlobalState } from "@algorandfoundation/xgov/registry";
 export function AdminPageIsland() {
   return (
     <UseQuery>
@@ -142,7 +143,7 @@ export function AdminPage() {
                   handleSubmitAddress={handleSubmitAddress}
                 />
                 <RoleList
-                  registryGlobalState={registryGlobalState.data}
+                  registryGlobalState={registryGlobalState.data as unknown as TypedGlobalState}
                   activeAddress={activeAddress}
                   xGovManager={registryGlobalState.data?.xgovManager}
                   handleSetRole={handleSetRole}
