@@ -15,9 +15,18 @@ import { $themeStore, toggleTheme } from "@/stores/themeStore";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "../Link";
+import { UseWallet } from "@/hooks";
+
+export function MobileNavIsland(props: { trigger?: ReactNode }) {
+  return (
+    <UseWallet>
+      <MobileNav {...props} />
+    </UseWallet>
+  );
+}
 
 export function MobileNav({ trigger }: { trigger?: ReactNode }) {
-  const { wallets, activeAddress } = useWallet();
+  const { wallets, activeAddress, activeWallet } = useWallet();
   const theme = useStore($themeStore);
 
   const [open, setOpen] = useState(false);
@@ -69,20 +78,30 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
               Cohort
             </Link>
 
+            {
+              !!activeAddress && (
+                <Link
+                  className="px-4 text-5xl font-bold text-algo-black dark:text-white"
+                  to={`/profile/${activeAddress}`}
+                >
+                  Profile
+                </Link>
+              )
+            }
+
             <Button
               className="text-5xl font-bold gap-4"
               variant="link"
               onClick={() => {
                 if (!!activeAddress) {
-                  navigate(`/profile/${activeAddress}`);
-                  setOpen(false);
+                  activeWallet?.disconnect();
                 } else {
                   setConnectDialogOpen(true);
                 }
               }}
             >
               {!!activeAddress ? (
-                "Profile"
+                "Disconnect"
               ) : (
                 <>
                   <WalletIcon className="stroke-algo-black dark:stroke-white size-12" />

@@ -25,8 +25,8 @@ export const proposalFormSchema = z.object({
   forumLink: z
     .string()
     .refine((val) => val !== "", { message: "Required field" })
-    .refine((val) => val.includes("https://forum.algorand.org/t/"), {
+    .refine((val) => val.includes("https://forum.algorand.co/t/"), {
       message:
-        "Must be a valid forum link beginning with 'https://forum.algorand.org/t/'",
+        "Must be a valid forum link beginning with 'https://forum.algorand.co/t/'",
     }),
 });

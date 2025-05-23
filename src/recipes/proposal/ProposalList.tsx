@@ -40,7 +40,7 @@ export const proposalFilter = (
     if (value) {
       switch (key) {
         case "status":
-          if (proposal.status !== ProposalStatusReverseMap[value]) {
+          if (!ProposalStatusReverseMap[value].includes(proposal.status)) {
             passes = false;
           }
           break;
@@ -95,7 +95,8 @@ export function StackedList({
           requestedAmount,
           proposer,
           approvals,
-          rejections
+          rejections,
+          forumLink
         } = proposal;
 
         const phase = ProposalStatusMap[status];
@@ -109,31 +110,19 @@ export function StackedList({
         return (
           <div
             key={id}
-            className="bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between gap-x-6 gap-y-4 p-5 sm:flex-nowrap relative transition overflow-hidden"
+            className="w-full bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-col gap-x-6 gap-y-4 p-5 relative transition overflow-hidden"
           >
             <a
               className="absolute left-0 top-0 w-full h-full hover:bg-algo-blue/30 dark:hover:bg-algo-teal/30"
               href={`/proposal/${Number(id)}`}
             ></a>
             <div>
-              <p className=" text-xl font-semibold text-algo-black dark:text-white">
-                <BracketedPhaseDetail phase={phase} />
-                &nbsp;&nbsp;{title} {proposer == activeAddress && "🫵"}
-              </p>
-              <div className="mt-3 hidden md:flex md:items-center gap-4 md:gap-10 text-algo-blue dark:text-algo-teal font-mono">
-                <UserPill address={proposer} />
-                <RequestedAmountDetail requestedAmount={requestedAmount} />
-                <FocusDetail focus={focus} />
-              </div>
-            </div>
-            <dl className="flex w-full flex-none justify-between md:gap-x-8 sm:w-auto font-mono">
-              <div className="mt-3 flex md:hidden flex-col items-start justify-start gap-4 md:gap-10 text-algo-blue dark:text-algo-teal font-mono text-xs">
-                <UserPill address={proposer} />
-                <RequestedAmountDetail requestedAmount={requestedAmount} />
-                <FocusDetail focus={focus} />
-              </div>
-              <div className="flex flex-col justify-end items-end gap-4">
-                <div className="flex items-end gap-4">
+              <div className="flex justify-between items-center">
+                <p className="text-xl font-semibold text-algo-black dark:text-white">
+                  <BracketedPhaseDetail phase={phase} />
+                  &nbsp;&nbsp;{title} {proposer == activeAddress && "🫵"}
+                </p>
+                <div className="hidden lg:flex flex-wrap justify-end items-end gap-4">
                   {phase === "Voting" && (
                     <>
                       <UserCircleRow />
@@ -147,7 +136,45 @@ export function StackedList({
                   {phase === "Discussion" && (
                     <>
                       <UserCircleRow />
-                      <DiscussionLink to={`https://forum.algorand.org/`} />
+                      <DiscussionLink to={forumLink} />
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="hidden lg:flex justify-between items-center mt-3">
+                <div className="flex items-center gap-10 text-algo-blue dark:text-algo-teal font-mono">
+                  <UserPill address={proposer} />
+                  <RequestedAmountDetail requestedAmount={requestedAmount} />
+                  <FocusDetail focus={focus} />
+                </div>
+                <FundingTypeAndTimeDetail
+                  fundingType={fundingType}
+                  time="2d ago"
+                />
+              </div>
+            </div>
+            <dl className="flex lg:hidden w-full flex-none justify-between gap-x-8 font-mono">
+              <div className="mt-3 flex flex-col items-start justify-start gap-4 text-algo-blue dark:text-algo-teal font-mono text-xs">
+                <UserPill address={proposer} />
+                <RequestedAmountDetail requestedAmount={requestedAmount} />
+                <FocusDetail focus={focus} />
+              </div>
+              <div className="flex flex-col justify-end items-end gap-4">
+                <div className="flex flex-wrap justify-end items-end gap-4">
+                  {phase === "Voting" && (
+                    <>
+                      <UserCircleRow />
+                      <VoteCounter
+                        approvals={Number(approvals)}
+                        rejections={Number(rejections)}
+                      />
+                    </>
+                  )}
+
+                  {phase === "Discussion" && (
+                    <>
+                      <UserCircleRow />
+                      <DiscussionLink to={forumLink} />
                     </>
                   )}
                 </div>

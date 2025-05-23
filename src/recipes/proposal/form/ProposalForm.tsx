@@ -56,9 +56,8 @@ export function ProposalForm({
         typeof proposal?.fundingType !== "undefined"
           ? String(proposal?.fundingType)
           : String(ProposalFundingType.Retroactive),
-      // deliverables: currentProposal?.cid || '',
       adoptionMetrics: proposal?.adoptionMetrics || [],
-      forumLink: proposal?.forumLink || "https://forum.algorand.org/t/",
+      forumLink: proposal?.forumLink || "https://forum.algorand.co/t/",
     },
     mode: "onChange",
   });
@@ -504,7 +503,7 @@ export function ProposalForm({
                 createProposalPending ? (
                   <div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>
                 ) : type === "edit"
-                  ? "Save as Draft"
+                  ? "Save Changes"
                   : "Save"
               }
             </Button>

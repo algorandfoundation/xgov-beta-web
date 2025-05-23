@@ -1,14 +1,14 @@
-import type { TypedGlobalState } from "@algorandfoundation/xgov/registry";
 import {env} from '@/constants'
 import algosdk, {
   ABIType,
   ALGORAND_MIN_TX_FEE,
   makePaymentTxnWithSuggestedParamsFromObject,
   type TransactionSigner,
+  encodeAddress
 } from "algosdk";
 
-import type { ProposerBoxState } from "./types";
-import { algod, algorand, RegistryAppID, registryClient } from "./algorand";
+import type { ProposerBoxState, RegistryGlobalState } from "./types";
+import { algorand, RegistryAppID, registryClient } from "./algorand";
 
 console.log("registry app id", env.PUBLIC_REGISTRY_APP_ID);
 const registryAppID: number = env.PUBLIC_REGISTRY_APP_ID;
@@ -17,12 +17,24 @@ import { Buffer } from "buffer";
 if (globalThis.Buffer === undefined) {
   globalThis.Buffer = Buffer;
 }
-export async function getGlobalState(): Promise<TypedGlobalState | undefined> {
+
+export async function getGlobalState(): Promise<RegistryGlobalState | undefined> {
   try {
-    return await registryClient.getState();
+    const state = await registryClient.state.global.getAll()
+    return {
+      ...state,
+      committeeManager: !!state.committeeManager ? encodeAddress(state.committeeManager.asByteArray()!) : '',
+      committeePublisher: !!state.committeePublisher ? encodeAddress(state.committeePublisher.asByteArray()!) : '',
+      kycProvider: !!state.kycProvider ? encodeAddress(state.kycProvider.asByteArray()!) : '',
+      xgovManager: !!state.xgovManager ? encodeAddress(state.xgovManager.asByteArray()!) : '',
+      xgovPayor: !!state.xgovPayor ? encodeAddress(state.xgovPayor.asByteArray()!) : '',
+      xgovReviewer: !!state.xgovReviewer ? encodeAddress(state.xgovReviewer.asByteArray()!) : '',
+      xgovSubscriber: !!state.xgovSubscriber ? encodeAddress(state.xgovSubscriber.asByteArray()!) : '',
+    }
+
   } catch (e) {
     console.error("failed to fetch global registry contract state", e);
-    return {} as TypedGlobalState;
+    return {} as RegistryGlobalState;
   }
 }
 
@@ -33,13 +45,15 @@ export async function getIsXGov(
   const xGovBoxName = new Uint8Array(Buffer.concat([Buffer.from("x"), addr]));
 
   try {
-    const xgovBoxValue = await algod
-      .getApplicationBoxByName(registryAppID, xGovBoxName)
-      .do();
+    const xgovBoxValue = await algorand.app.getBoxValueFromABIType({
+      appId: BigInt(registryAppID),
+      boxName: xGovBoxName,
+      type: ABIType.from("(address,uint64,uint64)"),
+    });
 
     let votingAddress: string = "";
-    if (!!xgovBoxValue && !!xgovBoxValue.value) {
-      votingAddress = algosdk.encodeAddress(xgovBoxValue.value);
+    if (!!xgovBoxValue && Array.isArray(xgovBoxValue)) {
+      votingAddress = xgovBoxValue[0] as string;
     }
 
     return {
@@ -125,7 +139,7 @@ export async function getAllProposers(): Promise<{
       kycExpiring: proposerBoxValue[2] as bigint,
     };
 
-    const addr = algosdk.encodeAddress(Buffer.from(box.name.slice(1)));
+    const addr = encodeAddress(Buffer.from(box.name.slice(1)));
 
     proposers[addr] = proposer;
   }
@@ -144,7 +158,7 @@ export async function getAllSubscribedXGovs(): Promise<string[]> {
   });
 
   return xGovBoxes.map((box) => {
-    return algosdk.encodeAddress(Buffer.from(box.name.slice(1)));
+    return encodeAddress(Buffer.from(box.name.slice(1)));
   });
 }
 

@@ -144,10 +144,6 @@ export function ProfilePage({
       proposer.data.kycExpiring > Date.now() / 1000) ||
     false;
 
-  // const hasCurrentProposal = proposalsData.data?.some((proposal) =>
-  //   activeStatuses.includes(proposal.status),
-  // );
-
   const proposals = proposalsData.data?.filter(
     (proposal) => proposal.status !== ProposalStatus.ProposalStatusEmpty,
   );
@@ -298,7 +294,11 @@ export function ProfilePage({
           <div className="flex gap-6 mb-4">
             <XGovProposerStatusPill proposer={proposer.data} />
             <Link to="/new">
-              <InfinityMirrorButton variant="secondary">
+              <InfinityMirrorButton
+                variant="secondary"
+                disabled={proposer.data?.activeProposal}
+                disabledMessage="You already have an active proposal"
+              >
                 New Proposal
               </InfinityMirrorButton>
             </Link>

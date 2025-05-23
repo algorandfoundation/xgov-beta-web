@@ -116,7 +116,7 @@ export function ProposalReviewerCard({
               )}
             </div>
           ) : (
-            <h2 className="text-xl font-bold mt-2 mb-4">
+            <h2 className="text-xl font-bold mt-2 mb-2">
               No action for you to take.
             </h2>
           )}

@@ -23,9 +23,6 @@ export const VOTING_DURATION_MEDIUM = BigInt(172800);
 export const VOTING_DURATION_LARGE = BigInt(259200);
 export const VOTING_DURATION_XLARGE = BigInt(345600);
 
-export const COOL_DOWN_DURATION = BigInt(86400);
-export const STALE_PROPOSAL_DURATION = BigInt(86400 * 14);
-
 export const QUORUM_SMALL = BigInt(100);
 export const QUORUM_MEDIUM = BigInt(200);
 export const QUORUM_LARGE = BigInt(300);

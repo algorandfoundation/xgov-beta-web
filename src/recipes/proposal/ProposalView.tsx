@@ -1,12 +1,11 @@
 import { type ReactNode, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { SquarePenIcon } from "lucide-react";
+import { CoinsIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
 
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { UserPill } from "@/components/UserPill/UserPill";
 import { BracketedPhaseDetail } from "@/components/BracketedPhaseDetail/BracketedPhaseDetail";
-import { BlockIcon } from "@/components/icons/BlockIcon";
 import {
   algorand,
   registryClient,
@@ -58,14 +57,14 @@ export const defaultsStatusCardMap = {
     header: 'Proposal is being discussed',
     subHeader: 'Take part in the discussion and help shape public sentiment on this proposal.',
     sideHeader: '',
-    icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
+    icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: 'View the discussion',
   },
   [ProposalStatus.ProposalStatusFinal]: {
     header: 'Proposal is being discussed',
     subHeader: 'Take part in the discussion and help shape public sentiment on this proposal.',
     sideHeader: '',
-    icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
+    icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: 'View the discussion',
   },
   [ProposalStatus.ProposalStatusVoting]: {
@@ -77,44 +76,44 @@ export const defaultsStatusCardMap = {
   },
   [ProposalStatus.ProposalStatusApproved]: {
     header: 'Proposal Approved!',
-    subHeader: '',
+    subHeader: 'The proposal has been approved by the xGov community! Once the proposal is verified to meet requirements, it will be funded!',
     sideHeader: '',
-    icon: '',
-    action: '',
+    icon: <PartyPopperIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
+    action: 'woo hoo! 🎉',
   },
   [ProposalStatus.ProposalStatusRejected]: {
-    header: 'Proposal has been rejected',
-    subHeader: '',
+    header: 'Proposal Rejected',
+    subHeader: 'Unfortunately, this proposal has been rejected by the xGov community.',
     sideHeader: '',
-    icon: '',
+    icon: <HeartCrackIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: '',
   },
   [ProposalStatus.ProposalStatusReviewed]: {
-    header: 'Proposal has been approved and deemed to conform with the xGov T&C.',
-    subHeader: '',
+    header: 'Proposal Reviewed',
+    subHeader: 'Proposal has been reviewed & meets xGov terms & conditions',
     sideHeader: '',
-    icon: '',
-    action: '',
+    icon: <PartyPopperIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
+    action: 'ahh yeah! 🎉',
   },
   [ProposalStatus.ProposalStatusFunded]: {
     header: 'Proposal Funded!',
-    subHeader: '',
+    subHeader: 'Proposal funds have been released to the proposer.',
     sideHeader: '',
-    icon: '',
+    icon: <CoinsIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: '',
   },
   [ProposalStatus.ProposalStatusBlocked]: {
-    header: 'Proposal has been Blocked by xGov Reviewer.',
-    subHeader: '',
+    header: 'Proposal Blocked',
+    subHeader: 'Unfortunately, this proposal has been blocked for not meeting xGov terms & conditions.',
     sideHeader: '',
-    icon: '',
+    icon: <HeartCrackIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: '',
   },
   [ProposalStatus.ProposalStatusDelete]: {
-    header: 'Proposal has been deleted',
-    subHeader: '',
+    header: 'Proposal Deleted',
+    subHeader: 'This proposal has been deleted.',
     sideHeader: '',
-    icon: '',
+    icon: <TrashIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: '',
   },
 }
@@ -144,15 +143,15 @@ function StatusCardTemplate({
       )}
     >
       <div className="w-full px-4 py-5 sm:px-6">
-        <div className="w-full flex items-center justify-between">
+        <div className="w-full flex gap-10 items-center justify-between">
           <h3 className="text-base font-semibold text-algo-black dark:text-white">
             {header}
           </h3>
 
-          <p>{sideHeader}</p>
+          <p className="text-algo-blue dark:text-algo-teal">{sideHeader}</p>
         </div>
 
-        <p className="mt-1 text-wrap text-sm text-algo-black-80 dark:text-algo-black-30">
+        <p className="mt-3 text-wrap text-sm text-algo-black-50 dark:text-algo-black-30">
           {subHeader}
         </p>
         <div className="flex flex-col items-center justify-center gap-10 w-full h-96">
@@ -187,16 +186,16 @@ function DiscussionStatusCard({
   const [days, hours, minutes, seconds] = useTimeLeft(
     Date.now() + (Number(minimumDiscussionDuration) - discussionDuration),
   );
-  let remainingTime = `${days}d ${hours}h ${minutes}m ${seconds}s remaining`;
+  let remainingTime = `${days}d ${hours}h ${minutes}m`;
 
   let header = 'Proposal is being discussed';
-  let icon = <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />;
+  let icon = <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />;
   if (!finalizable && proposal.proposer === activeAddress) {
     header = "Your proposal is in the drafting & discussion phase";
     icon = (
       <SquarePenIcon
         aria-hidden="true"
-        className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white"
+        className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white"
       />
     );
   }
@@ -220,30 +219,6 @@ function DiscussionStatusCard({
         >
           Delete
         </Button>
-
-        <Button
-          onClick={() => {
-            navigate(`/edit/${proposal.id}`);
-          }}
-          type="button"
-          variant="ghost"
-        >
-          Edit
-        </Button>
-
-        <InfinityMirrorButton
-          onClick={() => setIsFinalizeModalOpen(true)}
-          type="button"
-          variant="secondary"
-          disabled={!finalizable}
-          disabledMessage={
-            finalizable
-              ? undefined
-              : `Discussion is ongoing. ${remainingTime}`
-          }
-        >
-          Submit
-        </InfinityMirrorButton>
 
         <Button
           onClick={() => {
@@ -337,7 +312,7 @@ function VotingStatusCard({
   const [days, hours, minutes, seconds] = useTimeLeft(
     Date.now() + (minimumVotingDuration - votingDuration),
   );
-  const remainingTime = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  const remainingTime = `${days}d ${hours}h ${minutes}m`;
 
   const votingSchema = z.object({
     approvals: z.number().min(0, { message: "Must be a positive number" }),
@@ -460,7 +435,7 @@ function VotingStatusCard({
 
   if (!!voterInfo && voterInfo.votes > 0n) {
     if (voterInfo.voted) {
-      subheader = <></>
+      subheader = <div className="h-9 w-full"></div>
       action = (
         <>
           {baseAction}
@@ -610,7 +585,7 @@ function VotingStatusCard({
       header="Vote on this proposal"
       subHeader={subheader}
       sideHeader={remainingTime}
-      icon={<BlockIcon className="size-18 stroke-algo-blue dark:stroke-algo-teal" />}
+      icon={<VoteIcon className="size-24 stroke-[1] stroke-algo-blue dark:stroke-algo-teal" />}
       action={action}
     />
   )
@@ -682,7 +657,15 @@ export function ProposalInfo({
   pastProposals,
   children,
 }: ProposalInfoProps) {
+  console.log("ProposalInfo", proposal);
   const phase = ProposalStatusMap[proposal.status];
+
+  const _pastProposals = (pastProposals || []).filter((p) =>
+    [
+      ProposalStatus.ProposalStatusEmpty,
+      ProposalStatus.ProposalStatusDraft,
+    ].includes(p.status) && p.id !== proposal.id
+  )
 
   return (
     <>
@@ -801,13 +784,14 @@ export function ProposalInfo({
                   Proposed 2d ago
                 </span>
               </div>
-              {!!pastProposals && !!pastProposals.length && (
+              {!!_pastProposals && !!_pastProposals.length && (
                 <>
                   <h5 className="font-semibold text-algo-black dark:text-algo-black-30 mb-2">
                     Past Proposals
                   </h5>
                   <ul className="text-xl text-algo-black dark:text-white flex flex-col gap-2">
-                    {pastProposals.map((pastProposal) => {
+                    {_pastProposals.map((pastProposal) => {
+                      const phase = ProposalStatusMap[pastProposal.status];
                       return (
                         <li
                           key={pastProposal.id}

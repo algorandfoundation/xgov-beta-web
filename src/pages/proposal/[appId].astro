@@ -4,7 +4,6 @@ import { getProposal, getProposalsByProposer, getGlobalState } from "@/api";
 import Layout from "@/layouts/Layout.astro";
 import Page from "@/layouts/Page.astro";
 
-import { ReviewerCardIsland } from "../../components/ProposalReviewerCard/ProposalReviewerCard";
 import { RequestedAmountDetail } from "../../components/RequestedAmountDetail/RequestedAmountDetail";
 import { FocusDetail } from "../../components/FocusDetail/FocusDetail";
 import { FundingTypeDetail } from "../../components/FundingTypeDetail/FundingTypeDetail";
@@ -20,6 +19,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { LoraPillLink } from "@/components/LoraPillLink/LoraPillLink";
+import {env} from '@/constants'
 
 interface Props {
   appId: string;
@@ -35,6 +35,8 @@ if (!appId) {
     statusText: "Not Found",
   });
 }
+
+const network = env.PUBLIC_NETWORK
 
 const registryGlobalState = await getGlobalState();
 
@@ -52,11 +54,6 @@ const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
 
 <Layout title={proposal.title} description={proposal.description}>
   <Page>
-    <ReviewerCardIsland
-      slot="sidebar"
-      client:load
-      proposal={proposal}
-    />
     <Breadcrumb slot="breadcrumb">
       <BreadcrumbList>
         <BreadcrumbItem>
@@ -66,7 +63,7 @@ const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
         <BreadcrumbItem>
           <BreadcrumbPage className="flex items-center gap-2">
             Proposal
-            <LoraPillLink id={proposal.id} />
+            <LoraPillLink network={network} id={proposal.id} />
           </BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>

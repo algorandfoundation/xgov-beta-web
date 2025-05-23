@@ -48,6 +48,14 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
     return await Promise.all(response['created-apps'].map(async (data: any): Promise<ProposalSummaryCardDetails> => {
       try {
         const state = AppManager.decodeAppState(data.params['global-state']);
+        const metadata = await algorand.app.getBoxValue(data.id, new Uint8Array(Buffer.from("M")))
+
+        let proposalMetadata;
+        try {
+          proposalMetadata = JSON.parse(Buffer.from(metadata).toString());
+        } catch (e: any) {
+          throw new Error("Failed to parse proposal metadata: " + e);
+        }
 
         let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
         if (state['committee_id'] && 'valueRaw' in state['committee_id']) {
@@ -80,7 +88,7 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
           committeeId,
           committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
           votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
-          coolDownStartTs: existsAndValue(state, 'cool_down_start_ts') ? BigInt(state['cool_down_start_ts'].value) : 0n
+          forumLink: proposalMetadata.forumLink,
         }
       } catch (error) {
         console.error('Error processing app data:', error);
