@@ -18,6 +18,7 @@ import {
   filters,
 } from "@/recipes/proposal/list/ProposalFilter.tsx";
 import VoteCounter from "@/components/VoteCounter/VoteCounter";
+import type { User } from "@/api/discourse/user.ts";
 const filterKeys = Object.keys(filters);
 
 export const proposalFilter = (
@@ -78,9 +79,11 @@ export const proposalFilter = (
 
 export function StackedList({
   proposals,
+  discourseUsers,
   activeAddress,
 }: {
   proposals: ProposalSummaryCardDetails[];
+  discourseUsers: User[][];
   activeAddress: string | null;
 }) {
   return (
@@ -125,7 +128,7 @@ export function StackedList({
                 <div className="hidden lg:flex flex-wrap justify-end items-end gap-4">
                   {phase === "Voting" && (
                     <>
-                      <UserCircleRow />
+                      <UserCircleRow users={[]}/>
                       <VoteCounter
                         approvals={Number(approvals)}
                         rejections={Number(rejections)}
@@ -135,7 +138,7 @@ export function StackedList({
 
                   {phase === "Discussion" && (
                     <>
-                      <UserCircleRow />
+                      <UserCircleRow users={[]} />
                       <DiscussionLink to={forumLink} />
                     </>
                   )}
@@ -163,7 +166,7 @@ export function StackedList({
                 <div className="flex flex-wrap justify-end items-end gap-4">
                   {phase === "Voting" && (
                     <>
-                      <UserCircleRow />
+                      <UserCircleRow users={[]} />
                       <VoteCounter
                         approvals={Number(approvals)}
                         rejections={Number(rejections)}
@@ -173,7 +176,7 @@ export function StackedList({
 
                   {phase === "Discussion" && (
                     <>
-                      <UserCircleRow />
+                      <UserCircleRow users={[]} />
                       <DiscussionLink to={forumLink} />
                     </>
                   )}

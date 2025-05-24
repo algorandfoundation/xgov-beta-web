@@ -1,0 +1,50 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import Page from "@/layouts/Page.astro";
+const title = "xGov";
+import {XGOV_POSTS} from "@/api/discourse/constants";
+const posts = await fetch(XGOV_POSTS).then(r=>r.json())
+---
+
+<Layout>
+  <Page title={title} path="/">
+    <Breadcrumb slot="breadcrumb">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>Posts</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+    <div class="grid gap-4">
+      {posts.topic_list.topics.map((post: any) => (
+        <article class="p-4 border rounded-lg bg-white dark:bg-algo-black border-algo-black dark:border-white">
+          <h2 class="text-xl font-semibold mb-2">
+            <a href={`https://forum.algorand.org/t/${post.slug}/${post.id}`} target="_blank" rel="noopener noreferrer"
+               class="hover:underline">
+              {post.title}
+            </a>
+          </h2>
+          <div class="text-sm text-gray-600 dark:text-gray-300">
+            <span>Last Posted by: {post.last_poster_username}</span>
+            <span class="mx-2">•</span>
+            <span>Replies: {post.posts_count - 1}</span>
+            <span class="mx-2">•</span>
+            <span>Views: {post.views}</span>
+          </div>
+        </article>
+      ))}
+    </div>
+  </Page>
+</Layout>

@@ -35,9 +35,9 @@ let isNfd = false;
 let address = query;
 if (query.includes(".algo")) {
   try {
-    await getNonFungibleDomainName(query).then((name) => {
+    await getNonFungibleDomainName(query).then((nfd) => {
       isNfd = true;
-      address = name;
+      address = nfd.owner;
     });
   } catch (e) {
     console.log(e);
