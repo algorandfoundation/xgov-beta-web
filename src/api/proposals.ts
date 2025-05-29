@@ -9,6 +9,7 @@ import {
   ProposalCategory,
   ProposalFocus,
   ProposalFundingType,
+  type ProposalJSON,
   type ProposalMainCardDetails,
   ProposalStatus,
   type ProposalSummaryCardDetails,
@@ -48,14 +49,6 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
     return await Promise.all(response['created-apps'].map(async (data: any): Promise<ProposalSummaryCardDetails> => {
       try {
         const state = AppManager.decodeAppState(data.params['global-state']);
-        const metadata = await algorand.app.getBoxValue(data.id, new Uint8Array(Buffer.from("M")))
-
-        let proposalMetadata;
-        try {
-          proposalMetadata = JSON.parse(Buffer.from(metadata).toString());
-        } catch (e: any) {
-          throw new Error("Failed to parse proposal metadata: " + e);
-        }
 
         let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
         if (state['committee_id'] && 'valueRaw' in state['committee_id']) {
@@ -88,7 +81,6 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
           committeeId,
           committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
           votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
-          forumLink: proposalMetadata.forumLink,
         }
       } catch (error) {
         console.error('Error processing app data:', error);
@@ -144,17 +136,14 @@ export async function getProposal(
   }
 
   const metadata = results[2].status === "fulfilled" ? results[2].value : null;
-  if (!metadata) {
-    throw new Error("Proposal metadata not found");
-  }
+  let proposalMetadata = {} as ProposalJSON;
 
-  console.log("Proposal metadata:", metadata);
-
-  let proposalMetadata;
-  try {
-    proposalMetadata = JSON.parse(Buffer.from(metadata).toString());
-  } catch (e: any) {
-    throw new Error("Failed to parse proposal metadata: " + e);
+  if (metadata) {
+    try {
+      proposalMetadata = JSON.parse(Buffer.from(metadata).toString());
+    } catch (e: any) {
+      throw new Error("Failed to parse proposal metadata: " + e);
+    }
   }
 
   let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
@@ -188,7 +177,7 @@ export async function getProposal(
     committeeId,
     committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
     votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
-    coolDownStartTs: existsAndValue(state, 'cool_down_start_ts') ? BigInt(state['cool_down_start_ts'].value) : 0n,
+    // coolDownStartTs: existsAndValue(state, 'cool_down_start_ts') ? BigInt(state['cool_down_start_ts'].value) : 0n,
     ...proposalMetadata
   }
 }
@@ -220,6 +209,20 @@ export async function getVoterBox(id: bigint, address: string): Promise<{ votes:
     };
   }
 }
+
+export async function getMetadata(id: bigint): Promise<ProposalJSON> {
+  const metadata = await algorand.app.getBoxValue(id, new Uint8Array(Buffer.from("M")))
+
+  let proposalMetadata: ProposalJSON;
+  try {
+    proposalMetadata = JSON.parse(Buffer.from(metadata).toString());
+  } catch (e: any) {
+    throw new Error("Failed to parse proposal metadata: " + e);
+  }
+
+  return proposalMetadata;
+}
+
 /**
  * Fetches brief information about proposals based on their IDs.
  *
@@ -301,26 +304,22 @@ export function getVotingDuration(category: ProposalCategory, durations: [bigint
   }
 }
 
-export async function createProposal(
+export async function openProposal(
   address: string,
-  data: any,
   transactionSigner: TransactionSigner,
-  emptyProposal: ProposalSummaryCardDetails | null,
-  bps: bigint,
-  setCreateProposalPending: (pending: boolean) => void, 
+  setOpenProposalLoading: (state: boolean) => void,
 ) {
-  setCreateProposalPending(true);
-  const proposalFee = PROPOSAL_FEE.microAlgo();
-  const addr = algosdk.decodeAddress(address).publicKey;
-  const proposerBoxName = new Uint8Array(
-    Buffer.concat([Buffer.from("p"), addr]),
-  );
-  const metadataBoxName = new Uint8Array(Buffer.from("M"));
+  setOpenProposalLoading(true);
+  
+  try {
+    const proposalFee = PROPOSAL_FEE.microAlgo();
+    const addr = algosdk.decodeAddress(address).publicKey;
+    const proposerBoxName = new Uint8Array(
+      Buffer.concat([Buffer.from("p"), addr]),
+    );
 
-  const suggestedParams = await algorand.getSuggestedParams();
+    const suggestedParams = await algorand.getSuggestedParams();
 
-  let appId: bigint = BigInt(0);
-  if (!emptyProposal) {
     // open a proposal
     const result = await registryClient.send.openProposal({
       sender: address,
@@ -339,197 +338,395 @@ export async function createProposal(
 
     // Store proposal ID if available
     if (!result.return) {
+      setOpenProposalLoading(false);
       console.error("Proposal creation failed");
-      setCreateProposalPending(false);
       return;
     }
 
     console.log(`\nNew Proposal: ${result.return}\n`);
-    appId = result.return;
-  } else {
-    appId = emptyProposal.id;
+
+    return result.return;
+  } catch (e) {
+    console.error(e)
   }
-
-  // instance a new proposal client
-  const proposalClient = proposalFactory.getAppClientById({ appId });
-
-  const metadata = new Uint8Array(Buffer.from(JSON.stringify(
-    {
-      description: data.description,
-      team: data.team,
-      additionalInfo: data.additionalInfo,
-      openSource: data.openSource,
-      adoptionMetrics: data.adoptionMetrics,
-      forumLink: data.forumLink,
-    },
-    (_, value) =>
-      typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
-  )))
-
-  let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
-  for (let j = 0; j < metadata.length; j += 2041) {
-    const chunk = metadata.slice(j, j + 2041);
-    chunkedMetadata.push(chunk);
-  }
-
-  const requestedAmount = AlgoAmount.Algos(
-    BigInt(data.requestedAmount),
-  ).microAlgos;
-
-  const proposalSubmissionFee = Math.trunc(
-    Number((requestedAmount * bps) / BigInt(10_000)),
-  );
-
-  console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
-  console.log(`Title: ${data.title}\n`);
-  console.log(`Funding Type: ${data.fundingType}\n`);
-  console.log(`Requested Amount: ${requestedAmount}\n`);
-  console.log(`Focus: ${data.focus}\n\n`);
-
-  const submitGroup = proposalClient
-    .newGroup()
-    .submit({
-      sender: address,
-      signer: transactionSigner,
-      args: {
-        payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-          amount: proposalSubmissionFee,
-          from: address,
-          to: proposalClient.appAddress,
-          suggestedParams,
-        }),
-        title: data.title,
-        fundingType: Number(data.fundingType),
-        requestedAmount,
-        focus: Number(data.focus),
-      },
-      appReferences: [registryClient.appId],
-    });
-
-  chunkedMetadata.map((chunk, index) => {
-    submitGroup.uploadMetadata({
-      sender: address,
-      signer: transactionSigner,
-      args: {
-        payload: chunk,
-        isFirstInGroup: index === 0,
-      },
-      appReferences: [registryClient.appId],
-      boxReferences: [metadataBoxName, metadataBoxName]
-    })
-  })
-
-  console.log('metadata.length', metadata.length);
-
-  await submitGroup.send()
-
-  console.log("Proposal submitted");
-  setCreateProposalPending(false);
-  return appId;
+  setOpenProposalLoading(false);
 }
 
-export async function updateProposal(
+export async function submitProposal(
+  address: string,
+  data: any,
+  transactionSigner: TransactionSigner,
+  appId: bigint,
+  bps: bigint,
+  setSubmitProposalLoading: (state: boolean) => void,
+) {
+  setSubmitProposalLoading(true);
+
+  try {
+    const metadataBoxName = new Uint8Array(Buffer.from("M"));
+
+    const suggestedParams = await algorand.getSuggestedParams();
+
+    // instance a new proposal client
+    const proposalClient = proposalFactory.getAppClientById({ appId });
+
+    const metadata = new Uint8Array(Buffer.from(JSON.stringify(
+      {
+        description: data.description,
+        team: data.team,
+        additionalInfo: data.additionalInfo,
+        openSource: data.openSource,
+        adoptionMetrics: data.adoptionMetrics,
+        forumLink: data.forumLink,
+      },
+      (_, value) =>
+        typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
+    )))
+
+    let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
+    for (let j = 0; j < metadata.length; j += 2041) {
+      const chunk = metadata.slice(j, j + 2041);
+      chunkedMetadata.push(chunk);
+    }
+
+    const requestedAmount = AlgoAmount.Algos(
+      BigInt(data.requestedAmount),
+    ).microAlgos;
+
+    const proposalSubmissionFee = Math.trunc(
+      Number((requestedAmount * bps) / BigInt(10_000)),
+    );
+
+    const submitGroup = proposalClient
+      .newGroup()
+      .submit({
+        sender: address,
+        signer: transactionSigner,
+        args: {
+          payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+            amount: proposalSubmissionFee,
+            from: address,
+            to: proposalClient.appAddress,
+            suggestedParams,
+          }),
+          title: data.title,
+          fundingType: Number(data.fundingType),
+          requestedAmount,
+          focus: Number(data.focus),
+        },
+        appReferences: [registryClient.appId],
+      });
+
+    chunkedMetadata.map((chunk, index) => {
+      submitGroup.uploadMetadata({
+        sender: address,
+        signer: transactionSigner,
+        args: {
+          payload: chunk,
+          isFirstInGroup: index === 0,
+        },
+        appReferences: [registryClient.appId],
+        boxReferences: [metadataBoxName, metadataBoxName]
+      })
+    })
+
+    await submitGroup.send()
+  } catch (e) {
+    console.error(e)
+  }
+  setSubmitProposalLoading(false);
+}
+
+export async function createProposal(
+  address: string,
+  data: any,
+  transactionSigner: TransactionSigner,
+  emptyProposal: ProposalSummaryCardDetails | null,
+  bps: bigint,
+  setCreateProposalLoading: (state: boolean) => void,
+) {
+  setCreateProposalLoading(true);
+  try {
+    const proposalFee = PROPOSAL_FEE.microAlgo();
+    const addr = algosdk.decodeAddress(address).publicKey;
+    const proposerBoxName = new Uint8Array(
+      Buffer.concat([Buffer.from("p"), addr]),
+    );
+    const metadataBoxName = new Uint8Array(Buffer.from("M"));
+
+    const suggestedParams = await algorand.getSuggestedParams();
+
+    let appId: bigint = BigInt(0);
+    if (!emptyProposal) {
+      // open a proposal
+      const result = await registryClient.send.openProposal({
+        sender: address,
+        signer: transactionSigner,
+        args: {
+          payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+            amount: proposalFee.microAlgos,
+            from: address,
+            to: registryClient.appAddress,
+            suggestedParams,
+          }),
+        },
+        boxReferences: [proposerBoxName],
+        extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
+      });
+
+      // Store proposal ID if available
+      if (!result.return) {
+        console.error("Proposal creation failed");
+        setCreateProposalLoading(false);
+        return;
+      }
+
+      console.log(`\nNew Proposal: ${result.return}\n`);
+      appId = result.return;
+    } else {
+      appId = emptyProposal.id;
+    }
+
+    // instance a new proposal client
+    const proposalClient = proposalFactory.getAppClientById({ appId });
+
+    const metadata = new Uint8Array(Buffer.from(JSON.stringify(
+      {
+        description: data.description,
+        team: data.team,
+        additionalInfo: data.additionalInfo,
+        openSource: data.openSource,
+        adoptionMetrics: data.adoptionMetrics,
+        forumLink: data.forumLink,
+      },
+      (_, value) =>
+        typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
+    )))
+
+    let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
+    for (let j = 0; j < metadata.length; j += 2041) {
+      const chunk = metadata.slice(j, j + 2041);
+      chunkedMetadata.push(chunk);
+    }
+
+    const requestedAmount = AlgoAmount.Algos(
+      BigInt(data.requestedAmount),
+    ).microAlgos;
+
+    const proposalSubmissionFee = Math.trunc(
+      Number((requestedAmount * bps) / BigInt(10_000)),
+    );
+
+    console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
+    console.log(`Title: ${data.title}\n`);
+    console.log(`Funding Type: ${data.fundingType}\n`);
+    console.log(`Requested Amount: ${requestedAmount}\n`);
+    console.log(`Focus: ${data.focus}\n\n`);
+
+    const submitGroup = proposalClient
+      .newGroup()
+      .submit({
+        sender: address,
+        signer: transactionSigner,
+        args: {
+          payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+            amount: proposalSubmissionFee,
+            from: address,
+            to: proposalClient.appAddress,
+            suggestedParams,
+          }),
+          title: data.title,
+          fundingType: Number(data.fundingType),
+          requestedAmount,
+          focus: Number(data.focus),
+        },
+        appReferences: [registryClient.appId],
+      });
+
+    chunkedMetadata.map((chunk, index) => {
+      submitGroup.uploadMetadata({
+        sender: address,
+        signer: transactionSigner,
+        args: {
+          payload: chunk,
+          isFirstInGroup: index === 0,
+        },
+        appReferences: [registryClient.appId],
+        boxReferences: [metadataBoxName, metadataBoxName]
+      })
+    })
+
+    console.log('metadata.length', metadata.length);
+
+    await submitGroup.send()
+
+    console.log("Proposal submitted");
+
+    return appId;
+  } catch (e) {
+    console.error(e)
+  }
+  setCreateProposalLoading(false);
+}
+
+
+export async function updateMetadata(
+  activeAddress: string,
+  data: any,
+  transactionSigner: TransactionSigner,
+  proposal: ProposalSummaryCardDetails,
+  setUpdateMetadataLoading: (state: boolean) => void,
+) {
+  setUpdateMetadataLoading(false);
+
+  try {
+    const metadataBoxName = new Uint8Array(Buffer.from("M"))
+
+    // instance a new proposal client
+    const proposalClient = proposalFactory.getAppClientById({
+      appId: proposal.id,
+    });
+
+    const metadata = new Uint8Array(Buffer.from(JSON.stringify(
+      {
+        description: data.description,
+        team: data.team,
+        additionalInfo: data.additionalInfo,
+        openSource: data.openSource,
+        adoptionMetrics: data.adoptionMetrics,
+        forumLink: data.forumLink,
+      },
+      (_, value) =>
+        typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
+    )))
+
+    let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
+    for (let j = 0; j < metadata.length; j += 2041) {
+      const chunk = metadata.slice(j, j + 2041);
+      chunkedMetadata.push(chunk);
+    }
+
+    const resubmitGroup = proposalClient.newGroup()
+
+    chunkedMetadata.map((chunk, index) => {
+      resubmitGroup.uploadMetadata({
+        sender: activeAddress,
+        signer: transactionSigner,
+        args: {
+          payload: chunk,
+          isFirstInGroup: index === 0,
+        },
+        appReferences: [registryClient.appId],
+        boxReferences: [metadataBoxName, metadataBoxName],
+      })
+    })
+
+    await resubmitGroup.send()
+
+    console.log("Proposal updated");
+
+    return proposal.id;
+  } catch (e) {
+    console.error(e)
+  }
+
+  setUpdateMetadataLoading(false);
+}
+
+export async function resubmitProposal(
   activeAddress: string,
   data: any,
   transactionSigner: TransactionSigner,
   proposal: ProposalSummaryCardDetails,
   bps: bigint,
-  setCreateProposalPending: (pending: boolean) => void,
+  setResubmitProposalLoading: (state: boolean) => void,
 ) {
-  setCreateProposalPending(true);
-  // const suggestedParams = await algorand.getSuggestedParams();
-  const metadataBoxName = new Uint8Array(Buffer.from("M"))
+  setResubmitProposalLoading(true);
 
-  // instance a new proposal client
-  const proposalClient = proposalFactory.getAppClientById({
-    appId: proposal.id,
-  });
+  try {
+    const metadataBoxName = new Uint8Array(Buffer.from("M"))
+    const suggestedParams = await algorand.getSuggestedParams();
 
-  const metadata = new Uint8Array(Buffer.from(JSON.stringify(
-    {
-      description: data.description,
-      team: data.team,
-      additionalInfo: data.additionalInfo,
-      openSource: data.openSource,
-      adoptionMetrics: data.adoptionMetrics,
-      forumLink: data.forumLink,
-    },
-    (_, value) =>
-      typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
-  )))
+    // instance a new proposal client
+    const proposalClient = proposalFactory.getAppClientById({
+      appId: proposal.id,
+    });
 
-  let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
-  for (let j = 0; j < metadata.length; j += 2041) {
-    const chunk = metadata.slice(j, j + 2041);
-    chunkedMetadata.push(chunk);
-  }
-
-  const requestedAmount = AlgoAmount.Algos(
-    BigInt(data.requestedAmount),
-  ).microAlgos;
-
-  const proposalSubmissionFee = Math.trunc(
-    Number((requestedAmount * bps) / BigInt(10_000)),
-  );
-
-  console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
-  console.log(`Title: ${data.title}\n`);
-  console.log(`Funding Type: ${data.fundingType}\n`);
-  console.log(`Requested Amount: ${requestedAmount}\n`);
-  console.log(`Focus: ${data.focus}\n\n`);
-
-  const resubmitGroup = proposalClient.newGroup()
-  
-  const metadataOnlyChange = data.title === proposal.title && Number(data.fundingType) === proposal.fundingType && requestedAmount === proposal.requestedAmount && Number(data.focus) === proposal.focus;
-  if (!metadataOnlyChange) {
-    alert("These changes will require a resubmission of the proposal. Coming soon.");
-    setCreateProposalPending(false);
-    return
-    // resubmitGroup
-    //   .drop({
-    //     sender: activeAddress,
-    //     signer: transactionSigner,
-    //     args: {},
-    //     appReferences: [registryClient.appId],
-    //     accountReferences: [activeAddress],
-    //     extraFee: (1000).microAlgos(),
-    //   })
-    //   .submit({
-    //     sender: activeAddress,
-    //     signer: transactionSigner,
-    //     args: {
-    //       payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-    //         amount: proposalSubmissionFee,
-    //         from: activeAddress,
-    //         to: proposalClient.appAddress,
-    //         suggestedParams,
-    //       }),
-    //       title: data.title,
-    //       fundingType: Number(data.fundingType),
-    //       requestedAmount,
-    //       focus: Number(data.focus),
-    //     },
-    //     appReferences: [registryClient.appId],
-    //   })
-  }
-
-  chunkedMetadata.map((chunk, index) => {
-    resubmitGroup.uploadMetadata({
-      sender: activeAddress,
-      signer: transactionSigner,
-      args: {
-        payload: chunk,
-        isFirstInGroup: index === 0,
+    const metadata = new Uint8Array(Buffer.from(JSON.stringify(
+      {
+        description: data.description,
+        team: data.team,
+        additionalInfo: data.additionalInfo,
+        openSource: data.openSource,
+        adoptionMetrics: data.adoptionMetrics,
+        forumLink: data.forumLink,
       },
-      appReferences: [registryClient.appId],
-      boxReferences: [metadataBoxName, metadataBoxName],
+      (_, value) =>
+        typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
+    )))
+
+    let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
+    for (let j = 0; j < metadata.length; j += 2041) {
+      const chunk = metadata.slice(j, j + 2041);
+      chunkedMetadata.push(chunk);
+    }
+
+    const requestedAmount = AlgoAmount.Algos(
+      BigInt(data.requestedAmount),
+    ).microAlgos;
+
+    const proposalSubmissionFee = Math.trunc(
+      Number((requestedAmount * bps) / BigInt(10_000)),
+    );
+
+    const resubmitGroup = proposalClient
+      .newGroup()
+      .drop({
+        sender: activeAddress,
+        signer: transactionSigner,
+        args: {},
+        appReferences: [registryClient.appId],
+        accountReferences: [activeAddress],
+        extraFee: (1000).microAlgos(),
+      })
+      .submit({
+        sender: activeAddress,
+        signer: transactionSigner,
+        args: {
+          payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+            amount: proposalSubmissionFee,
+            from: activeAddress,
+            to: proposalClient.appAddress,
+            suggestedParams,
+          }),
+          title: data.title,
+          fundingType: Number(data.fundingType),
+          requestedAmount,
+          focus: Number(data.focus),
+        },
+        appReferences: [registryClient.appId],
+      })
+
+    chunkedMetadata.map((chunk, index) => {
+      resubmitGroup.uploadMetadata({
+        sender: activeAddress,
+        signer: transactionSigner,
+        args: {
+          payload: chunk,
+          isFirstInGroup: index === 0,
+        },
+        appReferences: [registryClient.appId],
+        boxReferences: [metadataBoxName, metadataBoxName],
+      })
     })
-  })
 
-  await resubmitGroup.send()
+    await resubmitGroup.send()
 
-  console.log("Proposal updated");
-  setCreateProposalPending(false);
+    console.log("Proposal updated");
 
-  return proposal.id;
+    return proposal.id;
+  } catch (e) {
+    console.log(e)
+  }
+  setResubmitProposalLoading(false);
 }

@@ -2,6 +2,8 @@ import { type ProposalMainCardDetails, type ProposalSummaryCardDetails, type Reg
 import { useProposal, useProposalsByProposer, UseQuery, useRegistry, UseWallet } from "@/hooks";
 import { ProposalInfo, StatusCard } from "@/recipes";
 import { useWallet } from "@txnlab/use-wallet-react";
+import { navigate } from "astro/virtual-modules/transitions-router.js";
+import { useEffect } from "react";
 
 type ProposalInfoControllerProps = {
   xGovReviewer?: string;
@@ -14,9 +16,19 @@ export function ProposalInfoController({ xGovReviewer, proposal, pastProposals, 
   const { activeAddress } = useWallet();
   const proposalQuery = useProposal(proposal.id, proposal);
   const pastProposalsQuery = useProposalsByProposer(proposal.proposer, pastProposals);
-  
+
   const _proposal = proposalQuery.data || proposal;
   const _pastProposals = pastProposalsQuery.data || pastProposals;
+
+  useEffect(() => {
+    if (
+      _proposal.proposer === activeAddress &&
+      !!!_proposal.forumLink
+    ) {
+      // If the proposal is created by the active address and does not have a forum link, redirect to create a proposal
+      navigate(`/new`);
+    }
+  }, [activeAddress, _proposal]);
 
   return (
     <ProposalInfo

@@ -28,22 +28,40 @@ import { AlgorandIcon } from "@/components/icons/AlgorandIcon.tsx";
 import { cn } from "@/functions";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { proposalFormSchema } from "@/recipes/proposal/form/ProposalForm.schema.ts";
+import { proposalFormSchema, validatorSchemas } from "@/recipes/proposal/form/ProposalForm.schema.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
+import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationModal";
 
 export function ProposalForm({
   type,
-  onSubmit,
   proposal,
-  createProposalPending,
+  bps,
+  maxRequestedAmount = 1_000_000_000_000n, // Default to 1M Algo
+  onSubmit,
+  loading,
+  error
 }: {
   type: "edit" | "create";
   proposal?: ProposalMainCardDetails;
+  bps: bigint;
+  maxRequestedAmount?: bigint;
   onSubmit: (data: z.infer<typeof proposalFormSchema>) => void;
-  createProposalPending: boolean;
+  loading: boolean;
+  error?: string;
 }) {
-  const form = useForm<z.infer<typeof proposalFormSchema>>({
-    resolver: zodResolver(proposalFormSchema),
+  const [submitModalOpen, setSubmitModalOpen] = useState(false);
+
+  const formSchema = proposalFormSchema.setKey(
+    'requestedAmount',
+    validatorSchemas.requestedAmount({
+      min: 1_000_000,
+      max: Number(maxRequestedAmount)
+    })
+  )
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       title: proposal?.title || "",
       description: proposal?.description || "",
@@ -61,11 +79,16 @@ export function ProposalForm({
     },
     mode: "onChange",
   });
+
   const { errors } = form.formState;
+
+  const $requestedAmount = form.watch("requestedAmount");
+  const costs = Math.trunc(Number((BigInt($requestedAmount * 1_000_000) * bps) / BigInt(10_000)))
+
   return (
     <div className="p-4 rounded-lg border border-algo-blue dark:border-algo-teal">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form className="space-y-6">
           <FormField
             control={form.control}
             name="title"
@@ -498,16 +521,48 @@ export function ProposalForm({
           />
 
           <div className="flex items-center justify-end">
-            <Button type="submit" disabled={createProposalPending}>
+            <Button
+              type="button"
+              onClick={() => setSubmitModalOpen(true)}
+              disabled={loading}
+            >
               {
-                createProposalPending ? (
-                  <div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>
-                ) : type === "edit"
-                  ? "Save Changes"
-                  : "Save"
+                loading
+                  ? (<div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>)
+                  : type === "edit"
+                    ? "Update"
+                    : "Submit"
               }
             </Button>
           </div>
+
+          <ConfirmationModal
+            isOpen={submitModalOpen}
+            onClose={() => setSubmitModalOpen(false)}
+            title={type === "edit" ? "Update Proposal?" : "Submit Proposal?"}
+            description="Once submitted you will only be able to edit the description, team info, additional info & forum link without needing to create a new proposal."
+            warning={type !== "edit" ? (
+              <WarningNotice
+                title="Proposal Hold"
+                description={
+                  <>
+                    You will need to escrow
+                    <span className="inline-flex items-center gap-1 mx-1 font-semibold">
+                    {Number(bps / 100n)}%
+                    </span>
+                    of the requested amount
+                    <span className="inline-flex items-center gap-1 mx-1 font-semibold">
+                      <AlgorandIcon className="size-2.5" />{costs / 1_000_000}
+                    </span>
+                    If your proposal is vetoed, this amount will be slashed.
+                  </>
+                }
+              />
+            ) : undefined}
+            submitText={type === "edit" ? "Update Proposal" : "Submit Proposal"}
+            onSubmit={form.handleSubmit(onSubmit)}
+            errorMessage={error}
+          />
         </form>
       </Form>
     </div>

@@ -2,10 +2,11 @@ import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { z } from "zod";
 
-import { updateProposal, type ProposalMainCardDetails } from "@/api";
+import { resubmitProposal, updateMetadata, type ProposalMainCardDetails } from "@/api";
 import { proposalFormSchema, ProposalForm } from "@/recipes";
 import { UseQuery, useRegistry, UseWallet } from "@/hooks";
 import { useState } from "react";
+import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
 
 export type EditProposalProps = {
   proposal?: ProposalMainCardDetails;
@@ -14,7 +15,7 @@ export function EditProposalIsland({ proposal }: EditProposalProps) {
   return (
     <UseWallet>
       <UseQuery>
-      <EditProposalForm proposal={proposal} />
+        <EditProposalForm proposal={proposal} />
       </UseQuery>
     </UseWallet>
   );
@@ -27,12 +28,14 @@ export function EditProposalForm({
 }) {
   const { activeAddress, transactionSigner } = useWallet();
   const registry = useRegistry();
-  const [createProposalPending, setCreateProposalPending] = useState(false);
+  const [editProposalLoading, setEditProposalLoading] = useState(false);
 
   return (
     <ProposalForm
       type="edit"
       proposal={proposal}
+      proposalFee={registry.data?.proposalFee || 0n}
+      loading={editProposalLoading}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
         if (!activeAddress) {
           console.error("No active address");
@@ -49,22 +52,37 @@ export function EditProposalForm({
           return;
         }
 
-        try{
-          await updateProposal(
-            activeAddress,
-            data,
-            transactionSigner,
-            proposal,
-            registry.data?.proposalCommitmentBps,
-            setCreateProposalPending
-          );
+        const requestedAmount = AlgoAmount.Algos(
+          BigInt(data.requestedAmount),
+        ).microAlgos;
+
+        const metadataOnlyChange = data.title === proposal.title && Number(data.fundingType) === proposal.fundingType && requestedAmount === proposal.requestedAmount && Number(data.focus) === proposal.focus;
+
+        try {
+          if (metadataOnlyChange) {
+            await updateMetadata(
+              activeAddress,
+              data,
+              transactionSigner,
+              proposal,
+              setEditProposalLoading
+            )
+          } else {
+            await resubmitProposal(
+              activeAddress,
+              data,
+              transactionSigner,
+              proposal,
+              registry.data?.proposalCommitmentBps,
+              setEditProposalLoading
+            );
+          }
           navigate(`/proposal/${proposal.id}`);
         } catch (e) {
           console.error(e);
           console.error("Failed to update proposal");
         }
       }}
-      createProposalPending={createProposalPending}
     />
   );
 }

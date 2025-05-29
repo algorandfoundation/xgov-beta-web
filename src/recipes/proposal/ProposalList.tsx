@@ -18,6 +18,7 @@ import {
   filters,
 } from "@/recipes/proposal/list/ProposalFilter.tsx";
 import VoteCounter from "@/components/VoteCounter/VoteCounter";
+import { useMetadata } from "@/hooks";
 const filterKeys = Object.keys(filters);
 
 export const proposalFilter = (
@@ -96,10 +97,11 @@ export function StackedList({
           proposer,
           approvals,
           rejections,
-          forumLink
         } = proposal;
 
         const phase = ProposalStatusMap[status];
+
+        const metadata = useMetadata(id, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusFinal))
 
         // Filter out blocked proposals
         // They will still be visible in the Admin page
@@ -114,7 +116,7 @@ export function StackedList({
           >
             <a
               className="absolute left-0 top-0 w-full h-full hover:bg-algo-blue/30 dark:hover:bg-algo-teal/30"
-              href={`/proposal/${Number(id)}`}
+              href={phase === "Empty" ? '/new' : `/proposal/${Number(id)}`}
             ></a>
             <div>
               <div className="flex justify-between items-center">
@@ -136,7 +138,7 @@ export function StackedList({
                   {phase === "Discussion" && (
                     <>
                       <UserCircleRow />
-                      <DiscussionLink to={forumLink} />
+                      <DiscussionLink to={metadata.data?.forumLink} />
                     </>
                   )}
                 </div>
@@ -174,7 +176,7 @@ export function StackedList({
                   {phase === "Discussion" && (
                     <>
                       <UserCircleRow />
-                      <DiscussionLink to={forumLink} />
+                      <DiscussionLink to={metadata.data?.forumLink} />
                     </>
                   )}
                 </div>

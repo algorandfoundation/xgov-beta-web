@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 
-export default function VoteCounter({ approvals, rejections, nulls }: { approvals: number; rejections: number; nulls?: number }) {
+export function VoteCounter({ approvals, rejections, nulls }: { approvals: number; rejections: number; nulls?: number }) {
     return (
         <span className="flex gap-4 py-1">
             <span className="flex gap-1">

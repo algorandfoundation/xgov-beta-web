@@ -1,7 +1,7 @@
 import { ChatBubbleLeftIcon } from "../icons/ChatBubbleLeftIcon";
 import { Link } from "../Link";
 
-export function DiscussionLink({ to }: { to: string }) {
+export function DiscussionLink({ to = 'https://forum.algorand.co' }: { to: string | undefined }) {
   return (
     <Link
       to={to}

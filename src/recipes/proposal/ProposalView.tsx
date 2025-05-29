@@ -151,7 +151,7 @@ function StatusCardTemplate({
           <p className="text-algo-blue dark:text-algo-teal">{sideHeader}</p>
         </div>
 
-        <p className="mt-3 text-wrap text-sm text-algo-black-50 dark:text-algo-black-30">
+        <p className="mt-3 max-w-[30rem] text-wrap text-sm text-algo-black-50 dark:text-algo-black-30">
           {subHeader}
         </p>
         <div className="flex flex-col items-center justify-center gap-10 w-full h-96">
@@ -657,7 +657,6 @@ export function ProposalInfo({
   pastProposals,
   children,
 }: ProposalInfoProps) {
-  console.log("ProposalInfo", proposal);
   const phase = ProposalStatusMap[proposal.status];
 
   const _pastProposals = (pastProposals || []).filter((p) =>

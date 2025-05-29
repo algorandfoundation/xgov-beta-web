@@ -81,15 +81,15 @@ export const CustomizableVotes: Story = {
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-4">
         <span className="text-sm text-algo-black-60 dark:text-white/60 w-32">Popular:</span>
-        <VoteCounter />
+        <VoteCounter approvals={100} rejections={10} nulls={5} />
       </div>
       <div className="flex items-center gap-4">
         <span className="text-sm text-algo-black-60 dark:text-white/60 w-32">Controversial:</span>
-        <VoteCounter />
+        <VoteCounter approvals={50} rejections={50} nulls={0} />
       </div>
       <div className="flex items-center gap-4">
         <span className="text-sm text-algo-black-60 dark:text-white/60 w-32">New:</span>
-        <VoteCounter />
+        <VoteCounter approvals={0} rejections={0} nulls={0} />
       </div>
     </div>
   ),

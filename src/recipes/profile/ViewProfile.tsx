@@ -4,7 +4,7 @@ import { ProfileCard } from "@/components/ProfileCard/ProfileCard";
 
 import { useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { algorand, RegistryAppID, registryClient, signup } from "@/api";
+import { algorand, openProposal, RegistryAppID, registryClient, signup } from "@/api";
 import algosdk, {
   ALGORAND_MIN_TX_FEE,
   makePaymentTxnWithSuggestedParamsFromObject,
@@ -27,6 +27,8 @@ import {
   useProposalsByProposer,
 } from "@/hooks";
 import { StackedList } from "@/recipes";
+import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationModal";
+import { navigate } from "astro/virtual-modules/transitions-router.js";
 
 const activeStatuses = [
   // ProposalStatus.ProposalStatusEmpty,
@@ -69,27 +71,6 @@ export function ProfilePageController({ address }: { address: string }) {
     proposer.isError ||
     proposalsData.isError;
 
-  // const [subscribeXGovLoading, setSubscribeXGovLoading] =
-  //   useState<boolean>(false);
-  // const [setVotingAddressLoading, setSetVotingAddressLoading] =
-  //   useState<boolean>(false);
-  // const [subscribeProposerLoading, setSubscribeProposerLoading] =
-  //   useState<boolean>(false);
-
-  // const validProposer =
-  //   (proposer?.data &&
-  //     proposer.data.kycStatus &&
-  //     proposer.data.kycExpiring > Date.now() / 1000) ||
-  //   false;
-
-  // const hasCurrentProposal = proposalsData.data?.some((proposal) =>
-  //   activeStatuses.includes(proposal.status),
-  // );
-
-  // const proposals = proposalsData.data?.filter(
-  //   (proposal) => proposal.status !== ProposalStatus.ProposalStatusEmpty,
-  // );
-
   if (!address || !activeAddress || isLoading) {
     return <LoadingSpinner />;
   }
@@ -119,6 +100,7 @@ export function ProfilePage({
   const xgov = useXGov(address || activeAddress);
   const proposer = useProposer(address || activeAddress);
   const proposalsData = useProposalsByProposer(address || activeAddress);
+  const [showOpenProposalModal, setShowOpenProposalModal] = useState(false);
 
   const isLoading =
     registry.isLoading ||
@@ -137,6 +119,7 @@ export function ProfilePage({
     useState<boolean>(false);
   const [subscribeProposerLoading, setSubscribeProposerLoading] =
     useState<boolean>(false);
+  const [openProposalLoading, setOpenProposalLoading] = useState<boolean>(false);
 
   const validProposer =
     (proposer?.data &&
@@ -144,9 +127,9 @@ export function ProfilePage({
       proposer.data.kycExpiring > Date.now() / 1000) ||
     false;
 
-  const proposals = proposalsData.data?.filter(
-    (proposal) => proposal.status !== ProposalStatus.ProposalStatusEmpty,
-  );
+  console.log("validProposer", validProposer, 'activeProposal', proposer.data?.activeProposal);
+
+  const proposals = proposalsData.data
 
   if (!address || !activeAddress || isLoading) {
     return <LoadingSpinner />;
@@ -281,27 +264,58 @@ export function ProfilePage({
         setVotingAddress={setVotingAddress}
         setVotingAddressLoading={setVotingAddressLoading}
         isXGov={(address === activeAddress && xgov.data?.isXGov) || false}
+        xGovSignupCost={registry.data?.xgovFee || 0n}
         subscribeXgov={subscribeXgov}
         unsubscribeXgov={unsubscribeXgov}
         subscribeXGovLoading={subscribeXGovLoading}
         proposer={proposer.data}
+        proposerSignupCost={registry.data?.proposerFee || 0n}
         subscribeProposer={() => subscribeProposer(registry.data?.proposerFee!)}
         subscribeProposerLoading={subscribeProposerLoading}
         className="mt-6"
       />
       {validProposer && (
         <>
-          <div className="flex gap-6 mb-4">
+          <div className="flex items-center gap-6 mb-4">
             <XGovProposerStatusPill proposer={proposer.data} />
-            <Link to="/new">
-              <InfinityMirrorButton
-                variant="secondary"
-                disabled={proposer.data?.activeProposal}
-                disabledMessage="You already have an active proposal"
-              >
-                New Proposal
-              </InfinityMirrorButton>
-            </Link>
+            <InfinityMirrorButton
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowOpenProposalModal(true)}
+              disabled={proposer.data?.activeProposal}
+              disabledMessage="You already have an active proposal"
+            >
+              Open Proposal
+            </InfinityMirrorButton>
+            {
+              showOpenProposalModal && (
+                <ConfirmationModal
+                  isOpen={showOpenProposalModal}
+                  onClose={() => setShowOpenProposalModal(false)}
+                  title="Open Proposal"
+                  description="Are you sure you want to open a new proposal? You can only have one active proposal at a time."
+                  warningTitle="Proposal Fee"
+                  costs={registry.data?.proposalFee || 0n} // proposer.data?.proposalFee || 
+                  actionText="Open a proposal"
+                  submitText="Confirm"
+                  onSubmit={async () => {
+                    if (!activeAddress) {
+                      console.error("No active address");
+                      return;
+                    }
+
+                    const appId = await openProposal(
+                      activeAddress,
+                      transactionSigner,
+                      setOpenProposalLoading
+                    )
+
+                    navigate(`/new?appId=${appId}`)
+                  }}
+                  errorMessage=""
+                />
+              )
+            }
           </div>
           {!!proposals && (
             <StackedList proposals={proposals} activeAddress={null} />

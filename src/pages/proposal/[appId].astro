@@ -41,12 +41,14 @@ const network = env.PUBLIC_NETWORK
 const registryGlobalState = await getGlobalState();
 
 const proposal = await getProposal(BigInt(appId)).catch((e) => {
-  console.error(e)
+  console.error("Error fetching proposal:", e);
   return null;
 });
+
 if (!proposal || !registryGlobalState) {
   return Astro.redirect("/404");
 }
+
 const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
   (p) => p.id !== proposal.id,
 );

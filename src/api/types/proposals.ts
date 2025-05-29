@@ -198,12 +198,11 @@ export function isProposalInfoCardDetails(
 }
 
 export type ProposalSummaryCardDetails = Omit<ProposalTypedGlobalState, 'fundingType' | 'status' | 'focus' | 'fundingCategory'> & {
-    id: bigint;
-    fundingType: ProposalFundingType;
-    status: ProposalStatus;
-    focus: ProposalFocus;
-    fundingCategory: ProposalCategory;
-    forumLink: string;
+  id: bigint;
+  fundingType: ProposalFundingType;
+  status: ProposalStatus;
+  focus: ProposalFocus;
+  fundingCategory: ProposalCategory;
 }
 
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;
