@@ -20,7 +20,7 @@
   "dependencies": {
     "@agoralabs-sh/avm-web-provider": "^1.7.0",
     "@algorandfoundation/algokit-utils": "^7.0.0",
-    "@algorandfoundation/xgov": "github:algorandfoundation/xgov-beta-ts#build/app-clients",
+    "@algorandfoundation/xgov": "github:algorandfoundation/xgov-beta-ts",
     "@astrojs/check": "^0.9.4",
     "@astrojs/cloudflare": "^12.4.0",
     "@astrojs/react": "^4.1.5",
@@ -48,7 +48,7 @@
     "@types/react-dom": "^18.3.1",
     "@walletconnect/client": "^1.8.0",
     "@walletconnect/socket-transport": "github:awesome-algorand/walletconnect-socket-transport",
-    "algosdk": "2.9.0",
+    "algosdk": "^2.9.0",
     "astro": "^5.1.1",
     "astro-icon": "^1.1.1",
     "blockstore-core": "^5.0.2",

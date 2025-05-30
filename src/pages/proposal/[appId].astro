@@ -4,12 +4,11 @@ import { getProposal, getProposalsByProposer, getGlobalState } from "@/api";
 import Layout from "@/layouts/Layout.astro";
 import Page from "@/layouts/Page.astro";
 
-import { ReviewerCardIsland } from "../../components/ProposalReviewerCard/ProposalReviewerCard";
 import { RequestedAmountDetail } from "../../components/RequestedAmountDetail/RequestedAmountDetail";
 import { FocusDetail } from "../../components/FocusDetail/FocusDetail";
 import { FundingTypeDetail } from "../../components/FundingTypeDetail/FundingTypeDetail";
 
-import { StatusCardIsland, ProposalInfo } from "@/recipes";
+import { StatusCardIsland, ProposalInfoIsland } from "@/recipes";
 
 import {
   Breadcrumb,
@@ -20,6 +19,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { LoraPillLink } from "@/components/LoraPillLink/LoraPillLink";
+import {env} from '@/constants'
 
 interface Props {
   appId: string;
@@ -36,15 +36,19 @@ if (!appId) {
   });
 }
 
+const network = env.PUBLIC_NETWORK
+
 const registryGlobalState = await getGlobalState();
 
 const proposal = await getProposal(BigInt(appId)).catch((e) => {
-  console.error(e)
+  console.error("Error fetching proposal:", e);
   return null;
 });
+
 if (!proposal || !registryGlobalState) {
   return Astro.redirect("/404");
 }
+
 const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
   (p) => p.id !== proposal.id,
 );
@@ -52,11 +56,6 @@ const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
 
 <Layout title={proposal.title} description={proposal.description}>
   <Page>
-    <ReviewerCardIsland
-      slot="sidebar"
-      client:load
-      proposal={proposal}
-    />
     <Breadcrumb slot="breadcrumb">
       <BreadcrumbList>
         <BreadcrumbItem>
@@ -66,12 +65,17 @@ const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
         <BreadcrumbItem>
           <BreadcrumbPage className="flex items-center gap-2">
             Proposal
-            <LoraPillLink id={proposal.id} />
+            <LoraPillLink network={network} id={proposal.id} />
           </BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
-    <ProposalInfo proposal={proposal} pastProposals={pastProposals}>
+    <ProposalInfoIsland
+      client:only="react"
+      xGovReviewer={registryGlobalState.xgovReviewer}
+      proposal={proposal}
+      pastProposals={pastProposals}
+    >
       <div
         class="flex lg:flex-col items-end justify-between gap-2 text-white lg:-mt-16 mx-4 lg:mx-0 my-4 py-2"
       >
@@ -84,6 +88,6 @@ const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
         registry={registryGlobalState}
         proposal={proposal}
       />
-    </ProposalInfo>
+    </ProposalInfoIsland>
   </Page>
 </Layout>

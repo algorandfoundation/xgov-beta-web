@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   getAllProposals,
+  getMetadata,
   getProposal,
   getProposalsByProposer,
   getVoterBox,
@@ -21,7 +22,7 @@ export function useGetAllProposals(proposals?: ProposalSummaryCardDetails[]) {
 
 export function useProposalsByProposer(
   address: string | null | undefined,
-  proposals?: ProposalMainCardDetails[],
+  proposals?: ProposalSummaryCardDetails[],
 ) {
   return useQuery({
     queryKey: ["getProposalsByProposer", address],
@@ -46,9 +47,17 @@ export function useProposal(
 }
 
 export function useVoterBox(proposalId: number | null, activeAddress: string | null) {
-    return useQuery({
-        queryKey: ['getVoterBox', Number(proposalId!), activeAddress],
-        queryFn: () => getVoterBox(BigInt(proposalId!), activeAddress!),
-        enabled: !!proposalId && !!activeAddress,
-    });
+  return useQuery({
+    queryKey: ['getVoterBox', Number(proposalId!), activeAddress],
+    queryFn: () => getVoterBox(BigInt(proposalId!), activeAddress!),
+    enabled: !!proposalId && !!activeAddress,
+  });
+}
+
+export function useMetadata(proposalId: bigint | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['getMetadata', proposalId],
+    queryFn: () => getMetadata(proposalId!),
+    enabled,
+  });
 }

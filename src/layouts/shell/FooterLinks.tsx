@@ -73,12 +73,13 @@ export function FooterLinks() {
     <>
       {navigation.map((item) => (
         <a
+          key={item.name}
           target="_blank"
           href={item.href}
           className="flex justify-center items-center size-8 p-0.5 text-algo-black hover:text-algo-black-60 hover:bg-white dark:hover:bg-algo-black-80 dark:text-white/60 dark:hover:text-white rounded-full"
         >
           <span className="sr-only">{item.name}</span>
-          <item.icon aria-hidden="true" class="size-6" />
+          <item.icon aria-hidden="true" className="size-6" />
         </a>
       ))}
     </>

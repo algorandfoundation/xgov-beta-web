@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import type { TypedGlobalState } from "@algorandfoundation/xgov/registry";
+import type { RegistryGlobalState } from "@/api";
 
 const rolePretty: { [key: string]: string } = {
   kycProvider: "KYC Provider",
@@ -25,7 +25,7 @@ export function RoleList({
   xGovManager,
   handleSetRole,
 }: {
-  registryGlobalState: TypedGlobalState;
+  registryGlobalState: RegistryGlobalState;
   activeAddress: string;
   xGovManager: string;
   handleSetRole: (role: string) => void;

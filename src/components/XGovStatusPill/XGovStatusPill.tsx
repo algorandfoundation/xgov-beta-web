@@ -12,7 +12,7 @@ export interface XGovStatusPillProps {
   unsubscribeXGovLoading: boolean;
 }
 
-export default function XGovStatusPill({
+export function XGovStatusPill({
   isXGov,
   unsubscribeXgov,
   unsubscribeXGovLoading,

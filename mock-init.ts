@@ -7,7 +7,6 @@ import { ProposalFactory } from "@algorandfoundation/xgov";
 import { ProposalStatus as PS } from "@/api/types";
 import { mockProposals } from "./__fixtures__/proposals";
 import {
-  COOL_DOWN_DURATION,
   DISCUSSION_DURATION_LARGE,
   DISCUSSION_DURATION_MEDIUM,
   DISCUSSION_DURATION_SMALL,
@@ -23,7 +22,6 @@ import {
   QUORUM_LARGE,
   QUORUM_MEDIUM,
   QUORUM_SMALL,
-  STALE_PROPOSAL_DURATION,
   VOTING_DURATION_LARGE,
   VOTING_DURATION_MEDIUM,
   VOTING_DURATION_SMALL,
@@ -88,6 +86,9 @@ const dispenser = await algorand.account.dispenserFromEnvironment();
 
 await algorand.account.ensureFunded(adminAccount.addr, dispenser, fundAmount);
 
+// fund my local lute wallet
+await algorand.account.ensureFunded("KFLCTKV2ELKPWXPS6IS6AH3QBNA77DGSPLW3O2WT7YOLJBBLZ72S6K52EM", dispenser, (120).algo());
+
 // Create the registry
 const registryMinter = new XGovRegistryFactory({
   algorand,
@@ -148,8 +149,6 @@ await registryClient.send.configXgovRegistry({
         VOTING_DURATION_LARGE,
         VOTING_DURATION_XLARGE,
       ],
-      coolDownDuration: COOL_DOWN_DURATION,
-      staleProposalDuration: STALE_PROPOSAL_DURATION,
       quorum: [QUORUM_SMALL, QUORUM_MEDIUM, QUORUM_LARGE],
       weightedQuorum: [
         WEIGHTED_QUORUM_SMALL,

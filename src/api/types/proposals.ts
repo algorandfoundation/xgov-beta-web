@@ -26,7 +26,7 @@ export type Status =
 
 export const ProposalStatusMap = {
   [ProposalStatus.ProposalStatusEmpty]: "Empty",
-  [ProposalStatus.ProposalStatusDraft]: "Draft",
+  [ProposalStatus.ProposalStatusDraft]: "Discussion",
   [ProposalStatus.ProposalStatusFinal]: "Discussion",
   [ProposalStatus.ProposalStatusVoting]: "Voting",
   [ProposalStatus.ProposalStatusApproved]: "Approved",
@@ -34,22 +34,21 @@ export const ProposalStatusMap = {
   [ProposalStatus.ProposalStatusReviewed]: "Reviewed",
   [ProposalStatus.ProposalStatusFunded]: "Funded",
   [ProposalStatus.ProposalStatusBlocked]: "Blocked",
-  [ProposalStatus.ProposalStatusDelete]: "Delete",
+  [ProposalStatus.ProposalStatusDelete]: "Deleted",
 };
 
-export const ProposalStatusReverseMap: { [key: string]: ProposalStatus } = {
-  Empty: ProposalStatus.ProposalStatusEmpty,
-  Draft: ProposalStatus.ProposalStatusDraft,
-  Discussion: ProposalStatus.ProposalStatusFinal,
-  Voting: ProposalStatus.ProposalStatusVoting,
-  Approved: ProposalStatus.ProposalStatusApproved,
-  Rejected: ProposalStatus.ProposalStatusRejected,
-  Funded: ProposalStatus.ProposalStatusFunded,
-  Blocked: ProposalStatus.ProposalStatusBlocked,
-  Delete: ProposalStatus.ProposalStatusDelete,
+export const ProposalStatusReverseMap: { [key: string]: ProposalStatus[] } = {
+  Empty: [ProposalStatus.ProposalStatusEmpty],
+  Discussion: [ProposalStatus.ProposalStatusDraft, ProposalStatus.ProposalStatusFinal],
+  Voting: [ProposalStatus.ProposalStatusVoting],
+  Approved: [ProposalStatus.ProposalStatusApproved],
+  Rejected: [ProposalStatus.ProposalStatusRejected],
+  Funded: [ProposalStatus.ProposalStatusFunded],
+  Blocked: [ProposalStatus.ProposalStatusBlocked],
+  Delete: [ProposalStatus.ProposalStatusDelete],
 };
 
-export const ProposalStatusFilterKeys = ["Discussion", "Voting"];
+export const ProposalStatusFilterKeys = ["Discussion", "Voting", "Approved", "Rejected", "Funded", "Blocked"];
 
 export enum ProposalCategory {
   ProposalCategoryNull = 0,
@@ -199,11 +198,11 @@ export function isProposalInfoCardDetails(
 }
 
 export type ProposalSummaryCardDetails = Omit<ProposalTypedGlobalState, 'fundingType' | 'status' | 'focus' | 'fundingCategory'> & {
-    id: bigint;
-    fundingType: ProposalFundingType;
-    status: ProposalStatus;
-    focus: ProposalFocus;
-    fundingCategory: ProposalCategory;
+  id: bigint;
+  fundingType: ProposalFundingType;
+  status: ProposalStatus;
+  focus: ProposalFocus;
+  fundingCategory: ProposalCategory;
 }
 
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;

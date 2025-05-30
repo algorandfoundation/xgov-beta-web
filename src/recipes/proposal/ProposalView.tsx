@@ -1,12 +1,11 @@
 import { type ReactNode, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { SquarePenIcon } from "lucide-react";
+import { CoinsIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
 
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { UserPill } from "@/components/UserPill/UserPill";
 import { BracketedPhaseDetail } from "@/components/BracketedPhaseDetail/BracketedPhaseDetail";
-import { BlockIcon } from "@/components/icons/BlockIcon";
 import {
   algorand,
   registryClient,
@@ -32,7 +31,8 @@ import {
 } from "@/components/ui/dialog";
 import { useTimeLeft } from "@/hooks/useTimeLeft";
 import { Link } from "@/components/Link";
-import VoteCounter from "@/components/VoteCounter/VoteCounter";
+import { ProposalReviewerCard } from "@/components/ProposalReviewerCard/ProposalReviewerCard";
+import {VoteCounter} from "@/components/VoteCounter/VoteCounter";
 import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill";
 import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
@@ -57,14 +57,14 @@ export const defaultsStatusCardMap = {
     header: 'Proposal is being discussed',
     subHeader: 'Take part in the discussion and help shape public sentiment on this proposal.',
     sideHeader: '',
-    icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
+    icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: 'View the discussion',
   },
   [ProposalStatus.ProposalStatusFinal]: {
     header: 'Proposal is being discussed',
     subHeader: 'Take part in the discussion and help shape public sentiment on this proposal.',
     sideHeader: '',
-    icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
+    icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: 'View the discussion',
   },
   [ProposalStatus.ProposalStatusVoting]: {
@@ -76,44 +76,44 @@ export const defaultsStatusCardMap = {
   },
   [ProposalStatus.ProposalStatusApproved]: {
     header: 'Proposal Approved!',
-    subHeader: '',
+    subHeader: 'The proposal has been approved by the xGov community! Once the proposal is verified to meet requirements, it will be funded!',
     sideHeader: '',
-    icon: '',
-    action: '',
+    icon: <PartyPopperIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
+    action: 'woo hoo! 🎉',
   },
   [ProposalStatus.ProposalStatusRejected]: {
-    header: 'Proposal has been rejected',
-    subHeader: '',
+    header: 'Proposal Rejected',
+    subHeader: 'Unfortunately, this proposal has been rejected by the xGov community.',
     sideHeader: '',
-    icon: '',
+    icon: <HeartCrackIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: '',
   },
   [ProposalStatus.ProposalStatusReviewed]: {
-    header: 'Proposal has been approved and deemed to conform with the xGov T&C.',
-    subHeader: '',
+    header: 'Proposal Reviewed',
+    subHeader: 'Proposal has been reviewed & meets xGov terms & conditions',
     sideHeader: '',
-    icon: '',
-    action: '',
+    icon: <PartyPopperIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
+    action: 'ahh yeah! 🎉',
   },
   [ProposalStatus.ProposalStatusFunded]: {
     header: 'Proposal Funded!',
-    subHeader: '',
+    subHeader: 'Proposal funds have been released to the proposer.',
     sideHeader: '',
-    icon: '',
+    icon: <CoinsIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: '',
   },
   [ProposalStatus.ProposalStatusBlocked]: {
-    header: 'Proposal has been Blocked by xGov Reviewer.',
-    subHeader: '',
+    header: 'Proposal Blocked',
+    subHeader: 'Unfortunately, this proposal has been blocked for not meeting xGov terms & conditions.',
     sideHeader: '',
-    icon: '',
+    icon: <HeartCrackIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: '',
   },
   [ProposalStatus.ProposalStatusDelete]: {
-    header: 'Proposal has been deleted',
-    subHeader: '',
+    header: 'Proposal Deleted',
+    subHeader: 'This proposal has been deleted.',
     sideHeader: '',
-    icon: '',
+    icon: <TrashIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: '',
   },
 }
@@ -143,15 +143,15 @@ function StatusCardTemplate({
       )}
     >
       <div className="w-full px-4 py-5 sm:px-6">
-        <div className="w-full flex items-center justify-between">
+        <div className="w-full flex gap-10 items-center justify-between">
           <h3 className="text-base font-semibold text-algo-black dark:text-white">
             {header}
           </h3>
 
-          <p>{sideHeader}</p>
+          <p className="text-algo-blue dark:text-algo-teal">{sideHeader}</p>
         </div>
 
-        <p className="mt-1 text-wrap text-sm text-algo-black-80 dark:text-algo-black-30">
+        <p className="mt-3 max-w-[30rem] text-wrap text-sm text-algo-black-50 dark:text-algo-black-30">
           {subHeader}
         </p>
         <div className="flex flex-col items-center justify-center gap-10 w-full h-96">
@@ -183,19 +183,19 @@ function DiscussionStatusCard({
   const [isDropModalOpen, setIsDropModalOpen] = useState(false);
 
   const finalizable = discussionDuration > minimumDiscussionDuration;
-  const [days, hours, minutes, seconds] = useTimeLeft(
+  const [days, hours, minutes] = useTimeLeft(
     Date.now() + (Number(minimumDiscussionDuration) - discussionDuration),
   );
-  let remainingTime = `${days}d ${hours}h ${minutes}m ${seconds}s remaining`;
+  let remainingTime = `${days}d ${hours}h ${minutes}m`;
 
   let header = 'Proposal is being discussed';
-  let icon = <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white" />;
+  let icon = <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />;
   if (!finalizable && proposal.proposer === activeAddress) {
     header = "Your proposal is in the drafting & discussion phase";
     icon = (
       <SquarePenIcon
         aria-hidden="true"
-        className="size-24 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white"
+        className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white"
       />
     );
   }
@@ -309,10 +309,10 @@ function VotingStatusCard({
   const votingDuration = Date.now() - Number(proposal.voteOpenTs) * 1000;
   const minimumVotingDuration = getVotingDuration(proposal.fundingCategory, votingDurations);
 
-  const [days, hours, minutes, seconds] = useTimeLeft(
+  const [days, hours, minutes] = useTimeLeft(
     Date.now() + (minimumVotingDuration - votingDuration),
   );
-  const remainingTime = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  const remainingTime = `${days}d ${hours}h ${minutes}m`;
 
   const votingSchema = z.object({
     approvals: z.number().min(0, { message: "Must be a positive number" }),
@@ -435,7 +435,7 @@ function VotingStatusCard({
 
   if (!!voterInfo && voterInfo.votes > 0n) {
     if (voterInfo.voted) {
-      subheader = <></>
+      subheader = <div className="h-9 w-full"></div>
       action = (
         <>
           {baseAction}
@@ -585,7 +585,7 @@ function VotingStatusCard({
       header="Vote on this proposal"
       subHeader={subheader}
       sideHeader={remainingTime}
-      icon={<BlockIcon className="size-18 stroke-algo-blue dark:stroke-algo-teal" />}
+      icon={<VoteIcon className="size-24 stroke-[1] stroke-algo-blue dark:stroke-algo-teal" />}
       action={action}
     />
   )
@@ -643,17 +643,28 @@ export function StatusCard({
 }
 
 export interface ProposalInfoProps {
+  activeAddress: string | null;
+  xGovReviewer?: string;
   proposal: ProposalMainCardDetails;
   pastProposals?: ProposalBrief[];
   children?: ReactNode;
 }
 
 export function ProposalInfo({
+  activeAddress,
+  xGovReviewer,
   proposal,
   pastProposals,
   children,
 }: ProposalInfoProps) {
   const phase = ProposalStatusMap[proposal.status];
+
+  const _pastProposals = (pastProposals || []).filter((p) =>
+    [
+      ProposalStatus.ProposalStatusEmpty,
+      ProposalStatus.ProposalStatusDraft,
+    ].includes(p.status) && p.id !== proposal.id
+  )
 
   return (
     <>
@@ -694,7 +705,21 @@ export function ProposalInfo({
         </svg>
       </div>
       <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-6 lg:mx-0 lg:max-w-none lg:grid-cols-2 lg:items-start lg:gap-y-10">
-        <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 pt-6">
+        {
+          xGovReviewer
+          && activeAddress
+          && activeAddress === xGovReviewer
+          && (
+            <div className="lg:col-span-2">
+              <ProposalReviewerCard
+                proposalId={proposal.id}
+                status={proposal.status}
+              />
+            </div>
+          )
+        }
+
+        <div className="lg:col-span-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 pt-6">
           <div className="lg:pr-4">
             <div className="sm:max-w-lg md:max-w-[unset]">
               <p className="text-base/7 text-algo-blue">
@@ -710,10 +735,10 @@ export function ProposalInfo({
             </div>
           </div>
         </div>
-        <div className="lg:flex lg:flex-col lg:items-end lg:fixed lg:right-0 lg:pr-8 lg:pt-14">
+        <div className="lg:flex lg:flex-col lg:items-end lg:fixed lg:right-0 lg:pr-8 lg:pt-6 2xl:pt-14">
           {children}
         </div>
-        <div className="lg:col-span-2 lg:col-start-1 lg:row-start-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">
+        <div className="lg:col-span-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">
           <div className="lg:pr-4">
             <div className="max-w-xl text-lg/8 text-algo-black-70 dark:text-algo-black-30 sm:max-w-lg md:max-w-[unset]">
               <p className="mb-8">
@@ -758,13 +783,14 @@ export function ProposalInfo({
                   Proposed 2d ago
                 </span>
               </div>
-              {!!pastProposals && !!pastProposals.length && (
+              {!!_pastProposals && !!_pastProposals.length && (
                 <>
                   <h5 className="font-semibold text-algo-black dark:text-algo-black-30 mb-2">
                     Past Proposals
                   </h5>
                   <ul className="text-xl text-algo-black dark:text-white flex flex-col gap-2">
-                    {pastProposals.map((pastProposal) => {
+                    {_pastProposals.map((pastProposal) => {
+                      const phase = ProposalStatusMap[pastProposal.status];
                       return (
                         <li
                           key={pastProposal.id}

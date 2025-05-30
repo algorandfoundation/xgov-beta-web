@@ -5,6 +5,7 @@ import Footer from "@/layouts/shell/Footer.astro";
 
 import { ThemeToggle } from "@/components/button/ThemeToggle/ThemeToggle";
 import { ConnectIsland } from "@/components/Connect/Connect.island";
+import { MobileNavIsland } from "@/components/MobileNav/MobileNav";
 
 const path = Astro.url.pathname;
 ---
@@ -13,6 +14,7 @@ const path = Astro.url.pathname;
   <Header path={path}>
     <ConnectIsland client:only="react" path={path} />
     <ThemeToggle client:load />
+    <MobileNavIsland client:only="react" slot="mobile-nav" />
   </Header>
   <Content>
     <slot name="hero" />

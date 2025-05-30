@@ -6,9 +6,9 @@ import {
   getIsXGov,
   getAllSubscribedXGovs,
 } from "src/api/registry";
-import type { TypedGlobalState } from "@algorandfoundation/xgov/registry";
+import type { RegistryGlobalState } from "@/api";
 
-export function useRegistry(state?: TypedGlobalState) {
+export function useRegistry(state?: RegistryGlobalState) {
   return useQuery({
     queryKey: ["getGlobalState"],
     queryFn: getGlobalState,
