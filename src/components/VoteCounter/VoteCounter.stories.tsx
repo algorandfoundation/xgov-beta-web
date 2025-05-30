@@ -8,6 +8,11 @@ const meta: Meta<typeof VoteCounter> = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  args: {
+    approvals: 123,
+    rejections: 45,
+    nulls: 12,
+  }
 };
 
 export default meta;
