@@ -20,9 +20,9 @@ export type Exclude =
 export async function fetchAccountInformation(
     address: string,
     exclude: Exclude = 'none',
-): Promise<algosdk.modelsv2.Account> {
+): Promise<Record<string, any>> {
     const accountInfo = await algorand.client.algod.accountInformation(address).exclude(exclude).do()
-    return accountInfo as algosdk.modelsv2.Account
+    return accountInfo
 }
 
 export type AccountBalance = {
@@ -37,9 +37,15 @@ export async function fetchBalance(address: string | null): Promise<AccountBalan
     }
     const accountInfo = await fetchAccountInformation(address, 'all')
 
-    const amount = accountInfo.amount
-    const minimum = accountInfo.minBalance
+    const amount = BigInt(accountInfo['amount'])
+    const minimum = BigInt(accountInfo['min-balance'])
     const available = max(0n, amount - minimum)
+
+    console.log('fetchBalance', {
+        amount: AlgoAmount.MicroAlgos(amount),
+        available: AlgoAmount.MicroAlgos(available),
+        minimum: AlgoAmount.MicroAlgos(minimum),
+    })
 
     return {
         amount: AlgoAmount.MicroAlgos(amount),

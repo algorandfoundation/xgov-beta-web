@@ -11,6 +11,7 @@ export interface ConfirmationModalProps {
     warning?: JSX.Element;
     submitText?: string;
     onSubmit: () => Promise<void>;
+    loading?: boolean;
     errorMessage?: string;
 }
 
@@ -22,14 +23,13 @@ export function ConfirmationModal({
     warning,
     submitText = "Submit",
     onSubmit,
-    errorMessage,
+    loading = false,
+    errorMessage = '',
 }: ConfirmationModalProps) {
 
     const innerOnSubmit = async () => {
         try {
-            onClose();
             await onSubmit();
-
         } catch (error) {
             console.error("Error during proposal submission:", error);
         }
@@ -63,7 +63,12 @@ export function ConfirmationModal({
                     <Button variant="ghost" onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button onClick={innerOnSubmit}>{submitText}</Button>
+                    <Button onClick={innerOnSubmit} disabled={loading}>
+                        {loading
+                            ? "Loading..."
+                            : submitText
+                        }
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

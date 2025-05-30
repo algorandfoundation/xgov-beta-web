@@ -17,7 +17,7 @@ import {
   filterAmountMap,
   filters,
 } from "@/recipes/proposal/list/ProposalFilter.tsx";
-import VoteCounter from "@/components/VoteCounter/VoteCounter";
+import {VoteCounter} from "@/components/VoteCounter/VoteCounter";
 import { useMetadata } from "@/hooks";
 const filterKeys = Object.keys(filters);
 

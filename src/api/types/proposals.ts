@@ -34,7 +34,7 @@ export const ProposalStatusMap = {
   [ProposalStatus.ProposalStatusReviewed]: "Reviewed",
   [ProposalStatus.ProposalStatusFunded]: "Funded",
   [ProposalStatus.ProposalStatusBlocked]: "Blocked",
-  [ProposalStatus.ProposalStatusDelete]: "Delete",
+  [ProposalStatus.ProposalStatusDelete]: "Deleted",
 };
 
 export const ProposalStatusReverseMap: { [key: string]: ProposalStatus[] } = {

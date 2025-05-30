@@ -2,7 +2,7 @@ import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { z } from "zod";
 
-import { resubmitProposal, updateMetadata, type ProposalMainCardDetails } from "@/api";
+import { updateMetadata, type ProposalMainCardDetails } from "@/api";
 import { proposalFormSchema, ProposalForm } from "@/recipes";
 import { UseQuery, useRegistry, UseWallet } from "@/hooks";
 import { useState } from "react";
@@ -29,12 +29,12 @@ export function EditProposalForm({
   const { activeAddress, transactionSigner } = useWallet();
   const registry = useRegistry();
   const [editProposalLoading, setEditProposalLoading] = useState(false);
+  const [editProposalError, setEditProposalError] = useState<string | null>(null);
 
   return (
     <ProposalForm
       type="edit"
       proposal={proposal}
-      proposalFee={registry.data?.proposalFee || 0n}
       loading={editProposalLoading}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
         if (!activeAddress) {
@@ -58,25 +58,20 @@ export function EditProposalForm({
 
         const metadataOnlyChange = data.title === proposal.title && Number(data.fundingType) === proposal.fundingType && requestedAmount === proposal.requestedAmount && Number(data.focus) === proposal.focus;
 
+        if (!metadataOnlyChange) {  
+          console.error("Proposal metadata can only be edited, not funding or focus");
+        }
+
         try {
-          if (metadataOnlyChange) {
-            await updateMetadata(
-              activeAddress,
-              data,
-              transactionSigner,
-              proposal,
-              setEditProposalLoading
-            )
-          } else {
-            await resubmitProposal(
-              activeAddress,
-              data,
-              transactionSigner,
-              proposal,
-              registry.data?.proposalCommitmentBps,
-              setEditProposalLoading
-            );
-          }
+          await updateMetadata(
+            activeAddress,
+            data,
+            transactionSigner,
+            proposal,
+            setEditProposalLoading,
+            setEditProposalError
+          )
+
           navigate(`/proposal/${proposal.id}`);
         } catch (e) {
           console.error(e);

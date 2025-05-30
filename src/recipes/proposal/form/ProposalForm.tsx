@@ -36,15 +36,15 @@ import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationMo
 export function ProposalForm({
   type,
   proposal,
-  bps,
-  maxRequestedAmount = 1_000_000_000_000n, // Default to 1M Algo
+  bps = 0n,
+  maxRequestedAmount = 1_000_000n, // Default to 1M Algo
   onSubmit,
   loading,
   error
 }: {
   type: "edit" | "create";
   proposal?: ProposalMainCardDetails;
-  bps: bigint;
+  bps?: bigint;
   maxRequestedAmount?: bigint;
   onSubmit: (data: z.infer<typeof proposalFormSchema>) => void;
   loading: boolean;
@@ -55,8 +55,8 @@ export function ProposalForm({
   const formSchema = proposalFormSchema.setKey(
     'requestedAmount',
     validatorSchemas.requestedAmount({
-      min: 1_000_000,
-      max: Number(maxRequestedAmount)
+      min: 1,
+      max: Number(maxRequestedAmount),
     })
   )
 
@@ -69,7 +69,9 @@ export function ProposalForm({
       team: proposal?.team || "",
       additionalInfo: proposal?.additionalInfo || "",
       openSource: true,
-      focus: String(proposal?.focus) || "",
+      focus: proposal?.focus !== undefined && proposal?.focus !== null
+        ? String(proposal.focus)
+        : String(ProposalFocus.FocusNull),
       fundingType:
         typeof proposal?.fundingType !== "undefined"
           ? String(proposal?.fundingType)
@@ -83,7 +85,7 @@ export function ProposalForm({
   const { errors } = form.formState;
 
   const $requestedAmount = form.watch("requestedAmount");
-  const costs = Math.trunc(Number((BigInt($requestedAmount * 1_000_000) * bps) / BigInt(10_000)))
+  const costs = Math.trunc(Number((BigInt($requestedAmount * 1_000_000) * bps) / BigInt(10_000)));
 
   return (
     <div className="p-4 rounded-lg border border-algo-blue dark:border-algo-teal">
@@ -99,7 +101,7 @@ export function ProposalForm({
                   <span className="ml-0.5 text-red-500">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
-                    label="Owner account"
+                    label="Title"
                   >
                     A short title of your proposal encompassing the main idea.
                   </InfoPopover>
@@ -109,6 +111,7 @@ export function ProposalForm({
                     id="proposal-title"
                     placeholder="Enter the title of your proposal"
                     spellCheck="false"
+                    disabled={type === "edit"}
                     {...field}
                   />
                 </FormControl>
@@ -127,7 +130,7 @@ export function ProposalForm({
                   <span className="ml-0.5 text-red-500">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
-                    label="Owner account"
+                    label="Forum Link"
                   >
                     A link to the Algorand forum where the proposal can be
                     discussed.
@@ -160,7 +163,7 @@ export function ProposalForm({
                   <span className="ml-0.5 text-red-500">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
-                    label="Owner account"
+                    label="Description"
                   >
                     A description of your proposal.
                   </InfoPopover>
@@ -189,7 +192,7 @@ export function ProposalForm({
                   <span className="ml-0.5 text-red-500">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
-                    label="Owner account"
+                    label="About the team"
                   >
                     All relevant information about the team behind the proposal.
                   </InfoPopover>
@@ -218,7 +221,7 @@ export function ProposalForm({
                   <span className="ml-0.5 text-red-500">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
-                    label="Owner account"
+                    label="Additional Info"
                   >
                     Additional details about the proposal users may find helpful
                     in deciding to vote.
@@ -248,7 +251,7 @@ export function ProposalForm({
                   <span className="ml-0.5 text-red-500">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
-                    label="Owner account"
+                    label="Open Source"
                   >
                     For the time being all Proposals are required to be open
                     source.
@@ -285,7 +288,7 @@ export function ProposalForm({
                   <span className="ml-0.5 text-red-500">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
-                    label="Owner account"
+                    label="Focus"
                   >
                     The category most relevant to your proposal.
                   </InfoPopover>
@@ -294,6 +297,7 @@ export function ProposalForm({
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
+                  disabled={type === "edit"}
                 >
                   <FormControl>
                     <SelectTrigger aria-label="Select proposal category">
@@ -345,7 +349,7 @@ export function ProposalForm({
                   <span className="ml-0.5 text-red-500">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
-                    label="Owner account"
+                    label="Funding Type"
                   >
                     For the time being only Retroactive funding is available.
                   </InfoPopover>
@@ -411,7 +415,7 @@ export function ProposalForm({
                     <span className="ml-0.5 text-red-500">*</span>
                     <InfoPopover
                       className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
-                      label="Owner account"
+                      label="Adoption Metrics"
                     >
                       Quick metrics about the adoption of your work that can be
                       used to measure success & ecosystem relevancy for the
@@ -485,7 +489,7 @@ export function ProposalForm({
                   <span className="ml-0.5 text-red-500">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
-                    label="Owner account"
+                    label="Requested Amount"
                   >
                     The amount of Algo being requested for the proposal.
                   </InfoPopover>
@@ -512,6 +516,7 @@ export function ProposalForm({
                       value={field.value}
                       onBlur={field.onBlur}
                       name={field.name}
+                      disabled={type === "edit"}
                     />
                   </div>
                 </FormControl>
@@ -540,7 +545,10 @@ export function ProposalForm({
             isOpen={submitModalOpen}
             onClose={() => setSubmitModalOpen(false)}
             title={type === "edit" ? "Update Proposal?" : "Submit Proposal?"}
-            description="Once submitted you will only be able to edit the description, team info, additional info & forum link without needing to create a new proposal."
+            description={type === "edit"
+              ? "Are you sure you want to update this proposal?"
+              : "Once submitted you will only be able to edit the forum link, description, team info, additional info & adoption metrics without needing to create a new proposal."
+            }
             warning={type !== "edit" ? (
               <WarningNotice
                 title="Proposal Hold"
@@ -548,7 +556,7 @@ export function ProposalForm({
                   <>
                     You will need to escrow
                     <span className="inline-flex items-center gap-1 mx-1 font-semibold">
-                    {Number(bps / 100n)}%
+                      {Number(bps / 100n)}%
                     </span>
                     of the requested amount
                     <span className="inline-flex items-center gap-1 mx-1 font-semibold">

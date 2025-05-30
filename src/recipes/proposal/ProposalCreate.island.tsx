@@ -1,6 +1,6 @@
-import { useProposalsByProposer, UseQuery, useRegistry, UseWallet } from "@/hooks";
+import { useProposalsByProposer, UseQuery, useRegistry, useSearchParams, useSearchParamsObserver, UseWallet } from "@/hooks";
 import { ProposalForm, proposalFormSchema } from "@/recipes";
-import { createProposal, ProposalStatus, submitProposal } from "@/api";
+import { ProposalStatus, submitProposal } from "@/api";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useEffect, useState } from "react";
 import { navigate } from "astro:transitions/client";
@@ -31,6 +31,12 @@ export function ProposalCreate() {
   const [proposalSubmitLoading, setProposalSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   
+  const [searchParams] = useSearchParams();
+  const [_searchParams, setSearchParams] = useState(searchParams);
+  useSearchParamsObserver((searchParams) => {
+    setSearchParams(searchParams);
+  });
+
   const emptyProposals =
     !!proposalsData.data &&
     proposalsData.data?.filter(
@@ -38,18 +44,22 @@ export function ProposalCreate() {
     );
   const emptyProposal =
     emptyProposals && emptyProposals.length > 0 ? emptyProposals[0] : null;
-  
-  const appId = emptyProposal?.id || null;
+
+  const appId = emptyProposal?.id || BigInt(Number(_searchParams.get('appId'))) || null;
+  // console.log("appId", appId);
 
   const currentProposals =
     !!proposalsData.data &&
     proposalsData.data?.filter((proposal) =>
       activeProposalTypes.includes(proposal.status),
     );
+
   const currentProposal =
     currentProposals && currentProposals.length > 0 && currentProposals[0];
 
-  const maxRequestedAmount = (!!userBalance.data?.available && userBalance.data.available.microAlgos > 1_000n) ? userBalance.data.available.microAlgos - 1_000n : 0n;
+  const maxRequestedAmount = (!!userBalance.data?.available && userBalance.data.available.microAlgos > 1_000n)
+    ? (((userBalance.data.available.microAlgos - 1_000n) / 1_000_000n) * 10n )
+    : 0n;
 
   useEffect(() => {
     if (currentProposal) {
@@ -93,13 +103,12 @@ export function ProposalCreate() {
             appId,
             registry.data?.proposalCommitmentBps,
             setProposalSubmitLoading,
+            setSubmitError,
           )
 
           navigate(`/proposal/${appId}`);
         } catch (e) {
           console.error(e);
-          console.error("Failed to submit proposal");
-          setSubmitError("Failed to submit proposal. Please try again.");
         }
       }}
     />

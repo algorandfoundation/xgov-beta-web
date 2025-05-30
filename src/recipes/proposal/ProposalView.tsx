@@ -32,7 +32,7 @@ import {
 import { useTimeLeft } from "@/hooks/useTimeLeft";
 import { Link } from "@/components/Link";
 import { ProposalReviewerCard } from "@/components/ProposalReviewerCard/ProposalReviewerCard";
-import VoteCounter from "@/components/VoteCounter/VoteCounter";
+import {VoteCounter} from "@/components/VoteCounter/VoteCounter";
 import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill";
 import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
@@ -735,7 +735,7 @@ export function ProposalInfo({
             </div>
           </div>
         </div>
-        <div className="lg:flex lg:flex-col lg:items-end lg:fixed lg:right-0 lg:pr-8 lg:pt-14">
+        <div className="lg:flex lg:flex-col lg:items-end lg:fixed lg:right-0 lg:pr-8 lg:pt-6 2xl:pt-14">
           {children}
         </div>
         <div className="lg:col-span-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">

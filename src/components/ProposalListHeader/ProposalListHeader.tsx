@@ -6,6 +6,9 @@ import { ProposalFilter } from "@/recipes";
 import { ConfirmationModal } from "../ConfirmationModal/ConfirmationModal";
 import { openProposal } from "@/api";
 import { navigate } from "astro/virtual-modules/transitions-router.js";
+import { WarningNotice } from "../WarningNotice/WarningNotice";
+import { AlgorandIcon } from "../icons/AlgorandIcon";
+import { queryClient } from "@/stores";
 
 export function ProposalListHeaderIsland({ title }: { title: string }) {
 
@@ -34,6 +37,7 @@ export function ProposalListHeader({
   const proposer = useProposer(activeAddress);
   const [showOpenProposalModal, setShowOpenProposalModal] = useState(false);
   const [openProposalLoading, setOpenProposalLoading] = useState(false);
+  const [openProposalError, setOpenProposalError] = useState<string>('');
 
   const validProposer =
     (proposer?.data &&
@@ -60,37 +64,55 @@ export function ProposalListHeader({
                 disabled={proposer.data?.activeProposal}
                 disabledMessage="You already have an active proposal"
               >
-                Open Proposal
+                {
+                  openProposalLoading
+                    ? (<div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>)
+                    : "Open Proposal"
+                }
               </InfinityMirrorButton>
-              {
-                showOpenProposalModal && (
-                  <ConfirmationModal
-                    isOpen={showOpenProposalModal}
-                    onClose={() => setShowOpenProposalModal(false)}
-                    title="Open Proposal"
-                    description="Are you sure you want to open a new proposal? You can only have one active proposal at a time."
-                    warningTitle="Proposal Fee"
-                    costs={registry.data?.proposalFee || 0n} // proposer.data?.proposalFee || 
-                    actionText="open a proposal"
-                    submitText="Confirm"
-                    onSubmit={async () => {
-                      if (!activeAddress) {
-                        console.error("No active address");
-                        return;
-                      }
-
-                      const appId = await openProposal(
-                        activeAddress,
-                        transactionSigner,
-                        setOpenProposalLoading
-                      )
-
-                      navigate(`/new?appId=${appId}`)
-                    }}
-                    errorMessage=""
+              <ConfirmationModal
+                isOpen={showOpenProposalModal}
+                onClose={() => setShowOpenProposalModal(false)}
+                title="Open Proposal"
+                description="Are you sure you want to open a new proposal? You can only have one active proposal at a time."
+                warning={
+                  <WarningNotice
+                    title="Proposal Fee"
+                    description={<>
+                      It will cost
+                      <span className="inline-flex items-center mx-1 gap-1">
+                        <AlgorandIcon className="size-2.5" />{Number(registry.data?.proposalFee || 0n) / 1_000_000}
+                      </span>
+                      to open a proposal.
+                    </>}
                   />
-                )
-              }
+                }
+                submitText="Confirm"
+                onSubmit={async () => {
+                  if (!activeAddress) {
+                    console.error("No active address");
+                    return;
+                  }
+
+                  try {
+                    const appId = await openProposal(
+                      activeAddress,
+                      transactionSigner,
+                      setOpenProposalLoading,
+                      setOpenProposalError
+                    )
+
+                    if (appId) {
+                      queryClient.invalidateQueries({ queryKey: ["getProposalsByProposer", activeAddress] })
+                      navigate(`/new?appId=${appId}`)
+                    }
+                  } catch (error) {
+                    console.error("Error opening proposal:", error);
+                  }
+                }}
+                loading={openProposalLoading}
+                errorMessage={openProposalError}
+              />
             </>
           )
         }

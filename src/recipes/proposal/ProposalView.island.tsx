@@ -20,15 +20,15 @@ export function ProposalInfoController({ xGovReviewer, proposal, pastProposals, 
   const _proposal = proposalQuery.data || proposal;
   const _pastProposals = pastProposalsQuery.data || pastProposals;
 
-  useEffect(() => {
-    if (
-      _proposal.proposer === activeAddress &&
-      !!!_proposal.forumLink
-    ) {
-      // If the proposal is created by the active address and does not have a forum link, redirect to create a proposal
-      navigate(`/new`);
-    }
-  }, [activeAddress, _proposal]);
+  // useEffect(() => {
+  //   if (
+  //     _proposal.proposer === activeAddress &&
+  //     !!!_proposal.forumLink
+  //   ) {
+  //     // If the proposal is created by the active address and does not have a forum link, redirect to create a proposal
+  //     navigate('/new');
+  //   }
+  // }, [activeAddress, _proposal]);
 
   return (
     <ProposalInfo

@@ -18,7 +18,7 @@ export const validatorSchemas = {
         message: `Must be at least ${constraints.min}`,
       })
       .refine((val) => val <= constraints.max, {
-        message: `Must be at most ${constraints.max}`,
+        message: `Insufficient balance. 10% of the requested amount must be escrowed. Maximum request based on your current balance is ${constraints.max}`,
       });
   },
   team: () => { return z.string().refine((val) => val !== "", { message: "Required field" }) },
@@ -52,7 +52,7 @@ export const proposalFormSchema = z
   .object({
     title: validatorSchemas.title(),
     description: validatorSchemas.description(),
-    requestedAmount: validatorSchemas.requestedAmount({ min: 1_000_000, max: 100_000_000_000 }),
+    requestedAmount: validatorSchemas.requestedAmount({ min: 1, max: 1_000_000 }),
     team: validatorSchemas.team(),
     additionalInfo: validatorSchemas.additionalInfo(),
     openSource: validatorSchemas.openSource(),

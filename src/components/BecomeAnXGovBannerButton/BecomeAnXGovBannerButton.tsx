@@ -15,9 +15,9 @@ export function BecomeAnXGovBannerButton({ onClick, disabled = false }: BecomeAn
       onClick={onClick}
       disabled={disabled}
     >
-      <div className="absolute w-full h-full animate-mass-scale">
+      <div className="absolute w-full h-full ">
         <div className="relative w-full h-full flex items-center justify-center">
-          <BecomeAnXGovIcon className="absolute stroke-white group-hover:stroke-algo-blue dark:stroke-algo-black dark:group-hover:stroke-algo-teal"/>
+          <BecomeAnXGovIcon className="absolute stroke-white group-hover:stroke-algo-blue dark:stroke-algo-black dark:group-hover:stroke-algo-teal animate-mass-scale transform-gpu"/>
         </div>
       </div>
 

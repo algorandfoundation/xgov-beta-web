@@ -4,7 +4,7 @@ import { ActionButton } from "../button/ActionButton/ActionButton";
 import { cn } from "@/functions";
 import { XGovProposerStatusPill } from "../XGovProposerStatusPill/XGovProposerStatusPill";
 import { BecomeAnXGovBannerButton } from "../BecomeAnXGovBannerButton/BecomeAnXGovBannerButton";
-import XGovStatusPill from "../XGovStatusPill/XGovStatusPill";
+import {XGovStatusPill} from "../XGovStatusPill/XGovStatusPill";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
@@ -15,16 +15,16 @@ import { AlgorandIcon } from "../icons/AlgorandIcon";
 
 export interface ProfileCardProps {
   votingAddress: string;
-  setVotingAddress: (votingAddress: string) => void;
+  setVotingAddress: (votingAddress: string) => Promise<void>;
   setVotingAddressLoading: boolean;
   isXGov: boolean;
   xGovSignupCost: bigint;
-  subscribeXgov: () => void;
-  unsubscribeXgov: () => void;
+  subscribeXgov: () => Promise<void>;
+  unsubscribeXgov: () => Promise<void>;
   subscribeXGovLoading: boolean;
   proposer?: { isProposer: boolean } & ProposerBoxState;
   proposerSignupCost: bigint;
-  subscribeProposer: () => void;
+  subscribeProposer: () => Promise<void>;
   subscribeProposerLoading: boolean;
   className?: string;
 }
@@ -122,7 +122,7 @@ export function ProfileCard({
 interface BecomeXGovModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSignup: () => void;
+  onSignup: () => Promise<void>;
   costs: bigint;
   errorMessage?: string;
 }
