@@ -183,7 +183,7 @@ function DiscussionStatusCard({
   const [isDropModalOpen, setIsDropModalOpen] = useState(false);
 
   const finalizable = discussionDuration > minimumDiscussionDuration;
-  const [days, hours, minutes, seconds] = useTimeLeft(
+  const [days, hours, minutes] = useTimeLeft(
     Date.now() + (Number(minimumDiscussionDuration) - discussionDuration),
   );
   let remainingTime = `${days}d ${hours}h ${minutes}m`;
@@ -309,7 +309,7 @@ function VotingStatusCard({
   const votingDuration = Date.now() - Number(proposal.voteOpenTs) * 1000;
   const minimumVotingDuration = getVotingDuration(proposal.fundingCategory, votingDurations);
 
-  const [days, hours, minutes, seconds] = useTimeLeft(
+  const [days, hours, minutes] = useTimeLeft(
     Date.now() + (minimumVotingDuration - votingDuration),
   );
   const remainingTime = `${days}d ${hours}h ${minutes}m`;

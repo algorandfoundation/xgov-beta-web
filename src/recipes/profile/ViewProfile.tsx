@@ -1,5 +1,3 @@
-import { Link } from "@/components/Link";
-
 import { ProfileCard } from "@/components/ProfileCard/ProfileCard";
 
 import { useState } from "react";
@@ -11,8 +9,6 @@ import algosdk, {
   type TransactionSigner,
 } from "algosdk";
 import { Buffer } from "buffer";
-
-import { ProposalStatus } from "@/api";
 
 import { XGovProposerStatusPill } from "@/components/XGovProposerStatusPill/XGovProposerStatusPill";
 import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton";
@@ -33,18 +29,19 @@ import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
 import { queryClient } from "@/stores";
 
-const activeStatuses = [
-  // ProposalStatus.ProposalStatusEmpty,
-  ProposalStatus.ProposalStatusDraft,
-  ProposalStatus.ProposalStatusFinal,
-  ProposalStatus.ProposalStatusVoting,
-  ProposalStatus.ProposalStatusApproved,
-  ProposalStatus.ProposalStatusRejected,
-  ProposalStatus.ProposalStatusReviewed,
-  // ProposalStatus.ProposalStatusFunded,
-  ProposalStatus.ProposalStatusBlocked,
-  ProposalStatus.ProposalStatusDelete,
-];
+// const activeStatuses = [
+//   // ProposalStatus.ProposalStatusEmpty,
+//   ProposalStatus.ProposalStatusDraft,
+//   ProposalStatus.ProposalStatusFinal,
+//   ProposalStatus.ProposalStatusVoting,
+//   ProposalStatus.ProposalStatusApproved,
+//   ProposalStatus.ProposalStatusRejected,
+//   ProposalStatus.ProposalStatusReviewed,
+//   // ProposalStatus.ProposalStatusFunded,
+//   ProposalStatus.ProposalStatusBlocked,
+//   ProposalStatus.ProposalStatusDelete,
+// ];
+
 export function ProfilePageIsland({ address }: { address: string }) {
   console.log(address)
   return (

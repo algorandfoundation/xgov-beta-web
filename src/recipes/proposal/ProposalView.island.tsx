@@ -2,8 +2,6 @@ import { type ProposalMainCardDetails, type ProposalSummaryCardDetails, type Reg
 import { useProposal, useProposalsByProposer, UseQuery, useRegistry, UseWallet } from "@/hooks";
 import { ProposalInfo, StatusCard } from "@/recipes";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { navigate } from "astro/virtual-modules/transitions-router.js";
-import { useEffect } from "react";
 
 type ProposalInfoControllerProps = {
   xGovReviewer?: string;

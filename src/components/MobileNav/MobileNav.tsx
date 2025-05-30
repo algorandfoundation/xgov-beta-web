@@ -1,4 +1,3 @@
-import { navigate } from "astro:transitions/client";
 import { BarsIcon } from "@/components/icons/BarsIcon";
 import { MoonIcon } from "@/components/icons/MoonIcon";
 import { SunIcon } from "@/components/icons/SunIcon";

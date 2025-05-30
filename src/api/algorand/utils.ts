@@ -1,6 +1,5 @@
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
 import { algorand } from "./algo-client";
-import type algosdk from "algosdk";
 
 const max = (...values: bigint[]): bigint => {
     if (values.length === 0) {

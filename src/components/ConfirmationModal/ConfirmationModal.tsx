@@ -1,7 +1,5 @@
-import { AlgorandIcon } from "../icons/AlgorandIcon";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
-import { WarningNotice } from "../WarningNotice/WarningNotice";
 
 export interface ConfirmationModalProps {
     isOpen: boolean;

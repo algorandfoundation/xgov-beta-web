@@ -5,12 +5,11 @@ import {
   getProposalClientById,
   type ProposalMainCardDetails,
   ProposalStatus,
-  ProposalStatusMap,
 } from "@/api";
 import { ALGORAND_MIN_TX_FEE } from "algosdk";
 import { UseWallet } from "@/hooks/useWallet.tsx";
 import { useProposal, UseQuery } from "@/hooks";
-import { CheckCircleIcon, CheckIcon, XIcon } from "lucide-react";
+import { CheckIcon, XIcon } from "lucide-react";
 import { Button } from "../ui/button";
 
 export function ReviewerCardIsland({

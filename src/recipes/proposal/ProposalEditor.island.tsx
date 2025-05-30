@@ -29,13 +29,14 @@ export function EditProposalForm({
   const { activeAddress, transactionSigner } = useWallet();
   const registry = useRegistry();
   const [editProposalLoading, setEditProposalLoading] = useState(false);
-  const [editProposalError, setEditProposalError] = useState<string | null>(null);
+  const [editProposalError, setEditProposalError] = useState<string | undefined>(undefined);
 
   return (
     <ProposalForm
       type="edit"
       proposal={proposal}
       loading={editProposalLoading}
+      error={editProposalError}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
         if (!activeAddress) {
           console.error("No active address");

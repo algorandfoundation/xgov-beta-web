@@ -8,8 +8,6 @@ import {XGovStatusPill} from "../XGovStatusPill/XGovStatusPill";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { useWallet } from "@txnlab/use-wallet-react";
-import { useRegistry } from "@/hooks";
 import { WarningNotice } from "../WarningNotice/WarningNotice";
 import { AlgorandIcon } from "../icons/AlgorandIcon";
 
@@ -186,7 +184,7 @@ export function BecomeXGovModal({
 interface BecomeProposerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSignup: () => void;
+  onSignup: () => Promise<void>;
   costs: bigint;
   errorMessage?: string;
 }
