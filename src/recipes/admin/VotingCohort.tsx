@@ -113,15 +113,15 @@ export function VotingCohort() {
           disabled={!!jsonData} // Disable button if jsonData is present
         />
         {errorMessage && (
-          <div className="text-red-500 mt-2">{errorMessage}</div>
+          <div className="text-algo-red mt-2">{errorMessage}</div>
         )}
         {successMessage && (
-          <div className="text-green-500 mt-2">{successMessage}</div>
+          <div className="text-algo-green mt-2">{successMessage}</div>
         )}
         {jsonData && fileName && (
           <div className="mt-4 p-2 border rounded bg-green-100 text-green-800 flex items-center justify-between">
             <span>{fileName}</span>
-            <button onClick={handleClearJsonData} className="ml-2 text-red-500">
+            <button onClick={handleClearJsonData} className="ml-2 text-algo-red">
               <FaTimes />
             </button>
           </div>

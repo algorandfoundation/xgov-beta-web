@@ -56,7 +56,7 @@ export function ConfirmationModal({
                     }
                     {!!warning && warning}
                 </DialogHeader>
-                {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+                {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
                 <DialogFooter className="mt-8">
                     <Button variant="ghost" onClick={onClose}>
                         Cancel

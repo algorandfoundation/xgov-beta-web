@@ -17,7 +17,7 @@ const buttonVariants = cva(
         default:
           "bg-white dark:bg-algo-black text-lg rounded-md text-algo-black dark:text-white p-2 px-4 border border-white dark:border-algo-black hover:bg-algo-blue hover:bg-opacity-80 hover:text-white  dark:hover:bg-algo-teal dark:hover:bg-opacity-80 dark:hover:text-algo-black",
         destructive:
-          "bg-red-500 text-slate-50 shadow-sm hover:bg-red-500/90 dark:bg-red-900 dark:text-slate-50 dark:hover:bg-red-900/90",
+          "bg-algo-red text-slate-50 shadow-sm hover:bg-algo-red/90 dark:bg-algo-red dark:text-slate-50 dark:hover:bg-algo-red/90",
         outline:
           "border border-slate-200 bg-white shadow-sm hover:bg-slate-100 hover:text-slate-900 dark:border-slate-800 dark:bg-transparent dark:hover:bg-slate-800 dark:hover:text-slate-50",
         secondary:
@@ -115,7 +115,7 @@ const InfinityMirrorButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const Comp = asChild ? Slot : "button";
     return (
-      <TooltipProvider>
+      <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="group relative">
