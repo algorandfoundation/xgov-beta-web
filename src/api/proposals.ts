@@ -108,6 +108,20 @@ export async function getProposalsByProposer(
 }
 
 /**
+ * Retrieves all proposals with status FINAL.
+ *
+ * This function fetches all proposals and filters them to return only those
+ * with a status of FINAL.
+ *
+ * @return A promise that resolves to an array of ProposalSummaryCardDetails with status FINAL.
+ */
+export async function getFinalProposals(): Promise<ProposalSummaryCardDetails[]> {
+  return (await getAllProposals()).filter(
+    (proposal) => proposal.status === ProposalStatus.ProposalStatusFinal
+  );
+}
+
+/**
  * Retrieves proposal details for a given proposal ID.
  *
  * @param id - The unique identifier of the proposal.
@@ -310,7 +324,7 @@ export async function openProposal(
   setError: (error: string) => void,
 ) {
   setOpenProposalLoading(true);
-  
+
   try {
     const proposalFee = PROPOSAL_FEE.microAlgo();
     const addr = algosdk.decodeAddress(address).publicKey;
@@ -344,7 +358,7 @@ export async function openProposal(
     }
 
     setOpenProposalLoading(false);
-    
+
     return result.return;
 
   } catch (e: any) {
@@ -628,7 +642,7 @@ export async function updateMetadata(
 
     await resubmitGroup.send()
     setUpdateMetadataLoading(false);
-    
+
     return proposal.id;
 
   } catch (e: any) {
