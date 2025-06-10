@@ -8,7 +8,6 @@ import { algorand } from "@/api/algorand";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { mockProposals } from "./__fixtures__/proposals";
 import {
-  COOL_DOWN_DURATION,
   DISCUSSION_DURATION_LARGE,
   DISCUSSION_DURATION_MEDIUM,
   DISCUSSION_DURATION_SMALL,
@@ -24,7 +23,6 @@ import {
   QUORUM_LARGE,
   QUORUM_MEDIUM,
   QUORUM_SMALL,
-  STALE_PROPOSAL_DURATION,
   VOTING_DURATION_LARGE,
   VOTING_DURATION_MEDIUM,
   VOTING_DURATION_SMALL,
@@ -184,8 +182,6 @@ await registryClient.send.configXgovRegistry({
         VOTING_DURATION_LARGE,
         VOTING_DURATION_XLARGE,
       ],
-      coolDownDuration: COOL_DOWN_DURATION,
-      staleProposalDuration: STALE_PROPOSAL_DURATION,
       quorum: [QUORUM_SMALL, QUORUM_MEDIUM, QUORUM_LARGE],
       weightedQuorum: [
         WEIGHTED_QUORUM_SMALL,
