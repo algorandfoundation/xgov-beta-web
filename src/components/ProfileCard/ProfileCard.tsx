@@ -168,7 +168,7 @@ export function BecomeXGovModal({
             }
           />
         </DialogHeader>
-        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+        {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
         <DialogFooter className="mt-8">
           <Button variant="ghost" onClick={onClose}>
             Cancel
@@ -232,7 +232,7 @@ export function BecomeProposerModal({
             }
           />
         </DialogHeader>
-        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+        {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
         <DialogFooter className="mt-8">
           <Button variant="ghost" onClick={onClose}>
             Cancel

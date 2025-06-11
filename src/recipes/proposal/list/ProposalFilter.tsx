@@ -91,7 +91,7 @@ export function ProposalFilter({ className }: ProposalFilterProps) {
           Clear Filters
         </Button>
       )}
-      <TooltipProvider>
+      <TooltipProvider delayDuration={200}>
         <Dialog open={dialogOpen}>
           <Tooltip>
             <DialogTrigger asChild>

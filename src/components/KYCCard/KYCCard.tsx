@@ -2,6 +2,7 @@ import { useState, useEffect, type ChangeEvent } from "react";
 import { cn } from "@/functions";
 import { ErrorModal } from "@/components/ErrorModal/ErrorModal";
 import type { ProposerBoxState } from "@/api";
+import { Button } from "../ui/button";
 
 export interface KYCCardProps {
   proposalAddress: string;
@@ -104,30 +105,38 @@ export function KYCCard({
   };
 
   return (
-    <div className="card border-2 border-algo-black rounded-2xl p-4 shadow-xl dark:border-algo-black-80 dark:bg-algo-black dark:text-white">
-      <div className="card-content flex items-center">
-        <span
+    <div className={cn(
+      "p-2 rounded-md dark:text-white",
+      currentKYCStatus
+        ? "bg-gradient-to-br from-algo-green/20 to-algo-black-10 dark:to-algo-black-90"
+        : isExpired
+          ? "bg-gradient-to-br from-algo-orange/20 dark:from-algo-yellow to-algo-black-10 dark:to-algo-black-90"
+          : "bg-gradient-to-br from-algo-red/20 to-algo-black-10 dark:to-algo-black-90"
+    )}>
+      <div className="flex gap-2 items-center justify-between">
+        <div className="flex flex-col gap-2">
+          <span className="text-xxs font-mono">
+            {proposalAddress}
+          </span>
+        </div>
+
+        <Button
+          size="xs"
+          onClick={handleButtonClick}
           className={cn(
-            "text-sm font-semibold",
             isExpired
-              ? "text-yellow-500"
+              ? "bg-algo-orange dark:bg-algo-yellow text-white border-algo-orange dark:border-algo-yellow"
               : currentKYCStatus
-                ? "text-green-500"
-                : "text-red-500",
+                ? "bg-algo-red text-white dark:text-white border-algo-red dark:bg-algo-red dark:border-algo-red"
+                : "bg-algo-green text-white border-algo-green",
           )}
         >
-          {proposalAddress}
-        </span>
-        <button
-          className="ml-auto px-2 py-1.5 text-sm rounded-sm outline-none focus:bg-white dark:focus:bg-algo-black-90"
-          onClick={handleButtonClick}
-        >
           {isExpired
-            ? "KYC Expired."
+            ? "Expired"
             : currentKYCStatus
-              ? "Disqualify KYC?"
-              : "Approve KYC?"}
-        </button>
+              ? "Disqualify"
+              : "Approve"}
+        </Button>
         {showDatePicker && (
           <input
             type="date"
@@ -146,7 +155,7 @@ export function KYCCard({
             </p>
             <div className="flex justify-end">
               <button
-                className="mr-2 px-4 py-2 bg-red-500 text-white rounded"
+                className="mr-2 px-4 py-2 bg-algo-red text-white rounded"
                 onClick={
                   selectedDate && Date.now() > selectedDate.getTime()
                     ? handleConfirmExpiredKYC

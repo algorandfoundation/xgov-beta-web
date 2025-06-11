@@ -8,6 +8,8 @@ import { useAllProposers } from "@/hooks";
 
 import { KYCCard } from "@/components/KYCCard/KYCCard";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
+import { Button } from "@/components/ui/button";
+import { RefreshCcwIcon } from "lucide-react";
 
 export interface KYCData {
   address: string;
@@ -38,9 +40,9 @@ export const KYCBox = ({
 
   const proposerBoxes = allProposers.data
     ? Object.keys(allProposers.data).map((key) => ({
-        parsedAddress: key,
-        values: allProposers.data[key] as unknown as ProposerBoxState,
-      }))
+      parsedAddress: key,
+      values: allProposers.data[key] as unknown as ProposerBoxState,
+    }))
     : [];
 
   async function callSetProposerKYC(
@@ -113,19 +115,6 @@ export const KYCBox = ({
     box.parsedAddress.toLowerCase().includes(filter.toLowerCase()),
   );
 
-  // Calculate pagination
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredProposerBoxes.slice(
-    indexOfFirstItem,
-    indexOfLastItem,
-  );
-  const totalPages = Math.ceil(filteredProposerBoxes.length / itemsPerPage);
-
-  const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-  };
-
   const handleRefresh = () => {
     try {
       allProposers.refetch();
@@ -138,44 +127,43 @@ export const KYCBox = ({
 
   return (
     <>
-      <div className="flex items-center mb-4">
-        <input
-          type="text"
-          placeholder="Filter by address"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="p-2 border rounded"
-        />
-        <button
-          onClick={handleRefresh}
-          className="ml-2 px-4 py-2 bg-blue-500 text-white rounded flex items-center justify-center"
-        >
-          <FaSync />
-        </button>
-      </div>
-      {errorMessage && <div className="text-red-500 mb-4">{errorMessage}</div>}
-      {currentItems.length === 0 ? (
-        <div>No Proposers found.</div>
-      ) : (
-        currentItems.map((proposerBox) => (
-          <KYCCard
-            key={proposerBox.parsedAddress}
-            proposalAddress={proposerBox.parsedAddress}
-            values={proposerBox.values}
-            callSetProposerKYC={callSetProposerKYC}
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <h2 className="text-xl font-semibold text-wrap text-algo-black dark:text-white m-0">
+          KYC
+        </h2>
+
+        <div className="inline-flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Filter by address"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="p-1 px-2 border rounded-md lg:min-w-96 dark:bg-algo-black-80 dark:border-algo-black-80"
           />
-        ))
-      )}
-      <div className="flex justify-center mt-4">
-        {Array.from({ length: totalPages }, (_, index) => (
-          <button
-            key={index}
-            onClick={() => handlePageChange(index + 1)}
-            className={`px-4 py-2 mx-1 border rounded ${currentPage === index + 1 ? "bg-blue-500 text-white" : "bg-white text-black"}`}
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            size="xs"
+            className="p-4 h-6 dark:bg-algo-black-80"
           >
-            {index + 1}
-          </button>
-        ))}
+            <RefreshCcwIcon className="size-3" />
+          </Button>
+        </div>
+      </div>
+      {errorMessage && <div className="text-algo-red mb-4">{errorMessage}</div>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredProposerBoxes.length === 0 ? (
+          <div>No Proposers found.</div>
+        ) : (
+          filteredProposerBoxes.map((proposerBox) => (
+            <KYCCard
+              key={proposerBox.parsedAddress}
+              proposalAddress={proposerBox.parsedAddress}
+              values={proposerBox.values}
+              callSetProposerKYC={callSetProposerKYC}
+            />
+          ))
+        )}
       </div>
     </>
   );
