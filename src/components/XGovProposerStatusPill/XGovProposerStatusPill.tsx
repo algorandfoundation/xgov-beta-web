@@ -20,8 +20,8 @@ export function XGovProposerStatusPill({ proposer }: XGovProposerStatusPill) {
   return (
     <div className="flex items-center gap-2 bg-algo-blue/10 dark:bg-algo-teal/10 py-1 pl-1 pr-3 rounded-full">
       {!proposer?.isProposer ? (
-        <div className="p-0.5 bg-red-500/10 rounded-full">
-          <XIcon className="p-1 text-red-500" />
+        <div className="p-0.5 bg-algo-red/10 rounded-full">
+          <XIcon className="p-1 text-algo-red" />
         </div>
       ) : proposer?.isProposer && !proposer.kycStatus ? (
         <div className="p-0.5 bg-algo-blue/10 dark:bg-algo-blue/20 rounded-full">
@@ -31,7 +31,7 @@ export function XGovProposerStatusPill({ proposer }: XGovProposerStatusPill) {
         proposer.kycStatus &&
         proposer.kycExpiring < Date.now() / 1000 ? (
         <div className="p-0.5 bg-algo-blue/10 rounded-full">
-          <ClockAlertIcon className="p-1 text-red-500" />
+          <ClockAlertIcon className="p-1 text-algo-red" />
         </div>
       ) : validKYC ? (
         <div className="p-0.5 bg-algo-teal-10 dark:bg-algo-teal/10 rounded-full">

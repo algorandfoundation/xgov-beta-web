@@ -99,7 +99,7 @@ export function ProposalReviewerCard({
                   onClick={() => handleReviewBlock(true)}
                   variant='destructive'
                 >
-                  <XIcon className="text-white group-hover:text-red-500 transition"/>
+                  <XIcon className="text-white group-hover:text-algo-red transition"/>
                   Block
                 </Button>
                 <Button
@@ -111,7 +111,7 @@ export function ProposalReviewerCard({
                 </Button>
               </div>
               {errorMessage && (
-                <p className="text-red-500 mt-4">{errorMessage}</p>
+                <p className="text-algo-red mt-4">{errorMessage}</p>
               )}
             </div>
           ) : (

@@ -103,7 +103,7 @@ export function EditableAddress({
       />
 
       {!!votingAddressFieldError && (
-        <span className="block -mt-5 pl-0.5 py-0.5 text-xs font-medium text-red-600">
+        <span className="block -mt-5 pl-0.5 py-0.5 text-xs font-medium text-algo-red">
           {votingAddressFieldError}
         </span>
       )}

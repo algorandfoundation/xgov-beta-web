@@ -25,8 +25,8 @@ export default function MajorityApprovedPill({ approved, className, label, ...co
                                     <CheckIcon className="size-5 p-1 text-algo-teal" />
                                 </div>
                             ) : (
-                                <div className="p-0.5 bg-red-500/10 rounded-full">
-                                    <XIcon className="size-5 p-1 text-red-500" />
+                                <div className="p-0.5 bg-algo-red/10 rounded-full">
+                                    <XIcon className="size-5 p-1 text-algo-red" />
                                 </div>
                             )
                     }
