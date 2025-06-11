@@ -6,7 +6,7 @@ export interface EditableAddressProps {
   defaultValue: string;
   loading: boolean;
   onSave: (value: string) => void;
-  disabled: boolean;
+  disabled?: boolean;
 }
 
 export function EditableAddress({
@@ -14,7 +14,7 @@ export function EditableAddress({
   defaultValue,
   loading,
   onSave,
-  disabled,
+  disabled = true,
 }: EditableAddressProps) {
   const votingAddressRef = useRef<HTMLInputElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
