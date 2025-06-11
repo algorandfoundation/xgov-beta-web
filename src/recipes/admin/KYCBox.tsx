@@ -8,6 +8,7 @@ import { useAllProposers } from "@/hooks";
 
 import { KYCCard } from "@/components/KYCCard/KYCCard";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
+import { env } from "@/constants";
 
 export interface KYCData {
   address: string;
@@ -19,6 +20,8 @@ export interface ProposerBoxes {
   parsedAddress: string;
   values: ProposerBoxState;
 }
+
+const network = env.PUBLIC_NETWORK;
 
 export const KYCBox = ({
   kycProvider,
@@ -68,7 +71,9 @@ export const KYCBox = ({
     );
 
     try {
-      const res = await registryClient.send.setProposerKyc({
+      const shouldFund = network === "testnet" && kycStatus === true;
+
+      let builder = registryClient.newGroup().setProposerKyc({
         sender: activeAddress,
         signer: transactionSigner,
         args: {
@@ -79,10 +84,24 @@ export const KYCBox = ({
         boxReferences: [proposerBoxName],
       });
 
+      if (shouldFund) {
+        builder = builder.addTransaction(
+          await registryClient.algorand.createTransaction.payment({
+            sender: activeAddress,
+            receiver: proposalAddress,
+            amount: (200).algos(),
+          }),
+        );
+      }
+
+      const res = await builder.send()
+
+      const { confirmations: [confirmation] } = res
+
       if (
-        res.confirmation.confirmedRound !== undefined &&
-        res.confirmation.confirmedRound > 0 &&
-        res.confirmation.poolError === ""
+        confirmation.confirmedRound !== undefined &&
+        confirmation.confirmedRound > 0 &&
+        confirmation.poolError === ""
       ) {
         console.log("Transaction confirmed");
         allProposers.refetch();
