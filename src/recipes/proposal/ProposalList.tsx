@@ -10,7 +10,7 @@ import { BracketedPhaseDetail } from "@/components/BracketedPhaseDetail/Brackete
 import { UserPill } from "@/components/UserPill/UserPill.tsx";
 import { RequestedAmountDetail } from "@/components/RequestedAmountDetail/RequestedAmountDetail.tsx";
 import { FocusDetail } from "@/components/FocusDetail/FocusDetail.tsx";
-import { UserCircleRow } from "@/components/UserCircleRow/UserCircleRow.tsx";
+// import { UserCircleRow } from "@/components/UserCircleRow/UserCircleRow.tsx";
 import { DiscussionLink } from "@/components/DiscussionLink/DiscussionLink.tsx";
 import { FundingTypeAndTimeDetail } from "@/components/FundingTypeAndTimeDetail/FundingTypeAndTimeDetail.tsx";
 import {
@@ -104,8 +104,12 @@ export function StackedList({
         const metadata = useMetadata(id, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusFinal))
 
         // Filter out blocked proposals
+        // Filter out empty proposals if the active address is not the proposer
         // They will still be visible in the Admin page
-        if (phase == "Blocked") {
+        if (
+          phase == "Blocked" ||
+          phase === "Empty" && proposer !== activeAddress
+        ) {
           return;
         }
 
@@ -127,7 +131,7 @@ export function StackedList({
                 <div className="hidden lg:flex flex-wrap justify-end items-end gap-4">
                   {phase === "Voting" && (
                     <>
-                      <UserCircleRow />
+                      {/* <UserCircleRow /> */}
                       <VoteCounter
                         approvals={Number(approvals)}
                         rejections={Number(rejections)}
@@ -137,7 +141,7 @@ export function StackedList({
 
                   {phase === "Discussion" && (
                     <>
-                      <UserCircleRow />
+                      {/* <UserCircleRow /> */}
                       <DiscussionLink to={metadata.data?.forumLink} />
                     </>
                   )}
@@ -165,7 +169,7 @@ export function StackedList({
                 <div className="flex flex-wrap justify-end items-end gap-4">
                   {phase === "Voting" && (
                     <>
-                      <UserCircleRow />
+                      {/* <UserCircleRow /> */}
                       <VoteCounter
                         approvals={Number(approvals)}
                         rejections={Number(rejections)}
@@ -175,7 +179,7 @@ export function StackedList({
 
                   {phase === "Discussion" && (
                     <>
-                      <UserCircleRow />
+                      {/* <UserCircleRow /> */}
                       <DiscussionLink to={metadata.data?.forumLink} />
                     </>
                   )}

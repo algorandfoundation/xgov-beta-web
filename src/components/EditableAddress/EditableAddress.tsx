@@ -6,6 +6,7 @@ export interface EditableAddressProps {
   defaultValue: string;
   loading: boolean;
   onSave: (value: string) => void;
+  disabled: boolean;
 }
 
 export function EditableAddress({
@@ -13,6 +14,7 @@ export function EditableAddress({
   defaultValue,
   loading,
   onSave,
+  disabled,
 }: EditableAddressProps) {
   const votingAddressRef = useRef<HTMLInputElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
@@ -25,7 +27,7 @@ export function EditableAddress({
     <div>
       <div className="flex items-center gap-2 pb-1">
         <h2 className="text-lg py-0.5 font-bold">{title}</h2>
-        {editingVotingAddress ? (
+        {!disabled && editingVotingAddress ? (
           <>
             <Button
               size="sm"
@@ -59,7 +61,7 @@ export function EditableAddress({
               {loading ? "Loading..." : "Cancel"}
             </Button>
           </>
-        ) : (
+        ) : !disabled ? (
           <Button
             size="sm"
             variant="ghost"
@@ -78,7 +80,7 @@ export function EditableAddress({
           >
             {loading ? "Loading..." : "Edit"}
           </Button>
-        )}
+        ) : null}
       </div>
 
       <input
@@ -99,7 +101,7 @@ export function EditableAddress({
             }
           }
         }}
-        disabled={!editingVotingAddress}
+        disabled={!editingVotingAddress || disabled}
       />
 
       {!!votingAddressFieldError && (

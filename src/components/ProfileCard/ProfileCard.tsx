@@ -12,6 +12,7 @@ import { WarningNotice } from "../WarningNotice/WarningNotice";
 import { AlgorandIcon } from "../icons/AlgorandIcon";
 
 export interface ProfileCardProps {
+  address: string;
   votingAddress: string;
   setVotingAddress: (votingAddress: string) => Promise<void>;
   setVotingAddressLoading: boolean;
@@ -24,10 +25,12 @@ export interface ProfileCardProps {
   proposerSignupCost: bigint;
   subscribeProposer: () => Promise<void>;
   subscribeProposerLoading: boolean;
+  activeAddress: string | null;
   className?: string;
 }
 
 export function ProfileCard({
+  address,
   votingAddress,
   setVotingAddress,
   setVotingAddressLoading,
@@ -40,6 +43,7 @@ export function ProfileCard({
   proposerSignupCost,
   subscribeProposer,
   subscribeProposerLoading,
+  activeAddress,
   className = "",
 }: ProfileCardProps) {
   const [showBecomeXGovModal, setShowBecomeXGovModal] = useState(false);
@@ -59,6 +63,7 @@ export function ProfileCard({
               isXGov={isXGov}
               unsubscribeXgov={unsubscribeXgov}
               unsubscribeXGovLoading={subscribeXGovLoading}
+              disabled={address !== activeAddress}
             />
             {!proposer ||
               (proposer?.isProposer && !proposer.kycStatus && (
@@ -66,10 +71,9 @@ export function ProfileCard({
               ))}
           </div>
 
-          {!isXGov ? (
+          {address === activeAddress && !isXGov ? (
             <BecomeAnXGovBannerButton
               onClick={() => setShowBecomeXGovModal(true)}
-              // onClick={subscribeXgov}
               disabled={subscribeXGovLoading}
             />
           ) : (
@@ -80,6 +84,7 @@ export function ProfileCard({
               onSave={(v) => {
                 setVotingAddress(v);
               }}
+              disabled={address !== activeAddress}
             />
           )}
 
