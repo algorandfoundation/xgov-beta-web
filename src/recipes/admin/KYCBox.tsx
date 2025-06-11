@@ -32,8 +32,6 @@ export const KYCBox = ({
   transactionSigner: any;
 }) => {
   const [errorMessage, setErrorMessage] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
   const [filter, setFilter] = useState("");
 
   const allProposers = useAllProposers();

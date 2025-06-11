@@ -217,7 +217,7 @@ export function BecomeProposerModal({
             Become a Proposer?
           </DialogTitle>
           <DialogDescription>
-            By becoming a Proposer, you will be able to submit proposals for the community to vote on.
+            By becoming a proposer, you will be able to submit proposals for the community to vote on. There's a one time proposer sign up fee for your address. Your profile will be valid after KYC has been completed.
           </DialogDescription>
           <WarningNotice
             title="Proposer Signup Fee"
