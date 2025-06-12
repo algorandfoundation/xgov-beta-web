@@ -56,22 +56,23 @@ export function ProfilePageIsland({ address }: { address: string }) {
 export function ProfilePageController({ address }: { address: string }) {
   const { transactionSigner, activeAddress } = useWallet();
   const registry = useRegistry();
-  const xgov = useXGov(address || activeAddress);
-  const proposer = useProposer(address || activeAddress);
-  const proposalsData = useProposalsByProposer(address || activeAddress);
+  const xgov = useXGov(address);
+  const proposer = useProposer(address);
+  const proposalsData = useProposalsByProposer(address);
 
   const isLoading =
     registry.isLoading ||
     xgov.isLoading ||
     proposer.isLoading ||
     proposalsData.isLoading;
+
   const isError =
     registry.isError ||
     xgov.isError ||
     proposer.isError ||
     proposalsData.isError;
 
-  if (!address || !activeAddress || isLoading) {
+  if (!address || isLoading) {
     return <LoadingSpinner />;
   }
 
@@ -97,9 +98,9 @@ export function ProfilePage({
   transactionSigner: TransactionSigner;
 }) {
   const registry = useRegistry();
-  const xgov = useXGov(address || activeAddress);
-  const proposer = useProposer(address || activeAddress);
-  const proposalsData = useProposalsByProposer(address || activeAddress);
+  const xgov = useXGov(address);
+  const proposer = useProposer(address);
+  const proposalsData = useProposalsByProposer(address);
   const [showOpenProposalModal, setShowOpenProposalModal] = useState(false);
 
   const isLoading =
@@ -132,7 +133,7 @@ export function ProfilePage({
 
   const proposals = proposalsData.data
 
-  if (!address || !activeAddress || isLoading) {
+  if (!address || isLoading) {
     return <LoadingSpinner />;
   }
 
@@ -142,6 +143,12 @@ export function ProfilePage({
 
   const subscribeXgov = async () => {
     setSubscribeXGovLoading(true);
+
+    if (!activeAddress || !transactionSigner) {
+      console.error("No active address or transaction signer");
+      setSubscribeXGovLoading(false);
+      return;
+    }
 
     if (!registry.data?.xgovFee) {
       console.error("xgovFee is not set");
@@ -188,6 +195,12 @@ export function ProfilePage({
   const setVotingAddress = async (address: string) => {
     setSetVotingAddressLoading(true);
 
+    if (!activeAddress || !transactionSigner) {
+      console.error("No active address or transaction signer");
+      setSetVotingAddressLoading(false);
+      return;
+    }
+
     await registryClient.send
       .setVotingAccount({
         sender: activeAddress,
@@ -217,6 +230,12 @@ export function ProfilePage({
 
   const unsubscribeXgov = async () => {
     setSubscribeXGovLoading(true);
+
+    if (!activeAddress || !transactionSigner) {
+      console.error("No active address or transaction signer");
+      setSubscribeXGovLoading(false);
+      return;
+    }
 
     await registryClient.send
       .unsubscribeXgov({
@@ -248,6 +267,12 @@ export function ProfilePage({
   const subscribeProposer = async (amount: bigint) => {
     setSubscribeProposerLoading(true);
 
+    if (!activeAddress || !transactionSigner) {
+      console.error("No active address or transaction signer");
+      setSubscribeProposerLoading(false);
+      return;
+    }
+
     await signup(activeAddress, transactionSigner, amount).catch((e: Error) => {
       console.error(`Error calling the contract: ${e.message}`);
       setSubscribeProposerLoading(false);
@@ -261,10 +286,11 @@ export function ProfilePage({
   return (
     <>
       <ProfileCard
+        address={address}
         votingAddress={xgov.data?.votingAddress || ""}
         setVotingAddress={setVotingAddress}
         setVotingAddressLoading={setVotingAddressLoading}
-        isXGov={(address === activeAddress && xgov.data?.isXGov) || false}
+        isXGov={(address && xgov.data?.isXGov) || false}
         xGovSignupCost={registry.data?.xgovFee || 0n}
         subscribeXgov={subscribeXgov}
         unsubscribeXgov={unsubscribeXgov}
@@ -273,67 +299,74 @@ export function ProfilePage({
         proposerSignupCost={registry.data?.proposerFee || 0n}
         subscribeProposer={() => subscribeProposer(registry.data?.proposerFee!)}
         subscribeProposerLoading={subscribeProposerLoading}
+        activeAddress={activeAddress}
         className="mt-6"
       />
       {validProposer && (
         <>
           <div className="flex items-center gap-6 mb-4">
             <XGovProposerStatusPill proposer={proposer.data} />
-            <InfinityMirrorButton
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowOpenProposalModal(true)}
-              disabled={proposer.data?.activeProposal}
-              disabledMessage="You already have an active proposal"
-            >
-              Create Proposal
-            </InfinityMirrorButton>
-            <ConfirmationModal
-              isOpen={showOpenProposalModal}
-              onClose={() => setShowOpenProposalModal(false)}
-              title="Create Proposal"
-              description="Are you sure you want to create a new proposal? You can only have one active proposal at a time."
-              warning={
-                <WarningNotice
-                  title="Proposal Fee"
-                  description={<>
-                    It will cost
-                    <span className="inline-flex items-center mx-1 gap-1">
-                      <AlgorandIcon className="size-2.5" />{Number(registry.data?.proposalFee || 0n) / 1_000_000}
-                    </span>
-                    to create a proposal.
-                  </>}
-                />
-              }
-              submitText="Confirm"
-              onSubmit={async () => {
-                if (!activeAddress) {
-                  console.error("No active address");
-                  return;
-                }
+            {
+              activeAddress === address && (
+                <>
+                  <InfinityMirrorButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowOpenProposalModal(true)}
+                    disabled={proposer.data?.activeProposal}
+                    disabledMessage="You already have an active proposal"
+                  >
+                    Create Proposal
+                  </InfinityMirrorButton>
+                  <ConfirmationModal
+                    isOpen={showOpenProposalModal}
+                    onClose={() => setShowOpenProposalModal(false)}
+                    title="Create Proposal"
+                    description="Are you sure you want to create a new proposal? You can only have one active proposal at a time."
+                    warning={
+                      <WarningNotice
+                        title="Proposal Fee"
+                        description={<>
+                          It will cost
+                          <span className="inline-flex items-center mx-1 gap-1">
+                            <AlgorandIcon className="size-2.5" />{Number(registry.data?.proposalFee || 0n) / 1_000_000}
+                          </span>
+                          to create a proposal.
+                        </>}
+                      />
+                    }
+                    submitText="Confirm"
+                    onSubmit={async () => {
+                      if (!activeAddress) {
+                        console.error("No active address");
+                        return;
+                      }
 
-                try {
-                  const appId = await openProposal(
-                    activeAddress,
-                    transactionSigner,
-                    setOpenProposalLoading,
-                    setOpenProposalError
-                  )
+                      try {
+                        const appId = await openProposal(
+                          activeAddress,
+                          transactionSigner,
+                          setOpenProposalLoading,
+                          setOpenProposalError
+                        )
 
-                  if (appId) {
-                    queryClient.invalidateQueries({ queryKey: ["getProposalsByProposer", activeAddress] })
-                    navigate(`/new?appId=${appId}`)
-                  }
-                } catch (error) {
-                  console.error("Error opening proposal:", error);
-                }
-              }}
-              loading={openProposalLoading}
-              errorMessage={openProposalError}
-            />
+                        if (appId) {
+                          queryClient.invalidateQueries({ queryKey: ["getProposalsByProposer", activeAddress] })
+                          navigate(`/new?appId=${appId}`)
+                        }
+                      } catch (error) {
+                        console.error("Error opening proposal:", error);
+                      }
+                    }}
+                    loading={openProposalLoading}
+                    errorMessage={openProposalError}
+                  />
+                </>
+              )
+            }
           </div>
           {!!proposals && (
-            <StackedList proposals={proposals} activeAddress={null} />
+            <StackedList proposals={proposals} activeAddress={activeAddress} />
           )}
         </>
       )}
