@@ -32,8 +32,8 @@ export function XGovStatusPill({
                                     <CheckIcon className="p-1 text-algo-teal" />
                                 </div>
                             ) : (
-                                <div className="p-0.5 bg-red-500/10 rounded-full">
-                                    <XIcon className="p-1 text-red-500" />
+                                <div className="p-0.5 bg-algo-red/10 rounded-full">
+                                    <XIcon className="p-1 text-algo-red" />
                                 </div>
                             )
                     }
@@ -44,7 +44,7 @@ export function XGovStatusPill({
             </DropdownMenuTrigger>
             <DropdownMenuContent className="mx-1">
                 <DropdownMenuItem
-                    className="text-red-500"
+                    className="text-algo-red"
                     onClick={unsubscribeXgov}
                     disabled={unsubscribeXGovLoading}
                 >

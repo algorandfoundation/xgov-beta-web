@@ -11,7 +11,7 @@ const buttonVariants = cva(
         default:
           "bg-algo-blue text-white border border-algo-blue hover:bg-white hover:text-algo-black dark:bg-algo-teal dark:text-algo-black dark:border-algo-teal dark:hover:bg-algo-black dark:hover:text-white",
         destructive:
-          "group flex items-center gap-2 bg-red-600 text-white border border-red-600 hover:bg-white hover:text-red-600 dark:hover:text-red-600 dark:hover:bg-algo-black",
+          "group flex items-center gap-2 bg-algo-red text-white border border-algo-red hover:bg-white hover:text-algo-red dark:hover:text-algo-red dark:hover:bg-algo-black",
         success:
           "group flex items-center gap-2 bg-algo-green text-white border border-algo-green hover:bg-white hover:text-algo-green dark:hover:bg-algo-black hover:border-algo-green transition",
         outline:
@@ -24,6 +24,7 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-9 px-4 py-2",
+        xs: 'h-6 rounded-md p-1 text-xs',
         sm: "h-8 rounded-md px-3 text-xs",
         lg: "h-10 rounded-md px-8",
         icon: "size-10",

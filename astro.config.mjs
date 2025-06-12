@@ -3,6 +3,8 @@ import tailwind from "@astrojs/tailwind";
 import cloudflare from "@astrojs/cloudflare";
 import react from "@astrojs/react";
 import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
+import { VitePWA } from "vite-plugin-pwa";
+import { manifest } from "./src/utils/manifest"
 
 // https://astro.build/config
 export default defineConfig({
@@ -20,6 +22,21 @@ export default defineConfig({
         ],
       },
     },
+    plugins: [
+      VitePWA({
+        registerType: "autoUpdate",
+        manifest,
+        workbox: {
+          globDirectory: 'dist',
+          globPatterns: [
+            '**/*.{js,css,svg,png,jpg,jpeg,gif,webp,woff,woff2,ttf,eot,ico}',
+          ],
+          // Don't fallback on document based (e.g. `/some-page`) requests
+          // This removes an errant console.log message from showing up.
+          navigateFallback: null,
+        },
+      })
+    ]
   },
   adapter: cloudflare(),
   integrations: [

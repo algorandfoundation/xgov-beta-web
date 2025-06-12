@@ -94,6 +94,7 @@
     "storybook": "^8.3.6",
     "tailwindcss": "^3.4.14",
     "tsx": "^4.19.3",
+    "vite-plugin-pwa": "^1.0.0",
     "vite-tsconfig-paths": "^5.0.1"
   }
 }

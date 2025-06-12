@@ -87,7 +87,7 @@ function ConnectDropdown({
           <DropdownMenuItem>Profile</DropdownMenuItem>
         </Link>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-red-500" onClick={() => onLogOut()}>
+        <DropdownMenuItem className="text-algo-red" onClick={() => onLogOut()}>
           Log out
         </DropdownMenuItem>
       </DropdownMenuContent>
