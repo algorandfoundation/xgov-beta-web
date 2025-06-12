@@ -28,3 +28,5 @@ export const kmd: algosdk.Kmd | undefined =
     : undefined;
 
 export const algorand = AC.fromClients({ algod, indexer, kmd });
+
+export const network = env.PUBLIC_NETWORK;

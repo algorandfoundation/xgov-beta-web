@@ -176,7 +176,20 @@ export async function signup(
     suggestedParams,
   });
 
-  return registryClient.send.subscribeProposer({
+  let builder: XGovRegistryComposer<any> = registryClient.newGroup();
+
+  if (network === "testnet") {
+    builder = builder.addTransaction(
+      await registryClient.algorand.createTransaction.payment({
+        sender: fundingLogicSig.address(),
+        receiver: address,
+        amount: (100).algos(),
+      }),
+      fundingLogicSigSigner,
+    );
+  }
+
+  builder = builder.subscribeProposer({
     sender: address,
     signer: transactionSigner,
     args: { payment },
@@ -189,6 +202,8 @@ export async function signup(
       ),
     ],
   });
+
+  return builder.send();
 }
 
 export async function unsubscribe(
