@@ -100,6 +100,8 @@ export async function roundWarp(to: number = 0) {
       signer: dispenser.signer,
       receiver: dispenser.addr,
       amount: (0).microAlgo(),
+      // adding a random note to avoid transaction duplicates
+      note: new Uint8Array(crypto.randomBytes(16)),
     });
   }
 }

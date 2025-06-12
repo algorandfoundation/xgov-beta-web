@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import crypto from "crypto";
 import algosdk, { ALGORAND_MIN_TX_FEE } from "algosdk";
 import { XGovRegistryFactory } from "@algorandfoundation/xgov/registry";
 import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
@@ -64,6 +65,8 @@ export async function roundWarp(to: number = 0) {
       signer: dispenser.signer,
       receiver: dispenser.addr,
       amount: (0).microAlgo(),
+      // adding a random note to avoid transaction duplicates
+      note: new Uint8Array(crypto.randomBytes(16)),
     });
   }
 }
