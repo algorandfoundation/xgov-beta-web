@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "../ui/button";
 import { WarningNotice } from "../WarningNotice/WarningNotice";
 import { AlgorandIcon } from "../icons/AlgorandIcon";
+import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispenserBanner";
 
 export interface ProfileCardProps {
   address: string;
@@ -70,6 +71,8 @@ export function ProfileCard({
                 <XGovProposerStatusPill proposer={proposer} />
               ))}
           </div>
+
+          <TestnetDispenserBanner />
 
           {address === activeAddress && !isXGov ? (
             <BecomeAnXGovBannerButton
