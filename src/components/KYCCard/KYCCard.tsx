@@ -1,6 +1,5 @@
-import { useState, useEffect, type ChangeEvent } from "react";
+import { useState, useEffect } from "react";
 import { cn, shortenAddress } from "@/functions";
-import { ErrorModal } from "@/components/ErrorModal/ErrorModal";
 import type { ProposerBoxState } from "@/api";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
@@ -34,6 +33,12 @@ export function KYCCard({
   const [currentKYCStatus, setCurrentKYCStatus] = useState(kyc_status);
   const [currentExpiryDate, setCurrentExpiryDate] = useState(expiry_date);
 
+  // reset error messages whenever dialog is closed
+  useEffect(() => {
+    if (!showConfirmDialog)
+      setErrorMessage("")
+  }, [showConfirmDialog])
+
   useEffect(() => {
     setIsExpired(
       currentExpiryDate ? Date.now() > currentExpiryDate * 1000 : false,
@@ -47,7 +52,7 @@ export function KYCCard({
       if (success) {
         setCurrentKYCStatus(true);
         setCurrentExpiryDate(dateInSeconds);
-        // setShowDatePicker(false);
+        setShowConfirmDialog(false);
       } else {
         setErrorMessage("Failed to approve KYC status.");
       }
@@ -86,9 +91,9 @@ export function KYCCard({
   };
 
   const handleDateChange = (date: Date | undefined) => {
-    if (selectedDate && Date.now() > selectedDate.getTime()) {
+    if (date && Date.now() > date.getTime()) {
       setAction("expire");
-    } else {
+    } else if (date) {
       setAction("approve");
     }
     setShowConfirmDialog(true);
@@ -164,10 +169,11 @@ export function KYCCard({
         description={
           selectedDate && Date.now() > selectedDate.getTime()
             ? `The selected date is in the past. Do you want to proceed with an expired KYC status?`
-            : `Disqualify KYC for ${shortenAddress(proposalAddress)}?`
+            : `${action === "approve" ? "Approve" : "Disqualify"} KYC for ${shortenAddress(proposalAddress)}?`
         }
         submitVariant={ action !== 'approve' ? "destructive" : "default"}
         onSubmit={async () => {
+          action === "approve" ? handleApprove(selectedDate!) :
           selectedDate && Date.now() > selectedDate.getTime()
             ? handleConfirmExpiredKYC()
             : handleDisqualify()
