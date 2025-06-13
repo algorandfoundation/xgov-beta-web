@@ -117,7 +117,7 @@ export function KYCCard({
           : "bg-gradient-to-r from-algo-red/20 to-algo-black-10 dark:to-algo-black-90"
     )}>
       <div className="flex gap-2 items-center justify-between">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 w-full truncate">
           <span className="text-xxs font-mono select-all">
             {proposalAddress}
           </span>
