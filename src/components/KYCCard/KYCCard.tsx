@@ -1,6 +1,5 @@
-import { useState, useEffect, type ChangeEvent } from "react";
+import { useState, useEffect } from "react";
 import { cn, shortenAddress } from "@/functions";
-import { ErrorModal } from "@/components/ErrorModal/ErrorModal";
 import type { ProposerBoxState } from "@/api";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
