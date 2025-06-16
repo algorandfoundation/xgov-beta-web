@@ -17,7 +17,7 @@ import {
 import { Button } from "../ui/button";
 import { WarningNotice } from "../WarningNotice/WarningNotice";
 import { AlgorandIcon } from "../icons/AlgorandIcon";
-import termsConditionsString from "./proposer-terms-and-conditions.txt";
+import termsAndConditionsString from "./TermsAndConditionsText.md?raw";
 import { TermsAndConditionsModal } from "@/recipes";
 import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispenserBanner";
 
@@ -140,7 +140,7 @@ export function ProfileCard({
             </div>
           </>
         }
-        terms={termsConditionsString}
+        terms={termsAndConditionsString}
         isOpen={showBecomeProposerTermsModal}
         onClose={() => setShowBecomeProposerTermsModal(false)}
         onAccept={() => {
