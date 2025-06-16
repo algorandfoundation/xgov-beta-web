@@ -34,11 +34,13 @@ export function KYCCard({
   const [currentKYCStatus, setCurrentKYCStatus] = useState(kyc_status);
   const [currentExpiryDate, setCurrentExpiryDate] = useState(expiry_date);
 
-  // reset error messages whenever dialog is closed
+  // reset error messages/loading state whenever dialog is closed
   useEffect(() => {
-    if (!showConfirmDialog)
-      setErrorMessage("")
-  }, [showConfirmDialog])
+    if (!showConfirmDialog) {
+      setErrorMessage("");
+      setLoading(false);
+    }
+  }, [showConfirmDialog]);
 
   useEffect(() => {
     setIsExpired(
@@ -47,40 +49,52 @@ export function KYCCard({
   }, [currentExpiryDate]);
 
   const handleApprove = (date: Date) => {
+    setLoading(true);
+
     const dateInSeconds = Math.floor(date.getTime() / 1000);
 
-    callSetProposerKYC(proposalAddress, true, dateInSeconds).then((success) => {
-      if (success) {
-        setCurrentKYCStatus(true);
-        setCurrentExpiryDate(dateInSeconds);
-        setShowConfirmDialog(false);
-      } else {
-        setErrorMessage("Failed to approve KYC status.");
-      }
-    });
+    callSetProposerKYC(proposalAddress, true, dateInSeconds)
+      .then((success) => {
+        if (success) {
+          setCurrentKYCStatus(true);
+          setCurrentExpiryDate(dateInSeconds);
+          setShowConfirmDialog(false);
+        } else {
+          setErrorMessage("Failed to approve KYC status.");
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleDisqualify = () => {
-    callSetProposerKYC(proposalAddress, false, 0).then((success) => {
-      if (success) {
-        setCurrentKYCStatus(false);
-        setCurrentExpiryDate(0);
-        setShowConfirmDialog(false);
-      } else {
-        setErrorMessage("Failed to disqualify KYC status.");
-      }
-    });
+    setLoading(true);
+
+    callSetProposerKYC(proposalAddress, false, 0)
+      .then((success) => {
+        if (success) {
+          setCurrentKYCStatus(false);
+          setCurrentExpiryDate(0);
+          setShowConfirmDialog(false);
+        } else {
+          setErrorMessage("Failed to disqualify KYC status.");
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleReset = () => {
-    callSetProposerKYC(proposalAddress, false, 0).then((success) => {
-      if (success) {
-        setCurrentKYCStatus(false);
-        setCurrentExpiryDate(0);
-      } else {
-        setErrorMessage("Failed to reset KYC status.");
-      }
-    });
+    setLoading(true);
+
+    callSetProposerKYC(proposalAddress, false, 0)
+      .then((success) => {
+        if (success) {
+          setCurrentKYCStatus(false);
+          setCurrentExpiryDate(0);
+        } else {
+          setErrorMessage("Failed to reset KYC status.");
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleButtonClick = () => {
@@ -181,12 +195,13 @@ export function KYCCard({
             ? `The selected date is in the past. Do you want to proceed with an expired KYC status?`
             : `${action === "approve" ? "Approve" : "Disqualify"} KYC for ${shortenAddress(proposalAddress)}?`
         }
-        submitVariant={ action !== 'approve' ? "destructive" : "default"}
+        submitVariant={action !== "approve" ? "destructive" : "default"}
         onSubmit={async () => {
-          action === "approve" ? handleApprove(selectedDate!) :
-          selectedDate && Date.now() > selectedDate.getTime()
-            ? handleConfirmExpiredKYC()
-            : handleDisqualify()
+          action === "approve"
+            ? handleApprove(selectedDate!)
+            : selectedDate && Date.now() > selectedDate.getTime()
+              ? handleConfirmExpiredKYC()
+              : handleDisqualify();
         }}
         loading={loading}
         errorMessage={errorMessage}
