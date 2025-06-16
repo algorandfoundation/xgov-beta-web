@@ -3,8 +3,7 @@ import { RefreshCcwIcon } from "lucide-react";
 import { decodeAddress } from "algosdk";
 
 import type { ProposerBoxState } from "@/api";
-import { registryClient } from "@/api";
-import { env } from "@/constants";
+import { network, registryClient } from "@/api";
 import { useAllProposers } from "@/hooks";
 
 import { KYCCard } from "@/components/KYCCard/KYCCard";
@@ -21,8 +20,6 @@ export interface ProposerBoxes {
   parsedAddress: string;
   values: ProposerBoxState;
 }
-
-const network = env.PUBLIC_NETWORK;
 
 export const KYCBox = ({
   kycProvider,

@@ -1,4 +1,4 @@
-import type { ProposerBoxState } from "@/api";
+import { network, type ProposerBoxState } from "@/api";
 import { EditableAddress } from "../EditableAddress/EditableAddress";
 import { ActionButton } from "../button/ActionButton/ActionButton";
 import { cn } from "@/functions";
@@ -270,7 +270,7 @@ export function BecomeProposerModal({
                   <AlgorandIcon className="size-2.5" />
                   {Number(costs) / 1_000_000}
                 </span>
-                &nbsp;to become a proposer.
+                &nbsp;to become a proposer. { network !== "testnet" ? null : <><br/>On testnet, this fee is sponsored.</> }
               </>
             }
           />
