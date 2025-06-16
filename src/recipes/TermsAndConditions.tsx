@@ -80,7 +80,7 @@ export function TermsAndConditionsModal({
           </DialogDescription>
           <div className="h-[60svh] self-center rounded-md border border-algo-blue dark:border-algo-teal p-2 text-sm text-left">
             <div
-              tabIndex={1}
+              tabIndex={0}
               onScroll={handleScroll}
               ref={scrollRef}
               id="tc-box"
