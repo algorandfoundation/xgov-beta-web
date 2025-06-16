@@ -1,51 +1,126 @@
-import { CheckIcon } from "@radix-ui/react-icons";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Printer, ClipboardCheck, Clipboard } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
 
-export function TermsAndConditions({
-  setAgreed,
-}: {
-  setAgreed: (value: boolean) => void;
-}) {
+function printString(content: string) {
+  const printWindow = window.open("", "", "height=600,width=800");
+  if (!printWindow) return;
+  printWindow.document.write(
+    `<html><head><title>Print</title></head><body style="white-space:pre">`,
+  );
+  printWindow.document.write(content);
+  printWindow.document.write("</body></html>");
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.onload = function () {
+    printWindow.print();
+    printWindow.close();
+  };
+}
+
+interface TermsAndConditionsModalProps {
+  title: string;
+  description: string | JSX.Element;
+  terms: string;
+  isOpen: boolean;
+  onClose: () => void;
+  onAccept: () => void;
+}
+
+export function TermsAndConditionsModal({
+  title,
+  description,
+  terms,
+  isOpen,
+  onClose,
+  onAccept,
+}: TermsAndConditionsModalProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrolledToBottom, setScrolledToBottom] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setScrolledToBottom(false);
+    }
+  }, [isOpen]);
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const isAtBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 10; // 10px threshold
+    if (isAtBottom === true) setScrolledToBottom(true);
+  };
+
+  const handlePrint = () => printString(terms);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(terms);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="p-4 rounded-lg bg-algo-blue-20 dark:bg-algo-teal-20">
-      <h1 className="font-bold">Terms and Conditions</h1>
-      <p className="text-algo-black-60 mb-4">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut tincidunt a
-        diam in vehicula. Cras mollis iaculis tortor sit amet dapibus. Etiam ac
-        risus pulvinar, faucibus leo vel, facilisis mi. Aenean cursus nibh sed
-        leo faucibus, at suscipit velit congue. Duis sit amet lacus
-        pellentesque, ullamcorper eros nec, lacinia justo. Sed pharetra nibh at
-        ligula condimentum semper. Vivamus venenatis, purus sit amet
-        sollicitudin sollicitudin, ex justo fringilla sapien, ac euismod purus
-        orci consequat dolor. Donec nec pretium lectus. In sagittis metus ac
-        erat hendrerit lacinia. Donec hendrerit quam et nibh ullamcorper
-        vulputate. In in mauris et sapien tincidunt sagittis. Vestibulum eu nunc
-        nisl. Pellentesque rutrum dictum vehicula. Curabitur et eros nisi. Sed
-        interdum felis a dignissim accumsan. Etiam vitae elit sed nulla commodo
-        tincidunt. Class aptent taciti sociosqu ad litora torquent per conubia
-        nostra, per inceptos himenaeos. Cras aliquet erat a viverra lobortis.
-        Nullam eu mi pulvinar, faucibus ligula nec, feugiat magna. Suspendisse
-        ultrices ex vel fringilla convallis.Lorem ipsum dolor sit amet,
-        consectetur adipiscing elit. Ut tincidunt a diam in vehicula. Cras
-        mollis iaculis tortor sit amet dapibus. Etiam ac risus pulvinar,
-        faucibus leo vel, facilisis mi. Aenean cursus nibh sed leo faucibus, at
-        suscipit velit congue. Duis sit amet lacus pellentesque, ullamcorper
-        eros nec, lacinia justo. Sed pharetra nibh at ligula condimentum semper.
-        Vivamus venenatis, purus sit amet sollicitudin sollicitudin, ex justo
-        fringilla sapien, ac euismod purus orci consequat dolor. Donec nec
-        pretium lectus. In sagittis metus ac erat hendrerit lacinia. Donec
-        hendrerit quam et nibh ullamcorper vulputate. In in mauris et sapien
-        tincidunt sagittis.
-      </p>
-      <button
-        type="button"
-        className="group w-full p-4 flex items-center justify-start gap-2 border border-algo-blue-50 dark:border-algo-teal-50 hover:bg-algo-blue-50 dark:hover:bg-algo-teal-30 hover:text-algo-white dark:hover:text-algo-black rounded-md"
-        onClick={() => setAgreed(true)}
+    <Dialog open={isOpen}>
+      <DialogContent
+        className="w-full h-full max-h-full sm:h-auto sm:w-fit sm:rounded-lg overflow-y-auto"
+        onCloseClick={onClose}
       >
-        <div className="h-5 w-5 flex items-center justify-center border border-algo-black rounded-sm">
-          <CheckIcon className="h-4 w-4 opacity-0 group-hover:opacity-100" />
-        </div>
-        <span>I've read and agree to the terms and conditions</span>
-      </button>
-    </div>
+        <DialogHeader className="mt-12 flex flex-col items-start gap-2">
+          <DialogTitle className="dark:text-white">{title}</DialogTitle>
+          <DialogDescription className="flex flex-col">
+            {description}
+          </DialogDescription>
+          <div className="h-[60svh] self-center rounded-md border border-algo-blue dark:border-algo-teal p-2 text-sm text-left">
+            <div
+              tabIndex={0}
+              onScroll={handleScroll}
+              ref={scrollRef}
+              id="tc-box"
+              className="h-full overflow-y-auto whitespace-pre-line sm:whitespace-pre"
+              dangerouslySetInnerHTML={{ __html: terms }}
+            ></div>
+          </div>
+        </DialogHeader>
+        <DialogFooter className="mt-4">
+          <div className="flex w-full justify-between">
+            <div className="flex">
+              <Button variant="ghost" onClick={handlePrint}>
+                <Printer className="mr-2 h-4 w-4" /> Print
+              </Button>
+              <Button variant="ghost" onClick={handleCopy}>
+                {copied ? (
+                  <ClipboardCheck className="mr-2 h-4 w-4 text-algo-blue dark:text-algo-teal" />
+                ) : (
+                  <Clipboard className="mr-2 h-4 w-4" />
+                )}
+                {copied ? (
+                  <span className="text-algo-blue dark:text-algo-teal">
+                    Copied
+                  </span>
+                ) : (
+                  <>Copy</>
+                )}
+              </Button>
+            </div>
+            <div className="flex">
+              <Button variant="ghost" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button disabled={!scrolledToBottom} onClick={() => onAccept()}>
+                Accept Terms
+              </Button>
+            </div>{" "}
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
