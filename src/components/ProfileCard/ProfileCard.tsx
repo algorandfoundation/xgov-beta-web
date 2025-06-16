@@ -5,7 +5,7 @@ import { cn } from "@/functions";
 import { XGovProposerStatusPill } from "../XGovProposerStatusPill/XGovProposerStatusPill";
 import { BecomeAnXGovBannerButton } from "../BecomeAnXGovBannerButton/BecomeAnXGovBannerButton";
 import { XGovStatusPill } from "../XGovStatusPill/XGovStatusPill";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -164,7 +164,6 @@ interface BecomeXGovModalProps {
   onClose: () => void;
   onSignup: () => Promise<void>;
   costs: bigint;
-  errorMessage?: string;
 }
 
 export function BecomeXGovModal({
@@ -172,8 +171,17 @@ export function BecomeXGovModal({
   onClose,
   onSignup,
   costs,
-  errorMessage,
 }: BecomeXGovModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) {
+      setLoading(false);
+      setErrorMessage("");
+    }
+  }, [isOpen]);
+
   const onSubmit = async () => {
     try {
       await onSignup();
@@ -214,7 +222,9 @@ export function BecomeXGovModal({
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={onSubmit}>Signup</Button>
+          <Button onClick={onSubmit} disabled={loading}>
+            {loading ? "Signing" : "Signup"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -226,7 +236,6 @@ interface BecomeProposerModalProps {
   onClose: () => void;
   onSignup: () => Promise<void>;
   costs: bigint;
-  errorMessage?: string;
 }
 
 export function BecomeProposerModal({
@@ -234,15 +243,26 @@ export function BecomeProposerModal({
   onClose,
   onSignup,
   costs,
-  errorMessage,
 }: BecomeProposerModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) {
+      setLoading(false);
+      setErrorMessage("");
+    }
+  }, [isOpen]);
+
   const onSubmit = async () => {
+    setLoading(true);
     try {
       await onSignup();
       onClose();
     } catch (error) {
       console.error("Error during signup:", error);
     }
+    setLoading(false);
   };
 
   return (
@@ -270,17 +290,27 @@ export function BecomeProposerModal({
                   <AlgorandIcon className="size-2.5" />
                   {Number(costs) / 1_000_000}
                 </span>
-                &nbsp;to become a proposer. { network !== "testnet" ? null : <><br/>On testnet, this fee is sponsored.</> }
+                &nbsp;to become a proposer.{" "}
+                {network !== "testnet" ? null : (
+                  <>
+                    <br />
+                    On testnet, this fee is sponsored.
+                  </>
+                )}
               </>
             }
           />
         </DialogHeader>
-        {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
+        {errorMessage ? (
+          <p className="text-algo-red">{errorMessage}</p>
+        ) : null}
         <DialogFooter className="mt-8">
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={onSubmit}>Signup</Button>
+          <Button onClick={onSubmit} disabled={loading}>
+            {loading ? "Signing" : "Signup"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
