@@ -90,6 +90,7 @@ export const KYCBox = ({
             receiver: proposalAddress,
             amount: (200).algos(),
           }),
+          transactionSigner
         );
       }
 
