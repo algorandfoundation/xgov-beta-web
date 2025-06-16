@@ -23,6 +23,7 @@ export function KYCCard({
 }: KYCCardProps) {
   const kyc_status = values.kycStatus;
   const expiry_date = Number(values.kycExpiring);
+  const expity_humanDate = new Date(expiry_date * 1000).toLocaleDateString();
 
   const [action, setAction] = useState<"approve" | "disqualify" | "expire" | undefined>(undefined);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -108,18 +109,27 @@ export function KYCCard({
   };
 
   return (
-    <div className={cn(
-      "p-2 rounded-md dark:text-white",
-      currentKYCStatus
-        ? "bg-gradient-to-r from-algo-green/20 to-algo-black-10 dark:to-algo-black-90"
-        : isExpired
-          ? "bg-gradient-to-r from-algo-orange/20 dark:from-algo-yellow to-algo-black-10 dark:to-algo-black-90"
-          : "bg-gradient-to-r from-algo-red/20 to-algo-black-10 dark:to-algo-black-90"
-    )}>
+    <div
+      className={cn(
+        "p-2 rounded-md dark:text-white",
+        currentKYCStatus
+          ? "bg-gradient-to-r from-algo-green/20 to-algo-black-10 dark:to-algo-black-90"
+          : isExpired
+            ? "bg-gradient-to-r from-algo-orange/20 dark:from-algo-yellow to-algo-black-10 dark:to-algo-black-90"
+            : "bg-gradient-to-r from-algo-red/20 to-algo-black-10 dark:to-algo-black-90",
+      )}
+    >
       <div className="flex gap-2 items-center justify-between">
         <div className="flex flex-col gap-2 w-full truncate">
-          <span className="text-xxs font-mono select-all">
+          <span className="text-xs font-mono select-all">
             {proposalAddress}
+          </span>
+          <span className="text-xs">
+            {currentKYCStatus ? (
+              <>KYC { isExpired ? "Expired on " : "Approved - Expires" } {expity_humanDate}</>
+            ) : (
+              <>KYC {isExpired ? "Expired" : "Requested"}</>
+            )}
           </span>
         </div>
         <Popover>
