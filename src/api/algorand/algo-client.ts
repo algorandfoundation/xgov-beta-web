@@ -27,6 +27,9 @@ export const kmd: algosdk.Kmd | undefined =
       })
     : undefined;
 
-export const algorand = AC.fromClients({ algod, indexer, kmd });
+export const algorand = AC.fromClients({ algod, indexer, kmd, });
+
+// default txn lifetime/validity is too small. 120 rounds = ~5mins+
+algorand.setDefaultValidityWindow(120);
 
 export const network = env.PUBLIC_NETWORK;
