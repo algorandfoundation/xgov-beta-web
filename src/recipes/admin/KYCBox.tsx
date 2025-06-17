@@ -21,6 +21,21 @@ export interface ProposerBoxes {
   values: ProposerBoxState;
 }
 
+function sortKYC(a: ProposerBoxes, b: ProposerBoxes) {
+  const { parsedAddress: ka, values: { kycExpiring: va } } = a
+  const { parsedAddress: kb, values: { kycExpiring: vb } } = b
+  if (va && vb) {
+    return va < vb ? 1 : (va === vb ? 0 : -1)
+  }
+  if (va && !vb)
+    return -1
+  if (!va && vb)
+    return 1
+  if (ka < kb)
+    return -1
+  return 1
+}
+
 export const KYCBox = ({
   kycProvider,
   activeAddress,
@@ -39,7 +54,7 @@ export const KYCBox = ({
     ? Object.keys(allProposers.data).map((key) => ({
         parsedAddress: key,
         values: allProposers.data[key] as unknown as ProposerBoxState,
-      }))
+      })).sort(sortKYC)
     : [];
 
   async function callSetProposerKYC(

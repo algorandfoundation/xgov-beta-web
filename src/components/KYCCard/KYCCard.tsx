@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { ConfirmationModal } from "../ConfirmationModal/ConfirmationModal";
+import { useAllProposers, useProposer } from "@/hooks";
 
 export interface KYCCardProps {
   proposalAddress: string;
@@ -25,7 +26,11 @@ export function KYCCard({
   const expiry_date = Number(values.kycExpiring);
   const expity_humanDate = new Date(expiry_date * 1000).toLocaleDateString();
 
-  const [action, setAction] = useState<"approve" | "disqualify" | "expire" | undefined>(undefined);
+  const allProposers = useAllProposers();
+
+  const [action, setAction] = useState<
+    "approve" | "disqualify" | "expire" | undefined
+  >(undefined);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
@@ -59,6 +64,7 @@ export function KYCCard({
           setCurrentKYCStatus(true);
           setCurrentExpiryDate(dateInSeconds);
           setShowConfirmDialog(false);
+          allProposers.refetch();
         } else {
           setErrorMessage("Failed to approve KYC status.");
         }
@@ -75,6 +81,7 @@ export function KYCCard({
           setCurrentKYCStatus(false);
           setCurrentExpiryDate(0);
           setShowConfirmDialog(false);
+          allProposers.refetch();
         } else {
           setErrorMessage("Failed to disqualify KYC status.");
         }
@@ -90,6 +97,7 @@ export function KYCCard({
         if (success) {
           setCurrentKYCStatus(false);
           setCurrentExpiryDate(0);
+          allProposers.refetch();
         } else {
           setErrorMessage("Failed to reset KYC status.");
         }
@@ -97,9 +105,13 @@ export function KYCCard({
       .finally(() => setLoading(false));
   };
 
-  const handleButtonClick = () => {
+  const handleButtonClick = (e: any) => {
     if (isExpired) {
+      // clear the KYC status
       handleReset();
+      // skip date picker
+      // TODO need confirmation dialog actually
+      e.preventDefault();
     } else if (currentKYCStatus) {
       setShowConfirmDialog(true);
     }
@@ -180,8 +192,8 @@ export function KYCCard({
       <ConfirmationModal
         isOpen={showConfirmDialog}
         onClose={() => {
-          setShowConfirmDialog(false)
-          setAction(undefined)
+          setShowConfirmDialog(false);
+          setAction(undefined);
         }}
         title={
           action === "approve"
