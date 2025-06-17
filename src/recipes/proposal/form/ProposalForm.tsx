@@ -98,7 +98,7 @@ export function ProposalForm({
               <FormItem>
                 <FormLabel className="dark:text-white">
                   Title
-                  <span className="ml-0.5 text-red-500">*</span>
+                  <span className="ml-0.5 text-algo-red">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
                     label="Title"
@@ -127,7 +127,7 @@ export function ProposalForm({
               <FormItem>
                 <FormLabel className="dark:text-white">
                   Forum Link
-                  <span className="ml-0.5 text-red-500">*</span>
+                  <span className="ml-0.5 text-algo-red">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
                     label="Forum Link"
@@ -160,7 +160,7 @@ export function ProposalForm({
               <FormItem>
                 <FormLabel className="dark:text-white">
                   Description
-                  <span className="ml-0.5 text-red-500">*</span>
+                  <span className="ml-0.5 text-algo-red">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
                     label="Description"
@@ -189,7 +189,7 @@ export function ProposalForm({
               <FormItem>
                 <FormLabel className="dark:text-white">
                   About the team
-                  <span className="ml-0.5 text-red-500">*</span>
+                  <span className="ml-0.5 text-algo-red">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
                     label="About the team"
@@ -218,7 +218,7 @@ export function ProposalForm({
               <FormItem>
                 <FormLabel className="dark:text-white">
                   Additional Info
-                  <span className="ml-0.5 text-red-500">*</span>
+                  <span className="ml-0.5 text-algo-red">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
                     label="Additional Info"
@@ -248,7 +248,7 @@ export function ProposalForm({
               <FormItem>
                 <FormLabel className="dark:text-white">
                   License
-                  <span className="ml-0.5 text-red-500">*</span>
+                  <span className="ml-0.5 text-algo-red">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
                     label="Open Source"
@@ -285,7 +285,7 @@ export function ProposalForm({
               <FormItem>
                 <FormLabel className="dark:text-white">
                   Focus
-                  <span className="ml-0.5 text-red-500">*</span>
+                  <span className="ml-0.5 text-algo-red">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
                     label="Focus"
@@ -346,7 +346,7 @@ export function ProposalForm({
               <FormItem>
                 <FormLabel className="dark:text-white">
                   Funding Type
-                  <span className="ml-0.5 text-red-500">*</span>
+                  <span className="ml-0.5 text-algo-red">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
                     label="Funding Type"
@@ -412,7 +412,7 @@ export function ProposalForm({
                 <FormItem>
                   <FormLabel className="dark:text-white">
                     Adoption Metrics
-                    <span className="ml-0.5 text-red-500">*</span>
+                    <span className="ml-0.5 text-algo-red">*</span>
                     <InfoPopover
                       className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
                       label="Adoption Metrics"
@@ -486,7 +486,7 @@ export function ProposalForm({
               <FormItem>
                 <FormLabel className="dark:text-white">
                   Amount Requested
-                  <span className="ml-0.5 text-red-500">*</span>
+                  <span className="ml-0.5 text-algo-red">*</span>
                   <InfoPopover
                     className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
                     label="Requested Amount"
@@ -504,7 +504,7 @@ export function ProposalForm({
                       className={cn(
                         "pl-7",
                         !!errors.requestedAmount?.message
-                          ? "border-red-500"
+                          ? "border-algo-red"
                           : "",
                       )}
                       placeholder="0"

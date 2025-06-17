@@ -1,65 +1,95 @@
 import { Link } from "@/components/Link";
-import { shortenAddress } from "@/functions/shortening";
 import {
   ProposalStatus,
   ProposalStatusMap,
   type ProposalSummaryCardDetails,
 } from "@/api";
 import { useGetAllProposals, useAllXGovs } from "@/hooks";
+import { NetworkId } from "@txnlab/use-wallet-react";
+import { CopyIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useState } from "react";
+import { BracketedPhaseDetail } from "@/components/BracketedPhaseDetail/BracketedPhaseDetail";
 
 export interface PanelStatisticsData {
   xGovs: number;
   proposals: ProposalSummaryCardDetails[];
 }
 
-export const PanelStatistics = () => {
+export const PanelStatistics = ({ network = NetworkId.LOCALNET }: { network?: NetworkId; }) => {
   const proposals = useGetAllProposals();
   const xGovs = useAllXGovs();
+  const [openTooltips, setOpenTooltips] = useState<{ [key: number]: boolean }>({});
+
+  const handleCopyClick = (index: number, xGov: string) => {
+    navigator.clipboard.writeText(xGov);
+    setOpenTooltips(prev => ({ ...prev, [index]: true }));
+
+    // Auto-hide tooltip after 2 seconds
+    setTimeout(() => {
+      setOpenTooltips(prev => ({ ...prev, [index]: false }));
+    }, 800);
+  };
 
   return (
-    <>
-      <h2 className="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-8 mb-4">
-        xGovs ({xGovs.data?.length ? xGovs.data.length : 0}):
+    <div className="mx-auto max-w-[120rem]">
+      <h2 className="text-xl font-semibold text-wrap text-algo-black dark:text-white mb-2">
+        Proposals <span className="ml-1 text-sm font-normal text-algo-black-60 dark:text-algo-black-20">{proposals.data ? proposals.data.length : 0} total</span>
       </h2>
-      <div className="text-3xl text-wrap lg:text-3xl max-w-3xl text-algo-black dark:text-white font-bold mt-8 mb-4">
-        <div className="pl-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="text-xxs text-wrap text-algo-black dark:text-white mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+          {proposals.data &&
+            proposals.data.map((proposal) => (
+              <Link
+                to={`/proposal/${proposal.id}`}
+                className="flex flex-col gap-1 bg-algo-black-10 hover:bg-algo-black-40 dark:bg-algo-black-90 dark:hover:bg-algo-black-70 rounded-md p-3 transition"
+                key={proposal.id.toString()}
+              >
+                <BracketedPhaseDetail phase={ProposalStatusMap[proposal.status]} />
+                <h3 className="text-xl font-semibold">{proposal.title}</h3>
+              </Link>
+            ))}
+        </div>
+      </div>
+      <h2 className="text-xl font-semibold text-wrap text-algo-black dark:text-white mb-2">
+        xGovs <span className="ml-2 text-xs font-normal text-algo-black-60 dark:text-algo-black-20">{xGovs.data?.length ? xGovs.data.length : 0} total</span>
+      </h2>
+      <div className="text-xxs text-wrap text-algo-black dark:text-white">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
           {xGovs.data &&
             xGovs.data.map((xGov, index) => (
               <div
-                key={index}
-                className="p-4 border rounded-lg shadow-md bg-white dark:bg-algo-black overflow-hidden"
-              >
-                <p title={xGov}>{shortenAddress(xGov)}</p>
-              </div>
-            ))}
-        </div>
-      </div>
-      <h2 className="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-8 mb-4">
-        Proposals ({proposals.data ? proposals.data.length : 0}):
-      </h2>
-      <div className="text-3xl text-wrap lg:text-3xl max-w-3xl text-algo-black dark:text-white font-bold mt-8 mb-4">
-        <div className="pl-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {proposals.data &&
-            proposals.data.map((proposal) => (
-              <div
-                key={proposal.id.toString()}
-                className="p-4 border rounded-lg shadow-md bg-white dark:bg-algo-black"
-              >
+                className="flex items-center justify-between gap-1 bg-algo-black-10 hover:bg-algo-black-40 dark:bg-algo-black-90 dark:hover:bg-algo-black-70 rounded-md px-2 pb-1 pt-1.5 transition"
+                key={index}>
                 <Link
-                  to={`/proposal/${proposal.id}`}
-                  className="text-black-500 hover:underline"
+                  to={`https://lora.algokit.io/${network}/account/${xGov}`}
+                  target="_blank"
+                  className=" text-center rounded-md font-mono overflow-hidden"
                 >
-                  <h3 className="text-xl font-semibold">{proposal.title}</h3>
+                  <p className="truncate align-middle">{xGov}</p>
                 </Link>
-                <p
-                  className={`text-sm ${proposal.status === ProposalStatus.ProposalStatusBlocked ? "text-red-500" : "text-gray-500"} dark:${proposal.status === ProposalStatus.ProposalStatusBlocked ? "text-red-400" : "text-gray-400"}`}
-                >
-                  Status: {ProposalStatusMap[proposal.status]}
-                </p>
+
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip open={openTooltips[index] || false}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="p-1 h-6 dark:bg-algo-black-80"
+                        onClick={() => handleCopyClick(index, xGov)}
+                      >
+                        <CopyIcon className="size-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">Copied!</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             ))}
         </div>
       </div>
-    </>
+    </div>
   );
 };

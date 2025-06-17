@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontSize: {
+        'xxs': ['0.7rem', { lineHeight: '1rem' }],
+      },
       colors: {
         "algo-teal-10": "#E7FAF9",
         "algo-teal-20": "#D1F4F4",
@@ -47,6 +50,7 @@ export default {
         "algo-orange": "#FF7F48",
         "algo-yellow": "#FFE248",
         "algo-green": "#01DC94",
+        "algo-red": "#FF2C2C",
       },
       keyframes: {
         "accordion-down": {

@@ -364,9 +364,9 @@ export async function openProposal(
   } catch (e: any) {
     setOpenProposalLoading(false);
     if (e.message.includes('tried to spend')) {
-      setError("Insufficient funds to open proposal.")
+      setError("Insufficient funds to create proposal.")
     } else {
-      setError("Failed to open proposal.")
+      setError("Failed to create proposal.")
     }
   }
 }
@@ -606,6 +606,8 @@ export async function updateMetadata(
       appId: proposal.id,
     });
 
+    const refCountNeeded = (await proposalClient.appClient.getBoxValue(metadataBoxName)).length / 1024
+
     const metadata = new Uint8Array(Buffer.from(JSON.stringify(
       {
         description: data.description,
@@ -636,9 +638,22 @@ export async function updateMetadata(
           isFirstInGroup: index === 0,
         },
         appReferences: [registryClient.appId],
-        boxReferences: [metadataBoxName, metadataBoxName],
+        boxReferences: [metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName],
       })
     })
+
+    const opUpsNeeded = (refCountNeeded - (chunkedMetadata.length * 7)) / 7;
+    if (opUpsNeeded > 0) {
+      for (let i = 0; i < opUpsNeeded; i++) {
+        resubmitGroup.opUp({
+          sender: activeAddress,
+          signer: transactionSigner,
+          args: {},
+          boxReferences: [metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName],
+          note: `opup ${i}`
+        })
+      }
+    }
 
     await resubmitGroup.send()
     setUpdateMetadataLoading(false);

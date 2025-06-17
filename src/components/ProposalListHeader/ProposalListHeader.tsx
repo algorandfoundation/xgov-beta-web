@@ -67,14 +67,14 @@ export function ProposalListHeader({
                 {
                   openProposalLoading
                     ? (<div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>)
-                    : "Open Proposal"
+                    : "Create Proposal"
                 }
               </InfinityMirrorButton>
               <ConfirmationModal
                 isOpen={showOpenProposalModal}
                 onClose={() => setShowOpenProposalModal(false)}
-                title="Open Proposal"
-                description="Are you sure you want to open a new proposal? You can only have one active proposal at a time."
+                title="Create Proposal"
+                description="Are you sure you want to create a new proposal? You can only have one active proposal at a time."
                 warning={
                   <WarningNotice
                     title="Proposal Fee"
@@ -83,7 +83,7 @@ export function ProposalListHeader({
                       <span className="inline-flex items-center mx-1 gap-1">
                         <AlgorandIcon className="size-2.5" />{Number(registry.data?.proposalFee || 0n) / 1_000_000}
                       </span>
-                      to open a proposal.
+                      to create a proposal.
                     </>}
                   />
                 }

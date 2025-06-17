@@ -1,7 +1,10 @@
-import { useState, useEffect, type ChangeEvent } from "react";
-import { cn } from "@/functions";
-import { ErrorModal } from "@/components/ErrorModal/ErrorModal";
+import { useState, useEffect } from "react";
+import { cn, shortenAddress } from "@/functions";
 import type { ProposerBoxState } from "@/api";
+import { Button } from "../ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Calendar } from "../ui/calendar";
+import { ConfirmationModal } from "../ConfirmationModal/ConfirmationModal";
 
 export interface KYCCardProps {
   proposalAddress: string;
@@ -20,15 +23,24 @@ export function KYCCard({
 }: KYCCardProps) {
   const kyc_status = values.kycStatus;
   const expiry_date = Number(values.kycExpiring);
+  const expity_humanDate = new Date(expiry_date * 1000).toLocaleDateString();
 
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [action, setAction] = useState<"approve" | "disqualify" | "expire" | undefined>(undefined);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
-  const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [currentKYCStatus, setCurrentKYCStatus] = useState(kyc_status);
   const [currentExpiryDate, setCurrentExpiryDate] = useState(expiry_date);
+
+  // reset error messages/loading state whenever dialog is closed
+  useEffect(() => {
+    if (!showConfirmDialog) {
+      setErrorMessage("");
+      setLoading(false);
+    }
+  }, [showConfirmDialog]);
 
   useEffect(() => {
     setIsExpired(
@@ -37,43 +49,52 @@ export function KYCCard({
   }, [currentExpiryDate]);
 
   const handleApprove = (date: Date) => {
+    setLoading(true);
+
     const dateInSeconds = Math.floor(date.getTime() / 1000);
 
-    callSetProposerKYC(proposalAddress, true, dateInSeconds).then((success) => {
-      if (success) {
-        setCurrentKYCStatus(true);
-        setCurrentExpiryDate(dateInSeconds);
-        setShowDatePicker(false);
-      } else {
-        setErrorMessage("Failed to approve KYC status.");
-        setErrorModalOpen(true);
-      }
-    });
+    callSetProposerKYC(proposalAddress, true, dateInSeconds)
+      .then((success) => {
+        if (success) {
+          setCurrentKYCStatus(true);
+          setCurrentExpiryDate(dateInSeconds);
+          setShowConfirmDialog(false);
+        } else {
+          setErrorMessage("Failed to approve KYC status.");
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleDisqualify = () => {
-    callSetProposerKYC(proposalAddress, false, 0).then((success) => {
-      if (success) {
-        setCurrentKYCStatus(false);
-        setCurrentExpiryDate(0);
-        setShowConfirmDialog(false);
-      } else {
-        setErrorMessage("Failed to disqualify KYC status.");
-        setErrorModalOpen(true);
-      }
-    });
+    setLoading(true);
+
+    callSetProposerKYC(proposalAddress, false, 0)
+      .then((success) => {
+        if (success) {
+          setCurrentKYCStatus(false);
+          setCurrentExpiryDate(0);
+          setShowConfirmDialog(false);
+        } else {
+          setErrorMessage("Failed to disqualify KYC status.");
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleReset = () => {
-    callSetProposerKYC(proposalAddress, false, 0).then((success) => {
-      if (success) {
-        setCurrentKYCStatus(false);
-        setCurrentExpiryDate(0);
-      } else {
-        setErrorMessage("Failed to reset KYC status.");
-        setErrorModalOpen(true);
-      }
-    });
+    setLoading(true);
+
+    callSetProposerKYC(proposalAddress, false, 0)
+      .then((success) => {
+        if (success) {
+          setCurrentKYCStatus(false);
+          setCurrentExpiryDate(0);
+        } else {
+          setErrorMessage("Failed to reset KYC status.");
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleButtonClick = () => {
@@ -81,19 +102,17 @@ export function KYCCard({
       handleReset();
     } else if (currentKYCStatus) {
       setShowConfirmDialog(true);
-    } else {
-      setShowDatePicker(true);
     }
   };
 
-  const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selectedDate = new Date(e.target.value);
-    if (Date.now() > selectedDate.getTime()) {
-      setSelectedDate(selectedDate);
-      setShowConfirmDialog(true);
-    } else {
-      handleApprove(selectedDate);
+  const handleDateChange = (date: Date | undefined) => {
+    if (date && Date.now() > date.getTime()) {
+      setAction("expire");
+    } else if (date) {
+      setAction("approve");
     }
+    setShowConfirmDialog(true);
+    setSelectedDate(date);
   };
 
   const handleConfirmExpiredKYC = () => {
@@ -104,71 +123,88 @@ export function KYCCard({
   };
 
   return (
-    <div className="card border-2 border-algo-black rounded-2xl p-4 shadow-xl dark:border-algo-black-80 dark:bg-algo-black dark:text-white">
-      <div className="card-content flex items-center">
-        <span
-          className={cn(
-            "text-sm font-semibold",
-            isExpired
-              ? "text-yellow-500"
-              : currentKYCStatus
-                ? "text-green-500"
-                : "text-red-500",
-          )}
-        >
-          {proposalAddress}
-        </span>
-        <button
-          className="ml-auto px-2 py-1.5 text-sm rounded-sm outline-none focus:bg-white dark:focus:bg-algo-black-90"
-          onClick={handleButtonClick}
-        >
-          {isExpired
-            ? "KYC Expired."
-            : currentKYCStatus
-              ? "Disqualify KYC?"
-              : "Approve KYC?"}
-        </button>
-        {showDatePicker && (
-          <input
-            type="date"
-            className="ml-2 px-2 py-1.5 text-sm rounded-sm outline-none focus:bg-white dark:focus:bg-algo-black-90"
-            onChange={handleDateChange}
-          />
-        )}
-      </div>
-      {showConfirmDialog && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white dark:bg-algo-black p-4 rounded-lg shadow-lg">
-            <p className="mb-4">
-              {selectedDate && Date.now() > selectedDate.getTime()
-                ? `The selected date is in the past. Do you want to proceed with an expired KYC status?`
-                : `Confirm disqualify KYC status of ${proposalAddress}?`}
-            </p>
-            <div className="flex justify-end">
-              <button
-                className="mr-2 px-4 py-2 bg-red-500 text-white rounded"
-                onClick={
-                  selectedDate && Date.now() > selectedDate.getTime()
-                    ? handleConfirmExpiredKYC
-                    : handleDisqualify
-                }
-              >
-                Yes
-              </button>
-              <button
-                className="px-4 py-2 bg-gray-300 dark:bg-gray-700 rounded"
-                onClick={() => setShowConfirmDialog(false)}
-              >
-                No
-              </button>
-            </div>
-          </div>
-        </div>
+    <div
+      className={cn(
+        "p-2 rounded-md dark:text-white",
+        currentKYCStatus
+          ? "bg-gradient-to-r from-algo-green/20 to-algo-black-10 dark:to-algo-black-90"
+          : isExpired
+            ? "bg-gradient-to-r from-algo-orange/20 dark:from-algo-yellow to-algo-black-10 dark:to-algo-black-90"
+            : "bg-gradient-to-r from-algo-red/20 to-algo-black-10 dark:to-algo-black-90",
       )}
-      <ErrorModal
-        isOpen={errorModalOpen}
-        onClose={() => setErrorModalOpen(false)}
-        message={errorMessage}
+    >
+      <div className="flex gap-2 items-center justify-between">
+        <div className="flex flex-col gap-2 w-full truncate">
+          <span className="text-xs font-mono select-all">
+            {proposalAddress}
+          </span>
+          <span className="text-xs">
+            {currentKYCStatus ? (
+              <>KYC { isExpired ? "Expired on " : "Approved - Expires" } {expity_humanDate}</>
+            ) : (
+              <>KYC {isExpired ? "Expired" : "Requested"}</>
+            )}
+          </span>
+        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              size="xs"
+              onClick={handleButtonClick}
+              className={cn(
+                isExpired
+                  ? "bg-algo-orange dark:bg-algo-yellow text-white border-algo-orange dark:border-algo-yellow"
+                  : currentKYCStatus
+                    ? "bg-algo-red text-white dark:text-white border-algo-red dark:bg-algo-red dark:border-algo-red"
+                    : "bg-algo-green text-white border-algo-green",
+              )}
+            >
+              {isExpired
+                ? "Expired"
+                : currentKYCStatus
+                  ? "Disqualify"
+                  : "Approve"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateChange}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      <ConfirmationModal
+        isOpen={showConfirmDialog}
+        onClose={() => {
+          setShowConfirmDialog(false)
+          setAction(undefined)
+        }}
+        title={
+          action === "approve"
+            ? "Confirm Approving KYC Status"
+            : action === "expire"
+              ? "Confirm Expired KYC Status"
+              : "Confirm Disqualifying KYC Status"
+        }
+        description={
+          selectedDate && Date.now() > selectedDate.getTime()
+            ? `The selected date is in the past. Do you want to proceed with an expired KYC status?`
+            : `${action === "approve" ? "Approve" : "Disqualify"} KYC for ${shortenAddress(proposalAddress)}?`
+        }
+        submitVariant={action !== "approve" ? "destructive" : "default"}
+        onSubmit={async () => {
+          action === "approve"
+            ? handleApprove(selectedDate!)
+            : selectedDate && Date.now() > selectedDate.getTime()
+              ? handleConfirmExpiredKYC()
+              : handleDisqualify();
+        }}
+        loading={loading}
+        errorMessage={errorMessage}
       />
     </div>
   );

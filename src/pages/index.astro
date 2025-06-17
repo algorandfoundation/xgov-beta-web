@@ -9,6 +9,7 @@ import { Hero } from "@/components/Hero/Hero";
 import { ProposalListHeaderIsland } from "@/components/ProposalListHeader/ProposalListHeader";
 
 import { StackedListIsland } from "@/recipes";
+import { TestnetDispenserBannerIsland } from "@/components/TestnetDispenserBanner/TestnetDispenserBanner";
 
 const title = "Algorand xGov";
 
@@ -28,6 +29,7 @@ let proposals = await getAllProposals();
       treasury={(Number(registry?.outstandingFunds) / 1e6) || 0}
       votes={Number(registry?.committeeVotes) || 0}
     />
+    <TestnetDispenserBannerIsland client:only="react" />
     <ProposalListHeaderIsland client:only="react" title="Active Proposals" />
     <div class="flex flex-col gap-y-4">
       <StackedListIsland client:only="react" proposals={proposals} />

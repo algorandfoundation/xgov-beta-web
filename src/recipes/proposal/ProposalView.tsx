@@ -487,12 +487,12 @@ function VotingStatusCard({
                       <FormItem className="w-16">
                         <FormLabel className="dark:text-white">
                           Approvals
-                          <span className="ml-0.5 text-red-500">*</span>
+                          <span className="ml-0.5 text-algo-red">*</span>
                         </FormLabel>
                         <FormControl>
                           <Input
                             id="vote-approvals"
-                            className={!!errors.approvals?.message ? "border-red-500" : ""}
+                            className={!!errors.approvals?.message ? "border-algo-red" : ""}
                             placeholder="0"
                             type="number"
                             onFocus={(e) => e.target.select()}
@@ -515,12 +515,12 @@ function VotingStatusCard({
                       <FormItem className="w-16">
                         <FormLabel className="dark:text-white">
                           Abstains
-                          <span className="ml-0.5 text-red-500">*</span>
+                          <span className="ml-0.5 text-algo-red">*</span>
                         </FormLabel>
                         <FormControl>
                           <Input
                             id="vote-abstains"
-                            className={!!errors.nulls?.message ? "border-red-500" : ""}
+                            className={!!errors.nulls?.message ? "border-algo-red" : ""}
                             placeholder="0"
                             type="number"
                             onFocus={(e) => e.target.select()}
@@ -543,12 +543,12 @@ function VotingStatusCard({
                       <FormItem className="w-16">
                         <FormLabel className="dark:text-white">
                           Rejections
-                          <span className="ml-0.5 text-red-500">*</span>
+                          <span className="ml-0.5 text-algo-red">*</span>
                         </FormLabel>
                         <FormControl>
                           <Input
                             id="vote-rejections"
-                            className={!!errors.rejections?.message ? "border-red-500" : ""}
+                            className={!!errors.rejections?.message ? "border-algo-red" : ""}
                             placeholder="0"
                             type="number"
                             onFocus={(e) => e.target.select()}
@@ -893,7 +893,7 @@ export function FinalizeModal({
             Are you sure you want to submit this proposal?
           </DialogDescription>
         </DialogHeader>
-        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+        {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
         <DialogFooter className="mt-8">
           <Button variant="ghost" onClick={onClose}>
             Cancel
@@ -1085,7 +1085,7 @@ export function DropModal({
             undone.
           </DialogDescription>
         </DialogHeader>
-        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+        {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
         <DialogFooter className="mt-8">
           <Button variant="ghost" onClick={onClose}>
             Cancel

@@ -10,20 +10,22 @@ export interface XGovStatusPillProps {
   isXGov: boolean;
   unsubscribeXgov: () => void;
   unsubscribeXGovLoading: boolean;
+  disabled?: boolean
 }
 
 export function XGovStatusPill({
   isXGov,
   unsubscribeXgov,
   unsubscribeXGovLoading,
+  disabled = true,
 }: XGovStatusPillProps) {
     return (
         <DropdownMenu modal={false}>
-            <DropdownMenuTrigger disabled={!isXGov} asChild>
+            <DropdownMenuTrigger disabled={!isXGov || disabled} asChild>
                 <button
                     type='button'
                     className="group flex items-center gap-2 bg-algo-blue/10 hover:bg-algo-blue hover:text-white dark:bg-algo-teal/10 dark:hover:bg-algo-teal dark:hover:text-algo-black disabled:hover:bg-algo-blue/10 disabled:hover:text-algo-black dark:disabled:hover:bg-algo-teal/10 dark:disabled:hover:text-white py-1 pl-1 pr-3 rounded-full"
-                    disabled={!isXGov}
+                    disabled={!isXGov || disabled}
                 >
                     {
                         isXGov
@@ -32,8 +34,8 @@ export function XGovStatusPill({
                                     <CheckIcon className="p-1 text-algo-teal" />
                                 </div>
                             ) : (
-                                <div className="p-0.5 bg-red-500/10 rounded-full">
-                                    <XIcon className="p-1 text-red-500" />
+                                <div className="p-0.5 bg-algo-red/10 rounded-full">
+                                    <XIcon className="p-1 text-algo-red" />
                                 </div>
                             )
                     }
@@ -44,7 +46,7 @@ export function XGovStatusPill({
             </DropdownMenuTrigger>
             <DropdownMenuContent className="mx-1">
                 <DropdownMenuItem
-                    className="text-red-500"
+                    className="text-algo-red"
                     onClick={unsubscribeXgov}
                     disabled={unsubscribeXGovLoading}
                 >

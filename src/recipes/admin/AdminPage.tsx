@@ -19,7 +19,7 @@ export function AdminPageIsland() {
   );
 }
 export function AdminPage() {
-  const { activeAddress, transactionSigner } = useWallet();
+  const { activeAddress, transactionSigner, activeNetwork } = useWallet();
   const registryGlobalState = useRegistry();
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
@@ -120,21 +120,18 @@ export function AdminPage() {
   }
 
   return (
-    <div>
-      <h1 className="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
+    <div className="w-full">
+      <h1 className="text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold my-4">
         Admin Panel
       </h1>
       {activeAddress ? (
         <>
-          <div className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
-            <PanelStatistics />
-          </div>
           {registryGlobalState.data?.xgovManager &&
             activeAddress === registryGlobalState.data?.xgovManager && (
-              <>
-                <h1 className="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
+              <div className="mx-auto max-w-[120rem] mb-10">
+                <h2 className="text-xl font-semibold text-wrap text-algo-black dark:text-white mb-2">
                   Roles
-                </h1>
+                </h2>
                 <RoleModal
                   isOpen={modalIsOpen}
                   onRequestClose={() => setModalIsOpen(false)}
@@ -147,25 +144,24 @@ export function AdminPage() {
                   xGovManager={registryGlobalState.data?.xgovManager}
                   handleSetRole={handleSetRole}
                 />
-              </>
+              </div>
             )}
           {registryGlobalState.data?.kycProvider &&
             activeAddress === registryGlobalState.data?.kycProvider && (
-              <>
-                <h1 className="text-3xl text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
-                  Know-Your-Customer Management
-                </h1>
-                <div className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
-                  {registryGlobalState.data?.kycProvider && (
-                    <KYCBox
-                      kycProvider={registryGlobalState.data?.kycProvider}
-                      activeAddress={activeAddress}
-                      transactionSigner={transactionSigner}
-                    />
-                  )}
-                </div>
-              </>
+              <div className="mx-auto max-w-[120rem] mb-10">
+                {registryGlobalState.data?.kycProvider && (
+                  <KYCBox
+                    kycProvider={registryGlobalState.data?.kycProvider}
+                    activeAddress={activeAddress}
+                    transactionSigner={transactionSigner}
+                  />
+                )}
+
+              </div>
             )}
+          <div className="w-full relative text-algo-black dark:text-white">
+            <PanelStatistics network={activeNetwork} />
+          </div>
         </>
       ) : (
         <div>Wallet not connected</div>

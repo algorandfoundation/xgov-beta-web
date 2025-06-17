@@ -7,6 +7,7 @@ export interface ConfirmationModalProps {
     title?: string;
     description?: string;
     warning?: JSX.Element;
+    submitVariant?: "default" | "link" | "destructive" | "success" | "outline" | "secondary" | "ghost" | null | undefined;
     submitText?: string;
     onSubmit: () => Promise<void>;
     loading?: boolean;
@@ -19,6 +20,7 @@ export function ConfirmationModal({
     title,
     description,
     warning,
+    submitVariant = "default",
     submitText = "Submit",
     onSubmit,
     loading = false,
@@ -56,12 +58,16 @@ export function ConfirmationModal({
                     }
                     {!!warning && warning}
                 </DialogHeader>
-                {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+                {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
                 <DialogFooter className="mt-8">
                     <Button variant="ghost" onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button onClick={innerOnSubmit} disabled={loading}>
+                    <Button
+                        variant={submitVariant}
+                        onClick={innerOnSubmit}
+                        disabled={loading}
+                    >
                         {loading
                             ? "Loading..."
                             : submitText
