@@ -23,6 +23,7 @@ export function KYCCard({
 }: KYCCardProps) {
   const kyc_status = values.kycStatus;
   const expiry_date = Number(values.kycExpiring);
+  const expity_humanDate = new Date(expiry_date * 1000).toLocaleDateString();
 
   const [action, setAction] = useState<"approve" | "disqualify" | "expire" | undefined>(undefined);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -33,11 +34,13 @@ export function KYCCard({
   const [currentKYCStatus, setCurrentKYCStatus] = useState(kyc_status);
   const [currentExpiryDate, setCurrentExpiryDate] = useState(expiry_date);
 
-  // reset error messages whenever dialog is closed
+  // reset error messages/loading state whenever dialog is closed
   useEffect(() => {
-    if (!showConfirmDialog)
-      setErrorMessage("")
-  }, [showConfirmDialog])
+    if (!showConfirmDialog) {
+      setErrorMessage("");
+      setLoading(false);
+    }
+  }, [showConfirmDialog]);
 
   useEffect(() => {
     setIsExpired(
@@ -46,40 +49,52 @@ export function KYCCard({
   }, [currentExpiryDate]);
 
   const handleApprove = (date: Date) => {
+    setLoading(true);
+
     const dateInSeconds = Math.floor(date.getTime() / 1000);
 
-    callSetProposerKYC(proposalAddress, true, dateInSeconds).then((success) => {
-      if (success) {
-        setCurrentKYCStatus(true);
-        setCurrentExpiryDate(dateInSeconds);
-        setShowConfirmDialog(false);
-      } else {
-        setErrorMessage("Failed to approve KYC status.");
-      }
-    });
+    callSetProposerKYC(proposalAddress, true, dateInSeconds)
+      .then((success) => {
+        if (success) {
+          setCurrentKYCStatus(true);
+          setCurrentExpiryDate(dateInSeconds);
+          setShowConfirmDialog(false);
+        } else {
+          setErrorMessage("Failed to approve KYC status.");
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleDisqualify = () => {
-    callSetProposerKYC(proposalAddress, false, 0).then((success) => {
-      if (success) {
-        setCurrentKYCStatus(false);
-        setCurrentExpiryDate(0);
-        setShowConfirmDialog(false);
-      } else {
-        setErrorMessage("Failed to disqualify KYC status.");
-      }
-    });
+    setLoading(true);
+
+    callSetProposerKYC(proposalAddress, false, 0)
+      .then((success) => {
+        if (success) {
+          setCurrentKYCStatus(false);
+          setCurrentExpiryDate(0);
+          setShowConfirmDialog(false);
+        } else {
+          setErrorMessage("Failed to disqualify KYC status.");
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleReset = () => {
-    callSetProposerKYC(proposalAddress, false, 0).then((success) => {
-      if (success) {
-        setCurrentKYCStatus(false);
-        setCurrentExpiryDate(0);
-      } else {
-        setErrorMessage("Failed to reset KYC status.");
-      }
-    });
+    setLoading(true);
+
+    callSetProposerKYC(proposalAddress, false, 0)
+      .then((success) => {
+        if (success) {
+          setCurrentKYCStatus(false);
+          setCurrentExpiryDate(0);
+        } else {
+          setErrorMessage("Failed to reset KYC status.");
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   const handleButtonClick = () => {
@@ -108,18 +123,27 @@ export function KYCCard({
   };
 
   return (
-    <div className={cn(
-      "p-2 rounded-md dark:text-white",
-      currentKYCStatus
-        ? "bg-gradient-to-r from-algo-green/20 to-algo-black-10 dark:to-algo-black-90"
-        : isExpired
-          ? "bg-gradient-to-r from-algo-orange/20 dark:from-algo-yellow to-algo-black-10 dark:to-algo-black-90"
-          : "bg-gradient-to-r from-algo-red/20 to-algo-black-10 dark:to-algo-black-90"
-    )}>
+    <div
+      className={cn(
+        "p-2 rounded-md dark:text-white",
+        currentKYCStatus
+          ? "bg-gradient-to-r from-algo-green/20 to-algo-black-10 dark:to-algo-black-90"
+          : isExpired
+            ? "bg-gradient-to-r from-algo-orange/20 dark:from-algo-yellow to-algo-black-10 dark:to-algo-black-90"
+            : "bg-gradient-to-r from-algo-red/20 to-algo-black-10 dark:to-algo-black-90",
+      )}
+    >
       <div className="flex gap-2 items-center justify-between">
         <div className="flex flex-col gap-2 w-full truncate">
-          <span className="text-xxs font-mono select-all">
+          <span className="text-xs font-mono select-all">
             {proposalAddress}
+          </span>
+          <span className="text-xs">
+            {currentKYCStatus ? (
+              <>KYC { isExpired ? "Expired on " : "Approved - Expires" } {expity_humanDate}</>
+            ) : (
+              <>KYC {isExpired ? "Expired" : "Requested"}</>
+            )}
           </span>
         </div>
         <Popover>
@@ -171,12 +195,13 @@ export function KYCCard({
             ? `The selected date is in the past. Do you want to proceed with an expired KYC status?`
             : `${action === "approve" ? "Approve" : "Disqualify"} KYC for ${shortenAddress(proposalAddress)}?`
         }
-        submitVariant={ action !== 'approve' ? "destructive" : "default"}
+        submitVariant={action !== "approve" ? "destructive" : "default"}
         onSubmit={async () => {
-          action === "approve" ? handleApprove(selectedDate!) :
-          selectedDate && Date.now() > selectedDate.getTime()
-            ? handleConfirmExpiredKYC()
-            : handleDisqualify()
+          action === "approve"
+            ? handleApprove(selectedDate!)
+            : selectedDate && Date.now() > selectedDate.getTime()
+              ? handleConfirmExpiredKYC()
+              : handleDisqualify();
         }}
         loading={loading}
         errorMessage={errorMessage}
