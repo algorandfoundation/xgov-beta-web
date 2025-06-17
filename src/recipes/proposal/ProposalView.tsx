@@ -16,6 +16,7 @@ import {
   getXGovQuorum,
   getVoteQuorum,
   getVotingDuration,
+  getGlobalState,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -842,6 +843,8 @@ export function FinalizeModal({
         return false;
       }
 
+      const { committeePublisher } = (await getGlobalState())!
+
       const proposalFactory = new ProposalFactory({ algorand });
       const proposalClient = proposalFactory.getAppClientById({
         appId: proposalId,
@@ -852,7 +855,7 @@ export function FinalizeModal({
         signer: transactionSigner,
         args: {},
         appReferences: [registryClient.appId],
-        accountReferences: [activeAddress],
+        accountReferences: [activeAddress, committeePublisher],
         boxReferences: [new Uint8Array(Buffer.from("M"))],
         extraFee: (1000).microAlgos(),
       });
