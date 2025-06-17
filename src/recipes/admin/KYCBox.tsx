@@ -3,12 +3,14 @@ import { RefreshCcwIcon } from "lucide-react";
 import { decodeAddress } from "algosdk";
 
 import type { ProposerBoxState } from "@/api";
-import { algod, network, registryClient } from "@/api";
+import { algod, network, registryClient, wrapTransactionSigner } from "@/api";
 import { useAllProposers } from "@/hooks";
 
 import { KYCCard } from "@/components/KYCCard/KYCCard";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 import { Button } from "@/components/ui/button";
+import type { TransactionStatus } from "@/components/ConfirmationModal/ConfirmationModal";
+import { transactionFees } from "@algorandfoundation/algokit-utils";
 
 export interface KYCData {
   address: string;
@@ -36,10 +38,21 @@ function sortKYC(a: ProposerBoxes, b: ProposerBoxes) {
   return 1
 }
 
+export interface TransactionStateBaseProps {
+  setStatus: (status: TransactionStatus) => void
+  setErrorMessage: (err: string) => void
+}
+
+export interface CallSetProposerKYCProps extends TransactionStateBaseProps {
+  proposalAddress: string;
+  kycStatus: boolean;
+  expiration: number;
+}
+
 export const KYCBox = ({
   kycProvider,
   activeAddress,
-  transactionSigner,
+  transactionSigner: innerTransactionSigner,
 }: {
   kycProvider: string;
   activeAddress: string;
@@ -57,11 +70,17 @@ export const KYCBox = ({
       })).sort(sortKYC)
     : [];
 
-  async function callSetProposerKYC(
-    proposalAddress: string,
-    kycStatus: boolean,
-    expiration: number,
-  ) {
+  async function callSetProposerKYC({
+    proposalAddress,
+    kycStatus,
+    expiration,
+    setStatus,
+    setErrorMessage,
+  }: CallSetProposerKYCProps) {
+    const transactionSigner = wrapTransactionSigner(innerTransactionSigner, setStatus)
+
+    setStatus("loading");
+
     console.log(
       "Setting KYC status of",
       proposalAddress,
@@ -112,7 +131,6 @@ export const KYCBox = ({
           transactionSigner,
         );
       }
-
       const res = await builder.send();
 
       const {
@@ -126,7 +144,7 @@ export const KYCBox = ({
       ) {
         console.log("Transaction confirmed");
         allProposers.refetch();
-        setErrorMessage(""); // Clear any previous error message
+        setStatus("idle");
         return true;
       }
 

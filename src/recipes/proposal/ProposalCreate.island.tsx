@@ -1,4 +1,11 @@
-import { useProposalsByProposer, UseQuery, useRegistry, useSearchParams, useSearchParamsObserver, UseWallet } from "@/hooks";
+import {
+  useProposalsByProposer,
+  UseQuery,
+  useRegistry,
+  useSearchParams,
+  useSearchParamsObserver,
+  UseWallet,
+} from "@/hooks";
 import { ProposalForm, proposalFormSchema } from "@/recipes";
 import { ProposalStatus, submitProposal } from "@/api";
 import { useWallet } from "@txnlab/use-wallet-react";
@@ -6,6 +13,7 @@ import { useEffect, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { z } from "zod";
 import { useBalance } from "@/hooks/useBalance";
+import { useTransactionState } from "@/components/ConfirmationModal/ConfirmationModal";
 
 export function ProposalCreateIsland() {
   return (
@@ -29,13 +37,14 @@ export function ProposalCreate() {
   const registry = useRegistry();
   const proposalsData = useProposalsByProposer(activeAddress);
   const [proposalSubmitLoading, setProposalSubmitLoading] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
   const [searchParams] = useSearchParams();
   const [_searchParams, setSearchParams] = useState(searchParams);
   useSearchParamsObserver((searchParams) => {
     setSearchParams(searchParams);
   });
+
+  const { status, setStatus, errorMessage, setErrorMessage, reset } =
+    useTransactionState();
 
   const emptyProposals =
     !!proposalsData.data &&
@@ -45,8 +54,12 @@ export function ProposalCreate() {
   const emptyProposal =
     emptyProposals && emptyProposals.length > 0 ? emptyProposals[0] : null;
 
-  const appId = emptyProposal?.id || BigInt(Number(_searchParams.get('appId'))) || null;
-  // console.log("appId", appId);
+  const appId =
+    emptyProposal?.id || BigInt(Number(_searchParams.get("appId"))) || null;
+
+  useEffect(() => {
+    reset(); // reset transaction status and errors
+  }, [appId])
 
   const currentProposals =
     !!proposalsData.data &&
@@ -57,9 +70,11 @@ export function ProposalCreate() {
   const currentProposal =
     currentProposals && currentProposals.length > 0 && currentProposals[0];
 
-  const maxRequestedAmount = (!!userBalance.data?.available && userBalance.data.available.microAlgos > 1_000n)
-    ? (((userBalance.data.available.microAlgos - 1_000n) / 1_000_000n) * 10n )
-    : 0n;
+  const maxRequestedAmount =
+    !!userBalance.data?.available &&
+    userBalance.data.available.microAlgos > 1_000n
+      ? ((userBalance.data.available.microAlgos - 1_000n) / 1_000_000n) * 10n
+      : 0n;
 
   useEffect(() => {
     if (currentProposal) {
@@ -74,26 +89,27 @@ export function ProposalCreate() {
       minRequestedAmount={registry.data?.minRequestedAmount || 1n}
       maxRequestedAmount={maxRequestedAmount}
       loading={proposalSubmitLoading}
-      error={submitError || undefined}
+      error={errorMessage}
+      transactionStatus={status}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
         // TODO
         if (!activeAddress) {
-          console.error("No active address");
+          setErrorMessage("No active address");
           return;
         }
 
         if (!activeWallet) {
-          console.error("No active wallet");
+          setErrorMessage("No active wallet");
           return;
         }
 
         if (!registry.data?.proposalCommitmentBps) {
-          console.error("No proposal commitment bps");
+          setErrorMessage("No proposal commitment bps");
           return;
         }
 
         if (!appId) {
-          console.error("No appId set for Lute proposal");
+          setErrorMessage("No appId set for Lute proposal");
           return;
         }
 
@@ -104,9 +120,9 @@ export function ProposalCreate() {
             transactionSigner,
             appId,
             registry.data?.proposalCommitmentBps,
-            setProposalSubmitLoading,
-            setSubmitError,
-          )
+            setStatus,
+            setErrorMessage,
+          );
 
           navigate(`/proposal/${appId}`);
         } catch (e) {
