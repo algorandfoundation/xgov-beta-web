@@ -3,7 +3,7 @@ import { RefreshCcwIcon } from "lucide-react";
 import { decodeAddress } from "algosdk";
 
 import type { ProposerBoxState } from "@/api";
-import { network, registryClient } from "@/api";
+import { algod, network, registryClient } from "@/api";
 import { useAllProposers } from "@/hooks";
 
 import { KYCCard } from "@/components/KYCCard/KYCCard";
@@ -19,6 +19,21 @@ export interface KYCData {
 export interface ProposerBoxes {
   parsedAddress: string;
   values: ProposerBoxState;
+}
+
+function sortKYC(a: ProposerBoxes, b: ProposerBoxes) {
+  const { parsedAddress: ka, values: { kycExpiring: va } } = a
+  const { parsedAddress: kb, values: { kycExpiring: vb } } = b
+  if (va && vb) {
+    return va < vb ? 1 : (va === vb ? 0 : -1)
+  }
+  if (va && !vb)
+    return -1
+  if (!va && vb)
+    return 1
+  if (ka < kb)
+    return -1
+  return 1
 }
 
 export const KYCBox = ({
@@ -37,9 +52,9 @@ export const KYCBox = ({
 
   const proposerBoxes = allProposers.data
     ? Object.keys(allProposers.data).map((key) => ({
-      parsedAddress: key,
-      values: allProposers.data[key] as unknown as ProposerBoxState,
-    }))
+        parsedAddress: key,
+        values: allProposers.data[key] as unknown as ProposerBoxState,
+      })).sort(sortKYC)
     : [];
 
   async function callSetProposerKYC(
@@ -67,7 +82,14 @@ export const KYCBox = ({
     );
 
     try {
-      const shouldFund = network === "testnet" && kycStatus === true;
+      // fund proposers on testnet if they have < 200A balance
+      let shouldFund = false;
+      if (network === "testnet" && kycStatus === true) {
+        const { amount } = await algod.accountInformation(proposalAddress).do();
+        if (amount < 200_000_000) {
+          shouldFund = true;
+        }
+      }
 
       let builder = registryClient.newGroup().setProposerKyc({
         sender: activeAddress,
@@ -87,13 +109,15 @@ export const KYCBox = ({
             receiver: proposalAddress,
             amount: (200).algos(),
           }),
-          transactionSigner
+          transactionSigner,
         );
       }
 
-      const res = await builder.send()
+      const res = await builder.send();
 
-      const { confirmations: [confirmation] } = res
+      const {
+        confirmations: [confirmation],
+      } = res;
 
       if (
         confirmation.confirmedRound !== undefined &&
