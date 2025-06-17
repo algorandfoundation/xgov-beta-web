@@ -30,7 +30,7 @@ export function ProposalCreate() {
   const proposalsData = useProposalsByProposer(activeAddress);
   const [proposalSubmitLoading, setProposalSubmitLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  
+
   const [searchParams] = useSearchParams();
   const [_searchParams, setSearchParams] = useState(searchParams);
   useSearchParamsObserver((searchParams) => {
@@ -75,6 +75,7 @@ export function ProposalCreate() {
       loading={proposalSubmitLoading}
       error={submitError || undefined}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
+        // TODO
         if (!activeAddress) {
           console.error("No active address");
           return;

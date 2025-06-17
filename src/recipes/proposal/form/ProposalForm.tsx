@@ -28,7 +28,10 @@ import { AlgorandIcon } from "@/components/icons/AlgorandIcon.tsx";
 import { cn } from "@/functions";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { proposalFormSchema, validatorSchemas } from "@/recipes/proposal/form/ProposalForm.schema.ts";
+import {
+  proposalFormSchema,
+  validatorSchemas,
+} from "@/recipes/proposal/form/ProposalForm.schema.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
 import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationModal";
@@ -40,7 +43,7 @@ export function ProposalForm({
   maxRequestedAmount = 1_000_000n, // Default to 1M Algo
   onSubmit,
   loading,
-  error
+  error,
 }: {
   type: "edit" | "create";
   proposal?: ProposalMainCardDetails;
@@ -53,12 +56,12 @@ export function ProposalForm({
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
 
   const formSchema = proposalFormSchema.setKey(
-    'requestedAmount',
+    "requestedAmount",
     validatorSchemas.requestedAmount({
       min: 1,
       max: Number(maxRequestedAmount),
-    })
-  )
+    }),
+  );
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,9 +72,10 @@ export function ProposalForm({
       team: proposal?.team || "",
       additionalInfo: proposal?.additionalInfo || "",
       openSource: true,
-      focus: proposal?.focus !== undefined && proposal?.focus !== null
-        ? String(proposal.focus)
-        : String(ProposalFocus.FocusNull),
+      focus:
+        proposal?.focus !== undefined && proposal?.focus !== null
+          ? String(proposal.focus)
+          : String(ProposalFocus.FocusNull),
       fundingType:
         typeof proposal?.fundingType !== "undefined"
           ? String(proposal?.fundingType)
@@ -85,7 +89,9 @@ export function ProposalForm({
   const { errors } = form.formState;
 
   const $requestedAmount = form.watch("requestedAmount");
-  const costs = Math.trunc(Number((BigInt($requestedAmount * 1_000_000) * bps) / BigInt(10_000)));
+  const costs = Math.trunc(
+    Number((BigInt($requestedAmount * 1_000_000) * bps) / BigInt(10_000)),
+  );
 
   return (
     <div className="p-4 rounded-lg border border-algo-blue dark:border-algo-teal">
@@ -409,35 +415,35 @@ export function ProposalForm({
               };
 
               return (
-                <FormItem>
-                  <FormLabel className="dark:text-white">
-                    Adoption Metrics
-                    <span className="ml-0.5 text-algo-red">*</span>
-                    <InfoPopover
-                      className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
-                      label="Adoption Metrics"
-                    >
-                      Quick metrics about the adoption of your work that can be
-                      used to measure success & ecosystem relevancy for the
-                      funds being requested.
-                    </InfoPopover>
-                  </FormLabel>
-                  <FormControl>
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <Input
-                          id="adoption-metrics"
-                          placeholder="Type a metric and press Enter"
-                          spellCheck="false"
-                          value={metricInput}
-                          onChange={(e) => setMetricInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              addMetricFromEvent(e);
-                            }
-                          }}
-                        />
-                        {metricInput && (
+                <FormItem className="w-full grid gap-4 grid-cols-1 md:grid-cols-2">
+                  <div>
+                    <FormLabel className="dark:text-white">
+                      Adoption Metrics
+                      <span className="ml-0.5 text-algo-red">*</span>
+                      <InfoPopover
+                        className="mx-1.5 relative top-0.5 sm:mx-1 sm:top-0"
+                        label="Adoption Metrics"
+                      >
+                        Quick metrics about the adoption of your work that can
+                        be used to measure success & ecosystem relevancy for the
+                        funds being requested.
+                      </InfoPopover>
+                    </FormLabel>
+                    <FormControl>
+                      <div className="space-y-2 mt-2">
+                        <div className="relative">
+                          <Input
+                            id="adoption-metrics"
+                            placeholder="Type a metric and press Enter"
+                            spellCheck="false"
+                            value={metricInput}
+                            onChange={(e) => setMetricInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                addMetricFromEvent(e);
+                              }
+                            }}
+                          />
                           <Button
                             type="button"
                             size="sm"
@@ -448,32 +454,32 @@ export function ProposalForm({
                           >
                             Add
                           </Button>
-                        )}
-                      </div>
-
-                      {field.value && field.value.length > 0 && (
-                        <div className="mt-2 space-y-2">
-                          {field.value.map((metric, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 dark:text-algo-black-20 rounded border dark:border-gray-700"
-                            >
-                              <span>{metric}</span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeMetric(index)}
-                              >
-                                ✕
-                              </Button>
-                            </div>
-                          ))}
                         </div>
-                      )}
-                    </div>
-                  </FormControl>
-                  <FormMessage>{errors.adoptionMetrics?.message}</FormMessage>
+                      </div>
+                    </FormControl>
+                    <FormMessage>{errors.adoptionMetrics?.message}</FormMessage>
+                  </div>
+
+                  <div className="pt-0 md:pt-6 space-y-2">
+                    {!field.value?.length
+                      ? null
+                      : field.value.map((metric, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 dark:text-algo-black-20 rounded border dark:border-gray-700"
+                          >
+                            <span>{metric}</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeMetric(index)}
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        ))}
+                  </div>
                 </FormItem>
               );
             }}
@@ -529,15 +535,15 @@ export function ProposalForm({
             <Button
               type="button"
               onClick={() => setSubmitModalOpen(true)}
-              disabled={loading}
+              disabled={!form.formState.isValid || loading}
             >
-              {
-                loading
-                  ? (<div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>)
-                  : type === "edit"
-                    ? "Update"
-                    : "Submit"
-              }
+              {loading ? (
+                <div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>
+              ) : type === "edit" ? (
+                "Update"
+              ) : (
+                "Submit"
+              )}
             </Button>
           </div>
 
@@ -545,28 +551,32 @@ export function ProposalForm({
             isOpen={submitModalOpen}
             onClose={() => setSubmitModalOpen(false)}
             title={type === "edit" ? "Update Proposal?" : "Submit Proposal?"}
-            description={type === "edit"
-              ? "Are you sure you want to update this proposal?"
-              : "Once submitted you will only be able to edit the forum link, description, team info, additional info & adoption metrics without needing to create a new proposal."
+            description={
+              type === "edit"
+                ? "Are you sure you want to update this proposal?"
+                : "Once submitted you will only be able to edit the forum link, description, team info, additional info & adoption metrics without needing to create a new proposal."
             }
-            warning={type !== "edit" ? (
-              <WarningNotice
-                title="Proposal Hold"
-                description={
-                  <>
-                    You will need to escrow
-                    <span className="inline-flex items-center gap-1 mx-1 font-semibold">
-                      {Number(bps / 100n)}%
-                    </span>
-                    of the requested amount
-                    <span className="inline-flex items-center gap-1 mx-1 font-semibold">
-                      <AlgorandIcon className="size-2.5" />{costs / 1_000_000}
-                    </span>
-                    If your proposal is vetoed, this amount will be slashed.
-                  </>
-                }
-              />
-            ) : undefined}
+            warning={
+              type !== "edit" ? (
+                <WarningNotice
+                  title="Proposal Hold"
+                  description={
+                    <>
+                      You will need to escrow
+                      <span className="inline-flex items-center gap-1 mx-1 font-semibold">
+                        {Number(bps / 100n)}%
+                      </span>
+                      of the requested amount
+                      <span className="inline-flex items-center gap-1 mx-1 font-semibold">
+                        <AlgorandIcon className="size-2.5" />
+                        {costs / 1_000_000}
+                      </span>
+                      If your proposal is vetoed, this amount will be slashed.
+                    </>
+                  }
+                />
+              ) : undefined
+            }
             submitText={type === "edit" ? "Update Proposal" : "Submit Proposal"}
             onSubmit={form.handleSubmit(onSubmit)}
             errorMessage={error}
