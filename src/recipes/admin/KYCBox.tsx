@@ -3,7 +3,7 @@ import { RefreshCcwIcon } from "lucide-react";
 import { decodeAddress } from "algosdk";
 
 import type { ProposerBoxState } from "@/api";
-import { network, registryClient } from "@/api";
+import { algod, network, registryClient } from "@/api";
 import { useAllProposers } from "@/hooks";
 
 import { KYCCard } from "@/components/KYCCard/KYCCard";
@@ -37,9 +37,9 @@ export const KYCBox = ({
 
   const proposerBoxes = allProposers.data
     ? Object.keys(allProposers.data).map((key) => ({
-      parsedAddress: key,
-      values: allProposers.data[key] as unknown as ProposerBoxState,
-    }))
+        parsedAddress: key,
+        values: allProposers.data[key] as unknown as ProposerBoxState,
+      }))
     : [];
 
   async function callSetProposerKYC(
@@ -67,7 +67,14 @@ export const KYCBox = ({
     );
 
     try {
-      const shouldFund = network === "testnet" && kycStatus === true;
+      // fund proposers on testnet if they have < 200A balance
+      let shouldFund = false;
+      if (network === "testnet" && kycStatus === true) {
+        const { amount } = await algod.accountInformation(proposalAddress).do();
+        if (amount < 200_000_000) {
+          shouldFund = true;
+        }
+      }
 
       let builder = registryClient.newGroup().setProposerKyc({
         sender: activeAddress,
@@ -87,13 +94,15 @@ export const KYCBox = ({
             receiver: proposalAddress,
             amount: (200).algos(),
           }),
-          transactionSigner
+          transactionSigner,
         );
       }
 
-      const res = await builder.send()
+      const res = await builder.send();
 
-      const { confirmations: [confirmation] } = res
+      const {
+        confirmations: [confirmation],
+      } = res;
 
       if (
         confirmation.confirmedRound !== undefined &&
