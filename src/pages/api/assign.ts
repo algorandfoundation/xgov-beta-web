@@ -164,7 +164,7 @@ async function loadCommitteeFromAPI(
  */
 async function getCommitteeData(committeeId: Buffer): Promise<CommitteeData | null> {
   // For logging purposes - define outside try/catch to ensure it's available in the catch block
-  const committeeIdStr = `<byte array of length ${committeeId.length}>`;
+  const committeeIdStr = committeeId.toString("base64");
 
   try {
     // Convert committeeId to a base64url encoded filename
@@ -282,7 +282,8 @@ async function getCommitteeId(proposalClient: ProposalClient): Promise<Buffer | 
 
     if (byteArray) {
         const committeeId = Buffer.from(byteArray);
-        logger.debug(`Using committeeId from asByteArray(), length: ${byteArray.length}`);
+        const committeeIdStr = committeeId.toString("base64")
+        logger.debug(`Using committeeId ${committeeIdStr} from asByteArray(), length: ${byteArray.length}`);
         return committeeId;
       }
 
@@ -558,14 +559,15 @@ async function processProposal(
       throw new Error(`No committee ID found for proposal ${proposal.id}`);
     }
 
-    logger.info(`Fetching committee data for proposal ${proposal.id} with committee ID: ${committeeId}`);
+    const committeeIdStr = committeeId.toString("base64")
+    logger.info(`Fetching committee data for proposal ${proposal.id} with committee ID: ${committeeIdStr}`);
 
     // Get committee data using the committee ID
     const committeeData = await getCommitteeData(committeeId);
 
     // Skip this proposal if no committee data is found
     if (!committeeData) {
-      throw new Error(`Failed to get committee data for ID: byte array (${committeeId.length} bytes)`);
+      throw new Error(`Failed to get committee data for ID: ${committeeIdStr})`);
     }
 
     // Get eligible voters
