@@ -10,15 +10,20 @@ import { BracketedPhaseDetail } from "@/components/BracketedPhaseDetail/Brackete
 import { UserPill } from "@/components/UserPill/UserPill.tsx";
 import { RequestedAmountDetail } from "@/components/RequestedAmountDetail/RequestedAmountDetail.tsx";
 import { FocusDetail } from "@/components/FocusDetail/FocusDetail.tsx";
-import { UserCircleRow } from "@/components/UserCircleRow/UserCircleRow.tsx";
+// import { UserCircleRow } from "@/components/UserCircleRow/UserCircleRow.tsx";
 import { DiscussionLink } from "@/components/DiscussionLink/DiscussionLink.tsx";
 import { FundingTypeAndTimeDetail } from "@/components/FundingTypeAndTimeDetail/FundingTypeAndTimeDetail.tsx";
 import {
   filterAmountMap,
   filters,
 } from "@/recipes/proposal/list/ProposalFilter.tsx";
+<<<<<<< HEAD
 import VoteCounter from "@/components/VoteCounter/VoteCounter";
 import type { User } from "@/api/discourse/user.ts";
+=======
+import {VoteCounter} from "@/components/VoteCounter/VoteCounter";
+import { useMetadata } from "@/hooks";
+>>>>>>> main
 const filterKeys = Object.keys(filters);
 
 export const proposalFilter = (
@@ -99,14 +104,19 @@ export function StackedList({
           proposer,
           approvals,
           rejections,
-          forumLink
         } = proposal;
 
         const phase = ProposalStatusMap[status];
 
+        const metadata = useMetadata(id, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusFinal))
+
         // Filter out blocked proposals
+        // Filter out empty proposals if the active address is not the proposer
         // They will still be visible in the Admin page
-        if (phase == "Blocked") {
+        if (
+          phase == "Blocked" ||
+          phase === "Empty" && proposer !== activeAddress
+        ) {
           return;
         }
 
@@ -117,7 +127,7 @@ export function StackedList({
           >
             <a
               className="absolute left-0 top-0 w-full h-full hover:bg-algo-blue/30 dark:hover:bg-algo-teal/30"
-              href={`/proposal/${Number(id)}`}
+              href={phase === "Empty" ? '/new' : `/proposal/${Number(id)}`}
             ></a>
             <div>
               <div className="flex justify-between items-center">
@@ -128,7 +138,11 @@ export function StackedList({
                 <div className="hidden lg:flex flex-wrap justify-end items-end gap-4">
                   {phase === "Voting" && (
                     <>
+<<<<<<< HEAD
                       <UserCircleRow users={[]}/>
+=======
+                      {/* <UserCircleRow /> */}
+>>>>>>> main
                       <VoteCounter
                         approvals={Number(approvals)}
                         rejections={Number(rejections)}
@@ -138,8 +152,13 @@ export function StackedList({
 
                   {phase === "Discussion" && (
                     <>
+<<<<<<< HEAD
                       <UserCircleRow users={[]} />
                       <DiscussionLink to={forumLink} />
+=======
+                      {/* <UserCircleRow /> */}
+                      <DiscussionLink to={metadata.data?.forumLink} />
+>>>>>>> main
                     </>
                   )}
                 </div>
@@ -166,7 +185,11 @@ export function StackedList({
                 <div className="flex flex-wrap justify-end items-end gap-4">
                   {phase === "Voting" && (
                     <>
+<<<<<<< HEAD
                       <UserCircleRow users={[]} />
+=======
+                      {/* <UserCircleRow /> */}
+>>>>>>> main
                       <VoteCounter
                         approvals={Number(approvals)}
                         rejections={Number(rejections)}
@@ -176,8 +199,13 @@ export function StackedList({
 
                   {phase === "Discussion" && (
                     <>
+<<<<<<< HEAD
                       <UserCircleRow users={[]} />
                       <DiscussionLink to={forumLink} />
+=======
+                      {/* <UserCircleRow /> */}
+                      <DiscussionLink to={metadata.data?.forumLink} />
+>>>>>>> main
                     </>
                   )}
                 </div>

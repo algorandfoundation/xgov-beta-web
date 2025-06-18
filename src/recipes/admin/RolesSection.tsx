@@ -7,7 +7,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import type { TypedGlobalState } from "@algorandfoundation/xgov/registry";
+import type { RegistryGlobalState } from "@/api";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { CopyIcon } from "lucide-react";
 
 const rolePretty: { [key: string]: string } = {
   kycProvider: "KYC Provider",
@@ -25,20 +28,21 @@ export function RoleList({
   xGovManager,
   handleSetRole,
 }: {
-  registryGlobalState: TypedGlobalState;
+  registryGlobalState: RegistryGlobalState;
   activeAddress: string;
   xGovManager: string;
   handleSetRole: (role: string) => void;
 }) {
-  const handleCopyToClipboard = (text: string) => {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        alert("Address copied to clipboard");
-      })
-      .catch((err) => {
-        console.error("Failed to copy: ", err);
-      });
+  const [openTooltips, setOpenTooltips] = useState<{ [key: string]: boolean }>({});
+
+  const handleCopyClick = (role: string, address: string) => {
+    navigator.clipboard.writeText(address);
+    setOpenTooltips(prev => ({ ...prev, [role]: true }));
+
+    // Auto-hide tooltip after 2 seconds
+    setTimeout(() => {
+      setOpenTooltips(prev => ({ ...prev, [role]: false }));
+    }, 800);
   };
 
   const roles = new Map<string, string>([
@@ -52,36 +56,46 @@ export function RoleList({
   ]);
 
   return (
-    <div className="relative bg-white dark:bg-algo-black border-2 border-algo-black dark:border-white text-algo-black dark:text-white p-4 rounded-lg max-w-3xl">
-      <ul>
+    <div className="relative">
+      <ul className="flex flex-wrap gap-2 lg:gap-4">
         {Array.from(roles.entries()).map(([role, address]) => (
-          <li key={role} className="mb-2 flex items-center justify-between">
-            <div className="flex items-center w-full">
-              <span className="font-semibold w-48">{rolePretty[role]}:</span>
-              <span
-                className="flex-1 truncate"
-                title={address ? address : "Not set"}
-              >
-                <span className="select-all">
+          <li key={role} className="mb-2 flex items-center justify-between bg-algo-black-10 dark:bg-algo-black-90 text-algo-black dark:text-white p-2 md:p-4 rounded-lg w-full min-w-0 lg:max-w-xl">
+            <div className="flex flex-col items-start w-full min-w-0">
+              <span className="font-semibold text-algo-black-80 dark:text-algo-black-30 w-48">{rolePretty[role]}</span>
+              <span className="flex items-center gap-2 w-full min-w-0">
+                <p className="select-all font-mono text-xxs truncate flex-1 min-w-0">
                   {address ? address : "Not set"}
-                </span>
+                </p>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {address && (
+                    <TooltipProvider delayDuration={200}>
+                      <Tooltip open={openTooltips[role] || false}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="xs"
+                            className="p-1 h-6 dark:bg-algo-black-80"
+                            onClick={() => handleCopyClick(role, address)}
+                          >
+                            <CopyIcon className="size-3" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-sm">Copied!</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {xGovManager && activeAddress === xGovManager && (
+                    <Button
+                      size="xs"
+                      onClick={() => handleSetRole(role)}
+                    >
+                      Update
+                    </Button>
+                  )}
+                </div>
               </span>
-              {address && (
-                <button
-                  onClick={() => handleCopyToClipboard(address)}
-                  className="ml-2 px-2 py-1 bg-gray-300 text-black rounded cursor-pointer"
-                >
-                  Copy
-                </button>
-              )}
-              {xGovManager && activeAddress === xGovManager && (
-                <button
-                  onClick={() => handleSetRole(role)}
-                  className="ml-2 px-2 py-1 bg-blue-500 text-white rounded cursor-pointer"
-                >
-                  Set Role
-                </button>
-              )}
             </div>
           </li>
         ))}
@@ -139,25 +153,25 @@ export function RoleModal({
         <DialogClose asChild></DialogClose>
         <form onSubmit={handleFormSubmit}>
           <label className="block mb-2">
-            Address:
+            Enter the new address for {rolePretty[role]}:
             <input
               type="text"
               value={address}
               onChange={handleAddressChange}
-              className={`block w-full mt-1 p-2 border rounded ${isValid ? "border-green-500" : "border-red-500"}`}
+              className={`block w-full mt-1 p-2 dark:bg-algo-black border-2 rounded-md ${isValid ? "border-green-500" : "border-algo-red"}`}
             />
           </label>
           {errorMessage && (
-            <div className="text-red-500 mb-4">{errorMessage}</div>
+            <div className="text-algo-red mb-4">{errorMessage}</div>
           )}
           <div className="flex justify-end">
-            <button
+            <Button
               type="submit"
-              className="px-4 py-2 bg-blue-500 text-white rounded"
+              // className="px-4 py-2 bg-blue-500 text-white rounded"
               disabled={!isValid}
             >
               Submit
-            </button>
+            </Button>
           </div>
         </form>
       </DialogContent>

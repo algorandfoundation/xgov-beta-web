@@ -1,7 +1,7 @@
 import { ChatBubbleLeftIcon } from "../icons/ChatBubbleLeftIcon";
 import { Link } from "../Link";
 
-export function DiscussionLink({ to }: { to: string }) {
+export function DiscussionLink({ to = 'https://forum.algorand.co' }: { to: string | undefined }) {
   return (
     <Link
       to={to}
@@ -14,9 +14,9 @@ export function DiscussionLink({ to }: { to: string }) {
           className="size-4 md:size-6 stroke-[2] text-algo-blue dark:text-algo-teal group-hover:text-white"
         />
       </dt>
-      <dd className="text-xs md:text-base text-algo-blue dark:text-algo-teal group-hover:text-white">
+      {/* <dd className="text-xs md:text-base text-algo-blue dark:text-algo-teal group-hover:text-white">
         7
-      </dd>
+      </dd> */}
     </Link>
   );
 }

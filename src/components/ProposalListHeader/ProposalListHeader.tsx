@@ -1,9 +1,14 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { InfinityMirrorButton } from "../button/InfinityMirrorButton/InfinityMirrorButton";
-import { useProposer, UseQuery, UseWallet } from "@/hooks";
+import { useProposer, UseQuery, useRegistry, UseWallet } from "@/hooks";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { ProposalFilter } from "@/recipes";
-
+import { ConfirmationModal } from "../ConfirmationModal/ConfirmationModal";
+import { openProposal } from "@/api";
+import { navigate } from "astro/virtual-modules/transitions-router.js";
+import { WarningNotice } from "../WarningNotice/WarningNotice";
+import { AlgorandIcon } from "../icons/AlgorandIcon";
+import { queryClient } from "@/stores";
 
 export function ProposalListHeaderIsland({ title }: { title: string }) {
 
@@ -18,8 +23,6 @@ export function ProposalListHeaderIsland({ title }: { title: string }) {
   );
 }
 
-
-
 export interface ProposalListHeaderProps {
   title: string;
   children: ReactNode;
@@ -29,8 +32,12 @@ export function ProposalListHeader({
   title,
   children,
 }: ProposalListHeaderProps) {
-  const { activeAddress } = useWallet();
+  const { activeAddress, transactionSigner } = useWallet();
+  const registry = useRegistry();
   const proposer = useProposer(activeAddress);
+  const [showOpenProposalModal, setShowOpenProposalModal] = useState(false);
+  const [openProposalLoading, setOpenProposalLoading] = useState(false);
+  const [openProposalError, setOpenProposalError] = useState<string>('');
 
   const validProposer =
     (proposer?.data &&
@@ -47,18 +54,68 @@ export function ProposalListHeader({
       </div>
       <div className="sm:ml-16 sm:mt-0 sm:flex-none flex flex-wrap-reverse justify-end items-center gap-2 md:gap-6">
         {children}
-        {validProposer && (
-          <a href="/new">
-            <InfinityMirrorButton
-              variant="secondary"
-              size="sm"
-              disabled={proposer.data?.activeProposal}
-              disabledMessage="You already have an active proposal"
-            >
-              New Proposal
-            </InfinityMirrorButton>
-          </a>
-        )}
+        {
+          validProposer && (
+            <>
+              <InfinityMirrorButton
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowOpenProposalModal(true)}
+                disabled={proposer.data?.activeProposal}
+                disabledMessage="You already have an active proposal"
+              >
+                {
+                  openProposalLoading
+                    ? (<div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>)
+                    : "Create Proposal"
+                }
+              </InfinityMirrorButton>
+              <ConfirmationModal
+                isOpen={showOpenProposalModal}
+                onClose={() => setShowOpenProposalModal(false)}
+                title="Create Proposal"
+                description="Are you sure you want to create a new proposal? You can only have one active proposal at a time."
+                warning={
+                  <WarningNotice
+                    title="Proposal Fee"
+                    description={<>
+                      It will cost
+                      <span className="inline-flex items-center mx-1 gap-1">
+                        <AlgorandIcon className="size-2.5" />{Number(registry.data?.proposalFee || 0n) / 1_000_000}
+                      </span>
+                      to create a proposal.
+                    </>}
+                  />
+                }
+                submitText="Confirm"
+                onSubmit={async () => {
+                  if (!activeAddress) {
+                    console.error("No active address");
+                    return;
+                  }
+
+                  try {
+                    const appId = await openProposal(
+                      activeAddress,
+                      transactionSigner,
+                      setOpenProposalLoading,
+                      setOpenProposalError
+                    )
+
+                    if (appId) {
+                      queryClient.invalidateQueries({ queryKey: ["getProposalsByProposer", activeAddress] })
+                      navigate(`/new?appId=${appId}`)
+                    }
+                  } catch (error) {
+                    console.error("Error opening proposal:", error);
+                  }
+                }}
+                loading={openProposalLoading}
+                errorMessage={openProposalError}
+              />
+            </>
+          )
+        }
       </div>
     </div>
   );

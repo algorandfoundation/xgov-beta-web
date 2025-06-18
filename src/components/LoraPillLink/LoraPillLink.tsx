@@ -1,14 +1,15 @@
 import { Link } from "@/components/Link";
 import { DocumentIcon } from "../icons/DocumentIcon";
+import { NetworkId } from "@txnlab/use-wallet-react";
 
 export function LoraPillLink({
   id,
   className,
-  network // = "localnet",
+  network = NetworkId.LOCALNET
 }: {
   id: bigint;
   className?: string;
-  network?: "localnet" | "fnet" | "testnet" | "mainnet";
+  network?: NetworkId
 }) {
   return (
     <Link

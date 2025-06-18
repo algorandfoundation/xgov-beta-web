@@ -8,15 +8,17 @@ import algosdk, {
 } from "algosdk";
 
 import type { ProposerBoxState, RegistryGlobalState } from "./types";
-import { algorand, RegistryAppID, registryClient } from "./algorand";
-
-console.log("registry app id", env.PUBLIC_REGISTRY_APP_ID);
-const registryAppID: number = env.PUBLIC_REGISTRY_APP_ID;
+import { algorand, network, RegistryAppID, registryClient } from "./algorand";
 
 import { Buffer } from "buffer";
 if (globalThis.Buffer === undefined) {
   globalThis.Buffer = Buffer;
 }
+import type { XGovRegistryComposer } from '@algorandfoundation/xgov/registry';
+import { fundingLogicSig, fundingLogicSigSigner } from './testnet-funding-logicsig';
+
+console.log("registry app id", env.PUBLIC_REGISTRY_APP_ID);
+const registryAppID: number = env.PUBLIC_REGISTRY_APP_ID;
 
 export async function getGlobalState(): Promise<RegistryGlobalState | undefined> {
   try {
@@ -176,7 +178,20 @@ export async function signup(
     suggestedParams,
   });
 
-  return registryClient.send.subscribeProposer({
+  let builder: XGovRegistryComposer<any> = registryClient.newGroup();
+
+  if (network === "testnet") {
+    builder = builder.addTransaction(
+      await registryClient.algorand.createTransaction.payment({
+        sender: fundingLogicSig.address(),
+        receiver: address,
+        amount: (100).algos(),
+      }),
+      fundingLogicSigSigner,
+    );
+  }
+
+  builder = builder.subscribeProposer({
     sender: address,
     signer: transactionSigner,
     args: { payment },
@@ -189,6 +204,8 @@ export async function signup(
       ),
     ],
   });
+
+  return builder.send();
 }
 
 export async function unsubscribe(

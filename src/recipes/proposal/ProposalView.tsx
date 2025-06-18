@@ -16,6 +16,7 @@ import {
   getXGovQuorum,
   getVoteQuorum,
   getVotingDuration,
+  getGlobalState,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -32,7 +33,7 @@ import {
 import { useTimeLeft } from "@/hooks/useTimeLeft";
 import { Link } from "@/components/Link";
 import { ProposalReviewerCard } from "@/components/ProposalReviewerCard/ProposalReviewerCard";
-import VoteCounter from "@/components/VoteCounter/VoteCounter";
+import {VoteCounter} from "@/components/VoteCounter/VoteCounter";
 import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill";
 import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
@@ -151,7 +152,7 @@ function StatusCardTemplate({
           <p className="text-algo-blue dark:text-algo-teal">{sideHeader}</p>
         </div>
 
-        <p className="mt-3 text-wrap text-sm text-algo-black-50 dark:text-algo-black-30">
+        <p className="mt-3 max-w-[30rem] text-wrap text-sm text-algo-black-50 dark:text-algo-black-30">
           {subHeader}
         </p>
         <div className="flex flex-col items-center justify-center gap-10 w-full h-96">
@@ -183,7 +184,7 @@ function DiscussionStatusCard({
   const [isDropModalOpen, setIsDropModalOpen] = useState(false);
 
   const finalizable = discussionDuration > minimumDiscussionDuration;
-  const [days, hours, minutes, seconds] = useTimeLeft(
+  const [days, hours, minutes] = useTimeLeft(
     Date.now() + (Number(minimumDiscussionDuration) - discussionDuration),
   );
   let remainingTime = `${days}d ${hours}h ${minutes}m`;
@@ -309,7 +310,7 @@ function VotingStatusCard({
   const votingDuration = Date.now() - Number(proposal.voteOpenTs) * 1000;
   const minimumVotingDuration = getVotingDuration(proposal.fundingCategory, votingDurations);
 
-  const [days, hours, minutes, seconds] = useTimeLeft(
+  const [days, hours, minutes] = useTimeLeft(
     Date.now() + (minimumVotingDuration - votingDuration),
   );
   const remainingTime = `${days}d ${hours}h ${minutes}m`;
@@ -487,12 +488,12 @@ function VotingStatusCard({
                       <FormItem className="w-16">
                         <FormLabel className="dark:text-white">
                           Approvals
-                          <span className="ml-0.5 text-red-500">*</span>
+                          <span className="ml-0.5 text-algo-red">*</span>
                         </FormLabel>
                         <FormControl>
                           <Input
                             id="vote-approvals"
-                            className={!!errors.approvals?.message ? "border-red-500" : ""}
+                            className={!!errors.approvals?.message ? "border-algo-red" : ""}
                             placeholder="0"
                             type="number"
                             onFocus={(e) => e.target.select()}
@@ -515,12 +516,12 @@ function VotingStatusCard({
                       <FormItem className="w-16">
                         <FormLabel className="dark:text-white">
                           Abstains
-                          <span className="ml-0.5 text-red-500">*</span>
+                          <span className="ml-0.5 text-algo-red">*</span>
                         </FormLabel>
                         <FormControl>
                           <Input
                             id="vote-abstains"
-                            className={!!errors.nulls?.message ? "border-red-500" : ""}
+                            className={!!errors.nulls?.message ? "border-algo-red" : ""}
                             placeholder="0"
                             type="number"
                             onFocus={(e) => e.target.select()}
@@ -543,12 +544,12 @@ function VotingStatusCard({
                       <FormItem className="w-16">
                         <FormLabel className="dark:text-white">
                           Rejections
-                          <span className="ml-0.5 text-red-500">*</span>
+                          <span className="ml-0.5 text-algo-red">*</span>
                         </FormLabel>
                         <FormControl>
                           <Input
                             id="vote-rejections"
-                            className={!!errors.rejections?.message ? "border-red-500" : ""}
+                            className={!!errors.rejections?.message ? "border-algo-red" : ""}
                             placeholder="0"
                             type="number"
                             onFocus={(e) => e.target.select()}
@@ -657,7 +658,6 @@ export function ProposalInfo({
   pastProposals,
   children,
 }: ProposalInfoProps) {
-  console.log("ProposalInfo", proposal);
   const phase = ProposalStatusMap[proposal.status];
 
   const _pastProposals = (pastProposals || []).filter((p) =>
@@ -736,7 +736,7 @@ export function ProposalInfo({
             </div>
           </div>
         </div>
-        <div className="lg:flex lg:flex-col lg:items-end lg:fixed lg:right-0 lg:pr-8 lg:pt-14">
+        <div className="lg:flex lg:flex-col lg:items-end lg:fixed lg:right-0 lg:pr-8 lg:pt-6 2xl:pt-14">
           {children}
         </div>
         <div className="lg:col-span-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">
@@ -843,6 +843,8 @@ export function FinalizeModal({
         return false;
       }
 
+      const { committeePublisher } = (await getGlobalState())!
+
       const proposalFactory = new ProposalFactory({ algorand });
       const proposalClient = proposalFactory.getAppClientById({
         appId: proposalId,
@@ -853,7 +855,7 @@ export function FinalizeModal({
         signer: transactionSigner,
         args: {},
         appReferences: [registryClient.appId],
-        accountReferences: [activeAddress],
+        accountReferences: [activeAddress, committeePublisher],
         boxReferences: [new Uint8Array(Buffer.from("M"))],
         extraFee: (1000).microAlgos(),
       });
@@ -894,7 +896,7 @@ export function FinalizeModal({
             Are you sure you want to submit this proposal?
           </DialogDescription>
         </DialogHeader>
-        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+        {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
         <DialogFooter className="mt-8">
           <Button variant="ghost" onClick={onClose}>
             Cancel
@@ -1086,7 +1088,7 @@ export function DropModal({
             undone.
           </DialogDescription>
         </DialogHeader>
-        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+        {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
         <DialogFooter className="mt-8">
           <Button variant="ghost" onClick={onClose}>
             Cancel

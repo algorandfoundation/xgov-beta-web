@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 
-export default function VoteCounter({ approvals, rejections, nulls }: { approvals: number; rejections: number; nulls?: number }) {
+export function VoteCounter({ approvals, rejections, nulls }: { approvals: number; rejections: number; nulls?: number }) {
     return (
         <span className="flex gap-4 py-1">
             <span className="flex gap-1">
@@ -22,9 +22,9 @@ export default function VoteCounter({ approvals, rejections, nulls }: { approval
             <span className="flex gap-1">
                 <dt>
                     <span className="sr-only">Downvotes</span>
-                    <ArrowDown aria-hidden="true" className="size-4 md:size-6 stroke-[2] text-red-500" />
+                    <ArrowDown aria-hidden="true" className="size-4 md:size-6 stroke-[2] text-algo-red" />
                 </dt>
-                <dd className="text-xs md:text-base text-red-500">{rejections.toLocaleString()}</dd>
+                <dd className="text-xs md:text-base text-algo-red">{rejections.toLocaleString()}</dd>
             </span>
         </span>
     )

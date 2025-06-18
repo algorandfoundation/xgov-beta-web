@@ -66,11 +66,24 @@ const _title = title ? `${title} | ` : "";
   );
 
   document.addEventListener("astro:before-swap", (event) => {
+    const currentTheme = $themeStore.get()
     // Pass the incoming document to set the theme on it
-    event.newDocument.documentElement.classList.toggle(
-      "dark",
-      $themeStore.get() === "dark",
-    );
+    if(currentTheme === "dark"){
+      event.newDocument.documentElement.classList.toggle(
+        "dark",
+        true,
+      );
+    }
+    // Handle Default Dark Modes
+    if(currentTheme === "default"){
+      const darkModePreference = window.matchMedia("(prefers-color-scheme: dark)");
+      if(darkModePreference.matches){
+        event.newDocument.documentElement.classList.toggle(
+          "dark",
+          true,
+        );
+      }
+    }
   });
 
   (function () {

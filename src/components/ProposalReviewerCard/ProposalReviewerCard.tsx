@@ -5,12 +5,11 @@ import {
   getProposalClientById,
   type ProposalMainCardDetails,
   ProposalStatus,
-  ProposalStatusMap,
 } from "@/api";
 import { ALGORAND_MIN_TX_FEE } from "algosdk";
 import { UseWallet } from "@/hooks/useWallet.tsx";
 import { useProposal, UseQuery } from "@/hooks";
-import { CheckCircleIcon, CheckIcon, XIcon } from "lucide-react";
+import { CheckIcon, XIcon } from "lucide-react";
 import { Button } from "../ui/button";
 
 export function ReviewerCardIsland({
@@ -100,7 +99,7 @@ export function ProposalReviewerCard({
                   onClick={() => handleReviewBlock(true)}
                   variant='destructive'
                 >
-                  <XIcon className="text-white group-hover:text-red-500 transition"/>
+                  <XIcon className="text-white group-hover:text-algo-red transition"/>
                   Block
                 </Button>
                 <Button
@@ -112,7 +111,7 @@ export function ProposalReviewerCard({
                 </Button>
               </div>
               {errorMessage && (
-                <p className="text-red-500 mt-4">{errorMessage}</p>
+                <p className="text-algo-red mt-4">{errorMessage}</p>
               )}
             </div>
           ) : (

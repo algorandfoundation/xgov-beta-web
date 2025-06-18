@@ -1,10 +1,11 @@
-import { useProposalsByProposer, UseQuery, useRegistry, UseWallet } from "@/hooks";
+import { useProposalsByProposer, UseQuery, useRegistry, useSearchParams, useSearchParamsObserver, UseWallet } from "@/hooks";
 import { ProposalForm, proposalFormSchema } from "@/recipes";
-import { createProposal, ProposalStatus } from "@/api";
+import { ProposalStatus, submitProposal } from "@/api";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useEffect, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { z } from "zod";
+import { useBalance } from "@/hooks/useBalance";
 
 export function ProposalCreateIsland() {
   return (
@@ -23,10 +24,18 @@ const activeProposalTypes = [
 ];
 
 export function ProposalCreate() {
-  const { activeAddress, transactionSigner } = useWallet();
+  const { activeAddress, transactionSigner, activeWallet } = useWallet();
+  const userBalance = useBalance(activeAddress);
   const registry = useRegistry();
   const proposalsData = useProposalsByProposer(activeAddress);
-  const [createProposalPending, setCreateProposalPending] = useState(false);
+  const [proposalSubmitLoading, setProposalSubmitLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const [searchParams] = useSearchParams();
+  const [_searchParams, setSearchParams] = useState(searchParams);
+  useSearchParamsObserver((searchParams) => {
+    setSearchParams(searchParams);
+  });
 
   const emptyProposals =
     !!proposalsData.data &&
@@ -36,13 +45,21 @@ export function ProposalCreate() {
   const emptyProposal =
     emptyProposals && emptyProposals.length > 0 ? emptyProposals[0] : null;
 
+  const appId = emptyProposal?.id || BigInt(Number(_searchParams.get('appId'))) || null;
+  // console.log("appId", appId);
+
   const currentProposals =
     !!proposalsData.data &&
     proposalsData.data?.filter((proposal) =>
       activeProposalTypes.includes(proposal.status),
     );
+
   const currentProposal =
     currentProposals && currentProposals.length > 0 && currentProposals[0];
+
+  const maxRequestedAmount = (!!userBalance.data?.available && userBalance.data.available.microAlgos > 1_000n)
+    ? (((userBalance.data.available.microAlgos - 1_000n) / 1_000_000n) * 10n )
+    : 0n;
 
   useEffect(() => {
     if (currentProposal) {
@@ -53,9 +70,19 @@ export function ProposalCreate() {
   return (
     <ProposalForm
       type="create"
+      bps={registry.data?.proposalCommitmentBps || 0n}
+      maxRequestedAmount={maxRequestedAmount}
+      loading={proposalSubmitLoading}
+      error={submitError || undefined}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
+        // TODO
         if (!activeAddress) {
           console.error("No active address");
+          return;
+        }
+
+        if (!activeWallet) {
+          console.error("No active wallet");
           return;
         }
 
@@ -64,22 +91,27 @@ export function ProposalCreate() {
           return;
         }
 
+        if (!appId) {
+          console.error("No appId set for Lute proposal");
+          return;
+        }
+
         try {
-          const appId = await createProposal(
+          await submitProposal(
             activeAddress,
             data,
             transactionSigner,
-            emptyProposal,
+            appId,
             registry.data?.proposalCommitmentBps,
-            setCreateProposalPending
-          );
+            setProposalSubmitLoading,
+            setSubmitError,
+          )
+
           navigate(`/proposal/${appId}`);
         } catch (e) {
           console.error(e);
-          console.error("Failed to create proposal");
         }
       }}
-      createProposalPending={createProposalPending}
     />
   );
 }

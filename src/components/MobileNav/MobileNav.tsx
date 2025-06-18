@@ -1,4 +1,3 @@
-import { navigate } from "astro:transitions/client";
 import { BarsIcon } from "@/components/icons/BarsIcon";
 import { MoonIcon } from "@/components/icons/MoonIcon";
 import { SunIcon } from "@/components/icons/SunIcon";
@@ -43,7 +42,7 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
       <DialogTrigger asChild>
         {!trigger ? (
           <Button
-            className="lg:hidden border-none shadow-none bg-transparent"
+            className="lg:hidden border-none shadow-none bg-transparent hover:text-white hover:bg-transparent dark:hover:text-algo-black"
             variant="outline"
             size="icon"
             onClick={() => setOpen(true)}

@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontSize: {
+        'xxs': ['0.7rem', { lineHeight: '1rem' }],
+      },
       colors: {
         "algo-teal-10": "#E7FAF9",
         "algo-teal-20": "#D1F4F4",
@@ -47,6 +50,7 @@ export default {
         "algo-orange": "#FF7F48",
         "algo-yellow": "#FFE248",
         "algo-green": "#01DC94",
+        "algo-red": "#FF2C2C",
       },
       keyframes: {
         "accordion-down": {
@@ -58,15 +62,15 @@ export default {
           to: { height: "0" },
         },
         "mass-scale": {
-          from: { transform: "scale3d(0,0,0)" },
-          to: { transform: "scale3d(1,1,1)" },
+          from: { transform: "scale(0)" },
+          to: { transform: "scale(1)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "spin-slow": "spin 6s linear infinite",
-        "mass-scale": "mass-scale 6s ease-in infinite",
+        "mass-scale": "mass-scale 6s ease-in-out infinite alternate",
       },
     },
   },

@@ -35,7 +35,7 @@ export const ProposalStatusMap = {
   [ProposalStatus.ProposalStatusReviewed]: "Reviewed",
   [ProposalStatus.ProposalStatusFunded]: "Funded",
   [ProposalStatus.ProposalStatusBlocked]: "Blocked",
-  [ProposalStatus.ProposalStatusDelete]: "Delete",
+  [ProposalStatus.ProposalStatusDelete]: "Deleted",
 };
 
 export const ProposalStatusReverseMap: { [key: string]: ProposalStatus[] } = {
@@ -199,13 +199,12 @@ export function isProposalInfoCardDetails(
 }
 
 export type ProposalSummaryCardDetails = Omit<ProposalTypedGlobalState, 'fundingType' | 'status' | 'focus' | 'fundingCategory'> & {
-    id: bigint;
-    fundingType: ProposalFundingType;
-    status: ProposalStatus;
-    focus: ProposalFocus;
-    fundingCategory: ProposalCategory;
-    forumLink: string;
-    formUsers: User[];
+  id: bigint;
+  fundingType: ProposalFundingType;
+  status: ProposalStatus;
+  focus: ProposalFocus;
+  fundingCategory: ProposalCategory;
+  forumUsers?: User[];
 }
 
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;
