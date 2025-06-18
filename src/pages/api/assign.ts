@@ -241,9 +241,7 @@ async function parseRequestOptions(request: Request): Promise<{
  *
  * @returns Committee publisher account and signer, or null if no mnemonic
  */
-function createCommitteePublisher(): { addr: string; signer: TransactionSigner } | null {
-  const committeePublisherMnemonic = import.meta.env.COMMITTEE_PUBLISHER_MNEMONIC;
-
+function createCommitteePublisher(committeePublisherMnemonic?: string): { addr: string; signer: TransactionSigner } | null {
   // Check if we have committee publisher credentials
   if (!committeePublisherMnemonic) {
     return null;
@@ -724,7 +722,8 @@ function aggregateResults(proposalResults: ProposalResult[]): ResultsSummary {
  * @param context The Astro API context
  * @returns A JSON response with the results of the assignment operation
  */
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
+
   // Record start time for performance metrics
   const startTime = Date.now();
 
@@ -764,9 +763,13 @@ export const POST: APIRoute = async ({ request }) => {
         });
       }
     }
-
     // Setup committee publisher
-    const publisherInfo = createCommitteePublisher();
+    const publisherInfo = createCommitteePublisher(
+      import.meta.env.COMMITTEE_PUBLISHER_MNEMONIC ?
+        import.meta.env.COMMITTEE_PUBLISHER_MNEMONIC :
+        // @ts-expect-error, this can be undefined
+        locals?.runtime?.env?.COMMITTEE_PUBLISHER_MNEMONIC
+    );
     if (!publisherInfo) {
       return new Response(JSON.stringify({
         error: "Committee publisher mnemonic not found in environment variables"
