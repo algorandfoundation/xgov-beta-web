@@ -303,10 +303,6 @@ export function getVotingDuration(category: ProposalCategory, durations: [bigint
   }
 }
 
-export function formatDistanceToNow() {
-  
-}
-
 export async function openProposal(
   address: string,
   transactionSigner: TransactionSigner,
