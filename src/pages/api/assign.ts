@@ -112,13 +112,14 @@ async function loadCommitteeFromImport(
  *
  * @param safeCommitteeId The safe filename version of the committee ID
  * @param committeeIdStr String representation for logging
+ * @param apiUrl Optional URL from the env
  * @returns Committee data if found, null otherwise
  */
 async function loadCommitteeFromAPI(
   safeCommitteeId: string,
-  committeeIdStr: string
+  committeeIdStr: string,
+  apiUrl?: string,
 ): Promise<CommitteeData | null> {
-  const apiUrl = import.meta.env.COMMITTEE_API_URL;
   if (!apiUrl) {
     logger.error('COMMITTEE_API_URL environment variable not set');
     return null;
@@ -160,9 +161,10 @@ async function loadCommitteeFromAPI(
  * 2. External API
  *
  * @param committeeId The committee ID as a Buffer
+ * @param apiUrl The api url provided by the context
  * @returns Committee data if found, null otherwise
  */
-async function getCommitteeData(committeeId: Buffer): Promise<CommitteeData | null> {
+async function getCommitteeData(committeeId: Buffer, apiUrl?: string): Promise<CommitteeData | null> {
   // For logging purposes - define outside try/catch to ensure it's available in the catch block
   const committeeIdStr = committeeId.toString("base64");
 
@@ -179,7 +181,7 @@ async function getCommitteeData(committeeId: Buffer): Promise<CommitteeData | nu
     }
 
     // Try loading from API as a last resort
-    const apiData = await loadCommitteeFromAPI(safeCommitteeId, committeeIdStr);
+    const apiData = await loadCommitteeFromAPI(safeCommitteeId, committeeIdStr, apiUrl);
     if (apiData) {
       return apiData;
     }
@@ -541,7 +543,8 @@ async function processVoterBatch(
 async function processProposal(
   proposal: ProposalSummaryCardDetails,
   proposalFactory: ProposalFactory,
-  committeePublisher: { addr: string; signer: TransactionSigner }
+  committeePublisher: { addr: string; signer: TransactionSigner },
+  apiUrl?: string,
 ): Promise<ProposalResult> {
   try {
     logger.info(`Processing proposal ${proposal.id}: ${proposal.title}`);
@@ -561,7 +564,7 @@ async function processProposal(
     logger.info(`Fetching committee data for proposal ${proposal.id} with committee ID: ${committeeIdStr}`);
 
     // Get committee data using the committee ID
-    const committeeData = await getCommitteeData(committeeId);
+    const committeeData = await getCommitteeData(committeeId, apiUrl);
 
     // Skip this proposal if no committee data is found
     if (!committeeData) {
@@ -659,12 +662,13 @@ async function processProposal(
 async function processBatch(
   batch: ProposalSummaryCardDetails[],
   proposalFactory: ProposalFactory,
-  committeePublisher: { addr: string; signer: TransactionSigner }
+  committeePublisher: { addr: string; signer: TransactionSigner },
+  apiUrl?: string,
 ): Promise<ProposalResult[]> {
   logger.info(`Processing batch of ${batch.length} proposals`);
 
   // Create promises for processing each proposal
-  const batchPromises = batch.map(proposal => processProposal(proposal, proposalFactory, committeePublisher));
+  const batchPromises = batch.map(proposal => processProposal(proposal, proposalFactory, committeePublisher, apiUrl));
 
   // Process this batch in parallel, continuing even if some proposals fail
   const batchResults = await Promise.allSettled(batchPromises);
@@ -792,7 +796,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       const batch = proposalsToProcess.slice(i, i + maxConcurrentProposals);
       console.log(`Processing batch of ${batch.length} proposals (${i+1} to ${Math.min(i+maxConcurrentProposals, proposalsToProcess.length)} of ${proposalsToProcess.length})`);
 
-      const batchResults = await processBatch(batch, proposalFactory, publisherInfo);
+      const batchResults = await processBatch(batch, proposalFactory, publisherInfo, import.meta.env.COMMITTEE_API_URL ?
+        import.meta.env.COMMITTEE_API_URL :
+        // @ts-expect-error, this can be undefined
+        locals?.runtime?.env?.COMMITTEE_API_URL);
       proposalResults.push(...batchResults);
     }
 
