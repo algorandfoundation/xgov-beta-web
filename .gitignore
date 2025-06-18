@@ -1,6 +1,8 @@
 .deployment.json
 .wrangler
 
+src/pages/api/committees-dev
+
 # build output
 dist
 coverage

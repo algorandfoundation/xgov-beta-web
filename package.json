@@ -9,6 +9,7 @@
     "preview": "wrangler dev",
     "astro": "astro",
     "mock-init": "tsx --env-file=.env.template mock-init.ts",
+    "mock-init-assign": "tsx --env-file=.env.template mock-init-assign.ts",
     "lint": "eslint .",
     "prettier": "prettier --check .",
     "storybook": "storybook dev -p 6006",

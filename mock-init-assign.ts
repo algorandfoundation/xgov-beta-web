@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import crypto from "crypto";
+import path from "path";
 import algosdk, { ALGORAND_MIN_TX_FEE } from "algosdk";
 import { XGovRegistryFactory } from "@algorandfoundation/xgov/registry";
 import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 import { algorand } from "@/api/algorand";
 import { ProposalFactory } from "@algorandfoundation/xgov";
-import { ProposalStatus as PS } from "@/api/types";
 import { mockProposals } from "./__fixtures__/proposals";
 import {
   DISCUSSION_DURATION_LARGE,
@@ -32,6 +32,41 @@ import {
   WEIGHTED_QUORUM_SMALL,
   XGOV_FEE,
 } from "@/constants";
+
+// Define committee pair interface for later use
+interface CommitteePair {
+  proposals: bigint[];
+  committeeId: Buffer;
+  committeeMembers: {
+    address: string;
+    votes: number;
+  }[];
+}
+
+/**
+ * Converts a committee ID buffer to a base64url safe filename
+ *
+ * @param committeeId The committee ID as a Buffer
+ * @returns A base64url encoded string safe for filenames
+ */
+function committeeIdToSafeFileName(committeeId: Buffer): string {
+  // Use base64url encoding (base64 without padding, using URL-safe characters)
+  return committeeId
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+/**
+ * Generates a SHA256 hash of the JSON string and returns it as a Buffer
+ *
+ * @param jsonData The JSON data to hash
+ * @returns Buffer containing the SHA256 hash
+ */
+function generateCommitteeId(jsonData: string): Buffer {
+  return crypto.createHash('sha256').update(jsonData).digest();
+}
 
 async function getLastRound(): Promise<number> {
   return (await algorand.client.algod.status().do())["last-round"];
@@ -88,9 +123,6 @@ console.log("admin account", adminAccount.addr);
 const dispenser = await algorand.account.dispenserFromEnvironment();
 
 await algorand.account.ensureFunded(adminAccount.addr, dispenser, fundAmount);
-
-// fund my local lute wallet
-await algorand.account.ensureFunded("KFLCTKV2ELKPWXPS6IS6AH3QBNA77DGSPLW3O2WT7YOLJBBLZ72S6K52EM", dispenser, (120).algo());
 
 // Create the registry
 const registryMinter = new XGovRegistryFactory({
@@ -191,11 +223,11 @@ const committeeMembers: (TransactionSignerAccount & { account: algosdk.Account; 
 const committeeVotes: number[] = [100];
 let committeeVotesSum = 100;
 
-for (let i = 0; i < 100; i++) {
+for (let i = 0; i < 400; i++) {
   const randomAccount = algorand.account.random();
   console.log('committee member', randomAccount.addr);
   committeeMembers.push(randomAccount);
-  const votingPower = Math.floor(Math.random() * 1_000);
+  const votingPower = Math.floor(Math.random() * 1_000) + 1;
   committeeVotes.push(votingPower);
   committeeVotesSum += votingPower;
 }
@@ -231,16 +263,6 @@ for (const committeeMember of committeeMembers) {
     ],
   });
 }
-
-await registryClient.send.declareCommittee({
-  sender: adminAccount.addr,
-  signer: adminAccount.signer,
-  args: {
-    committeeId: new Uint8Array(Buffer.from('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')),
-    size: committeeMembers.length,
-    votes: committeeVotesSum,
-  },
-})
 
 // Generate and setup mock proposer accounts
 const proposerAccounts: (TransactionSignerAccount & {
@@ -417,16 +439,138 @@ for (let i = 0; i < mockProposals.length; i++) {
   }
 }
 
+// Before time warp, create random committee pairs
+// Each pair of proposals gets assigned a random committee of 200 members
+console.log("\nCreating random committee pairs for proposals...");
+
+// Skip the first proposal (index 0) as it's not going to be finalized
+const proposalsToAssign = proposalIds.slice(1);
+// Shuffle the proposals to create random pairs
+const shuffledProposals = [...proposalsToAssign].sort(() => Math.random() - 0.5);
+
+// Create pairs of proposals (handle odd number by having one triple if necessary)
+const proposalPairs: bigint[][] = [];
+for (let i = 0; i < shuffledProposals.length; i += 2) {
+  if (i + 1 < shuffledProposals.length) {
+    // Standard pair
+    proposalPairs.push([shuffledProposals[i], shuffledProposals[i + 1]]);
+  } else {
+    // Last proposal without a pair - add to the last pair to make a triple
+    // This handles cases with an odd number of proposals
+    if (proposalPairs.length > 0) {
+      proposalPairs[proposalPairs.length - 1].push(shuffledProposals[i]);
+    } else {
+      // If there's only one proposal to assign
+      proposalPairs.push([shuffledProposals[i]]);
+    }
+  }
+}
+
+// Map to keep track of which committee is assigned to which proposal
+const proposalToCommitteeMap = new Map<bigint, Buffer>();
+
+// Create committees directory if it doesn't exist
+const committeesDir = 'src/pages/api/committees-dev';
+if (!fs.existsSync(committeesDir)) {
+  fs.mkdirSync(committeesDir, { recursive: true });
+}
+
+// Generate a committee for each pair (without declaring yet)
+console.log("Generating committees for proposal pairs...");
+for (const pair of proposalPairs) {
+  // Select 200 random committee members for this pair
+  const shuffledMembers = [...Array(committeeMembers.length).keys()]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 200);
+
+  // Create committee data for this pair
+  const committeeData = {
+    xGovs: shuffledMembers.map(idx => ({
+      address: committeeMembers[idx].addr,
+      votes: committeeVotes[idx]
+    }))
+  };
+
+  // Calculate the vote sum for this committee
+  const committeeVoteSum = committeeData.xGovs.reduce((sum, member) => sum + member.votes, 0);
+
+  // Convert to JSON string
+  const committeeJson = JSON.stringify(committeeData, (_, v) =>
+    typeof v === "bigint" ? v.toString() : v, 2);
+
+  // Generate committee ID from the JSON content
+  const committeeId = generateCommitteeId(committeeJson);
+  const safeFileName = committeeIdToSafeFileName(committeeId);
+
+  // Write committee data to file
+  const filePath = path.join(committeesDir, `${safeFileName}.json`);
+  fs.writeFileSync(filePath, committeeJson, "utf-8");
+
+  // Store committee data for later use when finalizing
+  const committeeInfo = {
+    committeeId,
+    size: committeeData.xGovs.length,
+    votes: committeeVoteSum,
+    fileName: safeFileName
+  };
+
+  // Associate each proposal in the pair with this committee info
+  pair.forEach(proposalId => {
+    proposalToCommitteeMap.set(proposalId, committeeId);
+  });
+
+  console.log(`Created committee ${safeFileName} for proposals: ${pair.join(', ')}`);
+  console.log(`Committee size: ${committeeData.xGovs.length} voters with ${committeeVoteSum} total votes`);
+}
+
+// Log the committee assignments
+console.log('\nProposal to Committee Assignments:');
+proposalToCommitteeMap.forEach((committeeId, proposalId) => {
+  console.log(`Proposal ${proposalId}: Committee ${committeeIdToSafeFileName(committeeId)}`);
+});
+
+// Time warp to move proposals to the next phase
 const ts = (await getLatestTimestamp()) + 86400 * 5;
 await timeWarp(ts);
 console.log("finished time warp, new ts: ", await getLatestTimestamp());
 
 // Let's finalize all proposals except the first one, owned by admin
+// This moves them to the voting phase
 for (let i = 1; i < mockProposals.length; i++) {
   const proposalClient = proposalFactory.getAppClientById({
     appId: proposalIds[i],
   });
 
+  // Get the committee ID for this proposal
+  const committeeId = proposalToCommitteeMap.get(proposalIds[i]);
+
+  if (!committeeId) {
+    console.error(`No committee ID found for proposal ${proposalIds[i]}`);
+    process.exit(1);
+  }
+
+  console.log(`Preparing to finalize proposal ${proposalIds[i]} with committee ID ${committeeIdToSafeFileName(committeeId)}`);
+
+  // For this specific proposal, get its committee's vote info
+  const committeeFilePath = path.join(committeesDir, `${committeeIdToSafeFileName(committeeId)}.json`);
+  const committeeDataStr = fs.readFileSync(committeeFilePath, 'utf-8');
+  const committeeData = JSON.parse(committeeDataStr);
+  const committeeVoteSum = committeeData.xGovs.reduce((sum: number, member: any) => sum + member.votes, 0);
+
+  // Declare this committee right before finalizing the proposal
+  console.log(`Declaring committee ${committeeIdToSafeFileName(committeeId)} for proposal ${proposalIds[i]}`);
+  await registryClient.send.declareCommittee({
+    sender: adminAccount.addr,
+    signer: adminAccount.signer,
+    args: {
+      committeeId,
+      size: committeeData.xGovs.length,
+      votes: committeeVoteSum,
+    },
+  });
+
+  // Now finalize the proposal immediately after declaring its committee
+  console.log(`Finalizing proposal ${proposalIds[i]}`);
   await proposalClient.send.finalize({
     sender: proposerAccounts[i].addr,
     signer: proposerAccounts[i].signer,
@@ -437,145 +581,6 @@ for (let i = 1; i < mockProposals.length; i++) {
     extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
   });
 }
-
-
-for (let i = 1; i < mockProposals.length; i++) {
-  const proposal = mockProposals[i];
-  if (proposal.status === PS.ProposalStatusVoting) {
-
-    console.log(`Proposal ${i}`);
-
-    const proposalClient = proposalFactory.getAppClientById({ appId: proposalIds[i] });
-
-    for (let j = 0; j < committeeMembers.length; j++) {
-      const committeeMember = committeeMembers[j];
-      const votes = committeeVotes[j];
-
-      const addr = algosdk.decodeAddress(committeeMember.addr).publicKey;
-
-      console.log('Committee member: ', committeeMember.addr);
-      console.log('    voting power: ', votes);
-      console.log('           index: ', j);
-
-      try {
-        await proposalClient.send.assignVoter({
-          sender: adminAccount.addr,
-          signer: adminAccount.signer,
-          args: {
-            voter: committeeMember.addr,
-            votingPower: votes,
-          },
-          appReferences: [registryClient.appId],
-          boxReferences: [
-            new Uint8Array(Buffer.concat([
-              Buffer.from('V'),
-              addr,
-            ])),
-          ]
-        })
-        console.log('assigned voter');
-      } catch (e) {
-        console.error('Failed to assign voter');
-        process.exit(1);
-      }
-    }
-  }
-}
-
-for (let i = 1; i < 10; i++) {
-
-  let randomCutOff = Math.random() * committeeMembers.length
-  if (i === 1) {
-    randomCutOff = committeeMembers.length - 1
-  }
-
-  const lean = Math.random()
-
-  for (let j = 1; j < committeeMembers.length; j++) {
-    if (j > randomCutOff) {
-      break;
-    }
-
-    const potentialVotingPower = committeeVotes[j]
-    const actualVotingPower = Number(Math.floor(Math.random() * potentialVotingPower));
-
-    let approve = Math.random() > lean
-    if (i === 1) {
-      approve = true
-    }
-
-    await registryClient.send.voteProposal({
-      sender: committeeMembers[j].addr,
-      signer: committeeMembers[j].signer,
-      args: {
-        proposalId: proposalIds[i],
-        xgovAddress: committeeMembers[j].addr,
-        approvalVotes: approve ? actualVotingPower : 0n,
-        rejectionVotes: approve ? 0n : actualVotingPower,
-      },
-      accountReferences: [committeeMembers[j].addr],
-      appReferences: [proposalIds[i]],
-      boxReferences: [
-        new Uint8Array(Buffer.concat([Buffer.from('x'), algosdk.decodeAddress(committeeMembers[j].addr).publicKey])),
-        {
-          appId: proposalIds[i], name: new Uint8Array(Buffer.concat([Buffer.from('V'),
-          algosdk.decodeAddress(committeeMembers[j].addr).publicKey]))
-        }],
-      extraFee: (ALGORAND_MIN_TX_FEE * 100).microAlgos(),
-    })
-  }
-}
-
-// For one proposal, we will have a voting period
-// to make it reviewable by xGov Reviewer
-// Send votes for proposal #0 from admin account
-try {
-  await registryClient.send.voteProposal({
-    sender: adminAccount.addr,
-    signer: adminAccount.signer,
-    args: {
-      proposalId: proposalIds[1],
-      xgovAddress: adminAccount.addr,
-      approvalVotes: 10n,
-      rejectionVotes: 0n,
-    },
-    accountReferences: [adminAccount.addr],
-    appReferences: [proposalIds[1]],
-    boxReferences: [
-      new Uint8Array(
-        Buffer.concat([
-          Buffer.from("x"),
-          algosdk.decodeAddress(adminAccount.addr).publicKey,
-        ]),
-      ),
-      {
-        appId: proposalIds[1],
-        name: new Uint8Array(
-          Buffer.concat([
-            Buffer.from("V"),
-            algosdk.decodeAddress(adminAccount.addr).publicKey,
-          ]),
-        ),
-      },
-    ],
-    extraFee: (ALGORAND_MIN_TX_FEE * 100).microAlgos(),
-  });
-} catch (e) {
-  console.error("Failed to vote proposal");
-  process.exit(1);
-}
-
-// Scrutinize proposal #0's voting
-await proposalFactory
-  .getAppClientById({ appId: proposalIds[1] })
-  .send.scrutiny({
-    sender: adminAccount.addr,
-    signer: adminAccount.signer,
-    args: {},
-    appReferences: [registryClient.appId],
-    accountReferences: [proposerAccounts[1].addr],
-    extraFee: (1000).microAlgo()
-  })
 
 // Set admin account as xGov Reviewer to avoid having to click through admin panel
 await registryClient.send.setXgovReviewer({
@@ -594,13 +599,30 @@ console.log({
 console.log(
   `Use the following application to interact with the registry:\n`,
   results.appClient.appId,
+  `\n\n`,
 );
+
+// get 4 random proposal IDs (excluding the first one)
+const randomProposalIds = proposalIds.slice(1).sort(() => Math.random() - 0.5).slice(0, 4);
+
+console.log(
+  `To test the assignment endpoint, start the server by running:\n\n`,
+  `npm run dev\n\n`,
+  `get the server port from the console output (probably 4321), and then run:\n\n`,
+  `curl -v -X POST http://localhost:4321/api/assign \\ \n -H "Content-Type: application/json" \\ \n -d '{"proposalIds": [${randomProposalIds}]}' \\ \n -s | jq '.'\n\n`,
+  `then run:\n\n`,
+  `curl -v -X POST http://localhost:4321/api/assign \\ \n -H "Content-Type: application/json" \\ \n -s | jq '.'\n\n`,
+  `to assign the remaining proposals\n`,
+)
 const envFile = fs.readFileSync("./.env.template", "utf-8");
 fs.writeFileSync(
   ".env.development",
   envFile.replace(
     "<REPLACE_WITH_APPLICATION_ID>",
     results.appClient.appId.toString(),
+  ).replace(
+    "<REPLACE_WITH_PUBLISHER_MNEMONIC>",
+    `"${algosdk.secretKeyToMnemonic(adminAccount.account.sk)}"`,
   ),
   "utf-8",
 );
@@ -623,6 +645,12 @@ fs.writeFileSync(
         };
       }),
       proposalIds,
+      xGovs: committeeMembers.map((member, index) => {
+        return {
+          address: member.addr,
+          votes: committeeVotes[index],
+        };
+      })
     },
     (_, v) => (typeof v === "bigint" ? v.toString() : v),
     2,
