@@ -31,6 +31,13 @@ const MAX_CONCURRENT_PROPOSALS = 20; // Maximum number of proposals to process c
 const ENV_CONCURRENT_PROPOSALS = import.meta.env.MAX_CONCURRENT_PROPOSALS
   ? parseInt(import.meta.env.MAX_CONCURRENT_PROPOSALS, 10)
   : null;
+const DEFAULT_MAX_REQUESTS_PER_PROPOSAL = 5; // Default number of proposals to process concurrently
+const MAX_REQUESTS_PER_PROPOSAL = 20; // Maximum number of proposals to process concurrently
+// Environment variable for concurrent proposal processing
+const ENV_MAX_REQUESTS_PER_PROPOSAL = import.meta.env.MAX_REQUESTS_PER_PROPOSAL
+  ? parseInt(import.meta.env.MAX_REQUESTS_PER_PROPOSAL, 10)
+  : null;
+
 const CONFIRMATION_ROUNDS = 4; // Number of rounds to wait for transaction confirmation
 const VOTER_BOX_PREFIX_BYTE = 86; // ASCII for 'V'
 
@@ -246,19 +253,46 @@ async function getCommitteeData(
   }
 }
 
+function getNumericEnvironmentVariable(
+  localsKey: string,
+  locals: App.Locals,
+  defaultValue: number,
+): number {
+  // @ts-expect-error, runtime can be undefined
+  return locals?.runtime?.env && localsKey in locals?.runtime?.env
+    ? // @ts-expect-error, runtime can be undefined
+      parseInt(locals.runtime.env[localsKey], 10)
+    : defaultValue;
+}
+
+function getStringEnvironmentVariable(key: string, locals: App.Locals): string {
+  // @ts-expect-error, this can be undefined
+  if (locals?.runtime?.env && key in locals?.runtime?.env)
+    // @ts-expect-error, this can be undefined
+    return locals?.runtime?.env[key]
+  return import.meta.env[key] ?? ""
+}
+
 /**
  * Parses request options from the request body
  *
  * @param request The incoming request
  * @returns Parsed options for processing
  */
-async function parseRequestOptions(request: Request): Promise<{
+async function parseRequestOptions(
+  request: Request,
+  locals: App.Locals,
+): Promise<{
   maxConcurrentProposals: number;
+  maxRequestsPerProposal: number;
   proposalIds?: bigint[];
 }> {
   // Get concurrent proposals from environment variable first, then fallback to default
-  let maxConcurrentProposals =
-    ENV_CONCURRENT_PROPOSALS || DEFAULT_CONCURRENT_PROPOSALS;
+  let maxConcurrentProposals = getNumericEnvironmentVariable(
+    "MAX_CONCURRENT_PROPOSALS",
+    locals,
+    ENV_CONCURRENT_PROPOSALS || DEFAULT_CONCURRENT_PROPOSALS,
+  );
 
   // Ensure the value is within acceptable range
   if (
@@ -272,6 +306,28 @@ async function parseRequestOptions(request: Request): Promise<{
   } else {
     logger.info(
       `Using concurrency level from environment: ${maxConcurrentProposals}`,
+    );
+  }
+
+  // Get concurrent proposals from environment variable first, then fallback to default
+  let maxRequestsPerProposal = getNumericEnvironmentVariable(
+    "MAX_REQUESTS_PER_PROPOSAL",
+    locals,
+    ENV_MAX_REQUESTS_PER_PROPOSAL || DEFAULT_MAX_REQUESTS_PER_PROPOSAL,
+  );
+
+  // Ensure the value is within acceptable range
+  if (
+    maxRequestsPerProposal <= 0 ||
+    maxRequestsPerProposal > MAX_REQUESTS_PER_PROPOSAL
+  ) {
+    logger.warn(
+      `Invalid environment MAX_REQUESTS_PER_PROPOSAL value: ${maxRequestsPerProposal}, using default: ${DEFAULT_MAX_REQUESTS_PER_PROPOSAL}`,
+    );
+    maxRequestsPerProposal = DEFAULT_MAX_REQUESTS_PER_PROPOSAL;
+  } else {
+    logger.info(
+      `Using requests per proposal from environment: ${maxRequestsPerProposal}`,
     );
   }
 
@@ -308,7 +364,7 @@ async function parseRequestOptions(request: Request): Promise<{
     );
   }
 
-  return { maxConcurrentProposals, proposalIds };
+  return { maxConcurrentProposals, maxRequestsPerProposal, proposalIds };
 }
 
 /**
@@ -821,6 +877,7 @@ async function processBatch(
   batch: ProposalSummaryCardDetails[],
   proposalFactory: ProposalFactory,
   committeePublisher: { addr: string; signer: TransactionSigner },
+  maxRequestsPerProposal: number,
   apiUrl?: string,
 ): Promise<ProposalResult[]> {
   logger.info(`Processing batch of ${batch.length} proposals`);
@@ -894,8 +951,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Authentication validation removed
 
     // Parse request options
-    const { maxConcurrentProposals, proposalIds } =
-      await parseRequestOptions(request);
+    const { maxConcurrentProposals, maxRequestsPerProposal, proposalIds } =
+      await parseRequestOptions(request, locals);
 
     logger.info("Received proposalIds", proposalIds);
 
@@ -926,10 +983,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Setup committee publisher
     const publisherInfo = createCommitteePublisher(
-      import.meta.env.COMMITTEE_PUBLISHER_MNEMONIC
-        ? import.meta.env.COMMITTEE_PUBLISHER_MNEMONIC
-        : // @ts-expect-error, this can be undefined
-          locals?.runtime?.env?.COMMITTEE_PUBLISHER_MNEMONIC,
+      getStringEnvironmentVariable("COMMITTEE_PUBLISHER_MNEMONIC", locals)
     );
     if (!publisherInfo) {
       return new Response(
@@ -946,10 +1000,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const algorand = AlgorandClient.fromClients({ algod, indexer, kmd, });
+    const algorand = AlgorandClient.fromClients({ algod, indexer, kmd });
     // cache suggested params for 30 minutes
     const suggestedParams = await algorand.getSuggestedParams();
-    algorand.setSuggestedParamsCache(suggestedParams, new Date(Date.now() + 30 * 60 * 1000));
+    algorand.setSuggestedParamsCache(
+      suggestedParams,
+      new Date(Date.now() + 30 * 60 * 1000),
+    );
     // max txn validity to accomodate params caching
     algorand.setDefaultValidityWindow(1000);
 
@@ -957,7 +1014,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const proposalFactory = new ProposalFactory({ algorand });
 
     logger.info(
-      `Processing ${proposalsToProcess.length} proposals in batches of ${maxConcurrentProposals}...`,
+      `Processing ${proposalsToProcess.length} proposals in batches of ${maxConcurrentProposals}, req/proposal: ${maxRequestsPerProposal}`,
     );
 
     // Process proposals in batches
@@ -976,10 +1033,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         batch,
         proposalFactory,
         publisherInfo,
-        import.meta.env.COMMITTEE_API_URL
-          ? import.meta.env.COMMITTEE_API_URL
-          : // @ts-expect-error, this can be undefined
-            locals?.runtime?.env?.COMMITTEE_API_URL,
+        maxRequestsPerProposal,
+        getStringEnvironmentVariable("COMMITTEE_API_URL", locals),
       );
       proposalResults.push(...batchResults);
     }

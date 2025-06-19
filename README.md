@@ -119,6 +119,9 @@ COMMITTEE_API_URL=https://your-committee-api-endpoint
 
 # Maximum number of proposals to process concurrently (optional, default: 5, max: 20)
 MAX_CONCURRENT_PROPOSALS=10
+
+# Maximum number of concurrent requests to make per proposal
+MAX_REQUESTS_PER_PROPOSAL=5
 ```
 
 ### Committee Data Files
