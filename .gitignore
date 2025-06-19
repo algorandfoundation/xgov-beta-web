@@ -22,6 +22,7 @@ pnpm-debug.log*
 # environment variables
 .env
 .env.development
+.voters.json
 
 # macOS-specific files
 .DS_Store
