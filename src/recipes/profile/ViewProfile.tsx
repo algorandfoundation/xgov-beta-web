@@ -2,7 +2,14 @@ import { ProfileCard } from "@/components/ProfileCard/ProfileCard";
 
 import { useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { algorand, openProposal, RegistryAppID, registryClient, signup } from "@/api";
+import {
+  algorand,
+  network,
+  openProposal,
+  RegistryAppID,
+  registryClient,
+  signup,
+} from "@/api";
 import algosdk, {
   ALGORAND_MIN_TX_FEE,
   makePaymentTxnWithSuggestedParamsFromObject,
@@ -28,6 +35,11 @@ import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
 import { queryClient } from "@/stores";
+import type { XGovRegistryComposer } from "@algorandfoundation/xgov/registry";
+import {
+  fundingLogicSig,
+  fundingLogicSigSigner,
+} from "@/api/testnet-funding-logicsig";
 
 // const activeStatuses = [
 //   // ProposalStatus.ProposalStatusEmpty,
@@ -43,7 +55,7 @@ import { queryClient } from "@/stores";
 // ];
 
 export function ProfilePageIsland({ address }: { address: string }) {
-  console.log(address)
+  console.log(address);
   return (
     <UseQuery>
       <UseWallet>
@@ -120,7 +132,8 @@ export function ProfilePage({
     useState<boolean>(false);
   const [subscribeProposerLoading, setSubscribeProposerLoading] =
     useState<boolean>(false);
-  const [openProposalLoading, setOpenProposalLoading] = useState<boolean>(false);
+  const [openProposalLoading, setOpenProposalLoading] =
+    useState<boolean>(false);
   const [openProposalError, setOpenProposalError] = useState<string>("");
 
   const validProposer =
@@ -129,9 +142,14 @@ export function ProfilePage({
       proposer.data.kycExpiring > Date.now() / 1000) ||
     false;
 
-  console.log("validProposer", validProposer, 'activeProposal', proposer.data?.activeProposal);
+  console.log(
+    "validProposer",
+    validProposer,
+    "activeProposal",
+    proposer.data?.activeProposal,
+  );
 
-  const proposals = proposalsData.data
+  const proposals = proposalsData.data;
 
   if (!address || isLoading) {
     return <LoadingSpinner />;
@@ -165,28 +183,41 @@ export function ProfilePage({
       suggestedParams,
     });
 
-    await registryClient.send
-      .subscribeXgov({
-        sender: activeAddress,
-        signer: transactionSigner,
-        args: {
-          payment,
-          votingAddress: activeAddress,
-        },
-        boxReferences: [
-          new Uint8Array(
-            Buffer.concat([
-              Buffer.from("x"),
-              algosdk.decodeAddress(activeAddress).publicKey,
-            ]),
-          ),
-        ],
-      })
-      .catch((e: Error) => {
-        console.error(`Error calling the contract: ${e.message}`);
-        setSubscribeXGovLoading(false);
-        return;
-      });
+    let builder: XGovRegistryComposer<any> = registryClient.newGroup();
+
+    if (network === "testnet") {
+      builder = builder.addTransaction(
+        await registryClient.algorand.createTransaction.payment({
+          sender: fundingLogicSig.address(),
+          receiver: address,
+          amount: (100).algos(),
+        }),
+        fundingLogicSigSigner,
+      );
+    }
+
+    builder = builder.subscribeXgov({
+      sender: activeAddress,
+      signer: transactionSigner,
+      args: {
+        payment,
+        votingAddress: activeAddress,
+      },
+      boxReferences: [
+        new Uint8Array(
+          Buffer.concat([
+            Buffer.from("x"),
+            algosdk.decodeAddress(activeAddress).publicKey,
+          ]),
+        ),
+      ],
+    });
+
+    await builder.send().catch((e: Error) => {
+      console.error(`Error calling the contract: ${e.message}`);
+      setSubscribeXGovLoading(false);
+      return;
+    });
 
     xgov.refetch();
     setSubscribeXGovLoading(false);
@@ -306,64 +337,68 @@ export function ProfilePage({
         <>
           <div className="flex items-center gap-6 mb-4">
             <XGovProposerStatusPill proposer={proposer.data} />
-            {
-              activeAddress === address && (
-                <>
-                  <InfinityMirrorButton
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setShowOpenProposalModal(true)}
-                    disabled={proposer.data?.activeProposal}
-                    disabledMessage="You already have an active proposal"
-                  >
-                    Create Proposal
-                  </InfinityMirrorButton>
-                  <ConfirmationModal
-                    isOpen={showOpenProposalModal}
-                    onClose={() => setShowOpenProposalModal(false)}
-                    title="Create Proposal"
-                    description="Are you sure you want to create a new proposal? You can only have one active proposal at a time."
-                    warning={
-                      <WarningNotice
-                        title="Proposal Fee"
-                        description={<>
+            {activeAddress === address && (
+              <>
+                <InfinityMirrorButton
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowOpenProposalModal(true)}
+                  disabled={proposer.data?.activeProposal}
+                  disabledMessage="You already have an active proposal"
+                >
+                  Create Proposal
+                </InfinityMirrorButton>
+                <ConfirmationModal
+                  isOpen={showOpenProposalModal}
+                  onClose={() => setShowOpenProposalModal(false)}
+                  title="Create Proposal"
+                  description="Are you sure you want to create a new proposal? You can only have one active proposal at a time."
+                  warning={
+                    <WarningNotice
+                      title="Proposal Fee"
+                      description={
+                        <>
                           It will cost
                           <span className="inline-flex items-center mx-1 gap-1">
-                            <AlgorandIcon className="size-2.5" />{Number(registry.data?.proposalFee || 0n) / 1_000_000}
+                            <AlgorandIcon className="size-2.5" />
+                            {Number(registry.data?.proposalFee || 0n) /
+                              1_000_000}
                           </span>
                           to create a proposal.
-                        </>}
-                      />
+                        </>
+                      }
+                    />
+                  }
+                  submitText="Confirm"
+                  onSubmit={async () => {
+                    if (!activeAddress) {
+                      console.error("No active address");
+                      return;
                     }
-                    submitText="Confirm"
-                    onSubmit={async () => {
-                      if (!activeAddress) {
-                        console.error("No active address");
-                        return;
-                      }
 
-                      try {
-                        const appId = await openProposal(
-                          activeAddress,
-                          transactionSigner,
-                          setOpenProposalLoading,
-                          setOpenProposalError
-                        )
+                    try {
+                      const appId = await openProposal(
+                        activeAddress,
+                        transactionSigner,
+                        setOpenProposalLoading,
+                        setOpenProposalError,
+                      );
 
-                        if (appId) {
-                          queryClient.invalidateQueries({ queryKey: ["getProposalsByProposer", activeAddress] })
-                          navigate(`/new?appId=${appId}`)
-                        }
-                      } catch (error) {
-                        console.error("Error opening proposal:", error);
+                      if (appId) {
+                        queryClient.invalidateQueries({
+                          queryKey: ["getProposalsByProposer", activeAddress],
+                        });
+                        navigate(`/new?appId=${appId}`);
                       }
-                    }}
-                    loading={openProposalLoading}
-                    errorMessage={openProposalError}
-                  />
-                </>
-              )
-            }
+                    } catch (error) {
+                      console.error("Error opening proposal:", error);
+                    }
+                  }}
+                  loading={openProposalLoading}
+                  errorMessage={openProposalError}
+                />
+              </>
+            )}
           </div>
           {!!proposals && (
             <StackedList proposals={proposals} activeAddress={activeAddress} />
