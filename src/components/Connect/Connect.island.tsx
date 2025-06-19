@@ -3,6 +3,7 @@ import { useWallet } from "@txnlab/use-wallet-react";
 
 import { Connect } from "@/components/Connect/Connect.tsx";
 import { UseWallet } from "@/hooks/useWallet";
+import { useNFD, UseQuery } from "@/hooks";
 
 export type ConnectIslandProps = {
   path?: string;
@@ -10,6 +11,8 @@ export type ConnectIslandProps = {
 
 export function ConnectController({ path = "/" }: ConnectIslandProps) {
   const manager = useWallet();
+  const nfd = useNFD(manager.activeAddress)
+
   return (
     <Connect
       onLogOut={() => {
@@ -18,13 +21,16 @@ export function ConnectController({ path = "/" }: ConnectIslandProps) {
       }}
       {...manager}
       path={path}
+      nfdName={nfd.data?.properties?.internal?.name || ""}
     />
   );
 }
 export function ConnectIsland(props: ConnectIslandProps) {
   return (
     <UseWallet>
-      <ConnectController {...props} />
+      <UseQuery>
+        <ConnectController {...props} />
+      </UseQuery>
     </UseWallet>
   );
 }

@@ -1,7 +1,7 @@
 
 import type { AppState } from "@algorandfoundation/algokit-utils/types/app";
 import { AppManager } from "@algorandfoundation/algokit-utils/types/app-manager";
-import algosdk, { ABIType, ALGORAND_MIN_TX_FEE, type TransactionSigner } from "algosdk";
+import algosdk, { ABIType, ALGORAND_MIN_TX_FEE, encodeAddress, type TransactionSigner } from "algosdk";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 
 import {
@@ -240,6 +240,36 @@ export async function getProposalBrief(
   );
 }
 
+export async function getProposalVoters(
+  id: number,
+  limit: number = 1000,
+): Promise<string[]> {
+  const boxes = await algorand.client.algod
+    .getApplicationBoxes(id)
+    .max(limit)
+    .do();
+
+  let voterBoxes: Uint8Array<ArrayBufferLike>[] = []
+  boxes.boxes.map((box) => {
+    if (new TextDecoder().decode(box.name).startsWith("V")) {
+      voterBoxes.push(box.name);
+    }
+  });
+
+  let addresses: string[] = [];
+  (await algorand.app.getBoxValuesFromABIType({
+    appId: BigInt(id),
+    boxNames: voterBoxes,
+    type: algosdk.ABIType.from('(uint64,bool)')
+  })).map((value, i) => {
+    if (Array.isArray(value) && value[1]) {
+      addresses.push(encodeAddress(Buffer.from(voterBoxes[i].slice(1))));
+    }
+  });
+
+  return addresses;
+}
+
 /**
  * Retrieves the discussion duration based on the given proposal category.
  *
@@ -310,7 +340,7 @@ export async function openProposal(
   setError: (error: string) => void,
 ) {
   setOpenProposalLoading(true);
-  
+
   try {
     const proposalFee = PROPOSAL_FEE.microAlgo();
     const addr = algosdk.decodeAddress(address).publicKey;
@@ -344,7 +374,7 @@ export async function openProposal(
     }
 
     setOpenProposalLoading(false);
-    
+
     return result.return;
 
   } catch (e: any) {
@@ -643,7 +673,7 @@ export async function updateMetadata(
 
     await resubmitGroup.send()
     setUpdateMetadataLoading(false);
-    
+
     return proposal.id;
 
   } catch (e: any) {

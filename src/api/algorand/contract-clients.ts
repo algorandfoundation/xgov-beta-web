@@ -16,7 +16,6 @@ export const registryClient = algorand.client.getTypedAppClientById(
   { appId: RegistryAppID },
 );
 
-// TODO: make prototype of the ProposalClient
 registryClient.getState = async function (): Promise<TypedGlobalState> {
   return (
     await registryClient
