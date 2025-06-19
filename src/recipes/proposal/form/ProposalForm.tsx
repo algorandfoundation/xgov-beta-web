@@ -60,8 +60,8 @@ export function ProposalForm({
   const formSchema = proposalFormSchema.setKey(
     "requestedAmount",
     validatorSchemas.requestedAmount({
-      min: Number(minRequestedAmount),
-      max: Number(maxRequestedAmount),
+      min: Number(minRequestedAmount) / 1e6,
+      max: Number(maxRequestedAmount) / 1e6,
     }),
   );
 
@@ -70,7 +70,7 @@ export function ProposalForm({
     defaultValues: {
       title: proposal?.title || "",
       description: proposal?.description || "",
-      requestedAmount: Number(proposal?.requestedAmount) / 1_000_000 || Number(minRequestedAmount) || 0,
+      requestedAmount: Number(proposal?.requestedAmount) / 1e6 || Number(minRequestedAmount) / 1e6 || 0,
       team: proposal?.team || "",
       additionalInfo: proposal?.additionalInfo || "",
       openSource: true,

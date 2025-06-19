@@ -71,7 +71,7 @@ export function ProposalCreate() {
     <ProposalForm
       type="create"
       bps={registry.data?.proposalCommitmentBps || 0n}
-      minRequestedAmount={registry.data?.minRequestedAmount || 1n}
+      minRequestedAmount={registry.data?.minRequestedAmount || 1000000n}
       maxRequestedAmount={maxRequestedAmount}
       loading={proposalSubmitLoading}
       error={submitError || undefined}
