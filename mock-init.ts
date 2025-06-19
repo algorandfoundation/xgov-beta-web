@@ -79,6 +79,8 @@ export async function timeWarp(to: number) {
   await algorand.client.algod.setBlockOffsetTimestamp(0).do();
 }
 
+
+algorand.setSuggestedParamsCacheTimeout(0);
 // Generate admin account (the one that creates the registry)
 const fundAmount = (10).algo();
 const adminAccount = await algorand.account.fromKmd(
