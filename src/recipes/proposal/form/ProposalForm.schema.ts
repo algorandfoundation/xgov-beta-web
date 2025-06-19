@@ -18,7 +18,7 @@ export const validatorSchemas = {
         message: `Must be at least ${constraints.min}`,
       })
       .refine((val) => val <= constraints.max, {
-        message: `Insufficient balance. 10% of the requested amount must be escrowed. Maximum request based on your current balance is ${constraints.max}`,
+        message: `Insufficient balance. 3% of the requested amount must be escrowed. Maximum request based on your current balance is ${constraints.max}`,
       });
   },
   team: () => { return z.string().refine((val) => val !== "", { message: "Required field" }) },
