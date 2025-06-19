@@ -17,6 +17,7 @@ import {
   getVoteQuorum,
   getVotingDuration,
   getGlobalState,
+  callFinalize,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -872,6 +873,15 @@ export function FinalizeModal({
         setErrorMessage(null);
         onClose();
         refetchProposal();
+
+        // call backend to finalize
+        try {
+          await callFinalize(proposalId);
+        } catch (e) {
+          console.warn("Failed to finalize:", e);
+        }
+        refetchProposal();
+
         return true;
       }
 

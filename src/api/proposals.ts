@@ -680,6 +680,22 @@ export async function updateMetadata(
   }
 }
 
+export async function callFinalize(proposalId: bigint) {
+  console.log("Staring finalize call", proposalId);
+  const response = await fetch("/api/assign", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      proposalIds: [proposalId],
+    }),
+  });
+  console.log("Finished finalize call");
+  const data = await response.json();
+  console.log("Finalize data:", data);
+}
+
 // export async function resubmitProposal(
 //   activeAddress: string,
 //   data: any,
