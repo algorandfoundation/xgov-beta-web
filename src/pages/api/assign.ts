@@ -17,6 +17,8 @@ import algosdk, { type TransactionSigner } from "algosdk";
 import type { APIRoute } from "astro";
 import { createLogger } from "@/utils/logger";
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
+import { chunk } from "@/functions";
+import pMap from "p-map";
 
 // Create logger for this file
 const logger = createLogger("assign-api");
@@ -269,8 +271,8 @@ function getStringEnvironmentVariable(key: string, locals: App.Locals): string {
   // @ts-expect-error, this can be undefined
   if (locals?.runtime?.env && key in locals?.runtime?.env)
     // @ts-expect-error, this can be undefined
-    return locals?.runtime?.env[key]
-  return import.meta.env[key] ?? ""
+    return locals?.runtime?.env[key];
+  return import.meta.env[key] ?? "";
 }
 
 /**
@@ -569,17 +571,13 @@ async function processVoterBatch(
   proposalClient: ProposalClient,
   eligibleVoters: CommitteeMember[],
   committeePublisher: { addr: string; signer: TransactionSigner },
-  groupStart: number,
 ): Promise<number> {
   const totalVoters = eligibleVoters.length;
   const MAX_VOTERS_PER_GROUP =
     FIRST_TXN_VOTERS + (MAX_GROUP_SIZE - 1) * OTHER_TXN_VOTERS; // = 7 + 15*8 = 127
 
   // Calculate how many voters to process in this batch (capped by MAX_VOTERS_PER_GROUP)
-  const votersInThisBatch = Math.min(
-    totalVoters - groupStart,
-    MAX_VOTERS_PER_GROUP,
-  );
+  const votersInThisBatch = eligibleVoters.length;
 
   if (votersInThisBatch <= 0) return 0;
 
@@ -635,7 +633,7 @@ async function processVoterBatch(
     }
 
     // Calculate start index for this batch
-    const batchStartIndex = groupStart + processedInGroup;
+    const batchStartIndex = processedInGroup;
 
     // Check if we've processed all voters
     if (batchStartIndex >= totalVoters) break;
@@ -706,19 +704,9 @@ async function processVoterBatch(
       error,
     );
 
-    // Check if we should continue with other batches or abort
-    if (groupStart === 0) {
-      // If this is the first batch, the error is likely systemic - abort processing this proposal
-      throw new Error(
-        `Failed to send initial transaction group for proposal ${proposalClient.appId}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    } else {
-      // If we've already processed some voters, log the error but continue with other batches
-      logger.warn(
-        `Skipping batch starting at index ${groupStart} for proposal ${proposalClient.appId} due to error. Continuing with next batch.`,
-      );
-      return 0;
-    }
+    throw new Error(
+      `Failed to send transaction group for proposal ${proposalClient.appId}: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -734,6 +722,7 @@ async function processProposal(
   proposal: ProposalSummaryCardDetails,
   proposalFactory: ProposalFactory,
   committeePublisher: { addr: string; signer: TransactionSigner },
+  maxRequestsPerProposal: number,
   apiUrl?: string,
 ): Promise<ProposalResult> {
   try {
@@ -801,32 +790,30 @@ async function processProposal(
       const MAX_VOTERS_PER_GROUP =
         FIRST_TXN_VOTERS + (MAX_GROUP_SIZE - 1) * OTHER_TXN_VOTERS; // = 7 + 15*8 = 127
 
-      // Process voters in groups of transactions
-      for (
-        let groupStart = 0;
-        groupStart < eligibleVoters.length;
-        groupStart += MAX_VOTERS_PER_GROUP
-      ) {
-        logger.debug(`Processing voter group starting at index ${groupStart}`);
-
-        try {
-          const processedCount = await processVoterBatch(
-            proposalClient,
-            eligibleVoters,
-            committeePublisher,
-            groupStart,
-          );
-          voterCount += processedCount;
-        } catch (error) {
-          logger.error(
-            `Failed to process transaction group for proposal ${proposal.id}`,
-            error,
-          );
-          throw new Error(
-            `Failed to assign voters to proposal ${proposal.id}: ${error instanceof Error ? error.message : String(error)}`,
-          );
-        }
-      }
+      const votersInChunks = chunk(eligibleVoters, MAX_VOTERS_PER_GROUP);
+      await pMap(
+        votersInChunks,
+        async (eligibleVotersChunk, i) => {
+          logger.debug(`Processing voter group starting at index ${i}`);
+          try {
+            const processedCount = await processVoterBatch(
+              proposalClient,
+              eligibleVotersChunk,
+              committeePublisher,
+            );
+            voterCount += eligibleVotersChunk.length;
+          } catch (error) {
+            logger.error(
+              `Failed to process transaction group for proposal ${proposal.id}`,
+              error,
+            );
+            throw new Error(
+              `Failed to assign voters to proposal ${proposal.id}: ${error instanceof Error ? error.message : String(error)}`,
+            );
+          }
+        },
+        { concurrency: maxRequestsPerProposal },
+      );
     }
 
     logger.info(
@@ -884,7 +871,13 @@ async function processBatch(
 
   // Create promises for processing each proposal
   const batchPromises = batch.map((proposal) =>
-    processProposal(proposal, proposalFactory, committeePublisher, apiUrl),
+    processProposal(
+      proposal,
+      proposalFactory,
+      committeePublisher,
+      maxRequestsPerProposal,
+      apiUrl,
+    ),
   );
 
   // Process this batch in parallel, continuing even if some proposals fail
@@ -983,7 +976,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Setup committee publisher
     const publisherInfo = createCommitteePublisher(
-      getStringEnvironmentVariable("COMMITTEE_PUBLISHER_MNEMONIC", locals)
+      getStringEnvironmentVariable("COMMITTEE_PUBLISHER_MNEMONIC", locals),
     );
     if (!publisherInfo) {
       return new Response(
