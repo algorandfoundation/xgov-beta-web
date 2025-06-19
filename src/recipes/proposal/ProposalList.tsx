@@ -17,13 +17,12 @@ import {
   filterAmountMap,
   filters,
 } from "@/recipes/proposal/list/ProposalFilter.tsx";
-<<<<<<< HEAD
-import VoteCounter from "@/components/VoteCounter/VoteCounter";
 import type { User } from "@/api/discourse/user.ts";
-=======
 import {VoteCounter} from "@/components/VoteCounter/VoteCounter";
 import { useMetadata } from "@/hooks";
->>>>>>> main
+import { UserCircleRow } from "@/components/UserCircleRow/UserCircleRow";
+import { useAvatars } from "@/hooks/useAvatar";
+import meta from "@/components/EditableAddress/EditableAddress.stories";
 const filterKeys = Object.keys(filters);
 
 export const proposalFilter = (
@@ -84,11 +83,9 @@ export const proposalFilter = (
 
 export function StackedList({
   proposals,
-  discourseUsers,
   activeAddress,
 }: {
   proposals: ProposalSummaryCardDetails[];
-  discourseUsers: User[][];
   activeAddress: string | null;
 }) {
   return (
@@ -109,6 +106,8 @@ export function StackedList({
         const phase = ProposalStatusMap[status];
 
         const metadata = useMetadata(id, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusFinal))
+        const avatars = useAvatars(metadata.data?.forumLink)
+        console.log('recent avatars', avatars.data?.recentAvatars)
 
         // Filter out blocked proposals
         // Filter out empty proposals if the active address is not the proposer
@@ -138,11 +137,7 @@ export function StackedList({
                 <div className="hidden lg:flex flex-wrap justify-end items-end gap-4">
                   {phase === "Voting" && (
                     <>
-<<<<<<< HEAD
-                      <UserCircleRow users={[]}/>
-=======
-                      {/* <UserCircleRow /> */}
->>>>>>> main
+                      <UserCircleRow users={avatars.data?.recentAvatars || []} />
                       <VoteCounter
                         approvals={Number(approvals)}
                         rejections={Number(rejections)}
@@ -152,13 +147,8 @@ export function StackedList({
 
                   {phase === "Discussion" && (
                     <>
-<<<<<<< HEAD
-                      <UserCircleRow users={[]} />
-                      <DiscussionLink to={forumLink} />
-=======
-                      {/* <UserCircleRow /> */}
+                      <UserCircleRow users={avatars.data?.recentAvatars || []} />
                       <DiscussionLink to={metadata.data?.forumLink} />
->>>>>>> main
                     </>
                   )}
                 </div>
@@ -185,11 +175,7 @@ export function StackedList({
                 <div className="flex flex-wrap justify-end items-end gap-4">
                   {phase === "Voting" && (
                     <>
-<<<<<<< HEAD
-                      <UserCircleRow users={[]} />
-=======
-                      {/* <UserCircleRow /> */}
->>>>>>> main
+                      <UserCircleRow users={avatars.data?.recentAvatars || []} />
                       <VoteCounter
                         approvals={Number(approvals)}
                         rejections={Number(rejections)}
@@ -199,13 +185,8 @@ export function StackedList({
 
                   {phase === "Discussion" && (
                     <>
-<<<<<<< HEAD
-                      <UserCircleRow users={[]} />
-                      <DiscussionLink to={forumLink} />
-=======
-                      {/* <UserCircleRow /> */}
+                      <UserCircleRow users={avatars.data?.recentAvatars || []} />
                       <DiscussionLink to={metadata.data?.forumLink} />
->>>>>>> main
                     </>
                   )}
                 </div>

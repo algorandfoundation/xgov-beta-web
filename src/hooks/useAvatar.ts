@@ -1,18 +1,13 @@
-import type { ProposalSummaryCardDetails } from "@/api";
+import { fetchDiscourseTopic, fetchDiscourseUsers } from "@/api/discourse/fetch";
 import { useQuery } from "@tanstack/react-query";
 
-
-
-
-export function useAvatar(proposal: ProposalSummaryCardDetails){
+export function useAvatars(forumLink?: string){
 
   // Fetch Discussion Users
-  // Fetch NFD Users
 
   return useQuery({
-    queryKey: ["getAvatar", proposal.proposer],
-    queryFn: () => {
-      return
-    },
+    queryKey: ["getAvatars", forumLink],
+    queryFn: () => fetchDiscourseTopic(forumLink!),
+    enabled: !!forumLink,
   })
 }
