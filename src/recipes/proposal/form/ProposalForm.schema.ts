@@ -7,7 +7,7 @@ export const validatorSchemas = {
       .string()
       .refine((val) => val !== "", { message: "Required field" })
   },
-  requestedAmount: (constraints: { min: number; max: number }) => {
+  requestedAmount: (constraints: { min: number; minErrorMessage: string; max: number; maxErrorMessage: string }) => {
     return z
       .number()
       .refine((val) => val !== 0, { message: "Required field" })
@@ -15,10 +15,10 @@ export const validatorSchemas = {
         message: "Must be a positive number",
       })
       .refine((val) => val >= constraints.min, {
-        message: `Must be at least ${constraints.min}`,
+        message: constraints.minErrorMessage,
       })
       .refine((val) => val <= constraints.max, {
-        message: `Insufficient balance. 3% of the requested amount must be escrowed. Maximum request based on your current balance is ${constraints.max}`,
+        message: constraints.maxErrorMessage,
       });
   },
   team: () => { return z.string().refine((val) => val !== "", { message: "Required field" }) },
@@ -52,7 +52,12 @@ export const proposalFormSchema = z
   .object({
     title: validatorSchemas.title(),
     description: validatorSchemas.description(),
-    requestedAmount: validatorSchemas.requestedAmount({ min: 1, max: 1_000_000 }),
+    requestedAmount: validatorSchemas.requestedAmount({
+      min: 1,
+      minErrorMessage: "Must be at least 1",
+      max: 1_000_000,
+      maxErrorMessage: "Must be at most 1,000,000",
+    }),
     team: validatorSchemas.team(),
     additionalInfo: validatorSchemas.additionalInfo(),
     openSource: validatorSchemas.openSource(),

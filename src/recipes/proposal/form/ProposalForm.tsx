@@ -57,11 +57,16 @@ export function ProposalForm({
 }) {
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
 
+  const minRequestedAmountInWholeAlgos = Number(minRequestedAmount) / 1e6;
+  const maxRequestedAmountInWholeAlgos = Number(maxRequestedAmount) / 1e6;
+
   const formSchema = proposalFormSchema.setKey(
     "requestedAmount",
     validatorSchemas.requestedAmount({
-      min: Number(minRequestedAmount) / 1e6,
-      max: Number(maxRequestedAmount) / 1e6,
+      min: minRequestedAmountInWholeAlgos,
+      minErrorMessage: `Must be at least ${minRequestedAmountInWholeAlgos}`,
+      max: maxRequestedAmountInWholeAlgos,
+      maxErrorMessage: `Insufficient balance. ${((bps || 0n) / 100n)}% of the requested amount must be escrowed. Maximum request based on your current balance is ${maxRequestedAmountInWholeAlgos.toFixed(0)}`,
     }),
   );
 

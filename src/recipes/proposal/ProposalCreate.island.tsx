@@ -57,8 +57,8 @@ export function ProposalCreate() {
   const currentProposal =
     currentProposals && currentProposals.length > 0 && currentProposals[0];
 
-  const maxRequestedAmount = (!!userBalance.data?.available && userBalance.data.available.microAlgos > 1_000n)
-    ? (((userBalance.data.available.microAlgos - 1_000n) / 1_000_000n) * 33n ) // enough to cover 3% of requested amount
+  const maxRequestedAmount = (!!userBalance.data?.available && userBalance.data.available.microAlgos > 1_000n && !!registry.data?.proposalCommitmentBps)
+    ? ((userBalance.data.available.microAlgos - 1_000n) * (registry.data?.proposalCommitmentBps / 100n))
     : 0n;
 
   useEffect(() => {
