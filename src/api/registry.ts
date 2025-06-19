@@ -15,7 +15,7 @@ if (globalThis.Buffer === undefined) {
   globalThis.Buffer = Buffer;
 }
 import type { XGovRegistryComposer } from '@algorandfoundation/xgov/registry';
-import { proposerFundingLogicSig, proposerFundingLogicSigSigner } from './testnet-funding-logicsig';
+import { fundingLogicSig, fundingLogicSigSigner } from './testnet-funding-logicsig';
 
 console.log("registry app id", env.PUBLIC_REGISTRY_APP_ID);
 const registryAppID: number = env.PUBLIC_REGISTRY_APP_ID;
@@ -183,11 +183,11 @@ export async function signup(
   if (network === "testnet") {
     builder = builder.addTransaction(
       await registryClient.algorand.createTransaction.payment({
-        sender: proposerFundingLogicSig.address(),
+        sender: fundingLogicSig.address(),
         receiver: address,
         amount: (100).algos(),
       }),
-      proposerFundingLogicSigSigner,
+      fundingLogicSigSigner,
     );
   }
 

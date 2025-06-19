@@ -37,8 +37,8 @@ import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
 import { queryClient } from "@/stores";
 import type { XGovRegistryComposer } from "@algorandfoundation/xgov/registry";
 import {
-  xgovFundingLogicSig,
-  xgovFundingLogicSigSigner,
+  fundingLogicSig,
+  fundingLogicSigSigner,
 } from "@/api/testnet-funding-logicsig";
 
 // const activeStatuses = [
@@ -188,11 +188,11 @@ export function ProfilePage({
     if (network === "testnet") {
       builder = builder.addTransaction(
         await registryClient.algorand.createTransaction.payment({
-          sender: xgovFundingLogicSig.address(),
+          sender: fundingLogicSig.address(),
           receiver: address,
           amount: (100).algos(),
         }),
-        xgovFundingLogicSigSigner,
+        fundingLogicSigSigner,
       );
     }
 
