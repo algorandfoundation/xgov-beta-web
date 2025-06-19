@@ -34,7 +34,7 @@ import {
 } from "@/recipes/proposal/form/ProposalForm.schema.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
-import { ConfirmationModal, useTransactionState, type TransactionStatus } from "@/components/ConfirmationModal/ConfirmationModal";
+import { ConfirmationModal, isLoadingState, useTransactionState, type TransactionStatus } from "@/components/ConfirmationModal/ConfirmationModal";
 
 export function ProposalForm({
   type,
@@ -43,9 +43,7 @@ export function ProposalForm({
   minRequestedAmount = 1n, // Default to 0 Algo
   maxRequestedAmount = 1_000_000n, // Default to 1M Algo
   onSubmit,
-  loading,
   transactionStatus,
-  error
 }: {
   type: "edit" | "create";
   proposal?: ProposalMainCardDetails;
@@ -53,10 +51,9 @@ export function ProposalForm({
   minRequestedAmount?: bigint;
   maxRequestedAmount?: bigint;
   onSubmit: (data: z.infer<typeof proposalFormSchema>) => void;
-  loading: boolean;
   transactionStatus: TransactionStatus;
-  error?: string;
 }) {
+  const loading = isLoadingState(transactionStatus);
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
 
   const formSchema = proposalFormSchema.setKey(
@@ -584,7 +581,6 @@ export function ProposalForm({
             submitText={type === "edit" ? "Update Proposal" : "Submit Proposal"}
             onSubmit={form.handleSubmit(onSubmit)}
             transactionStatus={transactionStatus}
-            errorMessage={error}
           />
         </form>
       </Form>

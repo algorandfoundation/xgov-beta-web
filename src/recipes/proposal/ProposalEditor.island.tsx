@@ -7,6 +7,7 @@ import { proposalFormSchema, ProposalForm } from "@/recipes";
 import { UseQuery, useRegistry, UseWallet } from "@/hooks";
 import { useState } from "react";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
+import { useTransactionState } from "@/components/ConfirmationModal/ConfirmationModal";
 
 export type EditProposalProps = {
   proposal?: ProposalMainCardDetails;
@@ -28,15 +29,14 @@ export function EditProposalForm({
 }) {
   const { activeAddress, transactionSigner } = useWallet();
   const registry = useRegistry();
-  const [editProposalLoading, setEditProposalLoading] = useState(false);
-  const [editProposalError, setEditProposalError] = useState<string | undefined>(undefined);
+
+  const { status, setStatus, } = useTransactionState()
 
   return (
     <ProposalForm
       type="edit"
       proposal={proposal}
-      loading={editProposalLoading}
-      error={editProposalError}
+      transactionStatus={status}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
         if (!activeAddress) {
           console.error("No active address");
@@ -59,7 +59,7 @@ export function EditProposalForm({
 
         const metadataOnlyChange = data.title === proposal.title && Number(data.fundingType) === proposal.fundingType && requestedAmount === proposal.requestedAmount && Number(data.focus) === proposal.focus;
 
-        if (!metadataOnlyChange) {  
+        if (!metadataOnlyChange) {
           console.error("Proposal metadata can only be edited, not funding or focus");
         }
 
@@ -69,8 +69,7 @@ export function EditProposalForm({
             data,
             transactionSigner,
             proposal,
-            setEditProposalLoading,
-            setEditProposalError
+            setStatus,
           )
 
           navigate(`/proposal/${proposal.id}`);

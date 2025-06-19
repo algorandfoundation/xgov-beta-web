@@ -410,10 +410,10 @@ export function getVotingDuration(
 export async function openProposal(
   address: string,
   transactionSigner: TransactionSigner,
-  setOpenProposalLoading: (state: boolean) => void,
-  setError: (error: string) => void,
+  setStatus: (status: TransactionStatus) => void,
 ) {
-  setOpenProposalLoading(true);
+  const wrappedTransactionSigner = wrapTransactionSigner(transactionSigner, setStatus)
+  setStatus("loading");
 
   try {
     const proposalFee = PROPOSAL_FEE.microAlgo();
@@ -427,7 +427,7 @@ export async function openProposal(
     // open a proposal
     const result = await registryClient.send.openProposal({
       sender: address,
-      signer: transactionSigner,
+      signer: wrappedTransactionSigner,
       args: {
         payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
           amount: proposalFee.microAlgos,
@@ -442,20 +442,18 @@ export async function openProposal(
 
     // Store proposal ID if available
     if (!result.return) {
-      setOpenProposalLoading(false);
-      setError("Proposal creation failed");
+      setStatus(new Error("Proposal creation failed"));
       return;
     }
 
-    setOpenProposalLoading(false);
+    setStatus("idle");
 
     return result.return;
   } catch (e: any) {
-    setOpenProposalLoading(false);
     if (e.message.includes("tried to spend")) {
-      setError("Insufficient funds to create proposal.");
+      setStatus(new Error("Insufficient funds to create proposal."));
     } else {
-      setError("Failed to create proposal.");
+      setStatus(new Error("Failed to create proposal."));
     }
   }
 }
@@ -479,7 +477,6 @@ export async function submitProposal(
   appId: bigint,
   bps: bigint,
   setStatus: (status: TransactionStatus) => void,
-  setError: (error: string) => void,
 ) {
   const wrappedTransactionSigner = wrapTransactionSigner(transactionSigner, setStatus)
   setStatus("loading");
@@ -556,9 +553,9 @@ export async function submitProposal(
     setStatus("idle");
   } catch (e: any) {
     if (e.message.includes("tried to spend")) {
-      setError("Insufficient funds to submit proposal.");
+      setStatus(new Error("Insufficient funds to submit proposal."));
     } else {
-      setError("Failed to submit proposal.");
+      setStatus(new Error("Failed to submit proposal."));
     }
   }
 }
@@ -692,12 +689,13 @@ export async function submitProposal(
 export async function updateMetadata(
   activeAddress: string,
   data: any,
-  transactionSigner: TransactionSigner,
+  innerTransactionSigner: TransactionSigner,
   proposal: ProposalSummaryCardDetails,
-  setUpdateMetadataLoading: (state: boolean) => void,
-  setError: (error: string) => void,
+  setStatus: (status: TransactionStatus) => void,
 ) {
-  setUpdateMetadataLoading(false);
+  const transactionSigner = wrapTransactionSigner(innerTransactionSigner, setStatus);
+
+  setStatus("loading");
 
   try {
     const metadataBoxName = new Uint8Array(Buffer.from("M"));
@@ -778,15 +776,13 @@ export async function updateMetadata(
     }
 
     await resubmitGroup.send();
-    setUpdateMetadataLoading(false);
-
+    setStatus("idle");
     return proposal.id;
   } catch (e: any) {
-    setUpdateMetadataLoading(false);
     if (e.message.includes("tried to spend")) {
-      setError("Insufficient funds to update proposal metadata.");
+      setStatus(new Error("Insufficient funds to update proposal metadata."));
     } else {
-      setError("Failed to update proposal metadata.");
+      setStatus(new Error("Failed to update proposal metadata."));
     }
   }
 }

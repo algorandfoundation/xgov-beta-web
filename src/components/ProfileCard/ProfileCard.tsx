@@ -20,17 +20,22 @@ import { AlgorandIcon } from "../icons/AlgorandIcon";
 import termsAndConditionsString from "./TermsAndConditionsText.md?raw";
 import { TermsAndConditionsModal } from "@/recipes";
 import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispenserBanner";
+import { isLoadingState, type TransactionStatus } from "../ConfirmationModal/ConfirmationModal";
 
 export interface ProfileCardProps {
   address: string;
+
   votingAddress: string;
   setVotingAddress: (votingAddress: string) => Promise<void>;
-  setVotingAddressLoading: boolean;
+  setVotingAddressStatus: TransactionStatus;
+
   isXGov: boolean;
   xGovSignupCost: bigint;
+
   subscribeXgov: () => Promise<void>;
   unsubscribeXgov: () => Promise<void>;
-  subscribeXGovLoading: boolean;
+  subscribeXGovStatus: TransactionStatus;
+
   proposer?: { isProposer: boolean } & ProposerBoxState;
   proposerSignupCost: bigint;
   subscribeProposer: () => Promise<void>;
@@ -41,14 +46,17 @@ export interface ProfileCardProps {
 
 export function ProfileCard({
   address,
+
   votingAddress,
   setVotingAddress,
-  setVotingAddressLoading,
+  setVotingAddressStatus,
+
   isXGov,
   xGovSignupCost,
   subscribeXgov,
   unsubscribeXgov,
-  subscribeXGovLoading,
+  subscribeXGovStatus,
+
   proposer,
   proposerSignupCost,
   subscribeProposer,
@@ -74,7 +82,7 @@ export function ProfileCard({
             <XGovStatusPill
               isXGov={isXGov}
               unsubscribeXgov={unsubscribeXgov}
-              unsubscribeXGovLoading={subscribeXGovLoading}
+              unsubscribeXGovLoading={isLoadingState(subscribeXGovStatus)}
               disabled={address !== activeAddress}
             />
             {!proposer ||
@@ -88,13 +96,13 @@ export function ProfileCard({
           {address === activeAddress && !isXGov ? (
             <BecomeAnXGovBannerButton
               onClick={() => setShowBecomeXGovModal(true)}
-              disabled={subscribeXGovLoading}
+              disabled={isLoadingState(subscribeXGovStatus)}
             />
           ) : (
             <EditableAddress
               title="Voting Address"
               defaultValue={votingAddress}
-              loading={setVotingAddressLoading}
+              loading={isLoadingState(setVotingAddressStatus)}
               onSave={(v) => {
                 setVotingAddress(v);
               }}

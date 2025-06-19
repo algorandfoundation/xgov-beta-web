@@ -15,20 +15,14 @@ export type TransactionStatus =
   | "loading"
   | "signing"
   | "sending"
-  | "error";
+  | Error;
 
 export function useTransactionState() {
   const [status, setStatus] = useState<TransactionStatus>("idle");
-  const [errorMessage, _setErrorMessage] = useState("");
 
-  const reset = () => {
-    setStatus("idle");
-    setErrorMessage("");
-  };
-  const setErrorMessage = (err: string) => {
-    setStatus("error");
-    _setErrorMessage(err);
-  };
+  const reset = () => setStatus("idle")
+  const errorMessage = status instanceof Error ? status?.message : undefined;
+  const setErrorMessage = (err: string) => setStatus(new Error(err));
 
   return {
     status,
@@ -37,6 +31,10 @@ export function useTransactionState() {
     setErrorMessage,
     reset,
   };
+}
+
+export function isLoadingState(state: TransactionStatus) {
+  return state === "loading" || state === "signing" || state === "sending"
 }
 
 export interface ConfirmationModalProps {
@@ -71,7 +69,6 @@ export function ConfirmationModal({
   submitText = "Submit",
   onSubmit,
   transactionStatus,
-  errorMessage = "",
 }: ConfirmationModalProps) {
   const { activeWallet } = useWallet();
 
@@ -92,7 +89,7 @@ export function ConfirmationModal({
           )}
           {!!warning && warning}
         </DialogHeader>
-        {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
+        {transactionStatus instanceof Error && <p className="text-algo-red">{transactionStatus.message}</p>}
         <DialogFooter className="mt-8">
           <Button variant="ghost" onClick={onClose}>
             Cancel

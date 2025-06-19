@@ -7,7 +7,7 @@ import {
   UseWallet,
 } from "@/hooks";
 import { ProposalForm, proposalFormSchema } from "@/recipes";
-import { ProposalStatus, submitProposal } from "@/api";
+import { ProposalStatus, submitProposal, wrapTransactionSigner } from "@/api";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useEffect, useState } from "react";
 import { navigate } from "astro:transitions/client";
@@ -36,14 +36,13 @@ export function ProposalCreate() {
   const userBalance = useBalance(activeAddress);
   const registry = useRegistry();
   const proposalsData = useProposalsByProposer(activeAddress);
-  const [proposalSubmitLoading, setProposalSubmitLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const [_searchParams, setSearchParams] = useState(searchParams);
   useSearchParamsObserver((searchParams) => {
     setSearchParams(searchParams);
   });
 
-  const { status, setStatus, errorMessage, setErrorMessage, reset } =
+  const { status, setStatus, setErrorMessage, reset } =
     useTransactionState();
 
   const emptyProposals =
@@ -88,8 +87,6 @@ export function ProposalCreate() {
       bps={registry.data?.proposalCommitmentBps || 0n}
       minRequestedAmount={registry.data?.minRequestedAmount || 1n}
       maxRequestedAmount={maxRequestedAmount}
-      loading={proposalSubmitLoading}
-      error={errorMessage}
       transactionStatus={status}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
         // TODO
@@ -121,7 +118,6 @@ export function ProposalCreate() {
             appId,
             registry.data?.proposalCommitmentBps,
             setStatus,
-            setErrorMessage,
           );
 
           navigate(`/proposal/${appId}`);
