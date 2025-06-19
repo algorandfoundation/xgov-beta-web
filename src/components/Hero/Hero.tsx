@@ -86,7 +86,7 @@ export function Hero({
         <p
           className={cn(
             animations.descriptionFadeIn,
-            "font-mono lg:text-2xl lg:pt-44 max-w-lg lg:max-w-4xl p-2 md:pr-8 mb-0 sm:mb-14 lg:mb-0 mt-2 z-10",
+            "font-mono lg:text-2xl lg:pt-44 max-w-lg lg:max-w-4xl p-2 md:pr-8 mb-32 sm:mb-40 lg:mb-14 mt-2 z-10",
           )}
         >
           {description}

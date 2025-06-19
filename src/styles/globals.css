@@ -30,3 +30,13 @@ html.dark::-webkit-scrollbar {
   background-color: #001324;
   width: 6px;
 }
+
+pera-wallet-sign-txn-toast {
+  position: relative;
+  z-index: 50 !important;
+}
+
+defly-wallet-sign-txn-toast {
+  position: relative;
+  z-index: 50 !important;
+}
