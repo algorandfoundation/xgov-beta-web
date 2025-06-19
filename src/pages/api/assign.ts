@@ -1,7 +1,9 @@
 import {
-  algorand,
+  algod,
   getFinalProposal,
   getFinalProposals,
+  indexer,
+  kmd,
   registryClient,
   type ProposalSummaryCardDetails,
 } from "@/api";
@@ -14,6 +16,7 @@ import {
 import algosdk, { type TransactionSigner } from "algosdk";
 import type { APIRoute } from "astro";
 import { createLogger } from "@/utils/logger";
+import { AlgorandClient } from "@algorandfoundation/algokit-utils";
 
 // Create logger for this file
 const logger = createLogger("assign-api");
@@ -942,6 +945,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
         },
       );
     }
+
+    const algorand = AlgorandClient.fromClients({ algod, indexer, kmd, });
+    // cache suggested params for 30 minutes
+    const suggestedParams = await algorand.getSuggestedParams();
+    algorand.setSuggestedParamsCache(suggestedParams, new Date(Date.now() + 30 * 60 * 1000));
+    // max txn validity to accomodate params caching
+    algorand.setDefaultValidityWindow(1000);
 
     // Create proposal factory
     const proposalFactory = new ProposalFactory({ algorand });
