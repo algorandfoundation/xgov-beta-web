@@ -1,11 +1,10 @@
 import {
-  algod,
   getFinalProposal,
   getFinalProposals,
-  indexer,
-  kmd,
-  registryClient,
   type ProposalSummaryCardDetails,
+  getAlgodClient,
+  getIndexerClient,
+  getRegistryClient,
 } from "@/api";
 import {
   ProposalClient,
@@ -17,8 +16,9 @@ import algosdk, { type TransactionSigner } from "algosdk";
 import type { APIRoute } from "astro";
 import { createLogger } from "@/utils/logger";
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
-import { chunk } from "@/functions";
+import { chunk, getNumericEnvironmentVariable, getStringEnvironmentVariable } from "@/functions";
 import pMap from "p-map";
+import type { XGovRegistryClient } from "@algorandfoundation/xgov/registry";
 
 // Create logger for this file
 const logger = createLogger("assign-api");
@@ -253,26 +253,6 @@ async function getCommitteeData(
     );
     return null;
   }
-}
-
-function getNumericEnvironmentVariable(
-  localsKey: string,
-  locals: App.Locals,
-  defaultValue: number,
-): number {
-  // @ts-expect-error, runtime can be undefined
-  return locals?.runtime?.env && localsKey in locals?.runtime?.env
-    ? // @ts-expect-error, runtime can be undefined
-      parseInt(locals.runtime.env[localsKey], 10)
-    : defaultValue;
-}
-
-function getStringEnvironmentVariable(key: string, locals: App.Locals): string {
-  // @ts-expect-error, this can be undefined
-  if (locals?.runtime?.env && key in locals?.runtime?.env)
-    // @ts-expect-error, this can be undefined
-    return locals?.runtime?.env[key];
-  return import.meta.env[key] ?? "";
 }
 
 /**
@@ -535,6 +515,7 @@ async function getEligibleVoters(
  * @returns Transaction parameters
  */
 function createTransactionParams(
+  registryClient: XGovRegistryClient,
   voters: [string, number][],
   boxReferences: Uint8Array[],
   committeePublisher: { addr: string; signer: TransactionSigner },
@@ -568,6 +549,7 @@ function createTransactionParams(
  * @returns Number of voters successfully assigned
  */
 async function processVoterBatch(
+  registryClient: XGovRegistryClient,
   proposalClient: ProposalClient,
   eligibleVoters: CommitteeMember[],
   committeePublisher: { addr: string; signer: TransactionSigner },
@@ -662,6 +644,7 @@ async function processVoterBatch(
 
     // Create transaction parameters
     const txnParams = createTransactionParams(
+      registryClient,
       voters,
       boxReferences,
       committeePublisher,
@@ -719,6 +702,7 @@ async function processVoterBatch(
  * @returns Result of the processing operation
  */
 async function processProposal(
+  registryClient: XGovRegistryClient,
   proposal: ProposalSummaryCardDetails,
   proposalFactory: ProposalFactory,
   committeePublisher: { addr: string; signer: TransactionSigner },
@@ -797,6 +781,7 @@ async function processProposal(
           logger.debug(`Processing voter group starting at index ${i}`);
           try {
             const processedCount = await processVoterBatch(
+              registryClient,
               proposalClient,
               eligibleVotersChunk,
               committeePublisher,
@@ -861,6 +846,7 @@ async function processProposal(
  * @returns Processing results
  */
 async function processBatch(
+  registryClient: XGovRegistryClient,
   batch: ProposalSummaryCardDetails[],
   proposalFactory: ProposalFactory,
   committeePublisher: { addr: string; signer: TransactionSigner },
@@ -872,6 +858,7 @@ async function processBatch(
   // Create promises for processing each proposal
   const batchPromises = batch.map((proposal) =>
     processProposal(
+      registryClient,
       proposal,
       proposalFactory,
       committeePublisher,
@@ -976,7 +963,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Setup committee publisher
     const publisherInfo = createCommitteePublisher(
-      getStringEnvironmentVariable("COMMITTEE_PUBLISHER_MNEMONIC", locals),
+      getStringEnvironmentVariable("COMMITTEE_PUBLISHER_MNEMONIC", locals, ""),
     );
     if (!publisherInfo) {
       return new Response(
@@ -992,8 +979,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
         },
       );
     }
-
-    const algorand = AlgorandClient.fromClients({ algod, indexer, kmd });
+    const algod = getAlgodClient(locals, "BACKEND");
+    const indexer = getIndexerClient(locals, "BACKEND");
+    const algorand = AlgorandClient.fromClients({ algod, indexer });
     // cache suggested params for 30 minutes
     const suggestedParams = await algorand.getSuggestedParams();
     algorand.setSuggestedParamsCache(
@@ -1002,6 +990,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
     // max txn validity to accomodate params caching
     algorand.setDefaultValidityWindow(1000);
+
+    const registryClient = getRegistryClient(algorand);
 
     // Create proposal factory
     const proposalFactory = new ProposalFactory({ algorand });
@@ -1023,11 +1013,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
 
       const batchResults = await processBatch(
+        registryClient,
         batch,
         proposalFactory,
         publisherInfo,
         maxRequestsPerProposal,
-        getStringEnvironmentVariable("COMMITTEE_API_URL", locals),
+        getStringEnvironmentVariable("COMMITTEE_API_URL", locals, ""),
       );
       proposalResults.push(...batchResults);
     }
