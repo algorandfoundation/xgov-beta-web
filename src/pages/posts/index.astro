@@ -28,20 +28,16 @@ const posts = await fetch(XGOV_POSTS).then(r=>r.json())
       </BreadcrumbList>
     </Breadcrumb>
     <div class="grid gap-4">
-      {posts.topic_list.topics.map((post: any) => (
+      {posts.latest_posts.map((post: any) => (
         <article class="p-4 border rounded-lg bg-white dark:bg-algo-black border-algo-black dark:border-white">
           <h2 class="text-xl font-semibold mb-2">
-            <a href={`https://forum.algorand.org/t/${post.slug}/${post.id}`} target="_blank" rel="noopener noreferrer"
+            <a href={`https://forum.algorand.co${post.post_url}`} target="_blank" rel="noopener noreferrer"
                class="hover:underline">
               {post.title}
             </a>
           </h2>
           <div class="text-sm text-gray-600 dark:text-gray-300">
-            <span>Last Posted by: {post.last_poster_username}</span>
-            <span class="mx-2">•</span>
-            <span>Replies: {post.posts_count - 1}</span>
-            <span class="mx-2">•</span>
-            <span>Views: {post.views}</span>
+            <span>Posted by: {post.username}</span>
           </div>
         </article>
       ))}
