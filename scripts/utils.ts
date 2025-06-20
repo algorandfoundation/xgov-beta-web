@@ -1,4 +1,3 @@
-import { AlgorandClient as algorand } from "../src/algorand/algo-client";
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
 
 export async function getLastRound(algorand: AlgorandClient): Promise<number> {
@@ -45,4 +44,19 @@ export async function timeWarp(algorand: AlgorandClient, to: number) {
   await algorand.client.algod.setBlockOffsetTimestamp(to - current).do();
   await roundWarp(algorand);
   await algorand.client.algod.setBlockOffsetTimestamp(0).do();
+}
+
+/**
+ * Converts a committee ID buffer to a base64url safe filename
+ *
+ * @param committeeId The committee ID as a Buffer
+ * @returns A base64url encoded string safe for filenames
+ */
+export function committeeIdToSafeFileName(committeeId: Buffer): string {
+  // Use base64url encoding (base64 without padding, using URL-safe characters)
+  return committeeId
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
 }

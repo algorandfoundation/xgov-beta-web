@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import yargs from 'yargs'
-import { registryClient } from "@/api/algorand";
+import { hideBin } from 'yargs/helpers' // Add this import
+import { algorand, registryClient } from "@/api/algorand";
 import algosdk, { ALGORAND_MIN_TX_FEE, makeBasicAccountTransactionSigner } from "algosdk";
+import { committeeIdToSafeFileName} from './scripts/utils'
 
 type CommitteeInfo = {
     xGovs: {
@@ -15,17 +17,26 @@ type CommitteeInfo = {
     }
 }
 
-const { proposalId, approve } = await yargs().options({
-    proposalId: { number: true, demandOption: true },
-    approve: { boolean: true, demandOption: true },
+const { proposalId, approve, votersFile, committeeDir } = await yargs(hideBin(process.argv)).options({
+    proposalId: { type: 'number', demandOption: true, alias: 'id' },
+    approve: { type: 'boolean', demandOption: true, default: true, alias: 'a' },
+    votersFile: { type: 'string', default: "./.voters.json" },
+    committeeDir: { type: 'string', default: "./src/pages/api/committees-dev" }
 }).argv
 
-const voterFile = fs.readFileSync("./.voters.json", "utf-8");
-const voters: { addr: string, secret: string }[] = JSON.parse(voterFile);
+const votingFile = fs.readFileSync(votersFile, "utf-8");
+const voters: { addr: string, secret: string }[] = JSON.parse(votingFile);
 
-const committeeId = (await registryClient.state.global.committeeId()).asString()
+console.log('registry client', registryClient.appId);
 
-const committeeFile = fs.readFileSync(`./public/committees/${committeeId}.json`, "utf-8");
+const committeeBytes = await registryClient.state.global.committeeId()
+const committeeByteArray = committeeBytes.asByteArray()
+if (!committeeByteArray) {
+    throw new Error('Committee ID not found')
+}
+const committeeId = committeeIdToSafeFileName(Buffer.from(committeeByteArray))
+
+const committeeFile = fs.readFileSync(`${committeeDir}/${committeeId}.json`, "utf-8");
 const committeeInfo: CommitteeInfo = JSON.parse(committeeFile);
 const xgovs = committeeInfo.xGovs
 
@@ -35,14 +46,11 @@ for (let i = 0; i < voters.length; i++) {
 
     const actualVotingPower = xgovs.find(x => x.address === voters[i].addr)?.votes ?? 0;
 
-    const signer = makeBasicAccountTransactionSigner({
-        addr: voters[i].addr,
-        sk: Buffer.from(voters[i].secret, "base64"),
-    });
+    const account = algorand.account.fromMnemonic(voters[i].secret);
 
     group.voteProposal({
         sender: voters[i].addr,
-        signer,
+        signer: account.signer,
         args: {
             proposalId,
             xgovAddress: voters[i].addr,

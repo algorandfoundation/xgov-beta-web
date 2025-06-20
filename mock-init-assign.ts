@@ -6,6 +6,7 @@ import { XGovRegistryFactory } from "@algorandfoundation/xgov/registry";
 import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 import { algorand } from "@/api/algorand";
 import { ProposalFactory } from "@algorandfoundation/xgov";
+import { committeeIdToSafeFileName} from './scripts/utils'
 import { mockProposals } from "./__fixtures__/proposals";
 import {
   DISCUSSION_DURATION_LARGE,
@@ -41,21 +42,6 @@ interface CommitteePair {
     address: string;
     votes: number;
   }[];
-}
-
-/**
- * Converts a committee ID buffer to a base64url safe filename
- *
- * @param committeeId The committee ID as a Buffer
- * @returns A base64url encoded string safe for filenames
- */
-function committeeIdToSafeFileName(committeeId: Buffer): string {
-  // Use base64url encoding (base64 without padding, using URL-safe characters)
-  return committeeId
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
 }
 
 /**
@@ -114,6 +100,7 @@ export async function timeWarp(to: number) {
   await algorand.client.algod.setBlockOffsetTimestamp(0).do();
 }
 
+algorand.setSuggestedParamsCacheTimeout(0);
 // Generate admin account (the one that creates the registry)
 const fundAmount = (10).algo();
 const adminAccount = await algorand.account.fromKmd(
@@ -216,12 +203,46 @@ const admin: TransactionSignerAccount & { account: algosdk.Account; } = {
   account: adminAccount.account,
 }
 
-const committeeMembers: (TransactionSignerAccount & { account: algosdk.Account; })[] = [
+let committeeMembers: (TransactionSignerAccount & { account: algosdk.Account; })[] = [
   admin,
 ];
 
 const committeeVotes: number[] = [100];
 let committeeVotesSum = 100;
+
+const votersFilePath = "./.voters.json";
+let votersLength = 0;
+let voterAddresses: string[] = []
+
+console.log("voters file exists", fs.existsSync(votersFilePath))
+
+if (fs.existsSync(votersFilePath)) {
+  const votersFile = fs.readFileSync(votersFilePath, "utf-8");
+  const voters: { addr: string; secret: string; }[] = JSON.parse(votersFile);
+  votersLength = voters.length;
+
+  // Transform voters into the correct format
+  const transformedVoters = voters.map(voter => {
+
+    voterAddresses = [...voterAddresses, voter.addr];
+
+    const votingPower = Math.floor(Math.random() * 1_000) + 1;
+    committeeVotes.push(votingPower);
+
+    const account = algorand.account.fromMnemonic(voter.secret);
+    return {
+      addr: voter.addr,
+      signer: account.signer,
+      account: account.account,
+    };
+  });
+  
+  committeeMembers = [...committeeMembers, ...transformedVoters];
+}
+
+for (let i = 0; i < votersLength; i++) {
+  await algorand.account.ensureFunded(voterAddresses[i], dispenser, fundAmount);
+}
 
 for (let i = 0; i < 400; i++) {
   const randomAccount = algorand.account.random();
@@ -507,12 +528,12 @@ for (const pair of proposalPairs) {
   fs.writeFileSync(filePath, committeeJson, "utf-8");
 
   // Store committee data for later use when finalizing
-  const committeeInfo = {
-    committeeId,
-    size: committeeData.xGovs.length,
-    votes: committeeVoteSum,
-    fileName: safeFileName
-  };
+  // const committeeInfo = {
+  //   committeeId,
+  //   size: committeeData.xGovs.length,
+  //   votes: committeeVoteSum,
+  //   fileName: safeFileName
+  // };
 
   // Associate each proposal in the pair with this committee info
   pair.forEach(proposalId => {
@@ -645,7 +666,7 @@ fs.writeFileSync(
         };
       }),
       proposalIds,
-      xGovs: committeeMembers.map((member, index) => {
+      xGovs: committeeMembers.filter(member => !voterAddresses.includes(member.addr)).map((member, index) => {
         return {
           address: member.addr,
           votes: committeeVotes[index],
