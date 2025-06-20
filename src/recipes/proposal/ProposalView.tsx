@@ -273,7 +273,7 @@ function DiscussionStatusCard({
       className={className}
       header={header}
       subHeader="Discussion is ongoing, take part and help shape public sentiment on this proposal."
-      sideHeader={discussionDuration > Number(minimumDiscussionDuration) ? 'Finalizable!' : remainingTime}
+      sideHeader={discussionDuration > Number(minimumDiscussionDuration) ? 'Ready to submit' : remainingTime}
       icon={icon}
       action={action}
     />
