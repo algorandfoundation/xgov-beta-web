@@ -1,25 +1,46 @@
 import fs from "node:fs";
+import yargs from 'yargs'
 import { registryClient } from "@/api/algorand";
 import algosdk, { ALGORAND_MIN_TX_FEE, makeBasicAccountTransactionSigner } from "algosdk";
 
-// TODO: setup cli args for these options
-const proposalId = 0n
-const approve = true;
+type CommitteeInfo = {
+    xGovs: {
+        address: string;
+        votes: number;
+    }[],
+    metadata: {
+        name: string;
+        description: string;
+        createdAt: string;
+    }
+}
+
+const { proposalId, approve } = await yargs().options({
+    proposalId: { number: true, demandOption: true },
+    approve: { boolean: true, demandOption: true },
+}).argv
 
 const voterFile = fs.readFileSync("./.voters.json", "utf-8");
 const voters: { addr: string, secret: string }[] = JSON.parse(voterFile);
 
+const committeeId = (await registryClient.state.global.committeeId()).asString()
+
+const committeeFile = fs.readFileSync(`./public/committees/${committeeId}.json`, "utf-8");
+const committeeInfo: CommitteeInfo = JSON.parse(committeeFile);
+const xgovs = committeeInfo.xGovs
+
+let group = registryClient.newGroup()
+
 for (let i = 0; i < voters.length; i++) {
 
-    // TODO: fetch voting power for each voter
-    const actualVotingPower = 0n
+    const actualVotingPower = xgovs.find(x => x.address === voters[i].addr)?.votes ?? 0;
 
     const signer = makeBasicAccountTransactionSigner({
         addr: voters[i].addr,
         sk: Buffer.from(voters[i].secret, "base64"),
     });
 
-    await registryClient.send.voteProposal({
+    group.voteProposal({
         sender: voters[i].addr,
         signer,
         args: {
@@ -29,13 +50,19 @@ for (let i = 0; i < voters.length; i++) {
             rejectionVotes: approve ? 0n : actualVotingPower,
         },
         accountReferences: [voters[i].addr],
-        appReferences: [proposalId],
+        appReferences: [BigInt(proposalId)],
         boxReferences: [
             new Uint8Array(Buffer.concat([Buffer.from('x'), algosdk.decodeAddress(voters[i].addr).publicKey])),
             {
-                appId: proposalId, name: new Uint8Array(Buffer.concat([Buffer.from('V'),
+                appId: BigInt(proposalId), name: new Uint8Array(Buffer.concat([Buffer.from('V'),
                 algosdk.decodeAddress(voters[i].addr).publicKey]))
             }],
-        extraFee: (ALGORAND_MIN_TX_FEE * 100).microAlgos(),
+        extraFee: (ALGORAND_MIN_TX_FEE).microAlgos(),
     })
+
+    const groupFullOrLast = (await (await group.composer()).count()) === 16 || i === (voters.length - 1)
+    if (groupFullOrLast) {
+        await group.send({ suppressLog: true });
+        group = registryClient.newGroup();
+    }
 }
