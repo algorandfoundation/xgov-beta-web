@@ -195,6 +195,16 @@ export async function getProposal(
   }
 }
 
+export async function getFinalProposal(
+  id: bigint,
+): Promise<ProposalMainCardDetails> {
+  const proposalData = await getProposal(id);
+  if (proposalData.status !== ProposalStatus.ProposalStatusFinal) {
+    throw new Error("Proposal not in final state")
+  }
+  return proposalData
+}
+
 export async function getVoterBox(id: bigint, address: string): Promise<{ votes: bigint, voted: boolean }> {
   const addr = algosdk.decodeAddress(address).publicKey;
   const voterBoxName = new Uint8Array(Buffer.concat([Buffer.from('V'), addr]));
@@ -668,6 +678,22 @@ export async function updateMetadata(
       setError("Failed to update proposal metadata.");
     }
   }
+}
+
+export async function callFinalize(proposalId: bigint) {
+  console.log("Staring finalize call", proposalId);
+  const response = await fetch("/api/assign", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      proposalIds: [proposalId],
+    }),
+  });
+  console.log("Finished finalize call");
+  const data = await response.json();
+  console.log("Finalize data:", data);
 }
 
 // export async function resubmitProposal(
