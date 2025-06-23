@@ -291,11 +291,11 @@ export function getDiscussionDuration(
 export function getXGovQuorum(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return Number(thresholds[0]) / 10;
+      return Number(thresholds[0]) / 100;
     case ProposalCategory.ProposalCategoryMedium:
-      return Number(thresholds[1]) / 10;
+      return Number(thresholds[1]) / 100;
     case ProposalCategory.ProposalCategoryLarge:
-      return Number(thresholds[2]) / 10;
+      return Number(thresholds[2]) / 100;
     default:
       return 0;
   }
@@ -304,11 +304,11 @@ export function getXGovQuorum(category: ProposalCategory, thresholds: [bigint, b
 export function getVoteQuorum(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return Number(thresholds[0]) / 10;
+      return Number(thresholds[0]) / 100;
     case ProposalCategory.ProposalCategoryMedium:
-      return Number(thresholds[1]) / 10;
+      return Number(thresholds[1]) / 100;
     case ProposalCategory.ProposalCategoryLarge:
-      return Number(thresholds[2]) / 10;
+      return Number(thresholds[2]) / 100;
     default:
       return 0;
   }
