@@ -29,6 +29,7 @@ export interface ConnectProps {
   activeAddress: string | null;
   activeWallet?: BaseWallet | null;
   nfdName?: string;
+  hideIcon?: boolean;
 }
 
 export function Connect({
@@ -37,6 +38,7 @@ export function Connect({
   wallets,
   activeAddress,
   nfdName,
+  hideIcon = false,
 }: ConnectProps) {
   const [dialogOpen, setOpenDialog] = useState(false);
 
@@ -63,7 +65,7 @@ export function Connect({
         variant="default"
         onClick={() => setOpenDialog(true)}
       >
-        <WalletIcon className="size-6 stroke-algo-black group-hover:stroke-white dark:stroke-white dark:group-hover:stroke-algo-black stroke-[1.5]" />
+        { !hideIcon && <WalletIcon className="size-6 stroke-algo-black group-hover:stroke-white dark:stroke-white dark:group-hover:stroke-algo-black stroke-[1.5]" /> }
         {cta}
       </InfinityMirrorButton>
     </ConnectDialog>
@@ -114,7 +116,7 @@ function ConnectDialog({
     <Dialog open={open}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
-        className="sm:max-w-[425px] rounded-lg"
+        className="h-full sm:max-w-[425px] rounded-lg"
         onCloseClick={() => setOpen(false)}
       >
         <DialogHeader className="mt-12 flex flex-col items-start gap-2">
