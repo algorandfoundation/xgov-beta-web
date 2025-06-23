@@ -6,12 +6,22 @@ import { UseWallet } from "@/hooks/useWallet";
 
 export type ConnectIslandProps = {
   path?: string;
+  cta?: string;
+  hiddenWhenConnected?: boolean;
 };
 
-export function ConnectController({ path = "/" }: ConnectIslandProps) {
+export function ConnectController({ path = "/", cta = 'Connect Wallet', hiddenWhenConnected = false }: ConnectIslandProps) {
   const manager = useWallet();
+
+  console.log('hiddenWhenConnected:', hiddenWhenConnected);
+  
+  if (hiddenWhenConnected && !!manager.activeWallet) {
+    return null;
+  }
+
   return (
     <Connect
+      cta={cta}
       onLogOut={() => {
         manager.activeWallet!.disconnect();
         path.includes("profile") && navigate("/");
@@ -21,7 +31,9 @@ export function ConnectController({ path = "/" }: ConnectIslandProps) {
     />
   );
 }
+
 export function ConnectIsland(props: ConnectIslandProps) {
+  console.log('island hiddenWhenConnected:', props.hiddenWhenConnected);
   return (
     <UseWallet>
       <ConnectController {...props} />

@@ -23,6 +23,7 @@ import { InfinityMirrorButton } from "../button/InfinityMirrorButton/InfinityMir
 
 export interface ConnectProps {
   path: string;
+  cta?: string;
   onLogOut: () => void;
   wallets: Wallet[];
   activeAddress: string | null;
@@ -31,6 +32,7 @@ export interface ConnectProps {
 }
 
 export function Connect({
+  cta = 'Connect Wallet',
   onLogOut,
   wallets,
   activeAddress,
@@ -62,7 +64,7 @@ export function Connect({
         onClick={() => setOpenDialog(true)}
       >
         <WalletIcon className="size-6 stroke-algo-black group-hover:stroke-white dark:stroke-white dark:group-hover:stroke-algo-black stroke-[1.5]" />
-        Connect Wallet
+        {cta}
       </InfinityMirrorButton>
     </ConnectDialog>
   );

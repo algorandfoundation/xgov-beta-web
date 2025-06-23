@@ -9,6 +9,7 @@ import { AlgoShapeIcon11 } from "@/components/icons/AlgoShapeIcon11.tsx";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon.tsx";
 import animations from "@/styles/homepage-animations.module.css";
 import { cn } from "@/functions/utils";
+import { ConnectIsland } from "../Connect/Connect.island";
 
 export interface HeroProps {
   title: string;
@@ -83,14 +84,26 @@ export function Hero({
         <AlgoShapeIcon11
           className={cn(animations.shapeSlideFadeIn8, "absolute fill-white/10")}
         />
-        <p
-          className={cn(
+
+        <div className="flex flex-col lg:text-2xl lg:pt-44 max-w-lg lg:max-w-4xl p-2 md:pr-8 mb-32 sm:mb-40 lg:mb-14 mt-2 z-10">
+          <p
+            className={cn(
+              animations.descriptionFadeIn,
+              "font-mono",
+            )}
+          >
+            {description}
+          </p>
+          <div className={cn(
             animations.descriptionFadeIn,
-            "font-mono lg:text-2xl lg:pt-44 max-w-lg lg:max-w-4xl p-2 md:pr-8 mb-32 sm:mb-40 lg:mb-14 mt-2 z-10",
-          )}
-        >
-          {description}
-        </p>
+            "relative mt-4 w-fit"
+          )}>
+            <ConnectIsland
+              cta="Connect your wallet to get started"
+              hiddenWhenConnected
+            />
+          </div>
+        </div>
       </div>
       <div className="w-full flex mt-8 lg:mt-6 p-4">
         <div
