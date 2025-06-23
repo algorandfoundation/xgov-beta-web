@@ -7,10 +7,7 @@ import { isDeepStrictEqual } from "util";
 // copied from api/assign.ts
 function committeeIdToSafeFileName(committeeId: string): string {
   // Use base64url encoding (base64 without padding, using URL-safe characters)
-  return committeeId
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+  return committeeId.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 const filename = process.argv[2];
@@ -33,18 +30,25 @@ if (valid) {
   console.warn(validate.errors);
 }
 
-const actualSort = jsonContents.xGovs.map(({address: a}) => a)
-const expectedSort = [...actualSort].sort()
+const actualSort = jsonContents.xGovs.map(({ address: a }) => a);
+const expectedSort = [...actualSort].sort();
 
 if (!isDeepStrictEqual(actualSort, expectedSort)) {
-  console.warn("Validation error: xGov array not sorted!")
+  console.warn("Validation error: xGov array not sorted!");
 } else {
-  console.warn("xGov array is sorted")
+  console.warn("xGov array is sorted");
 }
 
 const fileHash = Buffer.from(sha512_256(contents), "hex");
 const concatenated = Buffer.concat([Buffer.from("arc0034"), fileHash]);
-const committeeId = Buffer.from(sha512_256(concatenated), "hex").toString("base64");
+const committeeId = Buffer.from(sha512_256(concatenated), "hex").toString(
+  "base64",
+);
 
-console.log("Committee ID:", committeeId)
-console.log("Safe mode:", committeeIdToSafeFileName(committeeId))
+const size = jsonContents.xGovs.length;
+const votes = jsonContents.xGovs.reduce((total, { votes }) => total + votes, 0);
+
+console.log("Committee ID:", committeeId);
+console.log("Safe mode:", committeeIdToSafeFileName(committeeId));
+console.log("Size:", size);
+console.log("Total power:", votes);
