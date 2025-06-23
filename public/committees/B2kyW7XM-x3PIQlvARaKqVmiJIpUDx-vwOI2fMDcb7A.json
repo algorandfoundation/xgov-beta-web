@@ -1,0 +1,41 @@
+{
+  "xGovs": [
+    {
+      "address": "24N75MZBUFJPP6VITWSX4JGWYFGWDQGAVCXQAS6QK5Z3QCPELOYENU5T7M",
+      "votes": 375000
+    },
+    {
+      "address": "26CWLC6CLNCH7BAYE3TQMLJX4WEZMIU5VEK2KT3Q6KPCPRH2T2DXZEQZEA",
+      "votes": 375000
+    },
+    {
+      "address": "2BWLJVZTIAJV57FQI4JKYXLPM42A6C5HHOHN45JUPJQCNQUQQQQI22KZ7Q",
+      "votes": 375000
+    },
+    {
+      "address": "4ALDDLEHUR4774BLQMWU7XY6RQHMDZZZCUTWQH25RTH2EJYFHIYOZINZII",
+      "votes": 375000
+    },
+    {
+      "address": "BMG2OPCDNEVFG5LW4S6GT33PPEWXVJD7XEDLTED4BFWN5M4HXLZNCK3EWY",
+      "votes": 375000
+    },
+    {
+      "address": "EGK2QGSTJ2GMGGJOT4ZYPNJH5MA4BU7UWIX5OQBTA76SRAOF4NKD2JNM6M",
+      "votes": 375000
+    },
+    {
+      "address": "FX4YT56KRTJ6YQ2R5Z7RLBB45FWVX5JO7ZAVLKYDS42AY63ICMZPLRMARE",
+      "votes": 375000
+    },
+    {
+      "address": "JPEGRZ6G4IBZCOC7UV6QZWJ6TENNKRIPENUJTLG5K7PKIKMVTJHUGERARE",
+      "votes": 375000
+    }
+  ],
+  "metadata": {
+    "name": "Testnet Committee 2",
+    "description": "Testnet Committee for internal testing",
+    "createdAt": 1750673035
+  }
+}
