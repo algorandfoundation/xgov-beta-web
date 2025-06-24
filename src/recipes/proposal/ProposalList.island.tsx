@@ -6,6 +6,7 @@ import { queryClient } from "@/stores/query.ts";
 import {
   callScrutinize,
   getVotingDuration,
+  network,
   ProposalStatus,
   type ProposalSummaryCardDetails,
 } from "@/api";
@@ -38,7 +39,6 @@ function calculateVoteEnds(
   );
   return voteStarted + votingDuration;
 }
-
 
 export function StackedListIsland({
   proposals,
@@ -92,6 +92,7 @@ export function StackedListQuery({
   useInterval(() => {
     // TODO move this to a better place
     (async () => {
+      if (network !== "testnet") return;
       if (!registry?.data?.votingDurationXlarge) return;
 
       const votingDurations = [
