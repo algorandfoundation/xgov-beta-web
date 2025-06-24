@@ -1,7 +1,10 @@
-
 import type { AppState } from "@algorandfoundation/algokit-utils/types/app";
 import { AppManager } from "@algorandfoundation/algokit-utils/types/app-manager";
-import algosdk, { ABIType, ALGORAND_MIN_TX_FEE, type TransactionSigner } from "algosdk";
+import algosdk, {
+  ABIType,
+  ALGORAND_MIN_TX_FEE,
+  type TransactionSigner,
+} from "algosdk";
 import { ProposalFactory } from "@algorandfoundation/xgov";
 
 import {
@@ -26,9 +29,8 @@ import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
 
 export const proposalFactory = new ProposalFactory({ algorand });
 
-
 function existsAndValue(appState: AppState, key: string): boolean {
-  return key in appState && 'value' in appState[key];
+  return key in appState && "value" in appState[key];
 }
 
 /**
@@ -43,52 +45,94 @@ function existsAndValue(appState: AppState, key: string): boolean {
  */
 export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
   try {
-    const response = await algorand.client.algod.accountInformation(registryClient.appAddress).do();
+    const response = await algorand.client.algod
+      .accountInformation(registryClient.appAddress)
+      .do();
     console.log("Account info received, processing apps...");
 
-    return await Promise.all(response['created-apps'].map(async (data: any): Promise<ProposalSummaryCardDetails> => {
-      try {
-        const state = AppManager.decodeAppState(data.params['global-state']);
+    return await Promise.all(
+      response["created-apps"].map(
+        async (data: any): Promise<ProposalSummaryCardDetails> => {
+          try {
+            const state = AppManager.decodeAppState(
+              data.params["global-state"],
+            );
 
-        let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
-        if (state['committee_id'] && 'valueRaw' in state['committee_id']) {
-          committeeId = state['committee_id'].valueRaw;
-        }
+            let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
+            if (state["committee_id"] && "valueRaw" in state["committee_id"]) {
+              committeeId = state["committee_id"].valueRaw;
+            }
 
-        let proposer = '';
-        if (state.proposer && 'valueRaw' in state.proposer) {
-          proposer = algosdk.encodeAddress(state.proposer.valueRaw);
-        }
+            let proposer = "";
+            if (state.proposer && "valueRaw" in state.proposer) {
+              proposer = algosdk.encodeAddress(state.proposer.valueRaw);
+            }
 
-        return {
-          id: data.id,
-          title: existsAndValue(state, 'title') ? String(state.title.value) : '',
-          requestedAmount: existsAndValue(state, 'requested_amount') ? BigInt(state['requested_amount'].value) : 0n,
-          proposer,
-          fundingType: existsAndValue(state, 'funding_type') ? Number(state['funding_type'].value) as ProposalFundingType : 0,
-          status: existsAndValue(state, 'status') ? Number(state.status.value) as ProposalStatus : 0,
-          focus: existsAndValue(state, 'focus') ? Number(state.focus.value) as ProposalFocus : 0,
-          fundingCategory: existsAndValue(state, 'funding_category') ? Number(state['funding_category'].value) as ProposalCategory : 0,
-          submissionTs: existsAndValue(state, 'submission_timestamp') ? BigInt(state['submission_timestamp'].value) : 0n,
-          approvals: existsAndValue(state, 'approvals') ? BigInt(state.approvals.value) : 0n,
-          rejections: existsAndValue(state, 'rejections') ? BigInt(state.rejections.value) : 0n,
-          nulls: existsAndValue(state, 'nulls') ? BigInt(state.nulls.value) : 0n,
-          committeeVotes: existsAndValue(state, 'committee_votes') ? BigInt(state['committee_votes'].value) : 0n,
-          registryAppId: existsAndValue(state, 'registry_app_id') ? BigInt(state['registry_app_id'].value) : 0n,
-          finalizationTs: existsAndValue(state, 'finalization_timestamp') ? BigInt(state['finalization_timestamp'].value) : 0n,
-          voteOpenTs: existsAndValue(state, 'vote_opening_timestamp') ? BigInt(state['vote_opening_timestamp'].value) : 0n,
-          lockedAmount: existsAndValue(state, 'locked_amount') ? BigInt(state['locked_amount'].value) : 0n,
-          committeeId,
-          committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
-          votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
-        }
-      } catch (error) {
-        console.error('Error processing app data:', error);
-        throw error;
-      }
-    }));
+            return {
+              id: data.id,
+              title: existsAndValue(state, "title")
+                ? String(state.title.value)
+                : "",
+              requestedAmount: existsAndValue(state, "requested_amount")
+                ? BigInt(state["requested_amount"].value)
+                : 0n,
+              proposer,
+              fundingType: existsAndValue(state, "funding_type")
+                ? (Number(state["funding_type"].value) as ProposalFundingType)
+                : 0,
+              status: existsAndValue(state, "status")
+                ? (Number(state.status.value) as ProposalStatus)
+                : 0,
+              focus: existsAndValue(state, "focus")
+                ? (Number(state.focus.value) as ProposalFocus)
+                : 0,
+              fundingCategory: existsAndValue(state, "funding_category")
+                ? (Number(state["funding_category"].value) as ProposalCategory)
+                : 0,
+              submissionTs: existsAndValue(state, "submission_timestamp")
+                ? BigInt(state["submission_timestamp"].value)
+                : 0n,
+              approvals: existsAndValue(state, "approvals")
+                ? BigInt(state.approvals.value)
+                : 0n,
+              rejections: existsAndValue(state, "rejections")
+                ? BigInt(state.rejections.value)
+                : 0n,
+              nulls: existsAndValue(state, "nulls")
+                ? BigInt(state.nulls.value)
+                : 0n,
+              committeeVotes: existsAndValue(state, "committee_votes")
+                ? BigInt(state["committee_votes"].value)
+                : 0n,
+              registryAppId: existsAndValue(state, "registry_app_id")
+                ? BigInt(state["registry_app_id"].value)
+                : 0n,
+              finalizationTs: existsAndValue(state, "finalization_timestamp")
+                ? BigInt(state["finalization_timestamp"].value)
+                : 0n,
+              voteOpenTs: existsAndValue(state, "vote_opening_timestamp")
+                ? BigInt(state["vote_opening_timestamp"].value)
+                : 0n,
+              lockedAmount: existsAndValue(state, "locked_amount")
+                ? BigInt(state["locked_amount"].value)
+                : 0n,
+              committeeId,
+              committeeMembers: existsAndValue(state, "committee_members")
+                ? BigInt(state["committee_members"].value)
+                : 0n,
+              votedMembers: existsAndValue(state, "voted_members")
+                ? BigInt(state["voted_members"].value)
+                : 0n,
+            };
+          } catch (error) {
+            console.error("Error processing app data:", error);
+            throw error;
+          }
+        },
+      ),
+    );
   } catch (error) {
-    console.error('Error getting all proposals:', error);
+    console.error("Error getting all proposals:", error);
     throw error;
   }
 }
@@ -115,9 +159,11 @@ export async function getProposalsByProposer(
  *
  * @return A promise that resolves to an array of ProposalSummaryCardDetails with status FINAL.
  */
-export async function getFinalProposals(): Promise<ProposalSummaryCardDetails[]> {
+export async function getFinalProposals(): Promise<
+  ProposalSummaryCardDetails[]
+> {
   return (await getAllProposals()).filter(
-    (proposal) => proposal.status === ProposalStatus.ProposalStatusFinal
+    (proposal) => proposal.status === ProposalStatus.ProposalStatusFinal,
   );
 }
 
@@ -137,7 +183,7 @@ export async function getProposal(
     algorand.client.algod.getApplicationByID(Number(id)).do(),
     proposalClient.appClient.getGlobalState(),
     algorand.app.getBoxValue(id, new Uint8Array(Buffer.from("M"))),
-  ])
+  ]);
 
   const data = results[0].status === "fulfilled" ? results[0].value : null;
   if (!data || data.params.creator !== registryClient.appAddress) {
@@ -161,38 +207,68 @@ export async function getProposal(
   }
 
   let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
-  if (state['committee_id'] && 'valueRaw' in state['committee_id']) {
-    committeeId = state['committee_id'].valueRaw;
+  if (state["committee_id"] && "valueRaw" in state["committee_id"]) {
+    committeeId = state["committee_id"].valueRaw;
   }
 
-  let proposer = '';
-  if (state.proposer && 'valueRaw' in state.proposer) {
+  let proposer = "";
+  if (state.proposer && "valueRaw" in state.proposer) {
     proposer = algosdk.encodeAddress(state.proposer.valueRaw);
   }
 
   return {
     id: data.id,
-    title: existsAndValue(state, 'title') ? String(state.title.value) : '',
-    requestedAmount: existsAndValue(state, 'requested_amount') ? BigInt(state['requested_amount'].value) : 0n,
+    title: existsAndValue(state, "title") ? String(state.title.value) : "",
+    requestedAmount: existsAndValue(state, "requested_amount")
+      ? BigInt(state["requested_amount"].value)
+      : 0n,
     proposer,
-    fundingType: existsAndValue(state, 'funding_type') ? Number(state['funding_type'].value) as ProposalFundingType : 0,
-    status: existsAndValue(state, 'status') ? Number(state.status.value) as ProposalStatus : 0,
-    focus: existsAndValue(state, 'focus') ? Number(state.focus.value) as ProposalFocus : 0,
-    fundingCategory: existsAndValue(state, 'funding_category') ? Number(state['funding_category'].value) as ProposalCategory : 0,
-    submissionTs: existsAndValue(state, 'submission_timestamp') ? BigInt(state['submission_timestamp'].value) : 0n,
-    approvals: existsAndValue(state, 'approvals') ? BigInt(state.approvals.value) : 0n,
-    rejections: existsAndValue(state, 'rejections') ? BigInt(state.rejections.value) : 0n,
-    nulls: existsAndValue(state, 'nulls') ? BigInt(state.nulls.value) : 0n,
-    committeeVotes: existsAndValue(state, 'committee_votes') ? BigInt(state['committee_votes'].value) : 0n,
-    registryAppId: existsAndValue(state, 'registry_app_id') ? BigInt(state['registry_app_id'].value) : 0n,
-    finalizationTs: existsAndValue(state, 'finalization_timestamp') ? BigInt(state['finalization_timestamp'].value) : 0n,
-    voteOpenTs: existsAndValue(state, 'vote_opening_timestamp') ? BigInt(state['vote_opening_timestamp'].value) : 0n,
-    lockedAmount: existsAndValue(state, 'locked_amount') ? BigInt(state['locked_amount'].value) : 0n,
+    fundingType: existsAndValue(state, "funding_type")
+      ? (Number(state["funding_type"].value) as ProposalFundingType)
+      : 0,
+    status: existsAndValue(state, "status")
+      ? (Number(state.status.value) as ProposalStatus)
+      : 0,
+    focus: existsAndValue(state, "focus")
+      ? (Number(state.focus.value) as ProposalFocus)
+      : 0,
+    fundingCategory: existsAndValue(state, "funding_category")
+      ? (Number(state["funding_category"].value) as ProposalCategory)
+      : 0,
+    submissionTs: existsAndValue(state, "submission_timestamp")
+      ? BigInt(state["submission_timestamp"].value)
+      : 0n,
+    approvals: existsAndValue(state, "approvals")
+      ? BigInt(state.approvals.value)
+      : 0n,
+    rejections: existsAndValue(state, "rejections")
+      ? BigInt(state.rejections.value)
+      : 0n,
+    nulls: existsAndValue(state, "nulls") ? BigInt(state.nulls.value) : 0n,
+    committeeVotes: existsAndValue(state, "committee_votes")
+      ? BigInt(state["committee_votes"].value)
+      : 0n,
+    registryAppId: existsAndValue(state, "registry_app_id")
+      ? BigInt(state["registry_app_id"].value)
+      : 0n,
+    finalizationTs: existsAndValue(state, "finalization_timestamp")
+      ? BigInt(state["finalization_timestamp"].value)
+      : 0n,
+    voteOpenTs: existsAndValue(state, "vote_opening_timestamp")
+      ? BigInt(state["vote_opening_timestamp"].value)
+      : 0n,
+    lockedAmount: existsAndValue(state, "locked_amount")
+      ? BigInt(state["locked_amount"].value)
+      : 0n,
     committeeId,
-    committeeMembers: existsAndValue(state, 'committee_members') ? BigInt(state['committee_members'].value) : 0n,
-    votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
-    ...proposalMetadata
-  }
+    committeeMembers: existsAndValue(state, "committee_members")
+      ? BigInt(state["committee_members"].value)
+      : 0n,
+    votedMembers: existsAndValue(state, "voted_members")
+      ? BigInt(state["voted_members"].value)
+      : 0n,
+    ...proposalMetadata,
+  };
 }
 
 export async function getFinalProposal(
@@ -200,41 +276,47 @@ export async function getFinalProposal(
 ): Promise<ProposalMainCardDetails> {
   const proposalData = await getProposal(id);
   if (proposalData.status !== ProposalStatus.ProposalStatusFinal) {
-    throw new Error("Proposal not in final state")
+    throw new Error("Proposal not in final state");
   }
-  return proposalData
+  return proposalData;
 }
 
-export async function getVoterBox(id: bigint, address: string): Promise<{ votes: bigint, voted: boolean }> {
+export async function getVoterBox(
+  id: bigint,
+  address: string,
+): Promise<{ votes: bigint; voted: boolean }> {
   const addr = algosdk.decodeAddress(address).publicKey;
-  const voterBoxName = new Uint8Array(Buffer.concat([Buffer.from('V'), addr]));
+  const voterBoxName = new Uint8Array(Buffer.concat([Buffer.from("V"), addr]));
 
   try {
     const voterBoxValue = await algorand.app.getBoxValueFromABIType({
       appId: id,
       boxName: voterBoxName,
-      type: ABIType.from('(uint64,bool)')
+      type: ABIType.from("(uint64,bool)"),
     });
 
     if (!Array.isArray(voterBoxValue)) {
-      throw new Error('Voter box value is not an array');
+      throw new Error("Voter box value is not an array");
     }
 
     return {
       votes: voterBoxValue[0] as bigint,
-      voted: voterBoxValue[1] as boolean
+      voted: voterBoxValue[1] as boolean,
     };
   } catch (error) {
-    console.error('getting voter box value:', error);
+    console.error("getting voter box value:", error);
     return {
       votes: BigInt(0),
-      voted: false
+      voted: false,
     };
   }
 }
 
 export async function getMetadata(id: bigint): Promise<ProposalJSON> {
-  const metadata = await algorand.app.getBoxValue(id, new Uint8Array(Buffer.from("M")))
+  const metadata = await algorand.app.getBoxValue(
+    id,
+    new Uint8Array(Buffer.from("M")),
+  );
 
   let proposalMetadata: ProposalJSON;
   try {
@@ -288,7 +370,10 @@ export function getDiscussionDuration(
   }
 }
 
-export function getXGovQuorum(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): number {
+export function getXGovQuorum(
+  category: ProposalCategory,
+  thresholds: [bigint, bigint, bigint],
+): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
       return Number(thresholds[0]) / 10;
@@ -301,7 +386,10 @@ export function getXGovQuorum(category: ProposalCategory, thresholds: [bigint, b
   }
 }
 
-export function getVoteQuorum(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): number {
+export function getVoteQuorum(
+  category: ProposalCategory,
+  thresholds: [bigint, bigint, bigint],
+): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
       return Number(thresholds[0]) / 10;
@@ -314,7 +402,10 @@ export function getVoteQuorum(category: ProposalCategory, thresholds: [bigint, b
   }
 }
 
-export function getVotingDuration(category: ProposalCategory, durations: [bigint, bigint, bigint, bigint]): number {
+export function getVotingDuration(
+  category: ProposalCategory,
+  durations: readonly [bigint, bigint, bigint, bigint],
+): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
       return Number(durations[0]) * 1000;
@@ -370,13 +461,12 @@ export async function openProposal(
     setOpenProposalLoading(false);
 
     return result.return;
-
   } catch (e: any) {
     setOpenProposalLoading(false);
-    if (e.message.includes('tried to spend')) {
-      setError("Insufficient funds to create proposal.")
+    if (e.message.includes("tried to spend")) {
+      setError("Insufficient funds to create proposal.");
     } else {
-      setError("Failed to create proposal.")
+      setError("Failed to create proposal.");
     }
   }
 }
@@ -400,20 +490,23 @@ export async function submitProposal(
     // instance a new proposal client
     const proposalClient = proposalFactory.getAppClientById({ appId });
 
-    const metadata = new Uint8Array(Buffer.from(JSON.stringify(
-      {
-        description: data.description,
-        team: data.team,
-        additionalInfo: data.additionalInfo,
-        openSource: data.openSource,
-        adoptionMetrics: data.adoptionMetrics,
-        forumLink: data.forumLink,
-      },
-      (_, value) =>
-        typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
-    )))
+    const metadata = new Uint8Array(
+      Buffer.from(
+        JSON.stringify(
+          {
+            description: data.description,
+            team: data.team,
+            additionalInfo: data.additionalInfo,
+            openSource: data.openSource,
+            adoptionMetrics: data.adoptionMetrics,
+            forumLink: data.forumLink,
+          },
+          (_, value) => (typeof value === "bigint" ? value.toString() : value), // return everything else unchanged
+        ),
+      ),
+    );
 
-    let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
+    let chunkedMetadata: Uint8Array<ArrayBuffer>[] = [];
     for (let j = 0; j < metadata.length; j += 2041) {
       const chunk = metadata.slice(j, j + 2041);
       chunkedMetadata.push(chunk);
@@ -427,25 +520,23 @@ export async function submitProposal(
       Number((requestedAmount * bps) / BigInt(10_000)),
     );
 
-    const submitGroup = proposalClient
-      .newGroup()
-      .submit({
-        sender: address,
-        signer: transactionSigner,
-        args: {
-          payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-            amount: proposalSubmissionFee,
-            from: address,
-            to: proposalClient.appAddress,
-            suggestedParams,
-          }),
-          title: data.title,
-          fundingType: Number(data.fundingType),
-          requestedAmount,
-          focus: Number(data.focus),
-        },
-        appReferences: [registryClient.appId],
-      });
+    const submitGroup = proposalClient.newGroup().submit({
+      sender: address,
+      signer: transactionSigner,
+      args: {
+        payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+          amount: proposalSubmissionFee,
+          from: address,
+          to: proposalClient.appAddress,
+          suggestedParams,
+        }),
+        title: data.title,
+        fundingType: Number(data.fundingType),
+        requestedAmount,
+        focus: Number(data.focus),
+      },
+      appReferences: [registryClient.appId],
+    });
 
     chunkedMetadata.map((chunk, index) => {
       submitGroup.uploadMetadata({
@@ -456,15 +547,15 @@ export async function submitProposal(
           isFirstInGroup: index === 0,
         },
         appReferences: [registryClient.appId],
-        boxReferences: [metadataBoxName, metadataBoxName]
-      })
-    })
+        boxReferences: [metadataBoxName, metadataBoxName],
+      });
+    });
 
-    await submitGroup.send()
+    await submitGroup.send();
     setSubmitProposalLoading(false);
   } catch (e: any) {
     setSubmitProposalLoading(false);
-    if (e.message.includes('tried to spend')) {
+    if (e.message.includes("tried to spend")) {
       setError("Insufficient funds to submit proposal.");
     } else {
       setError("Failed to submit proposal.");
@@ -609,35 +700,40 @@ export async function updateMetadata(
   setUpdateMetadataLoading(false);
 
   try {
-    const metadataBoxName = new Uint8Array(Buffer.from("M"))
+    const metadataBoxName = new Uint8Array(Buffer.from("M"));
 
     // instance a new proposal client
     const proposalClient = proposalFactory.getAppClientById({
       appId: proposal.id,
     });
 
-    const refCountNeeded = (await proposalClient.appClient.getBoxValue(metadataBoxName)).length / 1024
+    const refCountNeeded =
+      (await proposalClient.appClient.getBoxValue(metadataBoxName)).length /
+      1024;
 
-    const metadata = new Uint8Array(Buffer.from(JSON.stringify(
-      {
-        description: data.description,
-        team: data.team,
-        additionalInfo: data.additionalInfo,
-        openSource: data.openSource,
-        adoptionMetrics: data.adoptionMetrics,
-        forumLink: data.forumLink,
-      },
-      (_, value) =>
-        typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
-    )))
+    const metadata = new Uint8Array(
+      Buffer.from(
+        JSON.stringify(
+          {
+            description: data.description,
+            team: data.team,
+            additionalInfo: data.additionalInfo,
+            openSource: data.openSource,
+            adoptionMetrics: data.adoptionMetrics,
+            forumLink: data.forumLink,
+          },
+          (_, value) => (typeof value === "bigint" ? value.toString() : value), // return everything else unchanged
+        ),
+      ),
+    );
 
-    let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
+    let chunkedMetadata: Uint8Array<ArrayBuffer>[] = [];
     for (let j = 0; j < metadata.length; j += 2041) {
       const chunk = metadata.slice(j, j + 2041);
       chunkedMetadata.push(chunk);
     }
 
-    const resubmitGroup = proposalClient.newGroup()
+    const resubmitGroup = proposalClient.newGroup();
 
     chunkedMetadata.map((chunk, index) => {
       resubmitGroup.uploadMetadata({
@@ -648,35 +744,72 @@ export async function updateMetadata(
           isFirstInGroup: index === 0,
         },
         appReferences: [registryClient.appId],
-        boxReferences: [metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName],
-      })
-    })
+        boxReferences: [
+          metadataBoxName,
+          metadataBoxName,
+          metadataBoxName,
+          metadataBoxName,
+          metadataBoxName,
+          metadataBoxName,
+          metadataBoxName,
+        ],
+      });
+    });
 
-    const opUpsNeeded = (refCountNeeded - (chunkedMetadata.length * 7)) / 7;
+    const opUpsNeeded = (refCountNeeded - chunkedMetadata.length * 7) / 7;
     if (opUpsNeeded > 0) {
       for (let i = 0; i < opUpsNeeded; i++) {
         resubmitGroup.opUp({
           sender: activeAddress,
           signer: transactionSigner,
           args: {},
-          boxReferences: [metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName, metadataBoxName],
-          note: `opup ${i}`
-        })
+          boxReferences: [
+            metadataBoxName,
+            metadataBoxName,
+            metadataBoxName,
+            metadataBoxName,
+            metadataBoxName,
+            metadataBoxName,
+            metadataBoxName,
+          ],
+          note: `opup ${i}`,
+        });
       }
     }
 
-    await resubmitGroup.send()
+    await resubmitGroup.send();
     setUpdateMetadataLoading(false);
 
     return proposal.id;
-
   } catch (e: any) {
     setUpdateMetadataLoading(false);
-    if (e.message.includes('tried to spend')) {
+    if (e.message.includes("tried to spend")) {
       setError("Insufficient funds to update proposal metadata.");
     } else {
       setError("Failed to update proposal metadata.");
     }
+  }
+}
+
+export async function callScrutinize(
+  address: string,
+  appId: bigint,
+  proposer: string,
+  transactionSigner: TransactionSigner,
+) {
+  const proposalClient = proposalFactory.getAppClientById({ appId });
+
+  try {
+    await proposalClient.send.scrutiny({
+      sender: address,
+      signer: transactionSigner,
+      args: {},
+      appReferences: [registryClient.appId],
+      accountReferences: [proposer],
+      extraFee: (1000).microAlgo(),
+    });
+  } catch (e) {
+    console.warn(`While calling scrutiny(${appId}):`, (e as Error).message)
   }
 }
 
