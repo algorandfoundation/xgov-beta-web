@@ -34,7 +34,7 @@ export function Hero({
         <h1
           className={cn(
             animations.titleFadeIn,
-            "w-40 md:w-full text-wrap p-3 lg:p-6 text-4xl lg:text-8xl font-bold z-10",
+            "w-40 md:w-full text-wrap p-4 lg:p-6 text-4xl lg:text-8xl font-bold z-10",
           )}
         >
           {title}
@@ -66,7 +66,7 @@ export function Hero({
         <AlgoShapeIcon9
           className={cn(
             animations.shapeSlideFadeIn5,
-            "absolute right-36 sm:right-52 top-24 fill-algo-blue dark:fill-algo-teal dark:sm:fill-white/10 sm:fill-white/10",
+            "hidden md:block absolute right-36 sm:right-52 top-24 fill-algo-blue dark:fill-algo-teal dark:sm:fill-white/10 sm:fill-white/10",
           )}
         />
         <AlgoShapeIcon10
@@ -85,22 +85,19 @@ export function Hero({
           className={cn(animations.shapeSlideFadeIn8, "absolute fill-white/10")}
         />
 
-        <div className="flex flex-col lg:text-2xl lg:pt-44 max-w-lg lg:max-w-4xl p-2 md:pr-8 mb-10 sm:mb-32 lg:mb-14 mt-2 z-10">
+        <div className="flex flex-col lg:text-2xl lg:pt-44 max-w-lg lg:max-w-4xl p-4 md:pr-8 mb-10 sm:mb-32 lg:mb-14 mt-2 z-10">
           <p
-            className={cn(
-              animations.descriptionFadeIn,
-              "font-mono",
-            )}
+            className={animations.descriptionFadeIn}
           >
             {description}
           </p>
           <div className={cn(
             animations.descriptionFadeIn,
-            "relative mt-4 w-fit"
+            "relative mt-8 md:mt-4 w-fit"
           )}>
             <ConnectIsland
               cta="Get Started"
-              hiddenWhenConnected
+              openTutorial
               hideIcon
             />
           </div>

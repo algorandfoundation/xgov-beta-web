@@ -116,7 +116,7 @@ function ConnectDialog({
     <Dialog open={open}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
-        className="h-full sm:max-w-[425px] rounded-lg"
+        className="h-full sm:h-auto sm:max-w-[425px] rounded-lg"
         onCloseClick={() => setOpen(false)}
       >
         <DialogHeader className="mt-12 flex flex-col items-start gap-2">
