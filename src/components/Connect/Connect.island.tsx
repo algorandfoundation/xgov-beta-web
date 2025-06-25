@@ -1,3 +1,4 @@
+import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useEffect, useState } from "react";
 
@@ -60,7 +61,7 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
             hideIcon={hideIcon}
             onLogOut={() => {
               manager.activeWallet!.disconnect();
-              path.includes("profile") && (window.location.href = "/");
+              path.includes("profile") && navigate("/");
             }}
             {...manager}
             path={path}
