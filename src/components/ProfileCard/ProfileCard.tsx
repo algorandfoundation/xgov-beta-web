@@ -3,7 +3,6 @@ import { EditableAddress } from "../EditableAddress/EditableAddress";
 import { ActionButton } from "../button/ActionButton/ActionButton";
 import { cn } from "@/functions";
 import { XGovProposerStatusPill } from "../XGovProposerStatusPill/XGovProposerStatusPill";
-import { BecomeAnXGovBannerButton } from "../BecomeAnXGovBannerButton/BecomeAnXGovBannerButton";
 import { XGovStatusPill } from "../XGovStatusPill/XGovStatusPill";
 import { useState } from "react";
 import {
@@ -86,10 +85,15 @@ export function ProfileCard({
           <TestnetDispenserBanner />
 
           {address === activeAddress && !isXGov ? (
-            <BecomeAnXGovBannerButton
+            <ActionButton
+              type="button"
               onClick={() => setShowBecomeXGovModal(true)}
               disabled={subscribeXGovLoading}
-            />
+            >
+              {subscribeXGovLoading
+                ? "Loading..."
+                : "Become an xGov"}
+            </ActionButton>
           ) : (
             <EditableAddress
               title="Voting Address"
@@ -204,7 +208,7 @@ export function BecomeXGovModal({
                   <AlgorandIcon className="size-2.5" />
                   {Number(costs) / 1_000_000}
                 </span>
-                &nbsp;to become an xGov. { network !== "testnet" ? null : <><br/>On testnet, this fee is sponsored.</> }
+                &nbsp;to become an xGov. {network !== "testnet" ? null : <><br />On testnet, this fee is sponsored.</>}
               </>
             }
           />
@@ -270,7 +274,7 @@ export function BecomeProposerModal({
                   <AlgorandIcon className="size-2.5" />
                   {Number(costs) / 1_000_000}
                 </span>
-                &nbsp;to become a proposer. { network !== "testnet" ? null : <><br/>On testnet, this fee is sponsored.</> }
+                &nbsp;to become a proposer. {network !== "testnet" ? null : <><br />On testnet, this fee is sponsored.</>}
               </>
             }
           />
