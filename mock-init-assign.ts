@@ -164,8 +164,8 @@ await registryClient.send.configXgovRegistry({
     config: {
       xgovFee: XGOV_FEE,
       proposerFee: PROPOSER_FEE,
-      proposalFee: PROPOSAL_FEE,
-      proposalPublishingBps: PROPOSAL_PUBLISHING_BPS,
+      openProposalFee: PROPOSAL_FEE,
+      daemonOpsFundingBps: PROPOSAL_PUBLISHING_BPS,
       proposalCommitmentBps: PROPOSAL_COMMITMENT_BPS,
       minRequestedAmount: MIN_REQUESTED_AMOUNT,
       maxRequestedAmount: [

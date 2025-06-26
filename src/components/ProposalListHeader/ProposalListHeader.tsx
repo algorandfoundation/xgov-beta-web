@@ -81,7 +81,7 @@ export function ProposalListHeader({
                     description={<>
                       It will cost
                       <span className="inline-flex items-center mx-1 gap-1">
-                        <AlgorandIcon className="size-2.5" />{Number(registry.data?.proposalFee || 0n) / 1_000_000}
+                        <AlgorandIcon className="size-2.5" />{Number(registry.data?.openProposalFee || 0n) / 1_000_000}
                       </span>
                       to create a proposal.
                     </>}
