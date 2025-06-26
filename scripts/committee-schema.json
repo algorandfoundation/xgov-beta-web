@@ -1,0 +1,53 @@
+{
+    "title": "xGov Commitee",
+    "description": "Selected xGov Committee with voting power and validity",
+    "type": "object",
+    "properties": {
+        "xGovs": {
+            "description": "xGovs with voting power, sorted lexicographically with respect addresses",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "address": {
+                        "description": "xGov address used on xGov Registry",
+                        "type": "string"
+                    },
+                    "votes": {
+                        "description": "xGov voting power",
+                        "type": "number"
+                    }
+                }
+            },
+            "uniqueItems": true,
+            "required": [
+                "address",
+                "votes"
+            ]
+        },
+        "periodStart": {
+            "description": "First block of the Committee slection period (equal or greater than)",
+            "type": "number"
+        },
+        "periodEnd": {
+            "description": "Last block of the Committee slection period (less than)",
+            "type": "number"
+        },
+        "members": {
+            "description": "Total number of Committee members",
+            "type": "number"
+        },
+        "votes": {
+            "description": "Total number of Committee votes",
+            "type": "number"
+        }
+    },
+    "required": [
+        "xGovs",
+        "periodStart",
+        "periodEnd",
+        "members",
+        "votes"
+    ],
+ "additionalProperties": false
+}

@@ -10,7 +10,6 @@ export async function fetchDiscourseUsers(url: string, init: RequestInit = {}){
       return []
     }
     const result =  await r.json()
-    console.log(result)
     return (result?.users || []) as User[]
   }))
 }
@@ -38,8 +37,6 @@ export async function fetchDiscourseTopic(url: string, init: RequestInit = {}, s
     const postsWithAvatars = topic.post_stream.posts
       .filter(post => post.avatar_template)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    
-    console.log('posts with avatars', postsWithAvatars)
     
       // Get unique avatars from the 5 most recent posts
     const uniqueAvatars = new Set<string>()

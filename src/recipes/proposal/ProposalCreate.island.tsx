@@ -1,4 +1,11 @@
-import { useProposalsByProposer, UseQuery, useRegistry, useSearchParams, useSearchParamsObserver, UseWallet } from "@/hooks";
+import {
+  useProposalsByProposer,
+  UseQuery,
+  useRegistry,
+  useSearchParams,
+  useSearchParamsObserver,
+  UseWallet,
+} from "@/hooks";
 import { ProposalForm, proposalFormSchema } from "@/recipes";
 import { ProposalStatus, submitProposal } from "@/api";
 import { useWallet } from "@txnlab/use-wallet-react";
@@ -45,8 +52,8 @@ export function ProposalCreate() {
   const emptyProposal =
     emptyProposals && emptyProposals.length > 0 ? emptyProposals[0] : null;
 
-  const appId = emptyProposal?.id || BigInt(Number(_searchParams.get('appId'))) || null;
-  // console.log("appId", appId);
+  const appId =
+    emptyProposal?.id || BigInt(Number(_searchParams.get("appId"))) || null;
 
   const currentProposals =
     !!proposalsData.data &&
@@ -57,9 +64,17 @@ export function ProposalCreate() {
   const currentProposal =
     currentProposals && currentProposals.length > 0 && currentProposals[0];
 
-  const maxRequestedAmount = (!!userBalance.data?.available && userBalance.data.available.microAlgos > 1_000n)
-    ? (((userBalance.data.available.microAlgos - 1_000n) / 1_000_000n) * 10n )
-    : 0n;
+  const maxRequestedAmount =
+    !!userBalance.data?.available &&
+    userBalance.data.available.microAlgos > 1_000n &&
+    !!registry.data?.proposalCommitmentBps
+      ? BigInt(
+          Math.floor(
+            Number(userBalance.data.available.microAlgos - 100_000n) /
+              (Number(registry.data?.proposalCommitmentBps) / 10000),
+          ),
+        )
+      : 0n;
 
   useEffect(() => {
     if (currentProposal) {
@@ -71,6 +86,7 @@ export function ProposalCreate() {
     <ProposalForm
       type="create"
       bps={registry.data?.proposalCommitmentBps || 0n}
+      minRequestedAmount={registry.data?.minRequestedAmount || 1000000n}
       maxRequestedAmount={maxRequestedAmount}
       loading={proposalSubmitLoading}
       error={submitError || undefined}
@@ -105,7 +121,7 @@ export function ProposalCreate() {
             registry.data?.proposalCommitmentBps,
             setProposalSubmitLoading,
             setSubmitError,
-          )
+          );
 
           navigate(`/proposal/${appId}`);
         } catch (e) {

@@ -40,6 +40,7 @@ export function ProposalForm({
   type,
   proposal,
   bps = 0n,
+  minRequestedAmount = 1n, // Default to 0 Algo
   maxRequestedAmount = 1_000_000n, // Default to 1M Algo
   onSubmit,
   loading,
@@ -48,6 +49,7 @@ export function ProposalForm({
   type: "edit" | "create";
   proposal?: ProposalMainCardDetails;
   bps?: bigint;
+  minRequestedAmount?: bigint;
   maxRequestedAmount?: bigint;
   onSubmit: (data: z.infer<typeof proposalFormSchema>) => void;
   loading: boolean;
@@ -55,11 +57,16 @@ export function ProposalForm({
 }) {
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
 
+  const minRequestedAmountInWholeAlgos = Number(minRequestedAmount) / 1e6;
+  const maxRequestedAmountInWholeAlgos = Number(maxRequestedAmount) / 1e6;
+
   const formSchema = proposalFormSchema.setKey(
     "requestedAmount",
     validatorSchemas.requestedAmount({
-      min: 1,
-      max: Number(maxRequestedAmount),
+      min: minRequestedAmountInWholeAlgos,
+      minErrorMessage: `Must be at least ${minRequestedAmountInWholeAlgos}`,
+      max: maxRequestedAmountInWholeAlgos,
+      maxErrorMessage: `Insufficient balance. ${((bps || 0n) / 100n)}% of the requested amount must be escrowed. Maximum request based on your current balance is ${maxRequestedAmountInWholeAlgos.toFixed(0)}`,
     }),
   );
 
@@ -68,7 +75,7 @@ export function ProposalForm({
     defaultValues: {
       title: proposal?.title || "",
       description: proposal?.description || "",
-      requestedAmount: Number(proposal?.requestedAmount) / 1_000_000 || 0,
+      requestedAmount: Number(proposal?.requestedAmount) / 1e6 || Number(minRequestedAmount) / 1e6 || 0,
       team: proposal?.team || "",
       additionalInfo: proposal?.additionalInfo || "",
       openSource: true,

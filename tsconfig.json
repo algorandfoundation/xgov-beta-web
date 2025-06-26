@@ -8,5 +8,5 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*", ".storybook/**/*", "mock-init.ts"]
+  "include": ["src/**/*", ".storybook/**/*", "mock-init.ts", "mock-init-assign.ts"],
 }

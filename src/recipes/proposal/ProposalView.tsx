@@ -17,6 +17,7 @@ import {
   getVoteQuorum,
   getVotingDuration,
   getGlobalState,
+  callFinalize,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -33,7 +34,7 @@ import {
 import { useTimeLeft } from "@/hooks/useTimeLeft";
 import { Link } from "@/components/Link";
 import { ProposalReviewerCard } from "@/components/ProposalReviewerCard/ProposalReviewerCard";
-import {VoteCounter} from "@/components/VoteCounter/VoteCounter";
+import { VoteCounter } from "@/components/VoteCounter/VoteCounter";
 import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill";
 import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
@@ -45,6 +46,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { formatDistanceToNow } from "date-fns";
 
 export const defaultsStatusCardMap = {
   [ProposalStatus.ProposalStatusEmpty]: {
@@ -271,7 +273,7 @@ function DiscussionStatusCard({
       className={className}
       header={header}
       subHeader="Discussion is ongoing, take part and help shape public sentiment on this proposal."
-      sideHeader={remainingTime}
+      sideHeader={discussionDuration > Number(minimumDiscussionDuration) ? 'Ready to submit' : remainingTime}
       icon={icon}
       action={action}
     />
@@ -585,7 +587,7 @@ function VotingStatusCard({
       className={className}
       header="Vote on this proposal"
       subHeader={subheader}
-      sideHeader={remainingTime}
+      sideHeader={votingDuration > minimumVotingDuration ? 'Voting window elapsed!' : remainingTime}
       icon={<VoteIcon className="size-24 stroke-[1] stroke-algo-blue dark:stroke-algo-teal" />}
       action={action}
     />
@@ -776,14 +778,16 @@ export function ProposalInfo({
               )}
 
               <div className="text-base inline-flex items-center justify-between gap-3 mt-2 mb-6 p-1 pr-4">
+                Created By
                 <UserPill variant="secondary" address={proposal.proposer} />
                 <span className="text-2xl font-semibold text-algo-blue dark:text-algo-teal">
                   //
                 </span>
                 <span className="text-algo-black-50 dark:text-white">
-                  Proposed 2d ago
+                  {formatDistanceToNow(new Date((Number(proposal.submissionTs) * 1000)), { addSuffix: true })}
                 </span>
               </div>
+
               {!!_pastProposals && !!_pastProposals.length && (
                 <>
                   <h5 className="font-semibold text-algo-black dark:text-algo-black-30 mb-2">
@@ -869,6 +873,15 @@ export function FinalizeModal({
         setErrorMessage(null);
         onClose();
         refetchProposal();
+
+        // call backend to finalize
+        try {
+          await callFinalize(proposalId);
+        } catch (e) {
+          console.warn("Failed to finalize:", e);
+        }
+        refetchProposal();
+
         return true;
       }
 

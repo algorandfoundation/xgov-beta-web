@@ -108,6 +108,20 @@ export async function getProposalsByProposer(
 }
 
 /**
+ * Retrieves all proposals with status FINAL.
+ *
+ * This function fetches all proposals and filters them to return only those
+ * with a status of FINAL.
+ *
+ * @return A promise that resolves to an array of ProposalSummaryCardDetails with status FINAL.
+ */
+export async function getFinalProposals(): Promise<ProposalSummaryCardDetails[]> {
+  return (await getAllProposals()).filter(
+    (proposal) => proposal.status === ProposalStatus.ProposalStatusFinal
+  );
+}
+
+/**
  * Retrieves proposal details for a given proposal ID.
  *
  * @param id - The unique identifier of the proposal.
@@ -179,6 +193,16 @@ export async function getProposal(
     votedMembers: existsAndValue(state, 'voted_members') ? BigInt(state['voted_members'].value) : 0n,
     ...proposalMetadata
   }
+}
+
+export async function getFinalProposal(
+  id: bigint,
+): Promise<ProposalMainCardDetails> {
+  const proposalData = await getProposal(id);
+  if (proposalData.status !== ProposalStatus.ProposalStatusFinal) {
+    throw new Error("Proposal not in final state")
+  }
+  return proposalData
 }
 
 export async function getVoterBox(id: bigint, address: string): Promise<{ votes: bigint, voted: boolean }> {
@@ -297,11 +321,11 @@ export function getDiscussionDuration(
 export function getXGovQuorum(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return Number(thresholds[0]) / 10;
+      return Number(thresholds[0]) / 100;
     case ProposalCategory.ProposalCategoryMedium:
-      return Number(thresholds[1]) / 10;
+      return Number(thresholds[1]) / 100;
     case ProposalCategory.ProposalCategoryLarge:
-      return Number(thresholds[2]) / 10;
+      return Number(thresholds[2]) / 100;
     default:
       return 0;
   }
@@ -310,11 +334,11 @@ export function getXGovQuorum(category: ProposalCategory, thresholds: [bigint, b
 export function getVoteQuorum(category: ProposalCategory, thresholds: [bigint, bigint, bigint]): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return Number(thresholds[0]) / 10;
+      return Number(thresholds[0]) / 100;
     case ProposalCategory.ProposalCategoryMedium:
-      return Number(thresholds[1]) / 10;
+      return Number(thresholds[1]) / 100;
     case ProposalCategory.ProposalCategoryLarge:
-      return Number(thresholds[2]) / 10;
+      return Number(thresholds[2]) / 100;
     default:
       return 0;
   }
@@ -323,11 +347,11 @@ export function getVoteQuorum(category: ProposalCategory, thresholds: [bigint, b
 export function getVotingDuration(category: ProposalCategory, durations: [bigint, bigint, bigint, bigint]): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return Number(durations[0]);
+      return Number(durations[0]) * 1000;
     case ProposalCategory.ProposalCategoryMedium:
-      return Number(durations[1]);
+      return Number(durations[1]) * 1000;
     case ProposalCategory.ProposalCategoryLarge:
-      return Number(durations[2]);
+      return Number(durations[2]) * 1000;
     default:
       return 0;
   }
@@ -684,6 +708,22 @@ export async function updateMetadata(
       setError("Failed to update proposal metadata.");
     }
   }
+}
+
+export async function callFinalize(proposalId: bigint) {
+  console.log("Staring finalize call", proposalId);
+  const response = await fetch("/api/assign", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      proposalIds: [proposalId],
+    }),
+  });
+  console.log("Finished finalize call");
+  const data = await response.json();
+  console.log("Finalize data:", data);
 }
 
 // export async function resubmitProposal(

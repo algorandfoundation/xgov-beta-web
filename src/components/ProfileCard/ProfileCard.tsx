@@ -204,7 +204,7 @@ export function BecomeXGovModal({
                   <AlgorandIcon className="size-2.5" />
                   {Number(costs) / 1_000_000}
                 </span>
-                &nbsp;to become an xGov.
+                &nbsp;to become an xGov. { network !== "testnet" ? null : <><br/>On testnet, this fee is sponsored.</> }
               </>
             }
           />

@@ -40,12 +40,6 @@ export async function fetchBalance(address: string | null): Promise<AccountBalan
     const minimum = BigInt(accountInfo['min-balance'])
     const available = max(0n, amount - minimum)
 
-    console.log('fetchBalance', {
-        amount: AlgoAmount.MicroAlgos(amount),
-        available: AlgoAmount.MicroAlgos(available),
-        minimum: AlgoAmount.MicroAlgos(minimum),
-    })
-
     return {
         amount: AlgoAmount.MicroAlgos(amount),
         available: AlgoAmount.MicroAlgos(available),

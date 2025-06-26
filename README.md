@@ -95,3 +95,122 @@ npm run mock-init
 Run `npm run dev` and navigate to the page. The script will now run and set things up in the background.
 
 Afterwards, make sure to re-comment the two lines from `src/layouts/Layout.astro`.
+
+## Voter Assignment Endpoint
+
+The application includes a POST endpoint at `/api/assign` that:
+
+1. Gets all proposals with status FINAL
+2. For each proposal, retrieves the committee ID from its global state
+3. Loads committee members from bundled JSON files or external API
+4. Assigns committee members as voters to each proposal using parallel processing
+5. Returns detailed results of the assignment process
+
+### Environment Variables for Voter Assignment
+
+To use this endpoint, add the following to your environment variables:
+
+```bash
+# Committee publisher mnemonic used to assign voters
+COMMITTEE_PUBLISHER_MNEMONIC=your_mnemonic_phrase_here
+
+# Committee data API URL (fallback if local files are unavailable)
+COMMITTEE_API_URL=https://your-committee-api-endpoint
+
+# Maximum number of proposals to process concurrently (optional, default: 5, max: 20)
+MAX_CONCURRENT_PROPOSALS=10
+
+# Maximum number of concurrent requests to make per proposal
+MAX_REQUESTS_PER_PROPOSAL=5
+```
+
+### Committee Data Files
+
+The voter assignment endpoint loads committee data using the following strategy:
+
+1. **Primary Source**: Dynamic import of committee JSON files
+   - Files located at `src/pages/api/committees/[committeeId].json`
+   - Works in both development and production (including Cloudflare)
+   - In development mode, files are located at `src/pages/api/committees-dev/[committeeId].json`
+
+2. **Fallback**: API request to the URL specified in `COMMITTEE_API_URL` environment variable
+   - Used when local files don't exist or can't be read
+   - The committee ID is appended to the URL as a query parameter
+
+For Cloudflare deployment, committee files must be placed in the `src/pages/api/committees` directory with filenames matching the base64url-encoded committee ID. These files are bundled with the application during deployment.
+
+The required JSON format for committee data is:
+
+```json
+{
+  "xGovs": [
+    {
+      "address": "ALGORAND_ADDRESS_1",
+      "votes": 1000
+    },
+    {
+      "address": "ALGORAND_ADDRESS_2",
+      "votes": 2000
+    }
+    // More committee members...
+  ]
+}
+```
+
+### Making a Request to the Voter Assignment Endpoint
+
+To trigger voter assignment, make a POST request to the endpoint:
+
+```bash
+curl -X POST https://your-domain/api/assign \
+  -H "Content-Type: application/json" \
+  -d '{"proposalIds": [123, 456]}'
+```
+
+#### Request Body Options:
+
+* `proposalIds` (optional): Array of specific proposal IDs to process (if omitted, all FINAL proposals will be processed)
+
+#### Response Format:
+
+```json
+{
+  "message": "Processed 10 proposals in 5.25s using parallel processing",
+  "results": {
+    "success": 8,
+    "failed": 2,
+    "details": [
+      {
+        "id": "123",
+        "title": "Example Proposal",
+        "voters": 100,
+        "skippedVoters": 0,
+        "totalVoters": 100,
+        "status": "success"
+      },
+      // More proposal results...
+    ]
+  },
+  "processingDetails": {
+    "concurrencyLevel": 10,  // Value from MAX_CONCURRENT_PROPOSALS environment variable
+    "executionTimeSeconds": 5.25
+  }
+}
+```
+
+The endpoint processes proposals in batches with parallel execution for better performance. For each proposal, it:
+1. Extracts the committee ID from the proposal's global state
+2. Loads committee data based on that ID
+3. Checks for already assigned voters to prevent duplicates
+4. Assigns eligible voters in optimized transaction groups (max 16 transactions per group)
+5. Returns detailed statistics about the assignment operation
+
+### Test the endpoint locally
+
+To test locally, first we need to populate some mock data:
+
+```bash
+npm run mock-init-assign
+```
+
+Than, follow the instructions at the end of the script output.

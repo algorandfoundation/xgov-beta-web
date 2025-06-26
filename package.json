@@ -9,6 +9,7 @@
     "preview": "wrangler dev",
     "astro": "astro",
     "mock-init": "tsx --env-file=.env.template mock-init.ts",
+    "mock-init-assign": "tsx --env-file=.env.template mock-init-assign.ts",
     "lint": "eslint .",
     "prettier": "prettier --check .",
     "storybook": "storybook dev -p 6006",
@@ -62,6 +63,7 @@
     "lute-connect": "^1.4.1",
     "multiformats": "^13.3.1",
     "nanostores": "^0.10.3",
+    "p-map": "^7.0.3",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
@@ -88,6 +90,7 @@
     "@storybook/test-runner": "^0.19.1",
     "@typescript-eslint/parser": "^8.29.1",
     "@vitejs/plugin-basic-ssl": "^2.0.0",
+    "ajv": "^8.17.1",
     "autoprefixer": "^10.4.20",
     "chromatic": "^11.16.1",
     "eslint": "^9.24.0",
@@ -101,5 +104,8 @@
     "tsx": "^4.19.3",
     "vite-plugin-pwa": "^1.0.0",
     "vite-tsconfig-paths": "^5.0.1"
+  },
+  "peerDependencies": {
+    "js-sha512": "^0.8.0"
   }
 }
