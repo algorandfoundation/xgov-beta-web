@@ -127,7 +127,7 @@ function ConnectDialog({
             Choose a wallet to connect & use the xGov app
           </DialogDescription>
         </DialogHeader>
-        <ul className="h-full flex flex-col sm:flex-row sm:flex-wrap items-start justify-center sm:justify-start gap-8 sm:gap-3">
+        <ul className="h-full flex flex-col sm:flex-row sm:flex-wrap items-start justify-center sm:justify-start gap-8 sm:gap-3 mt-6">
           {wallets.map((wallet) => (
             <li key={wallet.id}>
               <button
