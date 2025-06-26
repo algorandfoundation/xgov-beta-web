@@ -369,7 +369,7 @@ export async function getProposalVoters(
     type: algosdk.ABIType.from('(uint64,bool)')
   })).map((value, i) => {
     if (Array.isArray(value) && value[1]) {
-      addresses.push(encodeAddress(Buffer.from(voterBoxes[i].slice(1))));
+      addresses.push(algosdk.encodeAddress(Buffer.from(voterBoxes[i].slice(1))));
     }
   });
 
