@@ -1,4 +1,5 @@
 import type { ProposalTypedGlobalState } from "@algorandfoundation/xgov";
+import type { User } from "@/api/discourse/user.ts";
 
 export enum ProposalStatus {
   ProposalStatusEmpty = 0,
@@ -203,6 +204,7 @@ export type ProposalSummaryCardDetails = Omit<ProposalTypedGlobalState, 'funding
   status: ProposalStatus;
   focus: ProposalFocus;
   fundingCategory: ProposalCategory;
+  forumUsers?: User[];
 }
 
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;

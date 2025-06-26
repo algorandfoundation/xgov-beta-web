@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Connect } from "@/components/Connect/Connect.tsx";
 import { UseWallet } from "@/hooks/useWallet";
+
 import { TutorialDialog } from "@/components/TutorialDialog/TutorialDialog";
 import {
   markTutorialSeen,
@@ -11,7 +12,7 @@ import {
 } from "@/stores/firstTimeUserStore";
 import { InfinityMirrorButton } from "../button/InfinityMirrorButton/InfinityMirrorButton";
 import { WalletIcon } from "../icons/WalletIcon";
-import { useProposer, UseQuery, useRegistry, useXGov } from "@/hooks";
+import { useNFD, useProposer, UseQuery, useRegistry, useXGov } from "@/hooks";
 import { subscribeProposer, subscribeXgov } from "@/api";
 
 export type ConnectIslandProps = {
@@ -25,6 +26,7 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
   const manager = useWallet();
   const [showTutorial, setShowTutorial] = useState(false);
   const registry = useRegistry();
+  const nfd = useNFD(manager.activeAddress)
   const xgov = useXGov(manager.activeAddress);
   const proposer = useProposer(manager.activeAddress);
   const [subscribeXGovLoading, setSubscribeXGovLoading] = useState<boolean>(false);
@@ -65,6 +67,7 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
             }}
             {...manager}
             path={path}
+            nfdName={nfd.data?.properties?.internal?.name || ""}
           />
         )
       }

@@ -1,5 +1,6 @@
 import {
   FocusReverseMap,
+  getUrl,
   ProposalFundingTypeReverseMap,
   ProposalStatus,
   ProposalStatusMap,
@@ -10,7 +11,7 @@ import { BracketedPhaseDetail } from "@/components/BracketedPhaseDetail/Brackete
 import { UserPill } from "@/components/UserPill/UserPill.tsx";
 import { RequestedAmountDetail } from "@/components/RequestedAmountDetail/RequestedAmountDetail.tsx";
 import { FocusDetail } from "@/components/FocusDetail/FocusDetail.tsx";
-// import { UserCircleRow } from "@/components/UserCircleRow/UserCircleRow.tsx";
+import { UserCircleRow } from "@/components/UserCircleRow/UserCircleRow.tsx";
 import { DiscussionLink } from "@/components/DiscussionLink/DiscussionLink.tsx";
 import { FundingTypeAndTimeDetail } from "@/components/FundingTypeAndTimeDetail/FundingTypeAndTimeDetail.tsx";
 import {
@@ -18,7 +19,10 @@ import {
   filters,
 } from "@/recipes/proposal/list/ProposalFilter.tsx";
 import {VoteCounter} from "@/components/VoteCounter/VoteCounter";
-import { useMetadata } from "@/hooks";
+import { useMetadata, useNFDs, useProposalVoters } from "@/hooks";
+import { useDiscourseTopic } from "@/hooks/useDiscourseTopic";
+import { useUrls } from "@/hooks/useUrls";
+
 const filterKeys = Object.keys(filters);
 
 export const proposalFilter = (
@@ -102,6 +106,10 @@ export function StackedList({
         const phase = ProposalStatusMap[status];
 
         const metadata = useMetadata(id, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusFinal))
+        const discourse = useDiscourseTopic(metadata.data?.forumLink, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusFinal));
+        const votedAddresses = useProposalVoters(Number(id), status === ProposalStatus.ProposalStatusVoting);
+        const nfds = useNFDs(votedAddresses?.data, status === ProposalStatus.ProposalStatusVoting);
+        const avatars = useUrls(nfds?.data, status === ProposalStatus.ProposalStatusVoting);
 
         // Filter out blocked proposals
         // Filter out empty proposals if the active address is not the proposer
@@ -131,7 +139,7 @@ export function StackedList({
                 <div className="hidden lg:flex flex-wrap justify-end items-end gap-4">
                   {phase === "Voting" && (
                     <>
-                      {/* <UserCircleRow /> */}
+                      <UserCircleRow users={avatars.filter(v => !!v.data).map(v => v.data!)} />
                       <VoteCounter
                         approvals={Number(approvals)}
                         rejections={Number(rejections)}
@@ -141,8 +149,11 @@ export function StackedList({
 
                   {phase === "Discussion" && (
                     <>
-                      {/* <UserCircleRow /> */}
-                      <DiscussionLink to={metadata.data?.forumLink} />
+                      <UserCircleRow users={discourse.data?.recentAvatars || []} />
+                      <DiscussionLink
+                        to={metadata.data?.forumLink}
+                        postCount={discourse.data?.postCount || 0}
+                      />
                     </>
                   )}
                 </div>
@@ -169,7 +180,7 @@ export function StackedList({
                 <div className="flex flex-wrap justify-end items-end gap-4">
                   {phase === "Voting" && (
                     <>
-                      {/* <UserCircleRow /> */}
+                      <UserCircleRow users={avatars.filter(v => !!v.data).map(v => v.data!)} />
                       <VoteCounter
                         approvals={Number(approvals)}
                         rejections={Number(rejections)}
@@ -179,8 +190,11 @@ export function StackedList({
 
                   {phase === "Discussion" && (
                     <>
-                      {/* <UserCircleRow /> */}
-                      <DiscussionLink to={metadata.data?.forumLink} />
+                      <UserCircleRow users={discourse.data?.recentAvatars || []} />
+                      <DiscussionLink
+                        to={metadata.data?.forumLink}
+                        postCount={discourse.data?.postCount || 0}
+                      />
                     </>
                   )}
                 </div>

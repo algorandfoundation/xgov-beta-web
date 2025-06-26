@@ -346,6 +346,36 @@ export async function getProposalBrief(
   );
 }
 
+export async function getProposalVoters(
+  id: number,
+  limit: number = 1000,
+): Promise<string[]> {
+  const boxes = await algorand.client.algod
+    .getApplicationBoxes(id)
+    .max(limit)
+    .do();
+
+  let voterBoxes: Uint8Array<ArrayBufferLike>[] = []
+  boxes.boxes.map((box) => {
+    if (new TextDecoder().decode(box.name).startsWith("V")) {
+      voterBoxes.push(box.name);
+    }
+  });
+
+  let addresses: string[] = [];
+  (await algorand.app.getBoxValuesFromABIType({
+    appId: BigInt(id),
+    boxNames: voterBoxes,
+    type: algosdk.ABIType.from('(uint64,bool)')
+  })).map((value, i) => {
+    if (Array.isArray(value) && value[1]) {
+      addresses.push(algosdk.encodeAddress(Buffer.from(voterBoxes[i].slice(1))));
+    }
+  });
+
+  return addresses;
+}
+
 /**
  * Retrieves the discussion duration based on the given proposal category.
  *
