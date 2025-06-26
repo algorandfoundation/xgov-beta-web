@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { useTimeLeft } from "@/hooks/useTimeLeft";
 import { Link } from "@/components/Link";
-import { ProposalReviewerCard } from "@/components/ProposalReviewerCard/ProposalReviewerCard";
+import { ProposalCouncilCard } from "@/components/ProposalCouncilCard/ProposalCouncilCard";
 import { VoteCounter } from "@/components/VoteCounter/VoteCounter";
 import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill";
 import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
@@ -647,7 +647,7 @@ export function StatusCard({
 
 export interface ProposalInfoProps {
   activeAddress: string | null;
-  xGovReviewer?: string;
+  xGovCouncil?: string;
   proposal: ProposalMainCardDetails;
   pastProposals?: ProposalBrief[];
   children?: ReactNode;
@@ -655,7 +655,7 @@ export interface ProposalInfoProps {
 
 export function ProposalInfo({
   activeAddress,
-  xGovReviewer,
+  xGovCouncil,
   proposal,
   pastProposals,
   children,
@@ -709,12 +709,12 @@ export function ProposalInfo({
       </div>
       <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-6 lg:mx-0 lg:max-w-none lg:grid-cols-2 lg:items-start lg:gap-y-10">
         {
-          xGovReviewer
+          xGovCouncil
           && activeAddress
-          && activeAddress === xGovReviewer
+          && activeAddress === xGovCouncil
           && (
             <div className="lg:col-span-2">
-              <ProposalReviewerCard
+              <ProposalCouncilCard
                 proposalId={proposal.id}
                 status={proposal.status}
               />
@@ -847,7 +847,7 @@ export function FinalizeModal({
         return false;
       }
 
-      const { committeePublisher } = (await getGlobalState())!
+      const { xgovDaemon } = (await getGlobalState())!
 
       const proposalFactory = new ProposalFactory({ algorand });
       const proposalClient = proposalFactory.getAppClientById({
@@ -859,7 +859,7 @@ export function FinalizeModal({
         signer: transactionSigner,
         args: {},
         appReferences: [registryClient.appId],
-        accountReferences: [activeAddress, committeePublisher],
+        accountReferences: [activeAddress, xgovDaemon],
         boxReferences: [new Uint8Array(Buffer.from("M"))],
         extraFee: (1000).microAlgos(),
       });

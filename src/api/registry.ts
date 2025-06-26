@@ -26,11 +26,11 @@ export async function getGlobalState(): Promise<RegistryGlobalState | undefined>
     return {
       ...state,
       committeeManager: !!state.committeeManager ? encodeAddress(state.committeeManager.asByteArray()!) : '',
-      committeePublisher: !!state.committeePublisher ? encodeAddress(state.committeePublisher.asByteArray()!) : '',
+      xgovDaemon: !!state.xgovDaemon ? encodeAddress(state.xgovDaemon.asByteArray()!) : '',
       kycProvider: !!state.kycProvider ? encodeAddress(state.kycProvider.asByteArray()!) : '',
       xgovManager: !!state.xgovManager ? encodeAddress(state.xgovManager.asByteArray()!) : '',
       xgovPayor: !!state.xgovPayor ? encodeAddress(state.xgovPayor.asByteArray()!) : '',
-      xgovReviewer: !!state.xgovReviewer ? encodeAddress(state.xgovReviewer.asByteArray()!) : '',
+      xgovCouncil: !!state.xgovCouncil ? encodeAddress(state.xgovCouncil.asByteArray()!) : '',
       xgovSubscriber: !!state.xgovSubscriber ? encodeAddress(state.xgovSubscriber.asByteArray()!) : '',
     }
 

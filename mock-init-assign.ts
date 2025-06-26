@@ -203,11 +203,11 @@ await registryClient.send.setCommitteeManager({
   },
 });
 
-await registryClient.send.setCommitteePublisher({
+await registryClient.send.setXgovDaemon({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: {
-    publisher: adminAccount.addr,
+    xgovDaemon: adminAccount.addr,
   },
 });
 
@@ -583,8 +583,8 @@ for (let i = 1; i < mockProposals.length; i++) {
   });
 }
 
-// Set admin account as xGov Reviewer to avoid having to click through admin panel
-await registryClient.send.setXgovReviewer({
+// Set admin account as xGov Council to avoid having to click through admin panel
+await registryClient.send.setXgovCouncil({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: [adminAccount.addr],
@@ -622,7 +622,7 @@ fs.writeFileSync(
     "<REPLACE_WITH_APPLICATION_ID>",
     results.appClient.appId.toString(),
   ).replace(
-    "<REPLACE_WITH_PUBLISHER_MNEMONIC>",
+    "<REPLACE_WITH_DAEMON_MNEMONIC>",
     `"${algosdk.secretKeyToMnemonic(adminAccount.account.sk)}"`,
   ),
   "utf-8",

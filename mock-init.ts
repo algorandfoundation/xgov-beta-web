@@ -172,11 +172,11 @@ await registryClient.send.setCommitteeManager({
   },
 });
 
-await registryClient.send.setCommitteePublisher({
+await registryClient.send.setXgovDaemon({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: {
-    publisher: adminAccount.addr,
+    xgovDaemon: adminAccount.addr,
   },
 });
 
@@ -529,7 +529,7 @@ for (let i = 1; i < 10; i++) {
 }
 
 // For one proposal, we will have a voting period
-// to make it reviewable by xGov Reviewer
+// to make it reviewable by xGov Council
 // Send votes for proposal #0 from admin account
 try {
   await registryClient.send.voteProposal({
@@ -579,8 +579,8 @@ await proposalFactory
     extraFee: (1000).microAlgo()
   })
 
-// Set admin account as xGov Reviewer to avoid having to click through admin panel
-await registryClient.send.setXgovReviewer({
+// Set admin account as xGov Council to avoid having to click through admin panel
+await registryClient.send.setXgovCouncil({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: [adminAccount.addr],

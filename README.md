@@ -80,7 +80,7 @@ Go to Lora --> Fund. Type in the xGov Registry's account address and fund it wit
 
 Go to Lora --> App Lab --> {Your xGov Registry contract}.
 
-Call `set_committee_manager` and `set_committee_publisher`, providing your own account address. Then call `declare_committee`.
+Call `set_committee_manager` and `set_xgov_daemon`, providing your own account address. Then call `declare_committee`.
 
 Now the xGov Registry should be in a good state.
 
@@ -111,8 +111,8 @@ The application includes a POST endpoint at `/api/assign` that:
 To use this endpoint, add the following to your environment variables:
 
 ```bash
-# Committee publisher mnemonic used to assign voters
-COMMITTEE_PUBLISHER_MNEMONIC=your_mnemonic_phrase_here
+# Daemon/Committee publisher mnemonic used to assign voters
+XGOV_DAEMON_MNEMONIC=your_mnemonic_phrase_here
 
 # Committee data API URL (fallback if local files are unavailable)
 COMMITTEE_API_URL=https://your-committee-api-endpoint
