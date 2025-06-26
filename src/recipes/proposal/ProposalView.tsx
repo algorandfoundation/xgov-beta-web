@@ -47,6 +47,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
+import { ProposalPayorCard } from "@/components/ProposalPayorCard/ProposalPayorCard";
 
 export const defaultsStatusCardMap = {
   [ProposalStatus.ProposalStatusEmpty]: {
@@ -648,6 +649,7 @@ export function StatusCard({
 export interface ProposalInfoProps {
   activeAddress: string | null;
   xGovCouncil?: string;
+  xGovPayor?: string;
   proposal: ProposalMainCardDetails;
   pastProposals?: ProposalBrief[];
   children?: ReactNode;
@@ -656,6 +658,7 @@ export interface ProposalInfoProps {
 export function ProposalInfo({
   activeAddress,
   xGovCouncil,
+  xGovPayor,
   proposal,
   pastProposals,
   children,
@@ -715,6 +718,19 @@ export function ProposalInfo({
           && (
             <div className="lg:col-span-2">
               <ProposalCouncilCard
+                proposalId={proposal.id}
+                status={proposal.status}
+              />
+            </div>
+          )
+        }
+        {
+          xGovPayor
+          && activeAddress
+          && activeAddress === xGovPayor
+          && (
+            <div className="lg:col-span-2">
+              <ProposalPayorCard
                 proposalId={proposal.id}
                 status={proposal.status}
               />
