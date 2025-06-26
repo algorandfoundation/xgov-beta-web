@@ -3,16 +3,13 @@ import { ProfileCard } from "@/components/ProfileCard/ProfileCard";
 import { useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
 import {
-  algorand,
-  network,
   openProposal,
-  RegistryAppID,
   registryClient,
-  signup,
+  subscribeProposer,
+  subscribeXgov,
 } from "@/api";
 import algosdk, {
   ALGORAND_MIN_TX_FEE,
-  makePaymentTxnWithSuggestedParamsFromObject,
   type TransactionSigner,
 } from "algosdk";
 import { Buffer } from "buffer";
@@ -35,24 +32,6 @@ import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
 import { queryClient } from "@/stores";
-import type { XGovRegistryComposer } from "@algorandfoundation/xgov/registry";
-import {
-  fundingLogicSig,
-  fundingLogicSigSigner,
-} from "@/api/testnet-funding-logicsig";
-
-// const activeStatuses = [
-//   // ProposalStatus.ProposalStatusEmpty,
-//   ProposalStatus.ProposalStatusDraft,
-//   ProposalStatus.ProposalStatusFinal,
-//   ProposalStatus.ProposalStatusVoting,
-//   ProposalStatus.ProposalStatusApproved,
-//   ProposalStatus.ProposalStatusRejected,
-//   ProposalStatus.ProposalStatusReviewed,
-//   // ProposalStatus.ProposalStatusFunded,
-//   ProposalStatus.ProposalStatusBlocked,
-//   ProposalStatus.ProposalStatusDelete,
-// ];
 
 export function ProfilePageIsland({ address }: { address: string }) {
   console.log(address);
@@ -142,13 +121,6 @@ export function ProfilePage({
       proposer.data.kycExpiring > Date.now() / 1000) ||
     false;
 
-  console.log(
-    "validProposer",
-    validProposer,
-    "activeProposal",
-    proposer.data?.activeProposal,
-  );
-
   const proposals = proposalsData.data;
 
   if (!address || isLoading) {
@@ -158,70 +130,6 @@ export function ProfilePage({
   if (isError) {
     return <div>Error...</div>;
   }
-
-  const subscribeXgov = async () => {
-    setSubscribeXGovLoading(true);
-
-    if (!activeAddress || !transactionSigner) {
-      console.error("No active address or transaction signer");
-      setSubscribeXGovLoading(false);
-      return;
-    }
-
-    if (!registry.data?.xgovFee) {
-      console.error("xgovFee is not set");
-      setSubscribeXGovLoading(false);
-      return;
-    }
-
-    const suggestedParams = await algorand.getSuggestedParams();
-
-    const payment = makePaymentTxnWithSuggestedParamsFromObject({
-      from: activeAddress,
-      to: algosdk.getApplicationAddress(RegistryAppID),
-      amount: registry.data?.xgovFee,
-      suggestedParams,
-    });
-
-    let builder: XGovRegistryComposer<any> = registryClient.newGroup();
-
-    if (network === "testnet") {
-      builder = builder.addTransaction(
-        await registryClient.algorand.createTransaction.payment({
-          sender: fundingLogicSig.address(),
-          receiver: address,
-          amount: (100).algos(),
-        }),
-        fundingLogicSigSigner,
-      );
-    }
-
-    builder = builder.subscribeXgov({
-      sender: activeAddress,
-      signer: transactionSigner,
-      args: {
-        payment,
-        votingAddress: activeAddress,
-      },
-      boxReferences: [
-        new Uint8Array(
-          Buffer.concat([
-            Buffer.from("x"),
-            algosdk.decodeAddress(activeAddress).publicKey,
-          ]),
-        ),
-      ],
-    });
-
-    await builder.send().catch((e: Error) => {
-      console.error(`Error calling the contract: ${e.message}`);
-      setSubscribeXGovLoading(false);
-      return;
-    });
-
-    xgov.refetch();
-    setSubscribeXGovLoading(false);
-  };
 
   const setVotingAddress = async (address: string) => {
     setSetVotingAddressLoading(true);
@@ -295,25 +203,6 @@ export function ProfilePage({
     setSubscribeXGovLoading(false);
   };
 
-  const subscribeProposer = async (amount: bigint) => {
-    setSubscribeProposerLoading(true);
-
-    if (!activeAddress || !transactionSigner) {
-      console.error("No active address or transaction signer");
-      setSubscribeProposerLoading(false);
-      return;
-    }
-
-    await signup(activeAddress, transactionSigner, amount).catch((e: Error) => {
-      console.error(`Error calling the contract: ${e.message}`);
-      setSubscribeProposerLoading(false);
-      return;
-    });
-
-    await proposer.refetch();
-    setSubscribeProposerLoading(false);
-  };
-
   return (
     <>
       <ProfileCard
@@ -323,12 +212,24 @@ export function ProfilePage({
         setVotingAddressLoading={setVotingAddressLoading}
         isXGov={(address && xgov.data?.isXGov) || false}
         xGovSignupCost={registry.data?.xgovFee || 0n}
-        subscribeXgov={subscribeXgov}
+        subscribeXgov={() => subscribeXgov(
+          activeAddress,
+          transactionSigner,
+          setSubscribeXGovLoading,
+          registry.data?.xgovFee,
+          xgov.refetch
+        )}
         unsubscribeXgov={unsubscribeXgov}
         subscribeXGovLoading={subscribeXGovLoading}
         proposer={proposer.data}
         proposerSignupCost={registry.data?.proposerFee || 0n}
-        subscribeProposer={() => subscribeProposer(registry.data?.proposerFee!)}
+        subscribeProposer={() => subscribeProposer(
+          activeAddress,
+          transactionSigner,
+          setSubscribeProposerLoading,
+          registry.data?.proposerFee!,
+          proposer.refetch
+        )}
         subscribeProposerLoading={subscribeProposerLoading}
         activeAddress={activeAddress}
         className="mt-6"
