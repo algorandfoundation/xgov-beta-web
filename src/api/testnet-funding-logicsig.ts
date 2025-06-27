@@ -19,7 +19,7 @@ export const fundingLogicSigSigner =
   makeLogicSigAccountTransactionSigner(fundingLogicSig);
 
 const scrutinyFundingLsigB64 =
-  "BSABAjMAAIAgvczq3xRDToawT8nH8mk3Wkz8xqrHQd2zRM+GC/vV9boSQABiMgQiEjEQgQYSEDEgMgMSEDEZgQASEDMAGIG/99rhAhIQNwAaAIAEJpgyABIQNwAaATMBGBYSEDMAATIAEhA3ARoAgARzTb7MEhAzAQEiMgALEhCACDGafQAAJBgPFxBCAAKBAUM=";
+  "BSABAjMAAIAgvczq3xRDToawT8nH8mk3Wkz8xqrHQd2zRM+GC/vV9boSQABiMgQiEjEQgQYSEDEgMgMSEDEZgQASEDMAGIHn2OThAhIQNwAaAIAEJpgyABIQNwAaATMBGBYSEDMAATIAEhA3ARoAgARzTb7MEhAzAQEiMgALEhCACOi5RAADucLkFxBCAAKBAUM=";
 
 export const scrutinyFundingLogicSig = new LogicSigAccount(
   Buffer.from(scrutinyFundingLsigB64, "base64"),
