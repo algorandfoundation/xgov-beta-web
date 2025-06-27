@@ -16,7 +16,12 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
-  viteFinal(config) {
+  viteFinal: async (config) => {
+    config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "astro:transitions/client": require.resolve("./mocks/astro-transitions.js"),
+    };
     return mergeConfig(config, {
       plugins: [tsconfigPaths()],
     });

@@ -48,7 +48,7 @@ export function ProposalListHeader({
   return (
     <div className="flex items-center justify-between mb-4 px-3">
       <div className="sm:flex-auto">
-        <h1 className="text-lg sm:text-2xl md:text-4xl font-semibold text-algo-blue dark:text-algo-teal">
+        <h1 id="list-header-title" className="text-lg sm:text-2xl md:text-4xl font-semibold text-algo-blue dark:text-algo-teal">
           {title}
         </h1>
       </div>
