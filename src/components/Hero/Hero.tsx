@@ -9,6 +9,7 @@ import { AlgoShapeIcon11 } from "@/components/icons/AlgoShapeIcon11.tsx";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon.tsx";
 import animations from "@/styles/homepage-animations.module.css";
 import { cn } from "@/functions/utils";
+import { ConnectIsland } from "../Connect/Connect.island";
 
 export interface HeroProps {
   title: string;
@@ -33,7 +34,7 @@ export function Hero({
         <h1
           className={cn(
             animations.titleFadeIn,
-            "w-40 md:w-full text-wrap p-3 lg:p-6 text-4xl lg:text-8xl font-bold z-10",
+            "w-40 md:w-full text-wrap p-4 lg:p-6 text-4xl lg:text-8xl font-bold z-10",
           )}
         >
           {title}
@@ -65,7 +66,7 @@ export function Hero({
         <AlgoShapeIcon9
           className={cn(
             animations.shapeSlideFadeIn5,
-            "absolute right-36 sm:right-52 top-24 fill-algo-blue dark:fill-algo-teal dark:sm:fill-white/10 sm:fill-white/10",
+            "hidden md:block absolute right-36 sm:right-52 top-24 fill-algo-blue dark:fill-algo-teal dark:sm:fill-white/10 sm:fill-white/10",
           )}
         />
         <AlgoShapeIcon10
@@ -83,14 +84,24 @@ export function Hero({
         <AlgoShapeIcon11
           className={cn(animations.shapeSlideFadeIn8, "absolute fill-white/10")}
         />
-        <p
-          className={cn(
+
+        <div className="flex flex-col lg:text-2xl lg:pt-44 max-w-lg lg:max-w-4xl p-4 md:pr-8 mb-10 sm:mb-32 lg:mb-14 mt-2 z-10">
+          <p
+            className={animations.descriptionFadeIn}
+          >
+            {description}
+          </p>
+          <div className={cn(
             animations.descriptionFadeIn,
-            "font-mono lg:text-2xl lg:pt-44 max-w-lg lg:max-w-4xl p-2 md:pr-8 mb-32 sm:mb-40 lg:mb-14 mt-2 z-10",
-          )}
-        >
-          {description}
-        </p>
+            "relative mt-8 md:mt-4 w-fit"
+          )}>
+            <ConnectIsland
+              cta="Get Started"
+              openTutorial
+              hideIcon
+            />
+          </div>
+        </div>
       </div>
       <div className="w-full flex mt-8 lg:mt-6 p-4">
         <div
@@ -106,8 +117,8 @@ export function Hero({
             <AlgoShapeIcon1 className="w-full h-full fill-white/10" />
           </div>
 
-          <h1 className="text-2xl mb-2 font-bold">Current Cohort</h1>
-          <ul className="flex flex-wrap gap-x-8 gap-y-4 sm:gap-10 md:gap-40 text-sm font-mono text-white dark:text-algo-black">
+          <h1 className="text-2xl mb-2 font-bold">Current Stats</h1>
+          <ul className="flex flex-wrap gap-x-8 gap-y-4 sm:gap-x-14 md:gap-x-20 lg:gap-x-40 text-sm font-mono text-white dark:text-algo-black">
             <li className="flex flex-col">
               <span className="text-bold text-algo-blue-30 dark:text-algo-black-70">
                 xGovs

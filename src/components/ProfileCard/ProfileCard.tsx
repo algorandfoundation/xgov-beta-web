@@ -20,6 +20,8 @@ import { AlgorandIcon } from "../icons/AlgorandIcon";
 import termsAndConditionsString from "./TermsAndConditionsText.md?raw";
 import { TermsAndConditionsModal } from "@/recipes";
 import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispenserBanner";
+import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
+import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
 
 export interface ProfileCardProps {
   address: string;
@@ -58,8 +60,7 @@ export function ProfileCard({
 }: ProfileCardProps) {
   const [showBecomeXGovModal, setShowBecomeXGovModal] = useState(false);
   const [showBecomeProposerModal, setShowBecomeProposerModal] = useState(false);
-  const [showBecomeProposerTermsModal, setShowBecomeProposerTermsModal] =
-    useState(false);
+  const [showBecomeProposerTermsModal, setShowBecomeProposerTermsModal] = useState(false);
 
   return (
     <>
@@ -159,130 +160,3 @@ export function ProfileCard({
   );
 }
 
-interface BecomeXGovModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSignup: () => Promise<void>;
-  costs: bigint;
-  errorMessage?: string;
-}
-
-export function BecomeXGovModal({
-  isOpen,
-  onClose,
-  onSignup,
-  costs,
-  errorMessage,
-}: BecomeXGovModalProps) {
-  const onSubmit = async () => {
-    try {
-      await onSignup();
-      onClose();
-    } catch (error) {
-      console.error("Error during signup:", error);
-    }
-  };
-
-  return (
-    <Dialog open={isOpen}>
-      <DialogContent
-        className="w-full h-full sm:h-auto sm:max-w-[425px] sm:rounded-lg"
-        onCloseClick={onClose}
-      >
-        <DialogHeader className="mt-12 flex flex-col items-start gap-2">
-          <DialogTitle className="dark:text-white">Become an xGov?</DialogTitle>
-          <DialogDescription>
-            By becoming an xGov, you will be able to vote on proposals based on
-            your accounts participation in consensus.
-          </DialogDescription>
-          <WarningNotice
-            title="xGov Signup Fee"
-            description={
-              <>
-                It will cost&nbsp;
-                <span className="inline-flex items-center gap-1">
-                  <AlgorandIcon className="size-2.5" />
-                  {Number(costs) / 1_000_000}
-                </span>
-                &nbsp;to become an xGov. { network !== "testnet" ? null : <><br/>On testnet, this fee is sponsored.</> }
-              </>
-            }
-          />
-        </DialogHeader>
-        {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
-        <DialogFooter className="mt-8">
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={onSubmit}>Signup</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-interface BecomeProposerModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSignup: () => Promise<void>;
-  costs: bigint;
-  errorMessage?: string;
-}
-
-export function BecomeProposerModal({
-  isOpen,
-  onClose,
-  onSignup,
-  costs,
-  errorMessage,
-}: BecomeProposerModalProps) {
-  const onSubmit = async () => {
-    try {
-      await onSignup();
-      onClose();
-    } catch (error) {
-      console.error("Error during signup:", error);
-    }
-  };
-
-  return (
-    <Dialog open={isOpen}>
-      <DialogContent
-        className="w-full h-full sm:h-auto sm:max-w-[425px] sm:rounded-lg"
-        onCloseClick={onClose}
-      >
-        <DialogHeader className="mt-12 flex flex-col items-start gap-2">
-          <DialogTitle className="dark:text-white">
-            Become a Proposer?
-          </DialogTitle>
-          <DialogDescription>
-            By becoming a proposer, you will be able to submit proposals for the
-            community to vote on. There's a one time proposer sign up fee for
-            your address. Your profile will be valid after KYC has been
-            completed.
-          </DialogDescription>
-          <WarningNotice
-            title="Proposer Signup Fee"
-            description={
-              <>
-                It will cost&nbsp;
-                <span className="inline-flex items-center gap-1">
-                  <AlgorandIcon className="size-2.5" />
-                  {Number(costs) / 1_000_000}
-                </span>
-                &nbsp;to become a proposer. { network !== "testnet" ? null : <><br/>On testnet, this fee is sponsored.</> }
-              </>
-            }
-          />
-        </DialogHeader>
-        {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
-        <DialogFooter className="mt-8">
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={onSubmit}>Signup</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
