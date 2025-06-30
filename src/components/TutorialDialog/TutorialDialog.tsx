@@ -35,10 +35,7 @@ const tutorialSteps = [
     {
         title: "Welcome to xGov",
         description: "You've successfully connected your wallet to the xGov platform. Let's take a quick tour of what you can do here.",
-        content: `Now that you have successfully connected your wallet to the xGov platform, let's take a look at what you can do here.
-            
-            xGov is a decentralized, on-chain platform that enables Algorand Consensus participants to fund open-source builders across the ecosystem.
-        `,
+        content: `xGov is a decentralized, on-chain platform that enables Algorand Consensus participants to fund open-source builders across the ecosystem.`,
         action: null
     },
     {
@@ -369,7 +366,7 @@ export function TutorialDialog({
                                 </DialogDescription>
                             </DialogHeader>
 
-                            <div className="flex-1 mb-6">
+                            <div className="flex-1 mb-6 overflow-y-scroll">
                                 <p className="text-algo-black dark:text-white leading-relaxed text-base whitespace-pre-line">
                                     {currentStepData.content}
                                 </p>
