@@ -361,10 +361,7 @@ for (let i = 0; i < mockProposals.length; i++) {
   }
 
   const proposalSubmissionFee = Math.trunc(
-    Number(
-      (mockProposals[i].requestedAmount.algos().microAlgos * BigInt(1_000)) /
-      BigInt(10_000),
-    ),
+    Number((mockProposals[i].requestedAmount.algos().microAlgos * PROPOSAL_COMMITMENT_BPS) / BigInt(10_000)),
   );
 
   console.log(`Payment Amount: ${proposalSubmissionFee}\n`);

@@ -8,21 +8,23 @@ export const manifest: Partial<ManifestOptions> = {
 	theme_color: "#2D2DF1",
 	background_color: "#ffffff",
 	display: "fullscreen",
+	start_url: "/",
+	scope: "/",
 	icons: [
 		{
 			src: "/favicon.svg",
 			sizes: "192x192",
-			type: "image/png"
+			type: "image/svg+xml"
 		},
 		{
 			src: "/favicon.svg",
 			sizes: "512x512",
-			type: "image/png"
+			type: "image/svg+xml"
 		},
 		{
 			src: "/favicon.svg",
 			sizes: "512x512",
-			type: "image/png",
+			type: "image/svg+xml",
 			purpose: "any maskable"
 		}
 	]

@@ -66,15 +66,9 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
             </Link>
             <Link
               className="px-4 text-5xl font-bold text-algo-black dark:text-white"
-              to="/docs"
+              to="https://forum.algorand.co/c/gov-guides/32"
             >
               Docs
-            </Link>
-            <Link
-              className="px-4 text-5xl font-bold text-algo-black dark:text-white"
-              to="/cohort"
-            >
-              Cohort
             </Link>
 
             {

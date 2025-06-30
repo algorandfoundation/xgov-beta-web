@@ -30,11 +30,11 @@ const path = Astro.url.pathname;
             path === "/docs" ? "bg-algo-black/10" : "",
             "px-2 py-1 hover:bg-white/10 dark:hover:bg-algo-black/10 rounded-md",
           )}
-          to="/docs"
+          to="https://forum.algorand.co/c/gov-guides/32"
         >
           Docs
         </Link>
-        <Link
+        <!-- <Link
           data-testid="header-cohort-link"
           className={cn(
             path === "/cohort" ? "bg-algo-black/10" : "",
@@ -43,7 +43,7 @@ const path = Astro.url.pathname;
           to="/cohort"
         >
           Cohort
-        </Link>
+        </Link> -->
         <AdminLinkIsland client:only="react" path={path} />
       </nav>
       <slot />
