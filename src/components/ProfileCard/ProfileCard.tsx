@@ -3,7 +3,6 @@ import { EditableAddress } from "../EditableAddress/EditableAddress";
 import { ActionButton } from "../button/ActionButton/ActionButton";
 import { cn } from "@/functions";
 import { XGovProposerStatusPill } from "../XGovProposerStatusPill/XGovProposerStatusPill";
-import { BecomeAnXGovBannerButton } from "../BecomeAnXGovBannerButton/BecomeAnXGovBannerButton";
 import { XGovStatusPill } from "../XGovStatusPill/XGovStatusPill";
 import { useState } from "react";
 import {
@@ -87,10 +86,15 @@ export function ProfileCard({
           <TestnetDispenserBanner />
 
           {address === activeAddress && !isXGov ? (
-            <BecomeAnXGovBannerButton
+            <ActionButton
+              type="button"
               onClick={() => setShowBecomeXGovModal(true)}
               disabled={subscribeXGovLoading}
-            />
+            >
+              {subscribeXGovLoading
+                ? "Loading..."
+                : "Become an xGov"}
+            </ActionButton>
           ) : (
             <EditableAddress
               title="Voting Address"

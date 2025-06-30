@@ -35,10 +35,7 @@ const tutorialSteps = [
     {
         title: "Welcome to xGov",
         description: "You've successfully connected your wallet to the xGov platform. Let's take a quick tour of what you can do here.",
-        content: `Now that you have successfully connected your wallet to the xGov platform, let's take a look at what you can do here.
-            
-            xGov is a decentralized, on-chain platform that enables Algorand Consensus participants to fund open-source builders across the ecosystem.
-        `,
+        content: `xGov is a decentralized, on-chain platform that enables Algorand Consensus participants to fund open-source builders across the ecosystem.`,
         action: null
     },
     {
@@ -245,8 +242,8 @@ export function TutorialDialog({
                     className="w-full h-full sm:h-auto sm:max-w-6xl sm:rounded-lg"
                     onCloseClick={handleClose}
                 >
-                    <div className="sm:hidden">
-                        <DialogHeader className="mt-12 flex flex-col items-start gap-2">
+                    <div className="sm:hidden flex flex-col h-full">
+                        <DialogHeader className="mt-12 flex flex-col items-start gap-2 flex-shrink-0">
                             <DialogTitle className="dark:text-white text-xl">
                                 {currentStepData.title}
                             </DialogTitle>
@@ -255,13 +252,13 @@ export function TutorialDialog({
                             </DialogDescription>
                         </DialogHeader>
 
-                        <div className="py-6">
-                            <p className="text-algo-black dark:text-white leading-relaxed whitespace-pre-line">
+                        <div className="py-6 flex-1 overflow-y-auto">
+                            <p className="text-algo-black dark:text-white leading-relaxed whitespace-pre-line pb-14">
                                 {currentStepData.content}
                             </p>
                         </div>
 
-                        <DialogFooter>
+                        <DialogFooter className="flex-shrink-0">
                             <div className="flex flex-row justify-end items-center">
                                 <div className="w-full flex justify-between gap-2">
                                     <Button
@@ -269,11 +266,11 @@ export function TutorialDialog({
                                         onClick={handlePrevious}
                                         className={cn(
                                             currentStep === 0 && "opacity-0 pointer-events-none",
-                                            "flex items-center gap-1"
+                                            "flex items-center gap-1 xs:text-xs xs:px-2 xs:py-1"
                                         )}
                                     >
-                                        <ChevronLeftIcon className="size-4" />
-                                        Previous
+                                        <ChevronLeftIcon className="size-4 xs:size-3" />
+                                        <span className="hidden sm:inline">Previous</span>
                                     </Button>
 
                                     {getActionButton(currentStepData, currentStep)}
@@ -281,16 +278,16 @@ export function TutorialDialog({
                                     {currentStep < tutorialSteps.length - 1 ? (
                                         <Button
                                             onClick={handleNext}
-                                            className="flex items-center gap-1"
+                                            className="flex items-center gap-1 xs:text-xs xs:px-2 xs:py-1"
                                         >
-                                            Next
-                                            <ChevronRightIcon className="size-4" />
+                                            <span className="xs:hidden">Next</span>
+                                            <ChevronRightIcon className="size-4 xs:size-3" />
                                         </Button>
                                     ) : (
                                         <Button
                                             onClick={handleClose}
                                             variant="default"
-                                            className="bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black"
+                                            className="bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black xs:text-xs xs:px-2 xs:py-1"
                                         >
                                             Get Started
                                         </Button>
@@ -369,7 +366,7 @@ export function TutorialDialog({
                                 </DialogDescription>
                             </DialogHeader>
 
-                            <div className="flex-1 mb-6">
+                            <div className="flex-1 mb-6 overflow-y-scroll">
                                 <p className="text-algo-black dark:text-white leading-relaxed text-base whitespace-pre-line">
                                     {currentStepData.content}
                                 </p>
