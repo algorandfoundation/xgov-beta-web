@@ -350,23 +350,23 @@ async function parseRequestOptions(
 }
 
 /**
- * Creates a committee publisher account from mnemonic
+ * Creates an xgov daemon account from mnemonic
  *
- * @returns Committee publisher account and signer, or null if no mnemonic
+ * @returns xgov daemon account and signer, or null if no mnemonic
  */
-function createCommitteePublisher(
-  committeePublisherMnemonic?: string,
+function createXGovDaemon(
+  daemonMnemonic?: string,
 ): { addr: string; signer: TransactionSigner } | null {
-  // Check if we have committee publisher credentials
-  if (!committeePublisherMnemonic) {
+  // Check if we have daemon credentials
+  if (!daemonMnemonic) {
     return null;
   }
 
-  // Create committee publisher account from mnemonic
-  const account = algosdk.mnemonicToSecretKey(committeePublisherMnemonic);
+  // Create xgov daemon account from mnemonic
+  const account = algosdk.mnemonicToSecretKey(daemonMnemonic);
 
   // Create a TransactionSignerAccount from the account
-  const publisher = {
+  const daemon = {
     addr: account.addr,
     // Implement the signer as a TransactionSigner
     signer: (txnGroup: algosdk.Transaction[], indexesToSign: number[]) => {
@@ -376,8 +376,8 @@ function createCommitteePublisher(
     },
   };
 
-  logger.info(`Using committee publisher with address: ${account.addr}`);
-  return publisher;
+  logger.info(`Using xgov daemon with address: ${account.addr}`);
+  return daemon;
 }
 
 /**
@@ -510,7 +510,7 @@ async function getEligibleVoters(
  * Creates transaction parameters for a batch of voters
  *
  * @param voters Voter information to include in the transaction
- * @param committeePublisher The committee publisher for signing
+ * @param xgovDaemon The xgov daemon for signing
  * @param isFirstTransaction Whether this is the first transaction in a group
  * @returns Transaction parameters
  */
@@ -518,14 +518,14 @@ function createTransactionParams(
   registryClient: XGovRegistryClient,
   voters: [string, number][],
   boxReferences: Uint8Array[],
-  committeePublisher: { addr: string; signer: TransactionSigner },
+  xgovDaemon: { addr: string; signer: TransactionSigner },
   isFirstTransaction: boolean,
 ): CallParams<ProposalArgs["obj"]["assign_voters((address,uint64)[])void"]> {
   const txnParams: CallParams<
     ProposalArgs["obj"]["assign_voters((address,uint64)[])void"]
   > = {
-    sender: committeePublisher.addr,
-    signer: committeePublisher.signer,
+    sender: xgovDaemon.addr,
+    signer: xgovDaemon.signer,
     args: { voters },
     boxReferences,
   };
@@ -543,7 +543,7 @@ function createTransactionParams(
  *
  * @param proposalClient The proposal client
  * @param eligibleVoters The eligible voters to assign
- * @param committeePublisher The committee publisher for signing
+ * @param xgovDaemon The xgov daemon for signing
  * @param proposalId The proposal ID for logging
  * @param groupStart The starting index for this group
  * @returns Number of voters successfully assigned
@@ -552,7 +552,7 @@ async function processVoterBatch(
   registryClient: XGovRegistryClient,
   proposalClient: ProposalClient,
   eligibleVoters: CommitteeMember[],
-  committeePublisher: { addr: string; signer: TransactionSigner },
+  xgovDaemon: { addr: string; signer: TransactionSigner },
 ): Promise<number> {
   const totalVoters = eligibleVoters.length;
   const MAX_VOTERS_PER_GROUP =
@@ -647,7 +647,7 @@ async function processVoterBatch(
       registryClient,
       voters,
       boxReferences,
-      committeePublisher,
+      xgovDaemon,
       txnIndex === 0,
     );
 
@@ -698,14 +698,14 @@ async function processVoterBatch(
  *
  * @param proposal The proposal to process
  * @param proposalFactory The proposal factory
- * @param committeePublisher The committee publisher for signing
+ * @param xgovDaemon The xgov daemon for signing
  * @returns Result of the processing operation
  */
 async function processProposal(
   registryClient: XGovRegistryClient,
   proposal: ProposalSummaryCardDetails,
   proposalFactory: ProposalFactory,
-  committeePublisher: { addr: string; signer: TransactionSigner },
+  xgovDaemon: { addr: string; signer: TransactionSigner },
   maxRequestsPerProposal: number,
   apiUrl?: string,
 ): Promise<ProposalResult> {
@@ -784,7 +784,7 @@ async function processProposal(
               registryClient,
               proposalClient,
               eligibleVotersChunk,
-              committeePublisher,
+              xgovDaemon,
             );
             voterCount += eligibleVotersChunk.length;
           } catch (error) {
@@ -842,14 +842,14 @@ async function processProposal(
  *
  * @param batch Batch of proposals to process
  * @param proposalFactory The proposal factory
- * @param committeePublisher The committee publisher
+ * @param xgovDaemon The xgov daemon
  * @returns Processing results
  */
 async function processBatch(
   registryClient: XGovRegistryClient,
   batch: ProposalSummaryCardDetails[],
   proposalFactory: ProposalFactory,
-  committeePublisher: { addr: string; signer: TransactionSigner },
+  xgovDaemon: { addr: string; signer: TransactionSigner },
   maxRequestsPerProposal: number,
   apiUrl?: string,
 ): Promise<ProposalResult[]> {
@@ -861,7 +861,7 @@ async function processBatch(
       registryClient,
       proposal,
       proposalFactory,
-      committeePublisher,
+      xgovDaemon,
       maxRequestsPerProposal,
       apiUrl,
     ),
@@ -961,15 +961,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
       proposalsToProcess = allFinalProposals;
     }
 
-    // Setup committee publisher
-    const publisherInfo = createCommitteePublisher(
-      getStringEnvironmentVariable("COMMITTEE_PUBLISHER_MNEMONIC", locals, ""),
+    // Setup xgov daemon
+    const daemonInfo = createXGovDaemon(
+      getStringEnvironmentVariable("XGOV_DAEMON_MNEMONIC", locals, ""),
     );
-    if (!publisherInfo) {
+    if (!daemonInfo) {
       return new Response(
         JSON.stringify({
           error:
-            "Committee publisher mnemonic not found in environment variables",
+            "xGov Daemon mnemonic not found in environment variables",
         }),
         {
           status: 400,
@@ -1016,7 +1016,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         registryClient,
         batch,
         proposalFactory,
-        publisherInfo,
+        daemonInfo,
         maxRequestsPerProposal,
         getStringEnvironmentVariable("COMMITTEE_API_URL", locals, ""),
       );

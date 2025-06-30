@@ -4,14 +4,15 @@ import { ProposalInfo, StatusCard } from "@/recipes";
 import { useWallet } from "@txnlab/use-wallet-react";
 
 type ProposalInfoControllerProps = {
-  xGovReviewer?: string;
+  xGovCouncil?: string;
   xGovPayor?: string;
   proposal: ProposalMainCardDetails;
   pastProposals: ProposalSummaryCardDetails[];
   children: React.ReactNode;
 };
 
-export function ProposalInfoController({ xGovReviewer, xGovPayor, proposal, pastProposals, children }: ProposalInfoControllerProps) {
+
+export function ProposalInfoController({ xGovCouncil, xGovPayor, proposal, pastProposals, children }: ProposalInfoControllerProps) {
   const { activeAddress } = useWallet();
   const proposalQuery = useProposal(proposal.id, proposal);
   const pastProposalsQuery = useProposalsByProposer(proposal.proposer, pastProposals);
@@ -32,7 +33,7 @@ export function ProposalInfoController({ xGovReviewer, xGovPayor, proposal, past
   return (
     <ProposalInfo
       activeAddress={activeAddress}
-      xGovReviewer={xGovReviewer}
+      xGovCouncil={xGovCouncil}
       xGovPayor={xGovPayor}
       proposal={_proposal}
       pastProposals={_pastProposals}

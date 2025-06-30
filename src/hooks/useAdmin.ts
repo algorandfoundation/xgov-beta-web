@@ -19,10 +19,10 @@ export function useAdmin() {
     const addresses = [
       registryGlobalState.data?.kycProvider,
       registryGlobalState.data?.xgovManager,
-      registryGlobalState.data?.committeePublisher,
+      registryGlobalState.data?.xgovDaemon,
       registryGlobalState.data?.committeeManager,
       registryGlobalState.data?.xgovPayor,
-      // registryGlobalState.data?.xgovReviewer,
+      // registryGlobalState.data?.xgovCouncil,
       // registryGlobalState.data?.xgovSubscriber,
     ];
 

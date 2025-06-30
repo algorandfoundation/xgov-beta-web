@@ -15,10 +15,10 @@ import { CopyIcon } from "lucide-react";
 const rolePretty: { [key: string]: string } = {
   kycProvider: "KYC Provider",
   xGovManager: "xGov Manager",
-  committeePublisher: "Committee Publisher",
+  xgovDaemon: "xGov Daemon",
   committeeManager: "Committee Manager",
   xGovPayor: "xGov Payor",
-  xGovReviewer: "xGov Reviewer",
+  xgovCouncil: "xGov Council",
   xGovSubscriber: "xGov Subscriber",
 };
 
@@ -48,10 +48,10 @@ export function RoleList({
   const roles = new Map<string, string>([
     ["kycProvider", registryGlobalState.kycProvider],
     ["xGovManager", registryGlobalState.xgovManager],
-    ["committeePublisher", registryGlobalState.committeePublisher],
+    ["xgovDaemon", registryGlobalState.xgovDaemon],
     ["committeeManager", registryGlobalState.committeeManager],
     ["xGovPayor", registryGlobalState.xgovPayor],
-    ["xGovReviewer", registryGlobalState.xgovReviewer],
+    ["xGovCouncil", registryGlobalState.xgovCouncil],
     ["xGovSubscriber", registryGlobalState.xgovSubscriber],
   ]);
 
