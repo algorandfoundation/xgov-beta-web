@@ -73,6 +73,7 @@ const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
     <ProposalInfoIsland
       client:only="react"
       xGovReviewer={registryGlobalState.xgovReviewer}
+      xGovPayor={registryGlobalState.xgovPayor}
       proposal={proposal}
       pastProposals={pastProposals}
     >

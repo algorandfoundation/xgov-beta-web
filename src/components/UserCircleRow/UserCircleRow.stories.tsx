@@ -17,7 +17,7 @@ export const Default: Story = {};
 
 export const WithCustomUsers: Story = {
   render: () => {
-    return <UserCircleRow />;
+    return <UserCircleRow users={['https://sea2.discourse-cdn.com/flex016/user_avatar/forum.algorand.co/ghostofmcafee/48/3235_2.png']} />;
   },
 };
 
