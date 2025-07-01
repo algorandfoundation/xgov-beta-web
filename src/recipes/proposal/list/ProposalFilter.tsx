@@ -39,7 +39,7 @@ export const filterAmountMap: { [key: string]: number[] } = {
 
 export const filters: { [key: string]: string[] } = {
   status: ProposalStatusFilterKeys,
-  type: Object.keys(ProposalFundingTypeReverseMap).slice(1), // remove Null value
+  // type: Object.keys(ProposalFundingTypeReverseMap).slice(1), // remove Null value
   amount: Object.keys(filterAmountMap),
   focus: Object.keys(FocusReverseMap).slice(1), // remove Null value
 };

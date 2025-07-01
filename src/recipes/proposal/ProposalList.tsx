@@ -22,6 +22,7 @@ import {VoteCounter} from "@/components/VoteCounter/VoteCounter";
 import { useMetadata, useNFDs, useProposalVoters } from "@/hooks";
 import { useDiscourseTopic } from "@/hooks/useDiscourseTopic";
 import { useUrls } from "@/hooks/useUrls";
+import { formatDistanceToNow } from "date-fns";
 
 const filterKeys = Object.keys(filters);
 
@@ -101,6 +102,7 @@ export function StackedList({
           proposer,
           approvals,
           rejections,
+          submissionTs
         } = proposal;
 
         const phase = ProposalStatusMap[status];
@@ -166,7 +168,7 @@ export function StackedList({
                 </div>
                 <FundingTypeAndTimeDetail
                   fundingType={fundingType}
-                  time="2d ago"
+                  time={formatDistanceToNow(new Date((Number(submissionTs) * 1000)), { addSuffix: true })}
                 />
               </div>
             </div>
@@ -200,7 +202,7 @@ export function StackedList({
                 </div>
                 <FundingTypeAndTimeDetail
                   fundingType={fundingType}
-                  time="2d ago"
+                  time={formatDistanceToNow(new Date((Number(submissionTs) * 1000)), { addSuffix: true })}
                 />
               </div>
             </dl>
