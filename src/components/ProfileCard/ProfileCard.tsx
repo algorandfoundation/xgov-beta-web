@@ -1,21 +1,10 @@
-import { network, type ProposerBoxState } from "@/api";
+import { type ProposerBoxState } from "@/api";
 import { EditableAddress } from "../EditableAddress/EditableAddress";
 import { ActionButton } from "../button/ActionButton/ActionButton";
 import { cn } from "@/functions";
 import { XGovProposerStatusPill } from "../XGovProposerStatusPill/XGovProposerStatusPill";
 import { XGovStatusPill } from "../XGovStatusPill/XGovStatusPill";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
-import { Button } from "../ui/button";
-import { WarningNotice } from "../WarningNotice/WarningNotice";
-import { AlgorandIcon } from "../icons/AlgorandIcon";
 import termsAndConditionsString from "./TermsAndConditionsText.md?raw";
 import { TermsAndConditionsModal } from "@/recipes";
 import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispenserBanner";
@@ -111,7 +100,11 @@ export function ProfileCard({
 
           <div>
             <div className="flex items-center gap-6">
-              <XGovProposerStatusPill proposer={proposer} />
+              {
+                !proposer?.isProposer || !proposer?.kycStatus && (
+                  <XGovProposerStatusPill proposer={proposer} />
+                )
+              }
 
               {!proposer?.isProposer && (
                 <ActionButton
