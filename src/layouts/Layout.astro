@@ -46,6 +46,21 @@ const _title = title ? `${title} | ` : "";
         ((!("theme" in localStorage) || localStorage.theme === "default") &&
           window.matchMedia("(prefers-color-scheme: dark)").matches);
       document.documentElement.classList.toggle("dark", check);
+      
+      // Update PWA theme color on initial load
+      function updatePWAThemeColor(isDark) {
+        const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeColorMeta) {
+          themeColorMeta.setAttribute('content', isDark ? '#17CAC6' : '#2D2DF1');
+        }
+        const statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+        if (statusBarMeta) {
+          statusBarMeta.setAttribute('content', isDark ? 'black-translucent' : 'default');
+        }
+      }
+      
+      // Initialize theme color
+      updatePWAThemeColor(check);
     </script>
     <ClientRouter />
   </head>
@@ -76,13 +91,48 @@ const _title = title ? `${title} | ` : "";
   import { $themeStore } from "@/stores/themeStore";
 
   const cl = document.documentElement.classList;
-  $themeStore.subscribe(
-    (theme) => theme !== "default" && cl.toggle("dark", theme === "dark"),
-  );
+  
+  // Function to update PWA theme color
+  function updatePWAThemeColor(isDark: boolean) {
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+      themeColorMeta.setAttribute('content', isDark ? '#17CAC6' : '#2D2DF1');
+    }
+  }
+  
+  $themeStore.subscribe((theme) => {
+    if (theme !== "default") {
+      const isDark = theme === "dark";
+      cl.toggle("dark", isDark);
+      updatePWAThemeColor(isDark);
+    } else {
+      // Handle system preference
+      const darkModePreference = window.matchMedia("(prefers-color-scheme: dark)");
+      const isDark = darkModePreference.matches;
+      cl.toggle("dark", isDark);
+      updatePWAThemeColor(isDark);
+    }
+  });
+
+  // Listen for system theme changes when theme is set to "default"
+  const darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  darkModeMediaQuery.addEventListener("change", (e) => {
+    const currentTheme = $themeStore.get();
+    if (currentTheme === "default") {
+      cl.toggle("dark", e.matches);
+      updatePWAThemeColor(e.matches);
+    }
+  });
 
   document.addEventListener("astro:before-swap", (event) => {
     const currentTheme = $themeStore.get()
     // Pass the incoming document to set the theme on it
+    if(currentTheme === "light"){
+      event.newDocument.documentElement.classList.toggle(
+        "dark",
+        false,
+      );
+    }
     if(currentTheme === "dark"){
       event.newDocument.documentElement.classList.toggle(
         "dark",

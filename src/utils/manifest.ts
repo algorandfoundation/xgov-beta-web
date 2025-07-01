@@ -5,8 +5,8 @@ export const manifest: Partial<ManifestOptions> = {
 	short_name: "xGov",
 	description:
 		"A public goods funding protocol for the Algorand network",
-	theme_color: "#2D2DF1",
-	background_color: "#ffffff",
+	theme_color: "#FFFFFF",
+	background_color: "#FFFFFF",
 	display: "fullscreen",
 	start_url: "/",
 	scope: "/",
@@ -29,3 +29,9 @@ export const manifest: Partial<ManifestOptions> = {
 		}
 	]
 }
+
+// Theme colors for dynamic PWA theme
+export const THEME_COLORS = {
+	light: "#FFFFFF",
+	dark: "#001324"   // algo-black
+} as const
