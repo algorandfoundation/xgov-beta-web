@@ -101,7 +101,7 @@ export function ProfileCard({
           <div>
             <div className="flex items-center gap-6">
               {
-                !proposer?.isProposer || !proposer?.kycStatus && (
+                (!proposer?.isProposer || !proposer?.kycStatus) && (
                   <XGovProposerStatusPill proposer={proposer} />
                 )
               }
