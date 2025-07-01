@@ -70,45 +70,49 @@ export function ProfileCard({
         )}
       >
         <div className="w-full flex flex-col gap-4">
-          <div className="flex gap-6">
-            <XGovStatusPill
-              isXGov={isXGov}
-              unsubscribeXgov={unsubscribeXgov}
-              unsubscribeXGovLoading={subscribeXGovLoading}
-              disabled={address !== activeAddress}
-            />
-            {!proposer ||
-              (proposer?.isProposer && !proposer.kycStatus && (
-                <XGovProposerStatusPill proposer={proposer} />
-              ))}
-          </div>
-
           <TestnetDispenserBanner />
 
-          {address === activeAddress && !isXGov ? (
-            <ActionButton
-              type="button"
-              onClick={() => setShowBecomeXGovModal(true)}
-              disabled={subscribeXGovLoading}
-            >
-              {subscribeXGovLoading
-                ? "Loading..."
-                : "Become an xGov"}
-            </ActionButton>
-          ) : (
-            <EditableAddress
-              title="Voting Address"
-              defaultValue={votingAddress}
-              loading={setVotingAddressLoading}
-              onSave={(v) => {
-                setVotingAddress(v);
-              }}
-              disabled={address !== activeAddress}
-            />
-          )}
+          <div>
+            <div className="flex items-center gap-6">
+              <XGovStatusPill
+                isXGov={isXGov}
+                unsubscribeXgov={unsubscribeXgov}
+                unsubscribeXGovLoading={subscribeXGovLoading}
+                disabled={address !== activeAddress}
+              />
+              {address === activeAddress && !isXGov && (
+                <ActionButton
+                  type="button"
+                  onClick={() => setShowBecomeXGovModal(true)}
+                  disabled={subscribeXGovLoading}
+                >
+                  {subscribeXGovLoading
+                    ? "Loading..."
+                    : "Become an xGov"}
+                </ActionButton>
+              )}
+            </div>
+          </div>
+
+          {
+            isXGov && (
+              <EditableAddress
+                title="Voting Address"
+                defaultValue={votingAddress}
+                loading={setVotingAddressLoading}
+                onSave={(v) => {
+                  setVotingAddress(v);
+                }}
+                disabled={address !== activeAddress}
+              />
+            )
+          }
+
 
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-6">
+              <XGovProposerStatusPill proposer={proposer} />
+
               {!proposer?.isProposer && (
                 <ActionButton
                   type="button"
