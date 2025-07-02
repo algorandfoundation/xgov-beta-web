@@ -12,7 +12,7 @@ let walletProviders: SupportedWallet[] = [
   { id: WalletId.LUTE, options: { siteName: "XGov Beta" } },
 ];
 
-if (!!import.meta.env.PUBLIC_KMD_SERVER) {
+if (import.meta.env.PUBLIC_NETWORK === "localnet") {
   walletProviders = [WalletId.KMD, ...walletProviders];
 }
 
