@@ -10,7 +10,7 @@
 /* PWA Safe Area Support - Only apply in standalone mode */
 @media (display-mode: standalone) {
   @supports (padding: env(safe-area-inset-top)) {
-    body {
+    html {
       padding-top: env(safe-area-inset-top);
     }
 
