@@ -10,22 +10,35 @@
 /* PWA Safe Area Support - Only apply in standalone mode */
 @media (display-mode: standalone) {
   @supports (padding: env(safe-area-inset-top)) {
+    body {
+      padding-top: env(safe-area-inset-top);
+    }
+
     .pwa-header {
-      padding-top: calc(1rem + env(safe-area-inset-top));
+      transform: translateY(calc(-1 * env(safe-area-inset-top)));
     }
-    
-    .pwa-content {
-      padding-top: calc(6rem + env(safe-area-inset-top));
+
+    .pwa-header div {
+      padding-top: env(safe-area-inset-top);
     }
-    
-    .pwa-content-landing {
-      padding-top: calc(2rem + env(safe-area-inset-top));
+
+    /* we need to hide this header when dialogs are open */
+    body[data-scroll-locked] .pwa-header,
+    body:has([data-state="open"][role="dialog"]) .pwa-header,
+    body:has(.radix-dialog-overlay) .pwa-header {
+      opacity: 0;
+      pointer-events: none;
     }
   }
 }
 
 :root {
   --color-primary: #2d2df1;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 html {
