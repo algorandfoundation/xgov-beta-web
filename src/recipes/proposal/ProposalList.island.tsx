@@ -5,6 +5,7 @@ import { useWallet } from "@txnlab/use-wallet-react";
 import { queryClient } from "@/stores/query.ts";
 import {
   callScrutinize,
+  callUnassign,
   getVotingDuration,
   network,
   ProposalStatus,
@@ -124,12 +125,16 @@ export function StackedListQuery({
         await pMap(
           toScrutinizeNow,
           (proposal) =>
+          {
             callScrutinize(
               scrutinyFundingLogicSig.address(),
               proposal.id,
               proposal.proposer,
               scrutinyFundingLogicSigSigner,
-            ),
+            )
+            // call backend to unassign voters
+            callUnassign(proposal.id);
+          },
           { concurrency: SCRUTINIZE_CONCURRENCY },
         );
       }
@@ -161,6 +166,8 @@ export function StackedListQuery({
               proposal.proposer,
               scrutinyFundingLogicSigSigner,
             );
+            // call backend to unassign voters
+            callUnassign(proposal.id);
           }, wen);
         }
       }

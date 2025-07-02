@@ -885,7 +885,7 @@ export async function callFinalize(proposalId: bigint) {
 }
 
 export async function callUnassign(
-  proposalId: bigint,
+  proposalId: bigint | null,
 ): Promise<void> {
   console.log("Starting unassign call", proposalId);
   const response = await fetch("/api/unassign", {
@@ -894,7 +894,7 @@ export async function callUnassign(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      proposalIds: [proposalId],
+      proposalIds: proposalId !== null ? [proposalId] : [],
     }),
   });
   console.log("Finished unassign call");

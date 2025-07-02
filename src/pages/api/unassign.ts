@@ -507,7 +507,7 @@ async function processProposal(
     );
 
     // extra step, decommission the proposal
-    try {
+    /* try {
       logger.info(
         `Decommissioning proposal ${proposal.id} after unassigning voters`,
       );
@@ -529,7 +529,7 @@ async function processProposal(
         `Failed to decommission proposal ${proposal.id} after unassigning voters`,
         decommissionError,
       );
-    }
+    } */
 
     // Return successful result
     return {
