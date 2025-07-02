@@ -130,6 +130,9 @@ const registryMinter = new XGovRegistryFactory({
   algorand,
   defaultSender: adminAccount.addr,
   defaultSigner: adminAccount.signer,
+  deployTimeParams: {
+    entropy: "",
+  },
 });
 
 const results = await registryMinter.send.create.create();

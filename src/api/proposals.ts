@@ -167,6 +167,17 @@ export async function getFinalProposals(): Promise<
   );
 }
 
+export async function getAllProposalsToUnassign(): Promise<
+  ProposalSummaryCardDetails[]
+> {
+  return (await getAllProposals()).filter(
+    (proposal) =>
+      proposal.status === ProposalStatus.ProposalStatusFunded ||
+      proposal.status === ProposalStatus.ProposalStatusBlocked ||
+      proposal.status === ProposalStatus.ProposalStatusRejected,
+  );
+}
+
 /**
  * Retrieves proposal details for a given proposal ID.
  *
@@ -277,6 +288,20 @@ export async function getFinalProposal(
   const proposalData = await getProposal(id);
   if (proposalData.status !== ProposalStatus.ProposalStatusFinal) {
     throw new Error("Proposal not in final state");
+  }
+  return proposalData;
+}
+
+export async function getProposalToUnassign(
+  id: bigint,
+): Promise<ProposalMainCardDetails> {
+  const proposalData = await getProposal(id);
+  if (
+    proposalData.status !== ProposalStatus.ProposalStatusFunded &&
+    proposalData.status !== ProposalStatus.ProposalStatusBlocked &&
+    proposalData.status !== ProposalStatus.ProposalStatusRejected
+  ) {
+    throw new Error("Proposal not in unassignable state");
   }
   return proposalData;
 }
@@ -857,6 +882,24 @@ export async function callFinalize(proposalId: bigint) {
   console.log("Finished finalize call");
   const data = await response.json();
   console.log("Finalize data:", data);
+}
+
+export async function callUnassign(
+  proposalId: bigint | null,
+): Promise<void> {
+  console.log("Starting unassign call", proposalId);
+  const response = await fetch("/api/unassign", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      proposalIds: proposalId !== null ? [proposalId] : [],
+    }),
+  });
+  console.log("Finished unassign call");
+  const data = await response.json();
+  console.log("Unassign data:", data);
 }
 
 // export async function resubmitProposal(

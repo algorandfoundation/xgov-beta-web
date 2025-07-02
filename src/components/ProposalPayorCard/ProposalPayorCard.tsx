@@ -6,6 +6,7 @@ import {
   type ProposalMainCardDetails,
   ProposalStatus,
   registryClient,
+  callUnassign,
 } from "@/api";
 import { ALGORAND_MIN_TX_FEE, encodeAddress } from "algosdk";
 import { UseWallet } from "@/hooks/useWallet.tsx";
@@ -81,6 +82,12 @@ export function ProposalPayorCard({
         res.confirmation.poolError === ""
       ) {
         console.log("Transaction confirmed");
+        // call backend to unassign voters
+        try {
+          await callUnassign(proposalId);
+        } catch (e) {
+          console.warn("Failed to Unassign:", e);
+        }
         setErrorMessage(null);
         proposalQuery.refetch();
         return true;
