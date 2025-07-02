@@ -7,6 +7,23 @@
   }
 }
 
+/* PWA Safe Area Support - Only apply in standalone mode */
+@media (display-mode: standalone) {
+  @supports (padding: env(safe-area-inset-top)) {
+    .pwa-header {
+      padding-top: calc(1rem + env(safe-area-inset-top));
+    }
+    
+    .pwa-content {
+      padding-top: calc(6rem + env(safe-area-inset-top));
+    }
+    
+    .pwa-content-landing {
+      padding-top: calc(2rem + env(safe-area-inset-top));
+    }
+  }
+}
+
 :root {
   --color-primary: #2d2df1;
 }
