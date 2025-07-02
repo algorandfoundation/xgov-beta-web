@@ -29,10 +29,9 @@ export default defineConfig({
         workbox: {
           globDirectory: 'dist',
           globPatterns: [
-            '**/*.{js,css,svg,png,jpg,jpeg,gif,webp,woff,woff2,ttf,eot,ico}',
+            '**/*.{svg,png,jpg,jpeg,gif,webp,woff,woff2,ttf,eot,ico}',
+            // '**/*.{ js,css,svg,png,jpg,jpeg,gif,webp,woff,woff2,ttf,eot,ico}',
           ],
-          // Don't fallback on document based (e.g. `/some-page`) requests
-          // This removes an errant console.log message from showing up.
           navigateFallback: null,
         },
       })
