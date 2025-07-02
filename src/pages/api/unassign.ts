@@ -506,6 +506,31 @@ async function processProposal(
         `${voterCount} voters unassigned, `
     );
 
+    // extra step, decommission the proposal
+    try {
+      logger.info(
+        `Decommissioning proposal ${proposal.id} after unassigning voters`,
+      );
+      await registryClient.send.decommissionProposal({
+        sender: xgovDaemon.addr,
+        signer: xgovDaemon.signer,
+        args: {
+          proposalId: proposal.id,
+        },
+        appReferences: [proposal.id],
+        boxReferences: [{appId: proposal.id, name: "M"}],
+        extraFee: (1000).microAlgo(), // Extra fee for inner transaction
+      });
+      logger.info(
+        `Successfully decommissioned proposal ${proposal.id}`,
+      );
+    } catch (decommissionError) {
+      logger.error(
+        `Failed to decommission proposal ${proposal.id} after unassigning voters`,
+        decommissionError,
+      );
+    }
+
     // Return successful result
     return {
       success: true,
