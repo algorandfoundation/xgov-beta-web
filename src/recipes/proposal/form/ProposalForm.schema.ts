@@ -28,7 +28,11 @@ export const validatorSchemas = {
       .refine((val) => val !== "", { message: "Required field" })
   },
   openSource: () => { return z.boolean() },
-  focus: () => { return z.string() },
+  focus: () => { 
+    return z.string().refine((val) => val !== "0", { 
+      message: "Please select a focus category" 
+    })
+  },
   fundingType: () => { return z.string() },
   // deliverables: z.string(),
   adoptionMetrics: () => {
