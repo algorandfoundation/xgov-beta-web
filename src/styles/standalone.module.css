@@ -1,0 +1,5 @@
+@media all and (display-mode: standalone) {
+    .topPadding {
+        padding-top: env(safe-area-inset-top);
+    }
+}
