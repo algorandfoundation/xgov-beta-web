@@ -7,7 +7,7 @@ export function HeroAnimation() {
     <div
       className={cn(
         animations.intro,
-        "fixed h-screen w-full z-[60] overflow-hidden px-2 lg:px-4",
+        "fixed h-full w-full z-[60] overflow-hidden px-2 lg:px-4",
       )}
     >
       <div className="h-full w-full flex items-center justify-center bg-algo-blue dark:bg-algo-teal">
