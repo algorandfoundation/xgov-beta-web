@@ -83,7 +83,7 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
             }
 
             <Button
-              className="text-5xl font-bold gap-4 focus:outline-none"
+              className="text-5xl font-bold gap-4 ring-0 ring-transparent focus:outline-none"
               variant="link"
               onClick={() => {
                 if (!!activeAddress) {
