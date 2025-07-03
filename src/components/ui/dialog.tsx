@@ -80,6 +80,7 @@ const DialogFooter = ({
   <div
     className={cn(
       "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-algo-black border-t border-slate-200 dark:border-algo-black sm:static sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-t-0",
+      standaloneStyles.bottomPadding,
       className,
     )}
     {...props}

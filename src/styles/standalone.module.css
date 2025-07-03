@@ -2,4 +2,8 @@
     .topMargin {
         margin-top: env(safe-area-inset-top);
     }
+    
+    .bottomPadding {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
 }
