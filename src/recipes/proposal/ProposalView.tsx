@@ -581,6 +581,8 @@ function VotingStatusCard({
         )
       }
     }
+  } else {
+    subheader = <div className="h-9 w-full"></div>
   }
 
   return (
