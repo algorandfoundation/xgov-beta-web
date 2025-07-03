@@ -6,8 +6,8 @@
   *:hover {}
 }
 
-/* PWA Safe Area Support - Only apply in standalone mode */
-@media (display-mode: standalone) {
+
+@media all and (display-mode: standalone) {
   html {
     padding-top: env(safe-area-inset-top);
   }
