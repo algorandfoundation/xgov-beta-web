@@ -800,7 +800,7 @@ export function ProposalInfo({
                   //
                 </span>
                 <span className="text-algo-black-50 dark:text-white">
-                  {formatDistanceToNow(new Date((Number(proposal.submissionTs) * 1000)), { addSuffix: true })}
+                  {formatDistanceToNow(new Date((Number(proposal.submissionTs) * 1000)), { addSuffix: true }).replace('about ', '').replace(' minutes', 'm').replace(' minute', 'm').replace(' hours', 'h').replace(' hour', 'h').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}
                 </span>
               </div>
 
