@@ -1,14 +1,17 @@
 import { Mutex } from "async-mutex";
 import type { NFDProperties } from "@/api/nfd/avatar.ts";
+import { network } from '../algorand';
+
+export const BASE_NFD_API_URL = network === "testnet" ? "https://api.testnet.nf.domains" : "https://api.nf.domains";
 
 const mutex = new Mutex();
 
 function fetchNfd(address: string, init: RequestInit = {}) {
-  return fetch(`https://api.nf.domains/nfd?address=${address}`, init)
+  return fetch(`${BASE_NFD_API_URL}/nfd?address=${address}`, init)
 }
 
 function fetchNfds(addresses: string[], init: RequestInit = {}) {
-  return fetch(`https://api.nf.domains/nfd?address=${addresses.join("&address=")}`, init)
+  return fetch(`${BASE_NFD_API_URL}/nfd?address=${addresses.join("&address=")}`, init)
 }
 
 export async function sleep(ms: number) {

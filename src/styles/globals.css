@@ -3,12 +3,34 @@
 @tailwind utilities;
 
 @media (hover: hover) and (pointer: fine) {
-  *:hover {
+  *:hover {}
+}
+
+@media all and (display-mode: standalone) {
+  html {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .pwa-header {
+    transform: translateY(calc(-1 * env(safe-area-inset-top)));
+  }
+
+  .pwa-header div {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  div[role="dialog"] {
+    padding-top: calc(1.5rem + env(safe-area-inset-top));
   }
 }
 
 :root {
   --color-primary: #2d2df1;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 html {

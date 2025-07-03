@@ -10,7 +10,7 @@ import { MobileNavIsland } from "@/components/MobileNav/MobileNav";
 const path = Astro.url.pathname;
 ---
 
-<div class="flex flex-col min-h-screen">
+<div class="flex flex-col min-h-full">
   <Header path={path}>
     <ConnectIsland client:only="react" path={path} />
     <ThemeToggle client:load />

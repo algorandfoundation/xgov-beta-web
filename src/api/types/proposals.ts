@@ -118,7 +118,7 @@ export type Focus =
   | "Other";
 
 export const FocusMap = {
-  [ProposalFocus.FocusNull]: "Null",
+  [ProposalFocus.FocusNull]: "Unspecified",
   [ProposalFocus.FocusDeFi]: "DeFi",
   [ProposalFocus.FocusEducation]: "Education",
   [ProposalFocus.FocusLibraries]: "Libraries",

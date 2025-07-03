@@ -581,6 +581,8 @@ function VotingStatusCard({
         )
       }
     }
+  } else {
+    subheader = <div className="h-9 w-full"></div>
   }
 
   return (
@@ -793,14 +795,14 @@ export function ProposalInfo({
                 </div>
               )}
 
-              <div className="text-base inline-flex items-center justify-between gap-3 mt-2 mb-6 p-1 pr-4">
+              <div className="text-sm md:text-base inline-flex items-center justify-between gap-3 mt-2 mb-6 p-1 pr-4">
                 Created By
                 <UserPill variant="secondary" address={proposal.proposer} />
                 <span className="text-2xl font-semibold text-algo-blue dark:text-algo-teal">
                   //
                 </span>
                 <span className="text-algo-black-50 dark:text-white">
-                  {formatDistanceToNow(new Date((Number(proposal.submissionTs) * 1000)), { addSuffix: true })}
+                  {formatDistanceToNow(new Date((Number(proposal.submissionTs) * 1000)), { addSuffix: true }).replace('about ', '').replace(' minutes', 'm').replace(' minute', 'm').replace(' hours', 'h').replace(' hour', 'h').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}
                 </span>
               </div>
 

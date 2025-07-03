@@ -7,7 +7,7 @@ export const manifest: Partial<ManifestOptions> = {
 		"A public goods funding protocol for the Algorand network",
 	theme_color: "#FFFFFF",
 	background_color: "#FFFFFF",
-	display: "fullscreen",
+	display: "standalone",
 	start_url: "/",
 	scope: "/",
 	icons: [

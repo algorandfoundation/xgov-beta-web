@@ -17,14 +17,14 @@ const _title = title ? `${title} | ` : "";
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content="Astro description" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{`${_title}xGov`}</title>
     <!-- PWA Support -->
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#2D2DF1" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#FFFFFF" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="xGov" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
@@ -51,7 +51,7 @@ const _title = title ? `${title} | ` : "";
       function updatePWAThemeColor(isDark) {
         const themeColorMeta = document.querySelector('meta[name="theme-color"]');
         if (themeColorMeta) {
-          themeColorMeta.setAttribute('content', isDark ? '#17CAC6' : '#2D2DF1');
+          themeColorMeta.setAttribute('content', isDark ? '#001324' : '#FFFFFF');
         }
         const statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
         if (statusBarMeta) {
@@ -96,7 +96,7 @@ const _title = title ? `${title} | ` : "";
   function updatePWAThemeColor(isDark: boolean) {
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
     if (themeColorMeta) {
-      themeColorMeta.setAttribute('content', isDark ? '#17CAC6' : '#2D2DF1');
+      themeColorMeta.setAttribute('content', isDark ? '#001324' : '#FFFFFF');
     }
   }
   
@@ -132,12 +132,14 @@ const _title = title ? `${title} | ` : "";
         "dark",
         false,
       );
+      updatePWAThemeColor(false);
     }
     if(currentTheme === "dark"){
       event.newDocument.documentElement.classList.toggle(
         "dark",
         true,
       );
+      updatePWAThemeColor(true);
     }
     // Handle Default Dark Modes
     if(currentTheme === "default"){
@@ -147,6 +149,9 @@ const _title = title ? `${title} | ` : "";
           "dark",
           true,
         );
+        updatePWAThemeColor(true);
+      } else {
+        updatePWAThemeColor(false);
       }
     }
   });

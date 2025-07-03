@@ -12,7 +12,7 @@ export function FundingTypeAndTimeDetail({
       {ProposalFundingTypeMap[fundingType]}
       <span className="font-bold text-algo-blue dark:text-algo-teal">//</span>
       <p className="w-10 text-nowrap md:w-16 text-end">
-        <time dateTime="2023-01-23T22:34Z">{time}</time>
+        <time>{time.replace('about ', '').replace(' minutes', 'm').replace(' minute', 'm').replace(' hours', 'h').replace(' hour', 'h').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}</time>
       </p>
     </div>
   );

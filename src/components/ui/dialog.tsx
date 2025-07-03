@@ -4,6 +4,7 @@ import { Cross2Icon } from "@radix-ui/react-icons";
 
 import { cn } from "src/functions/utils";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
+import standaloneStyles from "@/styles/standalone.module.css";
 
 const Dialog = DialogPrimitive.Root;
 
@@ -45,10 +46,10 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <AlgorandIcon className="absolute left-[23px] top-[19px] fill-algo-blue dark:fill-algo-teal size-8 md:size-6" />
+      <AlgorandIcon className={cn(standaloneStyles.topMargin, "absolute left-[23px] top-[19px] fill-algo-blue dark:fill-algo-teal size-8 md:size-6")} />
       <DialogPrimitive.Close
         onClick={() => onCloseClick()}
-        className="absolute right-[14px] top-[14px] p-1 rounded-md hover:bg-algo-black/10 ring-offset-white focus:outline-none focus:ring-2 focus:ring-algo-black/50 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-white data-[state=open]:text-algo-black dark:ring-offset-slate-950 dark:focus:ring-slate-300 dark:data-[state=open]:bg-algo-black dark:data-[state=open]:text-white"
+        className={cn(standaloneStyles.topMargin, "absolute right-[14px] top-[14px] p-1 rounded-md hover:bg-algo-black/10 ring-offset-white focus:outline-none focus:ring-2 focus:ring-algo-black/50 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-white data-[state=open]:text-algo-black dark:ring-offset-slate-950 dark:focus:ring-slate-300 dark:data-[state=open]:bg-algo-black dark:data-[state=open]:text-white")}
       >
         <Cross2Icon className="size-6 text-algo-black dark:text-white" />
         <span className="sr-only">Close</span>
@@ -79,6 +80,7 @@ const DialogFooter = ({
   <div
     className={cn(
       "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-algo-black border-t border-slate-200 dark:border-algo-black sm:static sm:p-0 sm:bg-transparent sm:dark:bg-transparent sm:border-t-0",
+      standaloneStyles.bottomPadding,
       className,
     )}
     {...props}
