@@ -854,15 +854,28 @@ export async function callScrutinize(
 ) {
   const proposalClient = proposalFactory.getAppClientById({ appId });
 
-  try {
-    await proposalClient.send.scrutiny({
+  const scrutiny = (
+    await proposalClient.createTransaction.scrutiny({
       sender: address,
       signer: transactionSigner,
       args: {},
       appReferences: [registryClient.appId],
       accountReferences: [proposer],
       extraFee: (1000).microAlgo(),
-    });
+    })
+  ).transactions[0];
+
+  try {
+    await registryClient
+      .newGroup()
+      .isProposal({
+        sender: address,
+        signer: transactionSigner,
+        args: { proposalId: appId },
+        appReferences: [appId]
+      })
+      .addTransaction(scrutiny, transactionSigner)
+      .send()
   } catch (e) {
     console.warn(`While calling scrutiny(${appId}):`, (e as Error).message)
   }
