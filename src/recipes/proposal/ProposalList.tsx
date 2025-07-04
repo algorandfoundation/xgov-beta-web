@@ -6,6 +6,7 @@ import {
   ProposalStatusMap,
   ProposalStatusReverseMap,
   type ProposalSummaryCardDetails,
+  type ProposalSummaryCardDetailsWithNFDs,
 } from "@/api";
 import { BracketedPhaseDetail } from "@/components/BracketedPhaseDetail/BracketedPhaseDetail.tsx";
 import { UserPill } from "@/components/UserPill/UserPill.tsx";
@@ -86,7 +87,7 @@ export function StackedList({
   proposals,
   activeAddress,
 }: {
-  proposals: ProposalSummaryCardDetails[];
+  proposals: ProposalSummaryCardDetailsWithNFDs[];
   activeAddress: string | null;
 }) {
   return (
@@ -162,7 +163,7 @@ export function StackedList({
               </div>
               <div className="hidden lg:flex justify-between items-center mt-3">
                 <div className="flex items-center gap-10 text-algo-blue dark:text-algo-teal font-mono">
-                  <UserPill address={proposer} />
+                  <UserPill nfdName={proposal?.nfd?.name || ''} address={proposer} />
                   <RequestedAmountDetail requestedAmount={requestedAmount} />
                   <FocusDetail focus={focus} />
                 </div>
@@ -174,7 +175,7 @@ export function StackedList({
             </div>
             <dl className="flex lg:hidden w-full flex-none justify-between gap-x-8 font-mono">
               <div className="mt-3 flex flex-col items-start justify-start gap-4 text-algo-blue dark:text-algo-teal font-mono text-xs">
-                <UserPill address={proposer} />
+                <UserPill nfdName={proposal?.nfd?.name || ''} address={proposer} />
                 <RequestedAmountDetail requestedAmount={requestedAmount} />
                 <FocusDetail focus={focus} />
               </div>

@@ -13,6 +13,7 @@ import {
 } from "@/api";
 import {
   useGetAllProposals,
+  useNFDs,
   useRegistry,
   useSearchParams,
   useSearchParamsObserver,
@@ -61,6 +62,9 @@ export function StackedListQuery({
 }) {
   const registry = useRegistry();
   const proposalsQuery = useGetAllProposals(proposals);
+  const nfds = useNFDs(
+    proposalsQuery.data?.map((proposal) => proposal.proposer) || []
+  )
 
   const [searchParams] = useSearchParams();
   const [_searchParams, setSearchParams] = useState(searchParams);
@@ -68,12 +72,22 @@ export function StackedListQuery({
     setSearchParams(searchParams);
   });
 
+  // Merge NFD data with proposals before applying filters
+  const proposalsWithNFDs = useMemo(() => {
+    if (!proposalsQuery.data) return [];
+    
+    return proposalsQuery.data.map((proposal) => ({
+      ...proposal,
+      nfd: nfds.data?.[proposal.proposer]
+    }));
+  }, [proposalsQuery.data, nfds.data]);
+
   const _proposals = useMemo(
     () =>
-      (proposalsQuery.data || []).filter((proposal) =>
+      proposalsWithNFDs.filter((proposal) =>
         proposalFilter(proposal, _searchParams),
       ),
-    [proposals, _searchParams, proposalsQuery],
+    [proposalsWithNFDs, _searchParams],
   );
 
   const { activeAddress, isReady } = useWallet();

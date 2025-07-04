@@ -7,11 +7,11 @@ export const BASE_NFD_API_URL = network === "testnet" ? "https://api.testnet.nf.
 const mutex = new Mutex();
 
 function fetchNfd(address: string, init: RequestInit = {}) {
-  return fetch(`${BASE_NFD_API_URL}/nfd?address=${address}`, init)
+  return fetch(`${BASE_NFD_API_URL}/nfd/lookup?address=${address}`, init)
 }
 
 function fetchNfds(addresses: string[], init: RequestInit = {}) {
-  return fetch(`${BASE_NFD_API_URL}/nfd?address=${addresses.join("&address=")}`, init)
+  return fetch(`${BASE_NFD_API_URL}/nfd/lookup?address=${addresses.join("&address=")}`, init)
 }
 
 export async function sleep(ms: number) {
@@ -52,14 +52,15 @@ export async function getNonFungibleDomainName(
       throw new Error("Something went wrong")
     }
 
-    return await r.json()
+    const data = await r.json()
+    return data[address]
   })
 }
 
 export async function getNonFungibleDomainNames(
   addresses: string[],
   init: RequestInit = {},
-): Promise<NFD[]> {
+): Promise<{ [address: string]: NFD }> {
   return mutex.runExclusive(async () => {
     let r = await fetchNfds(addresses, init);
     if(r.status === 404) {
