@@ -72,7 +72,6 @@ export function StackedListQuery({
     setSearchParams(searchParams);
   });
 
-  // Merge NFD data with proposals before applying filters
   const proposalsWithNFDs = useMemo(() => {
     if (!proposalsQuery.data) return [];
     

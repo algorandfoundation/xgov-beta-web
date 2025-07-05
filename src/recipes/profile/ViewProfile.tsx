@@ -1,6 +1,6 @@
 import { ProfileCard } from "@/components/ProfileCard/ProfileCard";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
 import {
   openProposal,
@@ -25,6 +25,7 @@ import {
   useXGov,
   useRegistry,
   useProposalsByProposer,
+  useNFD,
 } from "@/hooks";
 import { StackedList } from "@/recipes";
 import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationModal";
@@ -91,19 +92,22 @@ export function ProfilePage({
   const registry = useRegistry();
   const xgov = useXGov(address);
   const proposer = useProposer(address);
-  const proposalsData = useProposalsByProposer(address);
+  const proposalsQuery = useProposalsByProposer(address);
+  const nfd = useNFD(address);
   const [showOpenProposalModal, setShowOpenProposalModal] = useState(false);
 
   const isLoading =
     registry.isLoading ||
     xgov.isLoading ||
     proposer.isLoading ||
-    proposalsData.isLoading;
+    proposalsQuery.isLoading ||
+    nfd.isLoading;
   const isError =
     registry.isError ||
     xgov.isError ||
     proposer.isError ||
-    proposalsData.isError;
+    proposalsQuery.isError ||
+    nfd.isError;
 
   const [subscribeXGovLoading, setSubscribeXGovLoading] =
     useState<boolean>(false);
@@ -121,7 +125,14 @@ export function ProfilePage({
       proposer.data.kycExpiring > Date.now() / 1000) ||
     false;
 
-  const proposals = proposalsData.data;
+  const proposalsWithNFDs = useMemo(() => {
+    if (!proposalsQuery.data) return [];
+
+    return proposalsQuery.data.map((proposal) => ({
+      ...proposal,
+      nfd: nfd.data
+    }));
+  }, [proposalsQuery.data, nfd.data]);
 
   if (!address || isLoading) {
     return <LoadingSpinner />;
@@ -301,8 +312,8 @@ export function ProfilePage({
               </>
             )}
           </div>
-          {!!proposals && (
-            <StackedList proposals={proposals} activeAddress={activeAddress} />
+          {!!proposalsWithNFDs && (
+            <StackedList proposals={proposalsWithNFDs} activeAddress={activeAddress} />
           )}
         </>
       )}
