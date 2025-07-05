@@ -67,7 +67,7 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
             }}
             {...manager}
             path={path}
-            nfdName={nfd.data?.properties?.internal?.name || ""}
+            nfdName={nfd.data?.name || ""}
           />
         )
       }

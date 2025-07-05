@@ -6,6 +6,7 @@ import { queryClient } from "@/stores/query.ts";
 import { type ProposalSummaryCardDetails } from "@/api";
 import {
   useGetAllProposals,
+  useNFDs,
   useProposalScrutinizer,
   useSearchParams,
   useSearchParamsObserver,
@@ -32,6 +33,9 @@ export function StackedListQuery({
   proposals: ProposalSummaryCardDetails[];
 }) {
   const proposalsQuery = useGetAllProposals(proposals);
+  const nfds = useNFDs(
+    proposalsQuery.data?.map((proposal) => proposal.proposer) || []
+  )
 
   const [searchParams] = useSearchParams();
   const [_searchParams, setSearchParams] = useState(searchParams);
@@ -39,12 +43,21 @@ export function StackedListQuery({
     setSearchParams(searchParams);
   });
 
+  const proposalsWithNFDs = useMemo(() => {
+    if (!proposalsQuery.data) return [];
+    
+    return proposalsQuery.data.map((proposal) => ({
+      ...proposal,
+      nfd: nfds.data?.[proposal.proposer]
+    }));
+  }, [proposalsQuery.data, nfds.data]);
+
   const _proposals = useMemo(
     () =>
-      (proposalsQuery.data || []).filter((proposal) =>
+      proposalsWithNFDs.filter((proposal) =>
         proposalFilter(proposal, _searchParams),
       ),
-    [proposals, _searchParams, proposalsQuery],
+    [proposalsWithNFDs, _searchParams],
   );
 
   const { activeAddress, isReady } = useWallet();

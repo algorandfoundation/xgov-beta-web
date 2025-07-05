@@ -1,5 +1,6 @@
 import type { ProposalTypedGlobalState } from "@algorandfoundation/xgov";
 import type { User } from "@/api/discourse/user.ts";
+import type { NFD } from "../nfd";
 
 export enum ProposalStatus {
   ProposalStatusEmpty = 0,
@@ -206,6 +207,8 @@ export type ProposalSummaryCardDetails = Omit<ProposalTypedGlobalState, 'funding
   fundingCategory: ProposalCategory;
   forumUsers?: User[];
 }
+
+export type ProposalSummaryCardDetailsWithNFDs = ProposalSummaryCardDetails & { nfd: NFD | undefined };
 
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;
 

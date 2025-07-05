@@ -15,7 +15,7 @@ const DEFAULT_INDEXER_SERVER = "https://fnet-idx.4160.nodely.dev";
 const DEFAULT_INDEXER_PORT = 443;
 const DEFAULT_INDEXER_TOKEN = "";
 
-console.log("Loading AlgorandClient");
+// console.log("Loading AlgorandClient");
 export const indexer = ClientManager.getIndexerClient({
   server: env.PUBLIC_INDEXER_SERVER || DEFAULT_INDEXER_SERVER,
   port: env.PUBLIC_INDEXER_PORT || DEFAULT_INDEXER_PORT,
