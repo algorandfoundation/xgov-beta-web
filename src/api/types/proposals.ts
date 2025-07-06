@@ -212,6 +212,8 @@ export type ProposalSummaryCardDetailsWithNFDs = ProposalSummaryCardDetails & { 
 
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;
 
+export type ProposalMainCardDetailsWithNFDs = ProposalMainCardDetails & { nfd: NFD | undefined };
+
 export type ProposalInfoCardDetails = Pick<
   ProposalMainCardDetails,
   | "focus"
