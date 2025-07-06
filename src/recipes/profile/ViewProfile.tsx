@@ -107,12 +107,6 @@ export function ProfilePage({
     proposer.isError ||
     proposalsQuery.isError;
 
-  console.log('     registry', registry.isError, registry.error);
-  console.log('         xgov', xgov.isError, xgov.error);
-  console.log('     proposer', proposer.isError, proposer.error);
-  console.log('proposalsData', proposalsQuery.isError, proposalsQuery.error);
-  console.log('          nfd', nfd.isError, nfd.error);
-
   const [subscribeXGovLoading, setSubscribeXGovLoading] =
     useState<boolean>(false);
   const [setVotingAddressLoading, setSetVotingAddressLoading] =
