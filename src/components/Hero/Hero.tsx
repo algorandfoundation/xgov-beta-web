@@ -136,7 +136,7 @@ export function Hero({
                 Treasury
               </span>
               <span className="flex items-center gap-1">
-                {(treasury / 1_000_000)
+                {treasury
                   .toString()
                   .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                 <AlgorandIcon className="fill-white dark:fill-algo-black size-3" />
