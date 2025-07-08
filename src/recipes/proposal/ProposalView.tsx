@@ -18,6 +18,7 @@ import {
   getVotingDuration,
   getGlobalState,
   callFinalize,
+  type ProposalMainCardDetailsWithNFDs,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -40,7 +41,7 @@ import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill"
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
 import VoteBar from "@/components/VoteBar/VoteBar";
 import algosdk from "algosdk";
-import { useProposal, useVoterBox } from "@/hooks";
+import { useNFD, useProposal, useVoterBox } from "@/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -652,7 +653,7 @@ export interface ProposalInfoProps {
   activeAddress: string | null;
   xGovCouncil?: string;
   xGovPayor?: string;
-  proposal: ProposalMainCardDetails;
+  proposal: ProposalMainCardDetailsWithNFDs;
   pastProposals?: ProposalBrief[];
   children?: ReactNode;
 }
@@ -665,6 +666,8 @@ export function ProposalInfo({
   pastProposals,
   children,
 }: ProposalInfoProps) {
+  const nfd = useNFD(proposal.proposer);
+  
   const phase = ProposalStatusMap[proposal.status];
 
   const _pastProposals = (pastProposals || []).filter((p) =>
@@ -797,7 +800,7 @@ export function ProposalInfo({
 
               <div className="text-sm md:text-base inline-flex items-center justify-between gap-3 mt-2 mb-6 p-1 pr-4">
                 Created By
-                <UserPill variant="secondary" address={proposal.proposer} />
+                <UserPill nfdName={nfd.data?.name} variant="secondary" address={proposal.proposer} />
                 <span className="text-2xl font-semibold text-algo-blue dark:text-algo-teal">
                   //
                 </span>

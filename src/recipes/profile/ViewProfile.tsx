@@ -35,7 +35,6 @@ import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
 import { queryClient } from "@/stores";
 
 export function ProfilePageIsland({ address }: { address: string }) {
-  console.log(address);
   return (
     <UseQuery>
       <UseWallet>
@@ -50,19 +49,19 @@ export function ProfilePageController({ address }: { address: string }) {
   const registry = useRegistry();
   const xgov = useXGov(address);
   const proposer = useProposer(address);
-  const proposalsData = useProposalsByProposer(address);
+  const proposalsQuery = useProposalsByProposer(address);
 
   const isLoading =
     registry.isLoading ||
     xgov.isLoading ||
     proposer.isLoading ||
-    proposalsData.isLoading;
+    proposalsQuery.isLoading;
 
   const isError =
     registry.isError ||
     xgov.isError ||
     proposer.isError ||
-    proposalsData.isError;
+    proposalsQuery.isError;
 
   if (!address || isLoading) {
     return <LoadingSpinner />;
@@ -100,14 +99,13 @@ export function ProfilePage({
     registry.isLoading ||
     xgov.isLoading ||
     proposer.isLoading ||
-    proposalsQuery.isLoading ||
-    nfd.isLoading;
+    proposalsQuery.isLoading;
+
   const isError =
     registry.isError ||
     xgov.isError ||
     proposer.isError ||
-    proposalsQuery.isError ||
-    nfd.isError;
+    proposalsQuery.isError;
 
   const [subscribeXGovLoading, setSubscribeXGovLoading] =
     useState<boolean>(false);
