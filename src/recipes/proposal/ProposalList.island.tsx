@@ -3,14 +3,15 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { useWallet } from "@txnlab/use-wallet-react";
 
 import { queryClient } from "@/stores/query.ts";
-import type { ProposalSummaryCardDetails } from "@/api";
+import { type ProposalSummaryCardDetails } from "@/api";
 import {
   useGetAllProposals,
+  useNFDs,
+  useProposalScrutinizer,
   useSearchParams,
   useSearchParamsObserver,
   UseWallet,
 } from "@/hooks";
-
 import { proposalFilter, StackedList } from "@/recipes";
 
 export function StackedListIsland({
@@ -32,6 +33,9 @@ export function StackedListQuery({
   proposals: ProposalSummaryCardDetails[];
 }) {
   const proposalsQuery = useGetAllProposals(proposals);
+  const nfds = useNFDs(
+    proposalsQuery.data?.map((proposal) => proposal.proposer) || []
+  )
 
   const [searchParams] = useSearchParams();
   const [_searchParams, setSearchParams] = useState(searchParams);
@@ -39,15 +43,27 @@ export function StackedListQuery({
     setSearchParams(searchParams);
   });
 
+  const proposalsWithNFDs = useMemo(() => {
+    if (!proposalsQuery.data) return [];
+    
+    return proposalsQuery.data.map((proposal) => ({
+      ...proposal,
+      nfd: nfds.data?.[proposal.proposer]
+    }));
+  }, [proposalsQuery.data, nfds.data]);
+
   const _proposals = useMemo(
     () =>
-      (proposalsQuery.data || []).filter((proposal) =>
+      proposalsWithNFDs.filter((proposal) =>
         proposalFilter(proposal, _searchParams),
       ),
-    [proposals, _searchParams, proposalsQuery],
+    [proposalsWithNFDs, _searchParams],
   );
 
   const { activeAddress, isReady } = useWallet();
+
+  // Use the custom hook for proposal scrutinization
+  useProposalScrutinizer(proposals);
 
   if (!isReady) {
     return null;
@@ -60,5 +76,6 @@ export function StackedListQuery({
       </div>
     );
   }
+
   return <StackedList activeAddress={activeAddress} proposals={_proposals} />;
 }

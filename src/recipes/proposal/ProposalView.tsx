@@ -17,6 +17,8 @@ import {
   getVoteQuorum,
   getVotingDuration,
   getGlobalState,
+  callFinalize,
+  type ProposalMainCardDetailsWithNFDs,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -32,20 +34,21 @@ import {
 } from "@/components/ui/dialog";
 import { useTimeLeft } from "@/hooks/useTimeLeft";
 import { Link } from "@/components/Link";
-import { ProposalReviewerCard } from "@/components/ProposalReviewerCard/ProposalReviewerCard";
+import { ProposalCouncilCard } from "@/components/ProposalCouncilCard/ProposalCouncilCard";
 import { VoteCounter } from "@/components/VoteCounter/VoteCounter";
 import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill";
 import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
 import VoteBar from "@/components/VoteBar/VoteBar";
 import algosdk from "algosdk";
-import { useProposal, useVoterBox } from "@/hooks";
+import { useNFD, useProposal, useVoterBox } from "@/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
+import { ProposalPayorCard } from "@/components/ProposalPayorCard/ProposalPayorCard";
 
 export const defaultsStatusCardMap = {
   [ProposalStatus.ProposalStatusEmpty]: {
@@ -272,7 +275,7 @@ function DiscussionStatusCard({
       className={className}
       header={header}
       subHeader="Discussion is ongoing, take part and help shape public sentiment on this proposal."
-      sideHeader={discussionDuration > Number(minimumDiscussionDuration) ? 'Finalizable!' : remainingTime}
+      sideHeader={discussionDuration > Number(minimumDiscussionDuration) ? 'Ready to submit' : remainingTime}
       icon={icon}
       action={action}
     />
@@ -579,6 +582,8 @@ function VotingStatusCard({
         )
       }
     }
+  } else {
+    subheader = <div className="h-9 w-full"></div>
   }
 
   return (
@@ -646,19 +651,23 @@ export function StatusCard({
 
 export interface ProposalInfoProps {
   activeAddress: string | null;
-  xGovReviewer?: string;
-  proposal: ProposalMainCardDetails;
+  xGovCouncil?: string;
+  xGovPayor?: string;
+  proposal: ProposalMainCardDetailsWithNFDs;
   pastProposals?: ProposalBrief[];
   children?: ReactNode;
 }
 
 export function ProposalInfo({
   activeAddress,
-  xGovReviewer,
+  xGovCouncil,
+  xGovPayor,
   proposal,
   pastProposals,
   children,
 }: ProposalInfoProps) {
+  const nfd = useNFD(proposal.proposer);
+  
   const phase = ProposalStatusMap[proposal.status];
 
   const _pastProposals = (pastProposals || []).filter((p) =>
@@ -708,12 +717,25 @@ export function ProposalInfo({
       </div>
       <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-6 lg:mx-0 lg:max-w-none lg:grid-cols-2 lg:items-start lg:gap-y-10">
         {
-          xGovReviewer
+          xGovCouncil
           && activeAddress
-          && activeAddress === xGovReviewer
+          && activeAddress === xGovCouncil
           && (
             <div className="lg:col-span-2">
-              <ProposalReviewerCard
+              <ProposalCouncilCard
+                proposalId={proposal.id}
+                status={proposal.status}
+              />
+            </div>
+          )
+        }
+        {
+          xGovPayor
+          && activeAddress
+          && activeAddress === xGovPayor
+          && (
+            <div className="lg:col-span-2">
+              <ProposalPayorCard
                 proposalId={proposal.id}
                 status={proposal.status}
               />
@@ -776,14 +798,14 @@ export function ProposalInfo({
                 </div>
               )}
 
-              <div className="text-base inline-flex items-center justify-between gap-3 mt-2 mb-6 p-1 pr-4">
+              <div className="text-sm md:text-base inline-flex items-center justify-between gap-3 mt-2 mb-6 p-1 pr-4">
                 Created By
-                <UserPill variant="secondary" address={proposal.proposer} />
+                <UserPill nfdName={nfd.data?.name} variant="secondary" address={proposal.proposer} />
                 <span className="text-2xl font-semibold text-algo-blue dark:text-algo-teal">
                   //
                 </span>
                 <span className="text-algo-black-50 dark:text-white">
-                  {formatDistanceToNow(new Date((Number(proposal.submissionTs) * 1000)), { addSuffix: true })}
+                  {formatDistanceToNow(new Date((Number(proposal.submissionTs) * 1000)), { addSuffix: true }).replace('about ', '').replace(' minutes', 'm').replace(' minute', 'm').replace(' hours', 'h').replace(' hour', 'h').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}
                 </span>
               </div>
 
@@ -846,7 +868,7 @@ export function FinalizeModal({
         return false;
       }
 
-      const { committeePublisher } = (await getGlobalState())!
+      const { xgovDaemon } = (await getGlobalState())!
 
       const proposalFactory = new ProposalFactory({ algorand });
       const proposalClient = proposalFactory.getAppClientById({
@@ -858,7 +880,7 @@ export function FinalizeModal({
         signer: transactionSigner,
         args: {},
         appReferences: [registryClient.appId],
-        accountReferences: [activeAddress, committeePublisher],
+        accountReferences: [activeAddress, xgovDaemon],
         boxReferences: [new Uint8Array(Buffer.from("M"))],
         extraFee: (1000).microAlgos(),
       });
@@ -872,6 +894,15 @@ export function FinalizeModal({
         setErrorMessage(null);
         onClose();
         refetchProposal();
+
+        // call backend to finalize
+        try {
+          await callFinalize(proposalId);
+        } catch (e) {
+          console.warn("Failed to finalize:", e);
+        }
+        refetchProposal();
+
         return true;
       }
 

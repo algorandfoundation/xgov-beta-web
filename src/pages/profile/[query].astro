@@ -20,7 +20,7 @@ import { ProfilePageIsland } from "@/recipes";
 interface Props {
   query: string;
 }
-const { query } = Astro.params;
+let { query } = Astro.params;
 
 if (!query || (!query.includes(".algo") && !isValidAddress(query))) {
   const error = await fetch(`${Astro.url}/404`);
@@ -33,21 +33,16 @@ if (!query || (!query.includes(".algo") && !isValidAddress(query))) {
 
 let isNfd = false;
 let address = query;
-if (query.includes(".algo")) {
-  try {
-    await getNonFungibleDomainName(query).then((name) => {
-      isNfd = true;
-      address = name;
-    });
-  } catch (e) {
-    console.log(e);
-    const error = await fetch(`${Astro.url}/404`);
-    return new Response(error.body, {
-      headers: error.headers,
-      status: 404,
-      statusText: "Not Found",
-    });
-  }
+
+try {
+  await getNonFungibleDomainName(address).then((nfd) => {
+    isNfd = true;
+    query = nfd.name;
+    address = nfd.owner;
+    console.log("NFD found:", nfd);
+  });
+} catch (e) {
+  console.log(e);
 }
 ---
 

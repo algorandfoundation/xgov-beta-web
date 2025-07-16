@@ -71,8 +71,14 @@ export function ProposalCreate() {
 
   const maxRequestedAmount =
     !!userBalance.data?.available &&
-    userBalance.data.available.microAlgos > 1_000n
-      ? ((userBalance.data.available.microAlgos - 1_000n) / 1_000_000n) * 10n
+    userBalance.data.available.microAlgos > 1_000n &&
+    !!registry.data?.proposalCommitmentBps
+      ? BigInt(
+          Math.floor(
+            Number(userBalance.data.available.microAlgos - 100_000n) /
+              (Number(registry.data?.proposalCommitmentBps) / 10000),
+          ),
+        )
       : 0n;
 
   useEffect(() => {
@@ -85,7 +91,7 @@ export function ProposalCreate() {
     <ProposalForm
       type="create"
       bps={registry.data?.proposalCommitmentBps || 0n}
-      minRequestedAmount={registry.data?.minRequestedAmount || 1n}
+      minRequestedAmount={registry.data?.minRequestedAmount || 1000000n}
       maxRequestedAmount={maxRequestedAmount}
       transactionStatus={status}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {

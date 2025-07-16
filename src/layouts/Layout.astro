@@ -17,10 +17,17 @@ const _title = title ? `${title} | ` : "";
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content="Astro description" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{`${_title}xGov`}</title>
+    <!-- PWA Support -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#FFFFFF" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="xGov" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Aeonik font faces -->
@@ -39,12 +46,35 @@ const _title = title ? `${title} | ` : "";
         ((!("theme" in localStorage) || localStorage.theme === "default") &&
           window.matchMedia("(prefers-color-scheme: dark)").matches);
       document.documentElement.classList.toggle("dark", check);
+      
+      // Update PWA theme color on initial load
+      function updatePWAThemeColor(isDark) {
+        const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeColorMeta) {
+          themeColorMeta.setAttribute('content', isDark ? '#001324' : '#FFFFFF');
+        }
+        const statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+        if (statusBarMeta) {
+          statusBarMeta.setAttribute('content', isDark ? 'black-translucent' : 'default');
+        }
+      }
+      
+      // Initialize theme color
+      updatePWAThemeColor(check);
     </script>
     <ClientRouter />
   </head>
   <body class="bg-white dark:bg-algo-black text-algo-black dark:text-white">
     <slot />
     <Devtools client:load />
+    <!-- PWA Service Worker Registration -->
+    <script is:inline>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        });
+      }
+    </script>
   </body>
 </html>
 <style is:global>
@@ -61,18 +91,55 @@ const _title = title ? `${title} | ` : "";
   import { $themeStore } from "@/stores/themeStore";
 
   const cl = document.documentElement.classList;
-  $themeStore.subscribe(
-    (theme) => theme !== "default" && cl.toggle("dark", theme === "dark"),
-  );
+  
+  // Function to update PWA theme color
+  function updatePWAThemeColor(isDark: boolean) {
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+      themeColorMeta.setAttribute('content', isDark ? '#001324' : '#FFFFFF');
+    }
+  }
+  
+  $themeStore.subscribe((theme) => {
+    if (theme !== "default") {
+      const isDark = theme === "dark";
+      cl.toggle("dark", isDark);
+      updatePWAThemeColor(isDark);
+    } else {
+      // Handle system preference
+      const darkModePreference = window.matchMedia("(prefers-color-scheme: dark)");
+      const isDark = darkModePreference.matches;
+      cl.toggle("dark", isDark);
+      updatePWAThemeColor(isDark);
+    }
+  });
+
+  // Listen for system theme changes when theme is set to "default"
+  const darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  darkModeMediaQuery.addEventListener("change", (e) => {
+    const currentTheme = $themeStore.get();
+    if (currentTheme === "default") {
+      cl.toggle("dark", e.matches);
+      updatePWAThemeColor(e.matches);
+    }
+  });
 
   document.addEventListener("astro:before-swap", (event) => {
     const currentTheme = $themeStore.get()
     // Pass the incoming document to set the theme on it
+    if(currentTheme === "light"){
+      event.newDocument.documentElement.classList.toggle(
+        "dark",
+        false,
+      );
+      updatePWAThemeColor(false);
+    }
     if(currentTheme === "dark"){
       event.newDocument.documentElement.classList.toggle(
         "dark",
         true,
       );
+      updatePWAThemeColor(true);
     }
     // Handle Default Dark Modes
     if(currentTheme === "default"){
@@ -82,6 +149,9 @@ const _title = title ? `${title} | ` : "";
           "dark",
           true,
         );
+        updatePWAThemeColor(true);
+      } else {
+        updatePWAThemeColor(false);
       }
     }
   });

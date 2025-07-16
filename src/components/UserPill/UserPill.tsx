@@ -22,14 +22,15 @@ const pillVariants = cva(
 );
 
 export interface UserPillProps extends VariantProps<typeof pillVariants> {
+  nfdName?: string;
   address: string;
 }
 
-export function UserPill({ variant, address }: UserPillProps) {
+export function UserPill({ variant, address, nfdName }: UserPillProps) {
   return (
     <Link to={`/profile/${address}`} className={cn(pillVariants({ variant }))}>
       <UserCircleIcon className="size-6 -translate-x-2 group-hover:stroke-white dark:group-hover:stroke-algo-black" />
-      {address.length === 58 ? shortenAddress(address) : address}
+      { !!nfdName ?  nfdName : address.length === 58 ? shortenAddress(address) : address}
     </Link>
   );
 }

@@ -1,21 +1,24 @@
 import { type ProposalMainCardDetails, type ProposalSummaryCardDetails, type RegistryGlobalState, getDiscussionDuration } from "@/api";
-import { useProposal, useProposalsByProposer, UseQuery, useRegistry, UseWallet } from "@/hooks";
+import { useNFD, useProposal, useProposalsByProposer, UseQuery, useRegistry, UseWallet } from "@/hooks";
 import { ProposalInfo, StatusCard } from "@/recipes";
 import { useWallet } from "@txnlab/use-wallet-react";
 
 type ProposalInfoControllerProps = {
-  xGovReviewer?: string;
+  xGovCouncil?: string;
+  xGovPayor?: string;
   proposal: ProposalMainCardDetails;
   pastProposals: ProposalSummaryCardDetails[];
   children: React.ReactNode;
 };
 
-export function ProposalInfoController({ xGovReviewer, proposal, pastProposals, children }: ProposalInfoControllerProps) {
+
+export function ProposalInfoController({ xGovCouncil, xGovPayor, proposal, pastProposals, children }: ProposalInfoControllerProps) {
   const { activeAddress } = useWallet();
   const proposalQuery = useProposal(proposal.id, proposal);
+  const nfd = useNFD(proposal.proposer);
   const pastProposalsQuery = useProposalsByProposer(proposal.proposer, pastProposals);
 
-  const _proposal = proposalQuery.data || proposal;
+  const _proposal = { ...(proposalQuery.data || proposal), nfd: nfd.data };
   const _pastProposals = pastProposalsQuery.data || pastProposals;
 
   // useEffect(() => {
@@ -31,7 +34,8 @@ export function ProposalInfoController({ xGovReviewer, proposal, pastProposals, 
   return (
     <ProposalInfo
       activeAddress={activeAddress}
-      xGovReviewer={xGovReviewer}
+      xGovCouncil={xGovCouncil}
+      xGovPayor={xGovPayor}
       proposal={_proposal}
       pastProposals={_pastProposals}
     >

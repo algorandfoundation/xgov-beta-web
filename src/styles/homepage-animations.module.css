@@ -10,14 +10,14 @@
   }
   100% {
     opacity: 1;
-    transform: translateY(-100%);
+    transform: translateY(-120%);
     pointer-events: none;
   }
 }
 
 .intro img {
   animation: fadeOut 0.3s ease forwards;
-  animation-delay: 0.6s;
+  animation-delay: 0.35s;
 }
 
 @keyframes fadeOut {

@@ -10,7 +10,7 @@ interface Props {
 const path = Astro.url.pathname;
 ---
 
-<header class="w-full px-2 md:px-4 z-50 fixed">
+<header class="w-full px-2 md:px-4 z-50 fixed pwa-header">
   <div
     class="w-full bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-b-3xl flex justify-between items-center p-4 lg:px-10"
   >
@@ -30,11 +30,11 @@ const path = Astro.url.pathname;
             path === "/docs" ? "bg-algo-black/10" : "",
             "px-2 py-1 hover:bg-white/10 dark:hover:bg-algo-black/10 rounded-md",
           )}
-          to="/docs"
+          to="https://forum.algorand.co/c/gov-guides/32"
         >
           Docs
         </Link>
-        <Link
+        <!-- <Link
           data-testid="header-cohort-link"
           className={cn(
             path === "/cohort" ? "bg-algo-black/10" : "",
@@ -43,7 +43,7 @@ const path = Astro.url.pathname;
           to="/cohort"
         >
           Cohort
-        </Link>
+        </Link> -->
         <AdminLinkIsland client:only="react" path={path} />
       </nav>
       <slot />

@@ -23,7 +23,6 @@ BigInt.prototype.toJSON = function () {
 const queryCache = new QueryClient();
 
 let walletProviders: SupportedWallet[] = [
-  WalletId.KMD,
   WalletId.DEFLY,
   WalletId.PERA,
   WalletId.EXODUS,

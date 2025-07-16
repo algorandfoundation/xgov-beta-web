@@ -1,0 +1,1 @@
+export const XGOV_POSTS = 'https://forum.algorand.co/posts.json'

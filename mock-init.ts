@@ -79,6 +79,8 @@ export async function timeWarp(to: number) {
   await algorand.client.algod.setBlockOffsetTimestamp(0).do();
 }
 
+
+algorand.setSuggestedParamsCacheTimeout(0);
 // Generate admin account (the one that creates the registry)
 const fundAmount = (10).algo();
 const adminAccount = await algorand.account.fromKmd(
@@ -97,6 +99,9 @@ const registryMinter = new XGovRegistryFactory({
   algorand,
   defaultSender: adminAccount.addr,
   defaultSigner: adminAccount.signer,
+  deployTimeParams: {
+    entropy: "",
+  },
 });
 
 const results = await registryMinter.send.create.create();
@@ -131,8 +136,8 @@ await registryClient.send.configXgovRegistry({
     config: {
       xgovFee: XGOV_FEE,
       proposerFee: PROPOSER_FEE,
-      proposalFee: PROPOSAL_FEE,
-      proposalPublishingBps: PROPOSAL_PUBLISHING_BPS,
+      openProposalFee: PROPOSAL_FEE,
+      daemonOpsFundingBps: PROPOSAL_PUBLISHING_BPS,
       proposalCommitmentBps: PROPOSAL_COMMITMENT_BPS,
       minRequestedAmount: MIN_REQUESTED_AMOUNT,
       maxRequestedAmount: [
@@ -170,11 +175,11 @@ await registryClient.send.setCommitteeManager({
   },
 });
 
-await registryClient.send.setCommitteePublisher({
+await registryClient.send.setXgovDaemon({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: {
-    publisher: adminAccount.addr,
+    xgovDaemon: adminAccount.addr,
   },
 });
 
@@ -359,10 +364,7 @@ for (let i = 0; i < mockProposals.length; i++) {
   }
 
   const proposalSubmissionFee = Math.trunc(
-    Number(
-      (mockProposals[i].requestedAmount.algos().microAlgos * BigInt(1_000)) /
-      BigInt(10_000),
-    ),
+    Number((mockProposals[i].requestedAmount.algos().microAlgos * PROPOSAL_COMMITMENT_BPS) / BigInt(10_000)),
   );
 
   console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
@@ -458,12 +460,11 @@ for (let i = 1; i < mockProposals.length; i++) {
       console.log('           index: ', j);
 
       try {
-        await proposalClient.send.assignVoter({
+        await proposalClient.send.assignVoters({
           sender: adminAccount.addr,
           signer: adminAccount.signer,
           args: {
-            voter: committeeMember.addr,
-            votingPower: votes,
+            voters: [[committeeMember.addr, votes]],
           },
           appReferences: [registryClient.appId],
           boxReferences: [
@@ -527,7 +528,7 @@ for (let i = 1; i < 10; i++) {
 }
 
 // For one proposal, we will have a voting period
-// to make it reviewable by xGov Reviewer
+// to make it reviewable by xGov Council
 // Send votes for proposal #0 from admin account
 try {
   await registryClient.send.voteProposal({
@@ -577,8 +578,8 @@ await proposalFactory
     extraFee: (1000).microAlgo()
   })
 
-// Set admin account as xGov Reviewer to avoid having to click through admin panel
-await registryClient.send.setXgovReviewer({
+// Set admin account as xGov Council to avoid having to click through admin panel
+await registryClient.send.setXgovCouncil({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: [adminAccount.addr],

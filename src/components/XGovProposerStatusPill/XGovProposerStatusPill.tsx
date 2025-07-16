@@ -38,7 +38,7 @@ export function XGovProposerStatusPill({ proposer }: XGovProposerStatusPill) {
           <CheckIcon className="p-1 text-algo-teal" />
         </div>
       ) : null}
-      <h2 className="md:text-xl dark:text-white font-bold">xGov Proposer</h2>
+      <h2 className="md:text-xl dark:text-white font-bold">Proposer</h2>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { PanelStatistics } from "./PanelStatistics";
 import { registryClient } from "@/api";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 import { UseQuery, UseWallet, useRegistry } from "@/hooks";
+import { DepositFundsCard } from "@/components/DepositFundsCard/DepositFundsCard";
 export function AdminPageIsland() {
   return (
     <UseQuery>
@@ -47,8 +48,8 @@ export function AdminPage() {
         });
         break;
 
-      case "committeePublisher":
-        res = await registryClient.send.setCommitteePublisher({
+      case "xgovDaemon":
+        res = await registryClient.send.setXgovDaemon({
           args: [address],
           sender: activeAddress,
           signer: transactionSigner,
@@ -79,8 +80,8 @@ export function AdminPage() {
         });
         break;
 
-      case "xGovReviewer":
-        res = await registryClient.send.setXgovReviewer({
+      case "xGovCouncil":
+        res = await registryClient.send.setXgovCouncil({
           args: [address],
           sender: activeAddress,
           signer: transactionSigner,
@@ -156,12 +157,12 @@ export function AdminPage() {
                     transactionSigner={transactionSigner}
                   />
                 )}
-
               </div>
             )}
           <div className="w-full relative text-algo-black dark:text-white">
             <PanelStatistics network={activeNetwork} />
           </div>
+          <DepositFundsCard />
         </>
       ) : (
         <div>Wallet not connected</div>

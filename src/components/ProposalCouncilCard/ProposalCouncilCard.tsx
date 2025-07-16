@@ -5,6 +5,7 @@ import {
   getProposalClientById,
   type ProposalMainCardDetails,
   ProposalStatus,
+  callUnassign,
 } from "@/api";
 import { ALGORAND_MIN_TX_FEE } from "algosdk";
 import { UseWallet } from "@/hooks/useWallet.tsx";
@@ -12,7 +13,7 @@ import { useProposal, UseQuery } from "@/hooks";
 import { CheckIcon, XIcon } from "lucide-react";
 import { Button } from "../ui/button";
 
-export function ReviewerCardIsland({
+export function CouncilCardIsland({
   proposal,
 }: {
   proposal: ProposalMainCardDetails;
@@ -20,12 +21,12 @@ export function ReviewerCardIsland({
   return (
     <UseQuery>
       <UseWallet>
-        <ProposalReviewerCard proposalId={proposal.id} status={proposal.status} />
+        <ProposalCouncilCard proposalId={proposal.id} status={proposal.status} />
       </UseWallet>
     </UseQuery>
   );
 }
-export function ProposalReviewerCard({
+export function ProposalCouncilCard({
   proposalId,
   status,
 }: {
@@ -64,6 +65,13 @@ export function ProposalReviewerCard({
         res.confirmation.poolError === ""
       ) {
         console.log("Transaction confirmed");
+        // call backend to unassign voters
+        try {
+          await callUnassign(proposalId);
+        } catch (e) {
+          console.warn("Failed to Unassign:", e);
+
+        }
         setErrorMessage(null);
         proposalQuery.refetch();
         return true;
@@ -82,7 +90,7 @@ export function ProposalReviewerCard({
   return (
     <div>
       <h1 className="text-3xl text-wrap lg:text-4xl max-w-4xl text-algo-black dark:text-white font-bold mt-16 mb-8 ">
-        xGov Reviewer Panel
+        xGov Council Panel
       </h1>
       <li
         role="listitem"

@@ -1,6 +1,15 @@
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon.tsx";
+import { cn } from "@/functions";
 
 const navigation = [
+  {
+    name: "Privacy Policy",
+    href: "https://algorand.co/algorand-foundation/privacy-policy"
+  },
+  {
+    name: "Disclaimers",
+    href: "https://algorand.co/algorand-foundation/disclaimer"
+  },
   {
     name: "Algorand",
     href: "https://algorand.co",
@@ -76,10 +85,13 @@ export function FooterLinks() {
           key={item.name}
           target="_blank"
           href={item.href}
-          className="flex justify-center items-center size-8 p-0.5 text-algo-black hover:text-algo-black-60 hover:bg-white dark:hover:bg-algo-black-80 dark:text-white/60 dark:hover:text-white rounded-full"
+          className={cn(
+            !!item.icon ? 'size-8 p-0.5' : 'py-0.5 px-2',
+            "flex justify-center items-center  text-algo-black hover:text-algo-black-60 hover:bg-white dark:hover:bg-algo-black-80 dark:text-white/60 dark:hover:text-white rounded-full"
+          )}
         >
           <span className="sr-only">{item.name}</span>
-          <item.icon aria-hidden="true" className="size-6" />
+          { !!item.icon ? <item.icon aria-hidden="true" className="size-6" /> : item.name }
         </a>
       ))}
     </>

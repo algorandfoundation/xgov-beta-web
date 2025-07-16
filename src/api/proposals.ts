@@ -160,9 +160,22 @@ export async function getProposalsByProposer(
  *
  * @return A promise that resolves to an array of ProposalSummaryCardDetails with status FINAL.
  */
-export async function getFinalProposals(): Promise<ProposalSummaryCardDetails[]> {
+export async function getFinalProposals(): Promise<
+  ProposalSummaryCardDetails[]
+> {
   return (await getAllProposals()).filter(
-    (proposal) => proposal.status === ProposalStatus.ProposalStatusFinal
+    (proposal) => proposal.status === ProposalStatus.ProposalStatusFinal,
+  );
+}
+
+export async function getAllProposalsToUnassign(): Promise<
+  ProposalSummaryCardDetails[]
+> {
+  return (await getAllProposals()).filter(
+    (proposal) =>
+      proposal.status === ProposalStatus.ProposalStatusFunded ||
+      proposal.status === ProposalStatus.ProposalStatusBlocked ||
+      proposal.status === ProposalStatus.ProposalStatusRejected,
   );
 }
 
@@ -270,6 +283,30 @@ export async function getProposal(
   };
 }
 
+export async function getFinalProposal(
+  id: bigint,
+): Promise<ProposalMainCardDetails> {
+  const proposalData = await getProposal(id);
+  if (proposalData.status !== ProposalStatus.ProposalStatusFinal) {
+    throw new Error("Proposal not in final state");
+  }
+  return proposalData;
+}
+
+export async function getProposalToUnassign(
+  id: bigint,
+): Promise<ProposalMainCardDetails> {
+  const proposalData = await getProposal(id);
+  if (
+    proposalData.status !== ProposalStatus.ProposalStatusFunded &&
+    proposalData.status !== ProposalStatus.ProposalStatusBlocked &&
+    proposalData.status !== ProposalStatus.ProposalStatusRejected
+  ) {
+    throw new Error("Proposal not in unassignable state");
+  }
+  return proposalData;
+}
+
 export async function getVoterBox(
   id: bigint,
   address: string,
@@ -335,6 +372,36 @@ export async function getProposalBrief(
   );
 }
 
+export async function getProposalVoters(
+  id: number,
+  limit: number = 1000,
+): Promise<string[]> {
+  const boxes = await algorand.client.algod
+    .getApplicationBoxes(id)
+    .max(limit)
+    .do();
+
+  let voterBoxes: Uint8Array<ArrayBufferLike>[] = []
+  boxes.boxes.map((box) => {
+    if (new TextDecoder().decode(box.name).startsWith("V")) {
+      voterBoxes.push(box.name);
+    }
+  });
+
+  let addresses: string[] = [];
+  (await algorand.app.getBoxValuesFromABIType({
+    appId: BigInt(id),
+    boxNames: voterBoxes,
+    type: algosdk.ABIType.from('(uint64,bool)')
+  })).map((value, i) => {
+    if (Array.isArray(value) && value[1]) {
+      addresses.push(algosdk.encodeAddress(Buffer.from(voterBoxes[i].slice(1))));
+    }
+  });
+
+  return addresses;
+}
+
 /**
  * Retrieves the discussion duration based on the given proposal category.
  *
@@ -365,11 +432,11 @@ export function getXGovQuorum(
 ): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return Number(thresholds[0]) / 10;
+      return Number(thresholds[0]) / 100;
     case ProposalCategory.ProposalCategoryMedium:
-      return Number(thresholds[1]) / 10;
+      return Number(thresholds[1]) / 100;
     case ProposalCategory.ProposalCategoryLarge:
-      return Number(thresholds[2]) / 10;
+      return Number(thresholds[2]) / 100;
     default:
       return 0;
   }
@@ -381,11 +448,11 @@ export function getVoteQuorum(
 ): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return Number(thresholds[0]) / 10;
+      return Number(thresholds[0]) / 100;
     case ProposalCategory.ProposalCategoryMedium:
-      return Number(thresholds[1]) / 10;
+      return Number(thresholds[1]) / 100;
     case ProposalCategory.ProposalCategoryLarge:
-      return Number(thresholds[2]) / 10;
+      return Number(thresholds[2]) / 100;
     default:
       return 0;
   }
@@ -393,15 +460,15 @@ export function getVoteQuorum(
 
 export function getVotingDuration(
   category: ProposalCategory,
-  durations: [bigint, bigint, bigint, bigint],
+  durations: readonly [bigint, bigint, bigint, bigint],
 ): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return Number(durations[0]);
+      return Number(durations[0]) * 1000;
     case ProposalCategory.ProposalCategoryMedium:
-      return Number(durations[1]);
+      return Number(durations[1]) * 1000;
     case ProposalCategory.ProposalCategoryLarge:
-      return Number(durations[2]);
+      return Number(durations[2]) * 1000;
     default:
       return 0;
   }
@@ -785,6 +852,75 @@ export async function updateMetadata(
       setStatus(new Error("Failed to update proposal metadata."));
     }
   }
+}
+
+export async function callScrutinize(
+  address: string,
+  appId: bigint,
+  proposer: string,
+  transactionSigner: TransactionSigner,
+) {
+  const proposalClient = proposalFactory.getAppClientById({ appId });
+
+  const scrutiny = (
+    await proposalClient.createTransaction.scrutiny({
+      sender: address,
+      signer: transactionSigner,
+      args: {},
+      appReferences: [registryClient.appId],
+      accountReferences: [proposer],
+      extraFee: (1000).microAlgo(),
+    })
+  ).transactions[0];
+
+  try {
+    await registryClient
+      .newGroup()
+      .isProposal({
+        sender: address,
+        signer: transactionSigner,
+        args: { proposalId: appId },
+        appReferences: [appId]
+      })
+      .addTransaction(scrutiny, transactionSigner)
+      .send()
+  } catch (e) {
+    console.warn(`While calling scrutiny(${appId}):`, (e as Error).message)
+  }
+}
+
+export async function callFinalize(proposalId: bigint) {
+  console.log("Staring finalize call", proposalId);
+  const response = await fetch("/api/assign", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      proposalIds: [proposalId],
+    }),
+  });
+  console.log("Finished finalize call");
+  const data = await response.json();
+  console.log("Finalize data:", data);
+}
+
+export async function callUnassign(
+  proposalId: bigint | null,
+): Promise<void> {
+  console.log("Starting unassign call", proposalId);
+  const response = await fetch("/api/unassign", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      proposalIds: proposalId !== null ? [proposalId] : [],
+    }),
+  });
+  console.log("Finished unassign call");
+  const data = await response.json();
+  console.log("Unassign data:", data);
 }
 
 // export async function resubmitProposal(

@@ -26,6 +26,7 @@
     "@astrojs/cloudflare": "^12.4.0",
     "@astrojs/react": "^4.1.5",
     "@astrojs/tailwind": "^5.1.4",
+    "@awesome-algorand/ipfs-toolkit": "^0.0.1-experimental.1",
     "@blockshake/defly-connect": "1.1.6",
     "@hookform/resolvers": "^3.10.0",
     "@nanostores/persistent": "^0.10.2",
@@ -52,6 +53,7 @@
     "algosdk": "^2.9.0",
     "astro": "^5.1.1",
     "astro-icon": "^1.1.1",
+    "async-mutex": "^0.5.0",
     "blockstore-core": "^5.0.2",
     "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.0",
@@ -61,6 +63,7 @@
     "lute-connect": "^1.4.1",
     "multiformats": "^13.3.1",
     "nanostores": "^0.10.3",
+    "p-map": "^7.0.3",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
@@ -86,6 +89,8 @@
     "@storybook/test": "^8.3.6",
     "@storybook/test-runner": "^0.19.1",
     "@typescript-eslint/parser": "^8.29.1",
+    "@vitejs/plugin-basic-ssl": "^2.0.0",
+    "ajv": "^8.17.1",
     "autoprefixer": "^10.4.20",
     "chromatic": "^11.16.1",
     "eslint": "^9.24.0",
@@ -99,5 +104,8 @@
     "tsx": "^4.19.3",
     "vite-plugin-pwa": "^1.0.0",
     "vite-tsconfig-paths": "^5.0.1"
+  },
+  "peerDependencies": {
+    "js-sha512": "^0.8.0"
   }
 }

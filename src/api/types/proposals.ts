@@ -1,4 +1,6 @@
 import type { ProposalTypedGlobalState } from "@algorandfoundation/xgov";
+import type { User } from "@/api/discourse/user.ts";
+import type { NFD } from "../nfd";
 
 export enum ProposalStatus {
   ProposalStatusEmpty = 0,
@@ -117,7 +119,7 @@ export type Focus =
   | "Other";
 
 export const FocusMap = {
-  [ProposalFocus.FocusNull]: "Null",
+  [ProposalFocus.FocusNull]: "Unspecified",
   [ProposalFocus.FocusDeFi]: "DeFi",
   [ProposalFocus.FocusEducation]: "Education",
   [ProposalFocus.FocusLibraries]: "Libraries",
@@ -203,9 +205,14 @@ export type ProposalSummaryCardDetails = Omit<ProposalTypedGlobalState, 'funding
   status: ProposalStatus;
   focus: ProposalFocus;
   fundingCategory: ProposalCategory;
+  forumUsers?: User[];
 }
 
+export type ProposalSummaryCardDetailsWithNFDs = ProposalSummaryCardDetails & { nfd: NFD | undefined };
+
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;
+
+export type ProposalMainCardDetailsWithNFDs = ProposalMainCardDetails & { nfd: NFD | undefined };
 
 export type ProposalInfoCardDetails = Pick<
   ProposalMainCardDetails,

@@ -59,28 +59,22 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
         {!connectDialogOpen ? (
           <nav className="h-full flex flex-col items-start justify-center gap-14">
             <Link
-              className="px-4 text-5xl font-bold text-algo-black dark:text-white"
+              className="px-4 text-5xl font-bold text-algo-black dark:text-white focus:outline-none"
               to="/"
             >
               Home
             </Link>
             <Link
-              className="px-4 text-5xl font-bold text-algo-black dark:text-white"
-              to="/docs"
+              className="px-4 text-5xl font-bold text-algo-black dark:text-white focus:outline-none"
+              to="https://forum.algorand.co/c/gov-guides/32"
             >
               Docs
-            </Link>
-            <Link
-              className="px-4 text-5xl font-bold text-algo-black dark:text-white"
-              to="/cohort"
-            >
-              Cohort
             </Link>
 
             {
               !!activeAddress && (
                 <Link
-                  className="px-4 text-5xl font-bold text-algo-black dark:text-white"
+                  className="px-4 text-5xl font-bold text-algo-black dark:text-white focus:outline-none"
                   to={`/profile/${activeAddress}`}
                 >
                   Profile
@@ -89,7 +83,7 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
             }
 
             <Button
-              className="text-5xl font-bold gap-4"
+              className="text-5xl font-bold gap-4 ring-0 ring-transparent focus:outline-none"
               variant="link"
               onClick={() => {
                 if (!!activeAddress) {
@@ -110,7 +104,7 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
             </Button>
 
             <Button
-              className="text-5xl font-bold gap-4"
+              className="text-5xl font-bold gap-4 focus:outline-none"
               variant="link"
               onClick={() => toggleTheme()}
             >
@@ -127,7 +121,7 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
             {wallets.map((wallet) => (
               <li key={wallet.id}>
                 <Button
-                  className="text-5xl font-bold flex gap-4"
+                  className="text-5xl font-bold flex gap-4 focus:outline-none"
                   variant="link"
                   onClick={() => {
                     wallet.connect();
