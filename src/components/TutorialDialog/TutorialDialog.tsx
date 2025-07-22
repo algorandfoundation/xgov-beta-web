@@ -15,6 +15,7 @@ import { TermsAndConditionsModal } from "@/recipes";
 import termsAndConditionsString from "../ProfileCard/TermsAndConditionsText.md?raw";
 import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
 import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
+import type { StaticTransactionStateInfo } from "@/hooks/useTransactionState";
 
 export interface TutorialDialogProps {
     isOpen: boolean;
@@ -24,11 +25,11 @@ export interface TutorialDialogProps {
     isXGov: boolean;
     xGovSignupCost: bigint;
     subscribeXgov: () => Promise<void>;
-    subscribeXgovLoading: boolean;
+    subscribeXgovTxnState: StaticTransactionStateInfo;
     isProposer: boolean;
     proposerSignupCost: bigint;
     subscribeProposer: () => Promise<void>;
-    subscribeProposerLoading: boolean;
+    subscribeProposerTxnState: StaticTransactionStateInfo;
 }
 
 const tutorialSteps = [
@@ -99,10 +100,10 @@ export function TutorialDialog({
     activeAddress,
     xGovSignupCost,
     subscribeXgov,
-    subscribeXgovLoading,
+    subscribeXgovTxnState,
     proposerSignupCost,
     subscribeProposer,
-    subscribeProposerLoading,
+    subscribeProposerTxnState,
     isXGov = false,
     isProposer = false
 }: TutorialDialogProps) {
@@ -179,10 +180,10 @@ export function TutorialDialog({
                 <Button
                     onClick={() => handleAction(type)}
                     variant='outline'
-                    disabled={subscribeXgovLoading}
+                    disabled={subscribeXgovTxnState.isPending}
                     className="flex items-center gap-2"
                 >
-                    {subscribeXgovLoading ? (
+                    {subscribeXgovTxnState.isPending ? (
                         <>
                             <div className="size-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
                             Processing...
@@ -208,10 +209,10 @@ export function TutorialDialog({
                 <Button
                     onClick={() => handleAction(type)}
                     variant='outline'
-                    disabled={subscribeProposerLoading}
+                    disabled={subscribeProposerTxnState.isPending}
                     className="flex items-center gap-2"
                 >
-                    {subscribeProposerLoading ? (
+                    {subscribeProposerTxnState.isPending ? (
                         <>
                             <div className="size-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
                             Processing...
@@ -419,7 +420,7 @@ export function TutorialDialog({
                 onClose={() => setShowBecomeXGovModal(false)}
                 onSignup={subscribeXgov}
                 costs={xGovSignupCost}
-                loading={subscribeXgovLoading}
+                txnState={subscribeXgovTxnState}
             />
 
             <TermsAndConditionsModal
@@ -449,7 +450,7 @@ export function TutorialDialog({
                 onClose={() => setShowBecomeProposerModal(false)}
                 onSignup={subscribeProposer}
                 costs={proposerSignupCost}
-                loading={subscribeProposerLoading}
+                txnState={subscribeProposerTxnState}
             />
         </>
     );

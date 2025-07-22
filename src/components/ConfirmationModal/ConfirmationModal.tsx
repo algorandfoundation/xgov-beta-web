@@ -9,6 +9,8 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { type StaticTransactionStateInfo, type TransactionState } from "@/hooks/useTransactionState";
+import { LoadingSpinner } from "../LoadingSpinner/LoadingSpinner";
+import { CheckIcon } from "lucide-react";
 
 export interface ConfirmationModalProps {
   isOpen: boolean;
@@ -17,15 +19,15 @@ export interface ConfirmationModalProps {
   description?: string;
   warning?: JSX.Element;
   submitVariant?:
-    | "default"
-    | "link"
-    | "destructive"
-    | "success"
-    | "outline"
-    | "secondary"
-    | "ghost"
-    | null
-    | undefined;
+  | "default"
+  | "link"
+  | "destructive"
+  | "success"
+  | "outline"
+  | "secondary"
+  | "ghost"
+  | null
+  | undefined;
   submitText?: string;
   onSubmit: () => Promise<void>;
   txnState: StaticTransactionStateInfo;
@@ -45,7 +47,7 @@ export function ConfirmationModal({
 }: ConfirmationModalProps) {
   const { activeWallet } = useWallet();
   const walletName = activeWallet?.metadata.name;
-    
+
   return (
     <Dialog open={isOpen}>
       <DialogContent
@@ -63,7 +65,7 @@ export function ConfirmationModal({
         </DialogHeader>
         {txnState instanceof Error && <p className="text-algo-red">{txnState.errorMessage}</p>}
         <DialogFooter className="mt-8">
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} disabled={txnState.isPending}>
             Cancel
           </Button>
           <Button
@@ -71,11 +73,20 @@ export function ConfirmationModal({
             onClick={() => onSubmit()}
             disabled={txnState.isPending}
           >
-            {txnState.status === "signing"
-              ? `Sign in ${walletName}`
-              : txnState.status === "sending"
-                ? "Executing"
-                : submitText}
+            {
+              (txnState.isPending && txnState.status === 'confirmed')
+                ? <CheckIcon className="text-algo-green h-4 w-4 mr-2 dark:text-algo-black" />
+                : txnState.isPending
+                  ? <LoadingSpinner className="mr-2" size="xs" variant='secondary' />
+                  : null
+            }
+            {
+              txnState.status === "signing"
+                ? `Sign in ${walletName}`
+                : txnState.status === "sending"
+                  ? "Executing"
+                  : submitText
+            }
           </Button>
         </DialogFooter>
       </DialogContent>

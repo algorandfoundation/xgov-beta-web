@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { CoinsIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
+import { CheckIcon, CoinsIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
 
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { UserPill } from "@/components/UserPill/UserPill";
@@ -47,8 +47,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, set } from "date-fns";
 import { ProposalPayorCard } from "@/components/ProposalPayorCard/ProposalPayorCard";
+import { useTransactionState, wrapTransactionSigner } from "@/hooks/useTransactionState";
+import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 
 export const defaultsStatusCardMap = {
   [ProposalStatus.ProposalStatusEmpty]: {
@@ -667,7 +669,7 @@ export function ProposalInfo({
   children,
 }: ProposalInfoProps) {
   const nfd = useNFD(proposal.proposer);
-  
+
   const phase = ProposalStatusMap[proposal.status];
 
   const _pastProposals = (pastProposals || []).filter((p) =>
@@ -961,15 +963,27 @@ export function DropModal({
   refetchProposal,
   refetchAllProposals,
 }: DropModalProps) {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { activeWallet } = useWallet();
+  const walletName = activeWallet?.metadata.name;
+
+  const {
+    status,
+    setStatus,
+    errorMessage,
+    reset,
+    isPending,
+  } = useTransactionState();
 
   const handleDrop = async () => {
-    try {
-      if (!activeAddress || !transactionSigner) {
-        setErrorMessage("Wallet not connected.");
-        return false;
-      }
+    if (!activeAddress || !transactionSigner) {
+      setStatus(new Error("Wallet not connected."));
+      return;
+    }
 
+    const wrappedTransactionSigner = wrapTransactionSigner(transactionSigner, setStatus)
+    setStatus("loading");
+
+    try {
       const proposalFactory = new ProposalFactory({ algorand });
       const proposalClient = proposalFactory.getAppClientById({
         appId: proposalId,
@@ -981,7 +995,7 @@ export function DropModal({
             .newGroup()
             .uploadMetadata({
               sender: activeAddress,
-              signer: transactionSigner,
+              signer: wrappedTransactionSigner,
               args: {
                 payload: new Uint8Array(Buffer.from("M")),
                 isFirstInGroup: true
@@ -999,7 +1013,7 @@ export function DropModal({
             })
             .uploadMetadata({
               sender: activeAddress,
-              signer: transactionSigner,
+              signer: wrappedTransactionSigner,
               args: {
                 payload: new Uint8Array(Buffer.from("M")),
                 isFirstInGroup: false
@@ -1017,7 +1031,7 @@ export function DropModal({
             })
             .uploadMetadata({
               sender: activeAddress,
-              signer: transactionSigner,
+              signer: wrappedTransactionSigner,
               args: {
                 payload: new Uint8Array(Buffer.from("M")),
                 isFirstInGroup: false
@@ -1036,7 +1050,7 @@ export function DropModal({
             })
             .uploadMetadata({
               sender: activeAddress,
-              signer: transactionSigner,
+              signer: wrappedTransactionSigner,
               args: {
                 payload: new Uint8Array(Buffer.from("M")),
                 isFirstInGroup: false
@@ -1070,7 +1084,7 @@ export function DropModal({
         .addTransaction(grp[3].txn, grp[3].signer)
         .dropProposal({
           sender: activeAddress,
-          signer: transactionSigner,
+          signer: wrappedTransactionSigner,
           args: { proposalId },
           appReferences: [registryClient.appId],
           accountReferences: [activeAddress],
@@ -1088,22 +1102,20 @@ export function DropModal({
         res.confirmations[4].confirmedRound > 0 &&
         res.confirmations[4].poolError === ""
       ) {
-        console.log("Transaction confirmed");
-        setErrorMessage(null);
-        onClose();
-        refetchProposal();
-        refetchAllProposals();
-        navigate("/");
-        return true;
+        setStatus("confirmed");
+        setTimeout(() => {
+          reset();
+          onClose();
+          refetchProposal();
+          refetchAllProposals();
+          navigate("/");
+        }, 800)
+        return;
       }
 
-      console.log("Transaction not confirmed");
-      setErrorMessage("Transaction not confirmed.");
-      return false;
+      setStatus(new Error("Transaction not confirmed."));
     } catch (error) {
-      console.error("Error during drop:", error);
-      setErrorMessage("An error occurred calling the proposal contract.");
-      return false;
+      setStatus(new Error("An error occurred while dropping the proposal."));
     }
   };
 
@@ -1127,8 +1139,26 @@ export function DropModal({
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={handleDrop}>
-            Delete
+          <Button
+            className="group"
+            variant="destructive"
+            onClick={handleDrop}
+            disabled={isPending}
+          >
+            {
+              (isPending && status === 'confirmed')
+                ? <CheckIcon className="text-algo-green h-4 w-4 mr-2 dark:text-algo-black" />
+                : isPending
+                  ? <LoadingSpinner className="mr-2" size="xs" variant='secondary' />
+                  : null
+            }
+            {
+              status === "signing"
+                ? `Sign in ${walletName}`
+                : status === "sending"
+                  ? "Executing"
+                  : "Delete"
+            }
           </Button>
         </DialogFooter>
       </DialogContent>

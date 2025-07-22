@@ -96,7 +96,11 @@ export async function setVotingAddress(
       ],
     });
 
-    setStatus("idle");
+    setStatus("confirmed");
+    setTimeout(() => {
+      setStatus("idle");
+    }, 800);
+
   } catch (e) {
     setStatus(new Error(`Error: ${(e as Error).message}`));
     return;
@@ -173,6 +177,10 @@ export async function subscribeXgov(
   try {
     await builder.send();
     setStatus("confirmed");
+    setTimeout(() => {
+      setStatus("idle");
+    }, 800);
+
   } catch (e) {
     setStatus(new Error((e as Error).message));
   }

@@ -141,9 +141,12 @@ export const KYCBox = ({
         confirmation.confirmedRound > 0 &&
         confirmation.poolError === ""
       ) {
-        console.log("Transaction confirmed");
-        allProposers.refetch();
-        setStatus("idle");
+        setStatus("confirmed");
+        setTimeout(() => {
+          setStatus("idle");
+          allProposers.refetch();
+        }, 800);
+
         return true;
       }
 

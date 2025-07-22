@@ -11,7 +11,12 @@ export type TransactionState =
 
 
 export function isLoadingState(state: TransactionState) {
-  return state === "loading" || state === "signing" || state === "sending"
+  return (
+    state === "loading" ||
+    state === "signing" ||
+    state === "sending" || 
+    state === "confirmed" // confirmed is also considered a loading state to ensure we have time to give the user feedback on the result
+  )
 }
 
 export type TransactionStateInfo = {

@@ -22,7 +22,7 @@ export function KYCCard({
 }: KYCCardProps) {
   const kyc_status = values.kycStatus;
   const expiry_date = Number(values.kycExpiring);
-  const expity_humanDate = new Date(expiry_date * 1000).toLocaleDateString();
+  const expiry_humanDate = new Date(expiry_date * 1000).toLocaleDateString();
 
   const [action, setAction] = useState<
     "approve" | "disqualify" | "expire" | undefined
@@ -147,7 +147,7 @@ export function KYCCard({
             {currentKYCStatus ? (
               <>
                 KYC {isExpired ? "Expired on " : "Approved - Expires"}{" "}
-                {expity_humanDate}
+                {expiry_humanDate}
               </>
             ) : (
               <>KYC {isExpired ? "Expired" : "Requested"}</>

@@ -14,6 +14,8 @@ import { InfinityMirrorButton } from "../button/InfinityMirrorButton/InfinityMir
 import { WalletIcon } from "../icons/WalletIcon";
 import { useNFD, useProposer, UseQuery, useRegistry, useXGov } from "@/hooks";
 import { subscribeProposer, subscribeXgov } from "@/api";
+import { useTransactionState } from "@/hooks/useTransactionState";
+import { set } from "date-fns";
 
 export type ConnectIslandProps = {
   path?: string;
@@ -29,8 +31,24 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
   const nfd = useNFD(manager.activeAddress)
   const xgov = useXGov(manager.activeAddress);
   const proposer = useProposer(manager.activeAddress);
-  const [subscribeXGovLoading, setSubscribeXGovLoading] = useState<boolean>(false);
-  const [subscribeProposerLoading, setSubscribeProposerLoading] = useState<boolean>(false);
+  // const [subscribeXGovLoading, setSubscribeXGovLoading] = useState<boolean>(false);
+  // const [subscribeProposerLoading, setSubscribeProposerLoading] = useState<boolean>(false);
+
+  const {
+    status: subXGovStatus,
+    setStatus: setSubXGovStatus,
+    errorMessage: subXGovErrorMessage,
+    setErrorMessage: setSubXGovErrorMessage,
+    isPending: isSubXGovPending
+  } = useTransactionState()
+
+  const {
+    status: subProposerStatus,
+    setStatus: setSubProposerStatus,
+    errorMessage: subProposerErrorMessage,
+    setErrorMessage: setSubProposerErrorMessage,
+    isPending: isSubProposerPending
+  } = useTransactionState()
 
   useEffect(() => {
     if (shouldShowTutorial(!!manager.activeAddress)) {
@@ -82,21 +100,29 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
         subscribeXgov={() => subscribeXgov(
           manager.activeAddress,
           manager.transactionSigner,
-          setSubscribeXGovLoading,
+          setSubXGovStatus,
           registry.data?.xgovFee,
           xgov.refetch
         )}
-        subscribeXgovLoading={subscribeXGovLoading}
+        subscribeXgovTxnState={{
+          status: subXGovStatus,
+          errorMessage: subXGovErrorMessage,
+          isPending: isSubXGovPending,
+        }}
         isProposer={proposer.data?.isProposer || false}
         proposerSignupCost={registry.data?.proposerFee || 0n}
         subscribeProposer={() => subscribeProposer(
           manager.activeAddress,
           manager.transactionSigner,
-          setSubscribeProposerLoading,
+          setSubProposerStatus,
           registry.data?.proposerFee!,
           proposer.refetch
         )}
-        subscribeProposerLoading={subscribeProposerLoading}
+        subscribeProposerTxnState={{
+          status: subProposerStatus,
+          errorMessage: subProposerErrorMessage,
+          isPending: isSubProposerPending,
+        }}
       />
     </>
   );

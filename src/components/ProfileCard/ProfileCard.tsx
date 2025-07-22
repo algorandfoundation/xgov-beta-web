@@ -11,7 +11,7 @@ import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispens
 
 import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
 import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
-import type { StaticTransactionStateInfo, TransactionState } from "@/hooks/useTransactionState";
+import type { StaticTransactionStateInfo } from "@/hooks/useTransactionState";
 
 export interface ProfileCardProps {
   address: string;
@@ -138,19 +138,20 @@ export function ProfileCard({
         onClose={() => setShowBecomeXGovModal(false)}
         onSignup={subscribeXgov}
         costs={xGovSignupCost}
+        txnState={subscribeXGovState}
       />
 
       <TermsAndConditionsModal
         title="xGov Proposer Terms & Conditions"
         description={
           <>
-            <div>
+            <span>
               By becoming a proposer, you will be able to submit funding
               proposals.
-            </div>
-            <div>
+            </span>
+            <span>
               Proposers need to agree to the Terms and Conditions below.
-            </div>
+            </span>
           </>
         }
         terms={termsAndConditionsString}
@@ -167,6 +168,7 @@ export function ProfileCard({
         onClose={() => setShowBecomeProposerModal(false)}
         onSignup={subscribeProposer}
         costs={proposerSignupCost}
+        txnState={subscribeProposerState}
       />
     </>
   );

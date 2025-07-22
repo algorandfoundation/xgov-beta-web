@@ -513,7 +513,10 @@ export async function openProposal(
       return;
     }
 
-    setStatus("idle");
+    setStatus("confirmed");
+    setTimeout(() => {
+      setStatus("idle");
+    }, 800);
 
     return result.return;
   } catch (e: any) {
@@ -609,7 +612,12 @@ export async function submitProposal(
     });
 
     await submitGroup.send();
-    setStatus("idle");
+    
+    setStatus("confirmed");
+    setTimeout(() => {
+      setStatus("idle");
+    }, 800);
+
   } catch (e: any) {
     if (e.message.includes("tried to spend")) {
       setStatus(new Error("Insufficient funds to submit proposal."));
@@ -835,7 +843,12 @@ export async function updateMetadata(
     }
 
     await resubmitGroup.send();
-    setStatus("idle");
+
+    setStatus("confirmed");
+    setTimeout(() => {
+      setStatus("idle");
+    }, 800)
+
     return proposal.id;
   } catch (e: any) {
     if (e.message.includes("tried to spend")) {

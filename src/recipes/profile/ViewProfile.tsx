@@ -128,6 +128,13 @@ export function ProfilePage({
   } = useTransactionState();
 
   const {
+    status: subProposerStatus,
+    setStatus: setSubProposerStatus,
+    errorMessage: subProposerErrorMessage,
+    isPending: subProposerIsPending,
+  } = useTransactionState();
+
+  const {
     reset: openReset,
     status: openStatus,
     setStatus: setOpenStatus,
@@ -200,14 +207,14 @@ export function ProfilePage({
         subscribeProposer={() => subscribeProposer(
           activeAddress,
           transactionSigner,
-          setSubXGovStatus,
+          setSubProposerStatus,
           registry.data?.proposerFee!,
           proposer.refetch
         )}
         subscribeProposerState={{
-          status: openStatus,
-          errorMessage: openErrorMessage,
-          isPending: openIsPending
+          status: subProposerStatus,
+          errorMessage: subProposerErrorMessage,
+          isPending: subProposerIsPending
         }}
         activeAddress={activeAddress}
         className="mt-6"
