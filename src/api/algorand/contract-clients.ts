@@ -14,7 +14,8 @@ import {
   fundingLogicSigSigner,
 } from "@/api/testnet-funding-logicsig";
 import type { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
-import { signup } from "../registry";
+import { signup, unsubscribe } from "../registry";
+import { wrapTransactionSigner, type TransactionState } from "@/hooks/useTransactionState";
 
 
 const DEFAULT_REGISTRY_APP_ID = 16324508;
@@ -56,25 +57,77 @@ export function getProposalClientById(appId: bigint) {
   return algorand.client.getTypedAppClientById(XGovProposalClient, { appId });
 }
 
+export async function setVotingAddress(
+  activeAddress: string | null,
+  transactionSigner: algosdk.TransactionSigner,
+  setStatus: React.Dispatch<React.SetStateAction<TransactionState>>,
+  address: string,
+  refetch: (options?: RefetchOptions) => Promise<QueryObserverResult<any, Error>>
+): Promise<void> {
+  if (!transactionSigner) return;
+
+  const wrappedTransactionSigner = wrapTransactionSigner(
+    transactionSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !wrappedTransactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  try {
+    await registryClient.send.setVotingAccount({
+      sender: activeAddress,
+      signer: wrappedTransactionSigner,
+      args: {
+        xgovAddress: activeAddress,
+        votingAddress: address,
+      },
+      boxReferences: [
+        new Uint8Array(
+          Buffer.concat([
+            Buffer.from("x"),
+            algosdk.decodeAddress(activeAddress).publicKey,
+          ]),
+        ),
+      ],
+    });
+
+    setStatus("idle");
+  } catch (e) {
+    setStatus(new Error(`Error: ${(e as Error).message}`));
+    return;
+  }
+
+  refetch();
+}
 
 export async function subscribeXgov(
   activeAddress: string | null,
   transactionSigner: algosdk.TransactionSigner,
-  setSubscribeXGovLoading: (value: React.SetStateAction<boolean>) => void,
+  setStatus: React.Dispatch<React.SetStateAction<TransactionState>>,
   xgovFee: bigint | undefined,
   refetch: (options?: RefetchOptions) => Promise<QueryObserverResult<any, Error>>
 ) {
-  setSubscribeXGovLoading(true);
+  if (!transactionSigner) return;
 
-  if (!activeAddress || !transactionSigner) {
-    console.error("No active address or transaction signer");
-    setSubscribeXGovLoading(false);
+  const wrappedTransactionSigner = wrapTransactionSigner(
+    transactionSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !wrappedTransactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
     return;
   }
 
   if (!xgovFee) {
-    console.error("xgovFee is not set");
-    setSubscribeXGovLoading(false);
+    setStatus(new Error("xgovFee is not set"));
     return;
   }
 
@@ -102,7 +155,7 @@ export async function subscribeXgov(
 
   builder = builder.subscribeXgov({
     sender: activeAddress,
-    signer: transactionSigner,
+    signer: wrappedTransactionSigner,
     args: {
       payment,
       votingAddress: activeAddress,
@@ -117,37 +170,71 @@ export async function subscribeXgov(
     ],
   });
 
-  await builder.send().catch((e: Error) => {
-    console.error(`Error calling the contract: ${e.message}`);
-    setSubscribeXGovLoading(false);
-    return;
-  });
+  try {
+    await builder.send();
+    setStatus("confirmed");
+  } catch (e) {
+    setStatus(new Error((e as Error).message));
+  }
 
   refetch();
-  setSubscribeXGovLoading(false);
 };
+
+export async function unsubscribeXgov(
+  activeAddress: string | null,
+  transactionSigner: algosdk.TransactionSigner,
+  setStatus: React.Dispatch<React.SetStateAction<TransactionState>>,
+  refetch: ((options?: RefetchOptions) => Promise<QueryObserverResult<any, Error>>)[]
+): Promise<void> {
+  if (!transactionSigner) return;
+
+  const wrappedTransactionSigner = wrapTransactionSigner(
+    transactionSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !wrappedTransactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  await unsubscribe(activeAddress, wrappedTransactionSigner).catch((e: Error) => {
+    console.error(`Error calling the contract: ${e.message}`);
+    setStatus(new Error(`Error: ${(e as Error).message}`));
+    return
+  });
+
+  Promise.all(refetch);
+}
 
 export async function subscribeProposer(
   activeAddress: string | null,
   transactionSigner: algosdk.TransactionSigner,
-  setSubscribeProposerLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setStatus: React.Dispatch<React.SetStateAction<TransactionState>>,
   amount: bigint,
   refetch: (options?: RefetchOptions) => Promise<QueryObserverResult<any, Error>>
 ) {
-    setSubscribeProposerLoading(true);
+  if (!transactionSigner) return;
 
-    if (!activeAddress || !transactionSigner) {
-      console.error("No active address or transaction signer");
-      setSubscribeProposerLoading(false);
-      return;
-    }
+  const wrappedTransactionSigner = wrapTransactionSigner(
+    transactionSigner,
+    setStatus,
+  );
 
-    await signup(activeAddress, transactionSigner, amount).catch((e: Error) => {
-      console.error(`Error calling the contract: ${e.message}`);
-      setSubscribeProposerLoading(false);
-      return;
-    });
+  setStatus("loading");
 
-    refetch();
-    setSubscribeProposerLoading(false);
-  };
+  if (!activeAddress || !wrappedTransactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  await signup(activeAddress, wrappedTransactionSigner, amount).catch((e: Error) => {
+    console.error(`Error calling the contract: ${e.message}`);
+    setStatus(new Error(`Error: ${(e as Error).message}`));
+    return
+  });
+
+  refetch();
+};

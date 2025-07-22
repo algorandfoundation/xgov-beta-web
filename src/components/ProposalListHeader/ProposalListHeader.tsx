@@ -9,6 +9,7 @@ import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { WarningNotice } from "../WarningNotice/WarningNotice";
 import { AlgorandIcon } from "../icons/AlgorandIcon";
 import { queryClient } from "@/stores";
+import { useTransactionState } from "@/hooks/useTransactionState";
 
 export function ProposalListHeaderIsland({ title }: { title: string }) {
 
@@ -36,14 +37,23 @@ export function ProposalListHeader({
   const registry = useRegistry();
   const proposer = useProposer(activeAddress);
   const [showOpenProposalModal, setShowOpenProposalModal] = useState(false);
-  const [openProposalLoading, setOpenProposalLoading] = useState(false);
-  const [openProposalError, setOpenProposalError] = useState<string>('');
+  // const [openProposalLoading, setOpenProposalLoading] = useState(false);
+  // const [openProposalError, setOpenProposalError] = useState<string>('');
 
   const validProposer =
     (proposer?.data &&
       proposer.data.kycStatus &&
       proposer.data.kycExpiring > Date.now() / 1000) ||
     false;
+
+  const {
+    status,
+    setStatus,
+    errorMessage,
+    setErrorMessage,
+    reset,
+    isPending
+  } = useTransactionState();
 
   return (
     <div className="flex items-center justify-between mb-4 px-3">
@@ -65,14 +75,17 @@ export function ProposalListHeader({
                 disabledMessage="You already have an active proposal"
               >
                 {
-                  openProposalLoading
+                  isPending
                     ? (<div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>)
                     : "Create Proposal"
                 }
               </InfinityMirrorButton>
               <ConfirmationModal
                 isOpen={showOpenProposalModal}
-                onClose={() => setShowOpenProposalModal(false)}
+                onClose={() => {
+                  setShowOpenProposalModal(false)
+                  reset();
+                }}
                 title="Create Proposal"
                 description="Are you sure you want to create a new proposal? You can only have one active proposal at a time."
                 warning={
@@ -98,8 +111,7 @@ export function ProposalListHeader({
                     const appId = await openProposal(
                       activeAddress,
                       transactionSigner,
-                      setOpenProposalLoading,
-                      setOpenProposalError
+                      setStatus
                     )
 
                     if (appId) {
@@ -110,8 +122,11 @@ export function ProposalListHeader({
                     console.error("Error opening proposal:", error);
                   }
                 }}
-                loading={openProposalLoading}
-                errorMessage={openProposalError}
+                txnState={{
+                  status,
+                  errorMessage,
+                  isPending
+                }}
               />
             </>
           )

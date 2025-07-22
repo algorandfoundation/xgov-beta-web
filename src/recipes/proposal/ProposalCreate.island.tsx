@@ -7,13 +7,13 @@ import {
   UseWallet,
 } from "@/hooks";
 import { ProposalForm, proposalFormSchema } from "@/recipes";
-import { ProposalStatus, submitProposal, wrapTransactionSigner } from "@/api";
+import { ProposalStatus, submitProposal } from "@/api";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useEffect, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { z } from "zod";
 import { useBalance } from "@/hooks/useBalance";
-import { useTransactionState } from "@/components/ConfirmationModal/ConfirmationModal";
+import { useTransactionState } from "@/hooks/useTransactionState";
 
 export function ProposalCreateIsland() {
   return (
@@ -42,8 +42,14 @@ export function ProposalCreate() {
     setSearchParams(searchParams);
   });
 
-  const { status, setStatus, setErrorMessage, reset } =
-    useTransactionState();
+  const {
+    status,
+    setStatus,
+    errorMessage,
+    setErrorMessage,
+    reset,
+    isPending
+  } = useTransactionState();
 
   const emptyProposals =
     !!proposalsData.data &&
@@ -93,7 +99,11 @@ export function ProposalCreate() {
       bps={registry.data?.proposalCommitmentBps || 0n}
       minRequestedAmount={registry.data?.minRequestedAmount || 1000000n}
       maxRequestedAmount={maxRequestedAmount}
-      transactionStatus={status}
+      txnState={{
+        status,
+        errorMessage,
+        isPending
+      }}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
         // TODO
         if (!activeAddress) {

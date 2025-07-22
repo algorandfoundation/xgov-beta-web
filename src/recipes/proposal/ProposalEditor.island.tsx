@@ -5,9 +5,8 @@ import { z } from "zod";
 import { updateMetadata, type ProposalMainCardDetails } from "@/api";
 import { proposalFormSchema, ProposalForm } from "@/recipes";
 import { UseQuery, useRegistry, UseWallet } from "@/hooks";
-import { useState } from "react";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
-import { useTransactionState } from "@/components/ConfirmationModal/ConfirmationModal";
+import { useTransactionState } from "@/hooks/useTransactionState";
 
 export type EditProposalProps = {
   proposal?: ProposalMainCardDetails;
@@ -30,13 +29,17 @@ export function EditProposalForm({
   const { activeAddress, transactionSigner } = useWallet();
   const registry = useRegistry();
 
-  const { status, setStatus, } = useTransactionState()
+  const { status, setStatus, errorMessage, isPending } = useTransactionState();
 
   return (
     <ProposalForm
       type="edit"
       proposal={proposal}
-      transactionStatus={status}
+      txnState={{
+        status,
+        errorMessage,
+        isPending
+      }}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
         if (!activeAddress) {
           console.error("No active address");

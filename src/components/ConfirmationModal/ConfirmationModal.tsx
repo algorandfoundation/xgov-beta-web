@@ -8,34 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { useState } from "react";
-
-export type TransactionStatus =
-  | "idle"
-  | "loading"
-  | "signing"
-  | "sending"
-  | Error;
-
-export function useTransactionState() {
-  const [status, setStatus] = useState<TransactionStatus>("idle");
-
-  const reset = () => setStatus("idle")
-  const errorMessage = status instanceof Error ? status?.message : undefined;
-  const setErrorMessage = (err: string) => setStatus(new Error(err));
-
-  return {
-    status,
-    setStatus,
-    errorMessage,
-    setErrorMessage,
-    reset,
-  };
-}
-
-export function isLoadingState(state: TransactionStatus) {
-  return state === "loading" || state === "signing" || state === "sending"
-}
+import { type StaticTransactionStateInfo, type TransactionState } from "@/hooks/useTransactionState";
 
 export interface ConfirmationModalProps {
   isOpen: boolean;
@@ -55,7 +28,7 @@ export interface ConfirmationModalProps {
     | undefined;
   submitText?: string;
   onSubmit: () => Promise<void>;
-  transactionStatus: TransactionStatus;
+  txnState: StaticTransactionStateInfo;
   errorMessage?: string;
 }
 
@@ -68,12 +41,11 @@ export function ConfirmationModal({
   submitVariant = "default",
   submitText = "Submit",
   onSubmit,
-  transactionStatus,
+  txnState,
 }: ConfirmationModalProps) {
   const { activeWallet } = useWallet();
-
   const walletName = activeWallet?.metadata.name;
-
+    
   return (
     <Dialog open={isOpen}>
       <DialogContent
@@ -89,7 +61,7 @@ export function ConfirmationModal({
           )}
           {!!warning && warning}
         </DialogHeader>
-        {transactionStatus instanceof Error && <p className="text-algo-red">{transactionStatus.message}</p>}
+        {txnState instanceof Error && <p className="text-algo-red">{txnState.errorMessage}</p>}
         <DialogFooter className="mt-8">
           <Button variant="ghost" onClick={onClose}>
             Cancel
@@ -97,13 +69,11 @@ export function ConfirmationModal({
           <Button
             variant={submitVariant}
             onClick={() => onSubmit()}
-            disabled={
-              transactionStatus === "signing" || transactionStatus === "sending"
-            }
+            disabled={txnState.isPending}
           >
-            {transactionStatus === "signing"
+            {txnState.status === "signing"
               ? `Sign in ${walletName}`
-              : transactionStatus === "sending"
+              : txnState.status === "sending"
                 ? "Executing"
                 : submitText}
           </Button>

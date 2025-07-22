@@ -3,14 +3,13 @@ import { RefreshCcwIcon } from "lucide-react";
 import { decodeAddress } from "algosdk";
 
 import type { ProposerBoxState } from "@/api";
-import { algod, network, registryClient, wrapTransactionSigner } from "@/api";
+import { algod, network, registryClient } from "@/api";
 import { useAllProposers } from "@/hooks";
 
 import { KYCCard } from "@/components/KYCCard/KYCCard";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 import { Button } from "@/components/ui/button";
-import type { TransactionStatus } from "@/components/ConfirmationModal/ConfirmationModal";
-import { transactionFees } from "@algorandfoundation/algokit-utils";
+import { wrapTransactionSigner, type TransactionState } from "@/hooks/useTransactionState";
 
 export interface KYCData {
   address: string;
@@ -39,7 +38,7 @@ function sortKYC(a: ProposerBoxes, b: ProposerBoxes) {
 }
 
 export interface TransactionStateBaseProps {
-  setStatus: (status: TransactionStatus) => void
+  setStatus: (status: TransactionState) => void
   setErrorMessage: (err: string) => void
 }
 

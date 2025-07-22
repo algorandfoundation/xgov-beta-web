@@ -26,7 +26,7 @@ import {
 
 import { PROPOSAL_FEE } from "@/constants.ts";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
-import type { TransactionStatus } from "@/components/ConfirmationModal/ConfirmationModal";
+import { wrapTransactionSigner, type TransactionState } from "@/hooks/useTransactionState";
 
 export const proposalFactory = new ProposalFactory({ algorand });
 
@@ -477,7 +477,7 @@ export function getVotingDuration(
 export async function openProposal(
   address: string,
   transactionSigner: TransactionSigner,
-  setStatus: (status: TransactionStatus) => void,
+  setStatus: (status: TransactionState) => void,
 ) {
   const wrappedTransactionSigner = wrapTransactionSigner(transactionSigner, setStatus)
   setStatus("loading");
@@ -525,28 +525,20 @@ export async function openProposal(
   }
 }
 
-export function wrapTransactionSigner(
-  transactionSigner: TransactionSigner,
-  setStatus: (s: TransactionStatus) => void,
-): TransactionSigner {
-  return async function (txns, idxs) {
-    setStatus("signing");
-    const signed = await transactionSigner(txns, idxs);
-    setStatus("sending");
-    return signed
-  };
-}
-
 export async function submitProposal(
   address: string,
   data: any,
   transactionSigner: TransactionSigner,
   appId: bigint,
   bps: bigint,
-  setStatus: (status: TransactionStatus) => void,
+  setStatus: (status: TransactionState) => void,
 ) {
-  const wrappedTransactionSigner = wrapTransactionSigner(transactionSigner, setStatus)
+  const wrappedTransactionSigner = wrapTransactionSigner(
+    transactionSigner,
+    setStatus
+  );
   setStatus("loading");
+
   try {
     const metadataBoxName = new Uint8Array(Buffer.from("M"));
 
@@ -758,7 +750,7 @@ export async function updateMetadata(
   data: any,
   innerTransactionSigner: TransactionSigner,
   proposal: ProposalSummaryCardDetails,
-  setStatus: (status: TransactionStatus) => void,
+  setStatus: (status: TransactionState) => void,
 ) {
   const transactionSigner = wrapTransactionSigner(innerTransactionSigner, setStatus);
 

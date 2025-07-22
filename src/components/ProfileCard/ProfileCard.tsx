@@ -8,28 +8,30 @@ import { useState } from "react";
 import termsAndConditionsString from "./TermsAndConditionsText.md?raw";
 import { TermsAndConditionsModal } from "@/recipes";
 import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispenserBanner";
-import { isLoadingState, type TransactionStatus } from "../ConfirmationModal/ConfirmationModal";
+
 import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
 import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
+import type { StaticTransactionStateInfo, TransactionState } from "@/hooks/useTransactionState";
 
 export interface ProfileCardProps {
   address: string;
 
   votingAddress: string;
   setVotingAddress: (votingAddress: string) => Promise<void>;
-  setVotingAddressStatus: TransactionStatus;
+  setVotingAddressState: StaticTransactionStateInfo;
 
   isXGov: boolean;
   xGovSignupCost: bigint;
 
   subscribeXgov: () => Promise<void>;
   unsubscribeXgov: () => Promise<void>;
-  subscribeXGovStatus: TransactionStatus;
+  subscribeXGovState: StaticTransactionStateInfo;
 
   proposer?: { isProposer: boolean } & ProposerBoxState;
   proposerSignupCost: bigint;
   subscribeProposer: () => Promise<void>;
-  subscribeProposerLoading: boolean;
+  subscribeProposerState: StaticTransactionStateInfo;
+  
   activeAddress: string | null;
   className?: string;
 }
@@ -39,18 +41,18 @@ export function ProfileCard({
 
   votingAddress,
   setVotingAddress,
-  setVotingAddressStatus,
+  setVotingAddressState,
 
   isXGov,
   xGovSignupCost,
   subscribeXgov,
   unsubscribeXgov,
-  subscribeXGovStatus,
+  subscribeXGovState,
 
   proposer,
   proposerSignupCost,
   subscribeProposer,
-  subscribeProposerLoading,
+  subscribeProposerState,
   activeAddress,
   className = "",
 }: ProfileCardProps) {
@@ -74,17 +76,17 @@ export function ProfileCard({
               <XGovStatusPill
                 isXGov={isXGov}
                 unsubscribeXgov={unsubscribeXgov}
-                unsubscribeXGovLoading={isLoadingState(subscribeXGovStatus)}
+                unsubscribeXGovLoading={subscribeXGovState.isPending}
                 disabled={address !== activeAddress}
               />
               {address === activeAddress && !isXGov && (
                 <ActionButton
                   type="button"
                   onClick={() => setShowBecomeXGovModal(true)}
-                  disabled={isLoadingState(subscribeXGovStatus)}
+                  disabled={subscribeXGovState.isPending}
                 >
-                  { 
-                    isLoadingState(subscribeXGovStatus)
+                  {
+                    subscribeXGovState.isPending
                       ? "Loading..."
                       : "Become an xGov"
                   }
@@ -98,7 +100,7 @@ export function ProfileCard({
               <EditableAddress
                 title="Voting Address"
                 defaultValue={votingAddress}
-                loading={isLoadingState(setVotingAddressStatus)}
+                loading={setVotingAddressState.isPending}
                 onSave={(v) => {
                   setVotingAddress(v);
                 }}
@@ -119,9 +121,9 @@ export function ProfileCard({
                 <ActionButton
                   type="button"
                   onClick={() => setShowBecomeProposerTermsModal(true)}
-                  disabled={subscribeProposerLoading}
+                  disabled={subscribeProposerState.isPending}
                 >
-                  {subscribeProposerLoading
+                  {subscribeProposerState.isPending
                     ? "Loading..."
                     : "Become a Proposer"}
                 </ActionButton>

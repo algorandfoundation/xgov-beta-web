@@ -4,12 +4,10 @@ import type { ProposerBoxState } from "@/api";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
-import {
-  ConfirmationModal,
-  useTransactionState,
-} from "../ConfirmationModal/ConfirmationModal";
+import { ConfirmationModal } from "../ConfirmationModal/ConfirmationModal";
 import type { CallSetProposerKYCProps } from "@/recipes";
 import { useAllProposers } from "@/hooks";
+import { useTransactionState } from "@/hooks/useTransactionState";
 
 export interface KYCCardProps {
   proposalAddress: string;
@@ -38,8 +36,14 @@ export function KYCCard({
 
   const allProposers = useAllProposers()
 
-  const { status, setStatus, errorMessage, setErrorMessage, reset } =
-    useTransactionState();
+  const {
+    status,
+    setStatus,
+    errorMessage,
+    setErrorMessage,
+    reset,
+    isPending
+  } = useTransactionState();
 
   // reset error messages/loading state whenever dialog is closed
   useEffect(() => {
@@ -207,8 +211,11 @@ export function KYCCard({
               ? handleConfirmExpiredKYC()
               : handleDisqualify();
         }}
-        // loading={loading}
-        transactionStatus={status}
+        txnState={{
+          status,
+          errorMessage,
+          isPending,
+        }}
         errorMessage={errorMessage}
       />
     </div>
