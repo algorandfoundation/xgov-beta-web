@@ -8,13 +8,14 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { cn } from "@/functions";
-import { CheckCircleIcon } from "../icons/CheckCircleIcon";
 import { TermsAndConditionsModal } from "@/recipes";
 import termsAndConditionsString from "../ProfileCard/TermsAndConditionsText.md?raw";
 import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
 import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
+import type { TransactionStateInfo } from "@/api/types/transaction_state";
+import { CheckCircleIcon } from "../icons/CheckCircleIcon";
 
 export interface TutorialDialogProps {
     isOpen: boolean;
@@ -24,11 +25,11 @@ export interface TutorialDialogProps {
     isXGov: boolean;
     xGovSignupCost: bigint;
     subscribeXgov: () => Promise<void>;
-    subscribeXgovLoading: boolean;
+    subscribeXgovTxnState: TransactionStateInfo;
     isProposer: boolean;
     proposerSignupCost: bigint;
     subscribeProposer: () => Promise<void>;
-    subscribeProposerLoading: boolean;
+    subscribeProposerTxnState: TransactionStateInfo;
 }
 
 const tutorialSteps = [
@@ -99,10 +100,10 @@ export function TutorialDialog({
     activeAddress,
     xGovSignupCost,
     subscribeXgov,
-    subscribeXgovLoading,
+    subscribeXgovTxnState,
     proposerSignupCost,
     subscribeProposer,
-    subscribeProposerLoading,
+    subscribeProposerTxnState,
     isXGov = false,
     isProposer = false
 }: TutorialDialogProps) {
@@ -169,7 +170,7 @@ export function TutorialDialog({
             if (isXGov) {
                 return (
                     <div className="flex items-center gap-2 text-xs">
-                        <CheckCircleIcon className="size-4 text-algo-blue dark:text-algo-teal" />
+                        <CheckIcon className="size-4 text-algo-green dark:text-algo-black" />
                         Already an xGov
                     </div>
                 );
@@ -179,10 +180,10 @@ export function TutorialDialog({
                 <Button
                     onClick={() => handleAction(type)}
                     variant='outline'
-                    disabled={subscribeXgovLoading}
+                    disabled={subscribeXgovTxnState.isPending}
                     className="flex items-center gap-2"
                 >
-                    {subscribeXgovLoading ? (
+                    {subscribeXgovTxnState.isPending ? (
                         <>
                             <div className="size-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
                             Processing...
@@ -198,7 +199,7 @@ export function TutorialDialog({
             if (isProposer) {
                 return (
                     <div className="flex items-center gap-2 text-xs">
-                        <CheckCircleIcon className="size-4 text-algo-blue dark:text-algo-teal" />
+                        <CheckIcon className="size-4 text-algo-green dark:text-algo-black" />
                         Already a Proposer
                     </div>
                 );
@@ -208,10 +209,10 @@ export function TutorialDialog({
                 <Button
                     onClick={() => handleAction(type)}
                     variant='outline'
-                    disabled={subscribeProposerLoading}
+                    disabled={subscribeProposerTxnState.isPending}
                     className="flex items-center gap-2"
                 >
-                    {subscribeProposerLoading ? (
+                    {subscribeProposerTxnState.isPending ? (
                         <>
                             <div className="size-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
                             Processing...
@@ -419,7 +420,7 @@ export function TutorialDialog({
                 onClose={() => setShowBecomeXGovModal(false)}
                 onSignup={subscribeXgov}
                 costs={xGovSignupCost}
-                loading={subscribeXgovLoading}
+                txnState={subscribeXgovTxnState}
             />
 
             <TermsAndConditionsModal
@@ -449,7 +450,7 @@ export function TutorialDialog({
                 onClose={() => setShowBecomeProposerModal(false)}
                 onSignup={subscribeProposer}
                 costs={proposerSignupCost}
-                loading={subscribeProposerLoading}
+                txnState={subscribeProposerTxnState}
             />
         </>
     );

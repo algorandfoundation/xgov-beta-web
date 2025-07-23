@@ -35,6 +35,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
 import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationModal";
+import type { TransactionStateInfo } from "@/api/types/transaction_state";
 
 export function ProposalForm({
   type,
@@ -43,32 +44,33 @@ export function ProposalForm({
   minRequestedAmount = 1n, // Default to 0 Algo
   maxRequestedAmount = 1_000_000n, // Default to 1M Algo
   onSubmit,
-  loading,
-  error,
+  txnState,
 }: {
   type: "edit" | "create";
   proposal?: ProposalMainCardDetails;
   bps?: bigint;
   minRequestedAmount?: bigint;
   maxRequestedAmount?: bigint;
-  onSubmit: (data: z.infer<typeof proposalFormSchema>) => void;
-  loading: boolean;
-  error?: string;
+  onSubmit: (data: z.infer<typeof proposalFormSchema>) => Promise<void>;
+  txnState: TransactionStateInfo;
 }) {
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
 
   const minRequestedAmountInWholeAlgos = Number(minRequestedAmount) / 1e6;
   const maxRequestedAmountInWholeAlgos = Number(maxRequestedAmount) / 1e6;
 
-  const formSchema = proposalFormSchema.setKey(
-    "requestedAmount",
-    validatorSchemas.requestedAmount({
-      min: minRequestedAmountInWholeAlgos,
-      minErrorMessage: `Must be at least ${minRequestedAmountInWholeAlgos}`,
-      max: maxRequestedAmountInWholeAlgos,
-      maxErrorMessage: `Insufficient balance. ${((bps || 0n) / 100n)}% of the requested amount must be escrowed. Maximum request based on your current balance is ${maxRequestedAmountInWholeAlgos.toFixed(0)}`,
-    }),
-  );
+  let formSchema = proposalFormSchema;
+  if (type === 'create') {
+    formSchema = proposalFormSchema.setKey(
+      "requestedAmount",
+      validatorSchemas.requestedAmount({
+        min: minRequestedAmountInWholeAlgos,
+        minErrorMessage: `Must be at least ${minRequestedAmountInWholeAlgos}`,
+        max: maxRequestedAmountInWholeAlgos,
+        maxErrorMessage: `Insufficient balance. ${((bps || 0n) / 100n)}% of the requested amount must be escrowed. Maximum request based on your current balance is ${maxRequestedAmountInWholeAlgos.toFixed(0)}`,
+      })
+    );
+  }
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -412,6 +414,7 @@ export function ProposalForm({
                 if (metricInput.trim() !== "") {
                   const newMetrics = [...field.value, metricInput.trim()];
                   field.onChange(newMetrics);
+                  form.trigger("adoptionMetrics");
                   setMetricInput("");
                 }
               };
@@ -419,6 +422,7 @@ export function ProposalForm({
               const removeMetric = (index: number) => {
                 const newMetrics = field.value.filter((_, i) => i !== index);
                 field.onChange(newMetrics);
+                form.trigger("adoptionMetrics");
               };
 
               return (
@@ -471,21 +475,21 @@ export function ProposalForm({
                     {!field.value?.length
                       ? null
                       : field.value.map((metric, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 dark:text-algo-black-20 rounded border dark:border-gray-700"
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 dark:text-algo-black-20 rounded border dark:border-gray-700"
+                        >
+                          <span>{metric}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeMetric(index)}
                           >
-                            <span>{metric}</span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeMetric(index)}
-                            >
-                              ✕
-                            </Button>
-                          </div>
-                        ))}
+                            ✕
+                          </Button>
+                        </div>
+                      ))}
                   </div>
                 </FormItem>
               );
@@ -542,9 +546,9 @@ export function ProposalForm({
             <Button
               type="button"
               onClick={() => setSubmitModalOpen(true)}
-              disabled={!form.formState.isValid || loading}
+              disabled={!form.formState.isDirty || !form.formState.isValid || txnState.isPending}
             >
-              {loading ? (
+              {txnState.isPending ? (
                 <div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>
               ) : type === "edit" ? (
                 "Update"
@@ -585,8 +589,11 @@ export function ProposalForm({
               ) : undefined
             }
             submitText={type === "edit" ? "Update Proposal" : "Submit Proposal"}
-            onSubmit={form.handleSubmit(onSubmit)}
-            errorMessage={error}
+            onSubmit={form.handleSubmit(async (data) => {
+              await onSubmit(data)
+              setSubmitModalOpen(false);
+            })}
+            txnState={txnState}
           />
         </form>
       </Form>

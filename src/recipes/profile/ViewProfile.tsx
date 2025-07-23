@@ -1,12 +1,14 @@
 import { ProfileCard } from "@/components/ProfileCard/ProfileCard";
 
-import { useMemo, useState } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
 import {
   openProposal,
   registryClient,
+  setVotingAddress,
   subscribeProposer,
   subscribeXgov,
+  unsubscribeXgov,
 } from "@/api";
 import algosdk, {
   ALGORAND_MIN_TX_FEE,
@@ -33,6 +35,9 @@ import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
 import { queryClient } from "@/stores";
+import { useTransactionState } from "@/hooks/useTransactionState";
+import { set } from "date-fns";
+
 
 export function ProfilePageIsland({ address }: { address: string }) {
   return (
@@ -45,7 +50,7 @@ export function ProfilePageIsland({ address }: { address: string }) {
 }
 
 export function ProfilePageController({ address }: { address: string }) {
-  const { transactionSigner, activeAddress } = useWallet();
+  const { transactionSigner: innerSigner, activeAddress } = useWallet();
   const registry = useRegistry();
   const xgov = useXGov(address);
   const proposer = useProposer(address);
@@ -75,18 +80,18 @@ export function ProfilePageController({ address }: { address: string }) {
     <ProfilePage
       address={address}
       activeAddress={activeAddress}
-      transactionSigner={transactionSigner}
+      innerSigner={innerSigner}
     />
   );
 }
 export function ProfilePage({
   address,
   activeAddress,
-  transactionSigner,
+  innerSigner,
 }: {
   address: string;
   activeAddress: string | null;
-  transactionSigner: TransactionSigner;
+  innerSigner: TransactionSigner;
 }) {
   const registry = useRegistry();
   const xgov = useXGov(address);
@@ -107,15 +112,35 @@ export function ProfilePage({
     proposer.isError ||
     proposalsQuery.isError;
 
-  const [subscribeXGovLoading, setSubscribeXGovLoading] =
-    useState<boolean>(false);
-  const [setVotingAddressLoading, setSetVotingAddressLoading] =
-    useState<boolean>(false);
-  const [subscribeProposerLoading, setSubscribeProposerLoading] =
-    useState<boolean>(false);
-  const [openProposalLoading, setOpenProposalLoading] =
-    useState<boolean>(false);
-  const [openProposalError, setOpenProposalError] = useState<string>("");
+  const {
+    status: votAddrStatus,
+    setStatus: setVotAddrStatus,
+    reset: resetVotAddr,
+    errorMessage: votAddrErrorMessage,
+    isPending: votAddrIsPending,
+  } = useTransactionState();
+
+  const {
+    status: subXgovStatus,
+    setStatus: setSubXGovStatus,
+    errorMessage: subXGovErrorMessage,
+    isPending: subXGovIsPending,
+  } = useTransactionState();
+
+  const {
+    status: subProposerStatus,
+    setStatus: setSubProposerStatus,
+    errorMessage: subProposerErrorMessage,
+    isPending: subProposerIsPending,
+  } = useTransactionState();
+
+  const {
+    reset: openReset,
+    status: openStatus,
+    setStatus: setOpenStatus,
+    errorMessage: openErrorMessage,
+    isPending: openIsPending,
+  } = useTransactionState();
 
   const validProposer =
     (proposer?.data &&
@@ -140,106 +165,57 @@ export function ProfilePage({
     return <div>Error...</div>;
   }
 
-  const setVotingAddress = async (address: string) => {
-    setSetVotingAddressLoading(true);
-
-    if (!activeAddress || !transactionSigner) {
-      console.error("No active address or transaction signer");
-      setSetVotingAddressLoading(false);
-      return;
-    }
-
-    await registryClient.send
-      .setVotingAccount({
-        sender: activeAddress,
-        signer: transactionSigner,
-        args: {
-          xgovAddress: activeAddress,
-          votingAddress: address,
-        },
-        boxReferences: [
-          new Uint8Array(
-            Buffer.concat([
-              Buffer.from("x"),
-              algosdk.decodeAddress(activeAddress).publicKey,
-            ]),
-          ),
-        ],
-      })
-      .catch((e: Error) => {
-        console.error(`Error calling the contract: ${e.message}`);
-        setSetVotingAddressLoading(false);
-        return;
-      });
-
-    await proposer.refetch();
-    setSetVotingAddressLoading(false);
-  };
-
-  const unsubscribeXgov = async () => {
-    setSubscribeXGovLoading(true);
-
-    if (!activeAddress || !transactionSigner) {
-      console.error("No active address or transaction signer");
-      setSubscribeXGovLoading(false);
-      return;
-    }
-
-    await registryClient.send
-      .unsubscribeXgov({
-        sender: activeAddress,
-        signer: transactionSigner,
-        args: {
-          xgovAddress: activeAddress,
-        },
-        extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
-        boxReferences: [
-          new Uint8Array(
-            Buffer.concat([
-              Buffer.from("x"),
-              algosdk.decodeAddress(activeAddress).publicKey,
-            ]),
-          ),
-        ],
-      })
-      .catch((e: Error) => {
-        console.error(`Error calling the contract: ${e.message}`);
-        setSubscribeXGovLoading(false);
-        return;
-      });
-
-    await Promise.all([xgov.refetch(), proposer.refetch()]);
-    setSubscribeXGovLoading(false);
-  };
-
   return (
     <>
       <ProfileCard
         address={address}
         votingAddress={xgov.data?.votingAddress || ""}
-        setVotingAddress={setVotingAddress}
-        setVotingAddressLoading={setVotingAddressLoading}
+        setVotingAddress={(address) => setVotingAddress({
+          activeAddress,
+          innerSigner,
+          setStatus: setVotAddrStatus,
+          newAddress: address,
+          refetch: [proposer.refetch]
+        })}
+        setVotingAddressState={{
+          status: votAddrStatus,
+          errorMessage: votAddrErrorMessage,
+          isPending: votAddrIsPending
+        }}
         isXGov={(address && xgov.data?.isXGov) || false}
         xGovSignupCost={registry.data?.xgovFee || 0n}
-        subscribeXgov={() => subscribeXgov(
+        subscribeXgov={() => subscribeXgov({
           activeAddress,
-          transactionSigner,
-          setSubscribeXGovLoading,
-          registry.data?.xgovFee,
-          xgov.refetch
-        )}
-        unsubscribeXgov={unsubscribeXgov}
-        subscribeXGovLoading={subscribeXGovLoading}
+          innerSigner,
+          setStatus: setSubXGovStatus,
+          xgovFee: registry.data?.xgovFee,
+          refetch: [xgov.refetch]
+        })}
+        unsubscribeXgov={() => unsubscribeXgov({
+          activeAddress,
+          innerSigner,
+          setStatus: setSubXGovStatus,
+          refetch: [xgov.refetch, proposer.refetch],
+        })}
+        subscribeXGovState={{
+          status: subXgovStatus,
+          errorMessage: subXGovErrorMessage,
+          isPending: subXGovIsPending
+        }}
         proposer={proposer.data}
         proposerSignupCost={registry.data?.proposerFee || 0n}
-        subscribeProposer={() => subscribeProposer(
+        subscribeProposer={() => subscribeProposer({
           activeAddress,
-          transactionSigner,
-          setSubscribeProposerLoading,
-          registry.data?.proposerFee!,
-          proposer.refetch
-        )}
-        subscribeProposerLoading={subscribeProposerLoading}
+          innerSigner,
+          setStatus: setSubProposerStatus,
+          refetch: [proposer.refetch],
+          amount: registry.data?.proposerFee!,
+        })}
+        subscribeProposerState={{
+          status: subProposerStatus,
+          errorMessage: subProposerErrorMessage,
+          isPending: subProposerIsPending
+        }}
         activeAddress={activeAddress}
         className="mt-6"
       />
@@ -260,7 +236,10 @@ export function ProfilePage({
                 </InfinityMirrorButton>
                 <ConfirmationModal
                   isOpen={showOpenProposalModal}
-                  onClose={() => setShowOpenProposalModal(false)}
+                  onClose={() => {
+                    setShowOpenProposalModal(false);
+                    openReset();
+                  }}
                   title="Create Proposal"
                   description="Are you sure you want to create a new proposal? You can only have one active proposal at a time."
                   warning={
@@ -281,31 +260,28 @@ export function ProfilePage({
                   }
                   submitText="Confirm"
                   onSubmit={async () => {
-                    if (!activeAddress) {
-                      console.error("No active address");
-                      return;
-                    }
+                    const appId = await openProposal({
+                      activeAddress,
+                      innerSigner,
+                      setStatus: setOpenStatus,
+                      refetch: []
+                    });
 
-                    try {
-                      const appId = await openProposal(
-                        activeAddress,
-                        transactionSigner,
-                        setOpenProposalLoading,
-                        setOpenProposalError,
-                      );
+                    console.log('open proposal stats: ', openStatus, openErrorMessage);
 
-                      if (appId) {
-                        queryClient.invalidateQueries({
-                          queryKey: ["getProposalsByProposer", activeAddress],
-                        });
-                        navigate(`/new?appId=${appId}`);
-                      }
-                    } catch (error) {
-                      console.error("Error opening proposal:", error);
+                    if (appId) {
+                      setShowOpenProposalModal(false);
+                      queryClient.invalidateQueries({
+                        queryKey: ["getProposalsByProposer", activeAddress],
+                      });
+                      navigate(`/new?appId=${appId}`);
                     }
                   }}
-                  loading={openProposalLoading}
-                  errorMessage={openProposalError}
+                  txnState={{
+                    status: openStatus,
+                    errorMessage: openErrorMessage,
+                    isPending: openIsPending
+                  }}
                 />
               </>
             )}
