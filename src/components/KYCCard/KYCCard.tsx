@@ -111,9 +111,9 @@ export function KYCCard({
     setSelectedDate(date);
   };
 
-  const handleConfirmExpiredKYC = () => {
+  const handleConfirmExpiredKYC = async () => {
     if (selectedDate) {
-      handleApprove(selectedDate);
+      await handleApprove(selectedDate);
     }
   };
 
@@ -196,11 +196,11 @@ export function KYCCard({
         submitVariant={action !== "approve" ? "destructive" : "default"}
         onSubmit={async () => {
           action === "approve"
-            ? handleApprove(selectedDate!)
+            ? await handleApprove(selectedDate!)
             : selectedDate && Date.now() > selectedDate.getTime()
-              ? handleConfirmExpiredKYC()
-              : handleDisqualify();
-          
+              ? await handleConfirmExpiredKYC()
+              : await handleDisqualify();
+
           setShowConfirmDialog(false);
         }}
         txnState={{

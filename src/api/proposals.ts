@@ -670,7 +670,7 @@ export async function voteProposal({
   appId,
   approvals,
   rejections,
-  voterInfo,
+  voterInfo
 }: VoteProposalProps) {
   if (!innerSigner) return;
 

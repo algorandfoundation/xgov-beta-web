@@ -20,6 +20,7 @@ import {
   callFinalize,
   type ProposalMainCardDetailsWithNFDs,
   dropProposal,
+  voteProposal,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -303,12 +304,33 @@ function VotingStatusCard({
   weightedQuorums,
   votingDurations,
 }: VotingStatusCardProps) {
-  const { activeAddress, transactionSigner } = useWallet();
+  const { activeAddress, transactionSigner: innerSigner } = useWallet();
   const proposalQuery = useProposal(proposal.id, proposal);
   const voterInfoQuery = useVoterBox(Number(proposal.id), activeAddress);
 
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [votesExceeded, setVotesExceeded] = useState(false);
+
+  const {
+    status: advancedStatus,
+    setStatus: setAdvancedStatus,
+    errorMessage: advancedErrorMessage,
+    isPending: advancedIsPending
+  } = useTransactionState();
+
+  const {
+    status: rejectStatus,
+    setStatus: setRejectStatus,
+    errorMessage: rejectErrorMessage,
+    isPending: rejectIsPending
+  } = useTransactionState();
+
+  const {
+    status: approveStatus,
+    setStatus: setApproveStatus,
+    errorMessage: approveErrorMessage,
+    isPending: approveIsPending
+  } = useTransactionState();
 
   const voterInfo = voterInfoQuery.data || undefined;
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
@@ -345,52 +367,17 @@ function VotingStatusCard({
 
   const usedFormVotes = form.watch("approvals") + form.watch("rejections") + form.watch("nulls");
 
-  const voteProposal = async (approvals: number, rejections: number) => {
-    if (!activeAddress || !transactionSigner) {
-      console.log('Wallet not connected');
-      return false;
-    }
-
-    if (!voterInfo) {
-      console.log('Voter info not found');
-      return false;
-    }
-
-    const addr = algosdk.decodeAddress(activeAddress).publicKey;
-    const xgovBoxName = new Uint8Array(Buffer.concat([Buffer.from('x'), addr]));
-    const voterBoxName = new Uint8Array(Buffer.concat([Buffer.from('V'), addr]));
-
-    const res = await registryClient.send.voteProposal({
-      sender: activeAddress,
-      signer: transactionSigner,
-      args: {
-        proposalId: proposal.id,
-        xgovAddress: activeAddress,
-        approvalVotes: approvals,
-        rejectionVotes: rejections,
-      },
-      appReferences: [proposal.id],
-      accountReferences: [activeAddress],
-      boxReferences: [
-        xgovBoxName,
-        { appId: proposal.id, name: voterBoxName }
-      ],
-      extraFee: (1000).microAlgos(),
+  const onSubmit = async ({ approvals, rejections }: z.infer<typeof votingSchema>) => {
+    await voteProposal({
+      activeAddress,
+      innerSigner,
+      setStatus: setAdvancedStatus,
+      refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
+      appId: proposal.id,
+      approvals,
+      rejections,
+      voterInfo
     });
-
-    if (res.confirmation.confirmedRound !== undefined && res.confirmation.confirmedRound > 0 && res.confirmation.poolError === '') {
-      console.log('Transaction confirmed');
-      proposalQuery.refetch();
-      voterInfoQuery.refetch();
-      return true;
-    }
-
-    console.log('Transaction not confirmed');
-    return false;
-  }
-
-  const onSubmit = async (data: z.infer<typeof votingSchema>) => {
-    await voteProposal(data.approvals, data.rejections);
   }
 
   let subheader = (
@@ -459,19 +446,53 @@ function VotingStatusCard({
             <div className="flex gap-4 items-center">
               <Button
                 type='button'
-                onClick={() => voteProposal(Number(voterInfo.votes), 0)}
+                onClick={() => voteProposal({
+                  activeAddress,
+                  innerSigner,
+                  setStatus: setApproveStatus,
+                  refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
+                  appId: proposal.id,
+                  approvals: Number(voterInfo.votes),
+                  rejections: 0,
+                  voterInfo: voterInfo,
+                })}
+                disabled={rejectIsPending || approveIsPending}
               >
-                Approve
+                <TransactionStateLoader
+                  defaultText="Approve"
+                  txnState={{
+                    status: approveStatus,
+                    errorMessage: approveErrorMessage,
+                    isPending: approveIsPending
+                  }}
+                />
               </Button>
 
               <Button
                 type='button'
                 variant='destructive'
-                onClick={() => voteProposal(0, Number(voterInfo.votes))}
+                onClick={() => voteProposal({
+                  activeAddress,
+                  innerSigner,
+                  setStatus: setRejectStatus,
+                  refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
+                  appId: proposal.id,
+                  approvals: 0,
+                  rejections: Number(voterInfo.votes),
+                  voterInfo: voterInfo,
+                })}
+                disabled={rejectIsPending || approveIsPending}
               >
-                Reject
+                <TransactionStateLoader
+                  defaultText="Reject"
+                  txnState={{
+                    status: rejectStatus,
+                    errorMessage: rejectErrorMessage,
+                    isPending: rejectIsPending
+                  }}
+                />
               </Button>
-            </div>
+            </div >
           </>
         )
       } else {
@@ -575,7 +596,7 @@ function VotingStatusCard({
 
                   <Button
                     type='submit'
-                    disabled={votesExceeded}
+                    disabled={votesExceeded || advancedIsPending}
                   >
                     Submit
                   </Button>
@@ -974,7 +995,7 @@ export function DropModal({
     isPending,
   } = useTransactionState();
 
-  
+
 
   return (
     <Dialog open={isOpen}>
