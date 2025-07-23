@@ -4,16 +4,17 @@ import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { WarningNotice } from "../WarningNotice/WarningNotice";
 import { LoadingSpinner } from "../LoadingSpinner/LoadingSpinner";
-import type { StaticTransactionStateInfo } from "@/hooks/useTransactionState";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { CheckIcon } from "lucide-react";
+import type { TransactionStateInfo } from "@/api/types/transaction_state";
+import { TransactionStateLoader } from "../TransactionStateLoader/TransactionStateLoader";
 
 export interface BecomeXGovModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSignup: () => Promise<void>;
   costs: bigint;
-  txnState: StaticTransactionStateInfo
+  txnState: TransactionStateInfo
 }
 
 export function BecomeXGovModal({
@@ -75,17 +76,7 @@ export function BecomeXGovModal({
             onClick={onSubmit}
             disabled={txnState.isPending}
           >
-            {
-              (!txnState.isPending || txnState.status === 'confirmed')
-                ? <CheckIcon className="text-algo-green h-4 w-4 mr-2 dark:text-algo-black" />
-                : txnState.isPending && <LoadingSpinner className="mr-2" size="xs" variant='secondary' />
-            }
-            {txnState.status === "signing"
-              ? `Sign in ${walletName}`
-              : txnState.status === "sending"
-                ? "Executing"
-                : "Signup"
-            }
+            <TransactionStateLoader defaultText="Signup" txnState={txnState} />
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -11,26 +11,26 @@ import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispens
 
 import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
 import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
-import type { StaticTransactionStateInfo } from "@/hooks/useTransactionState";
+import type { TransactionStateInfo } from "@/hooks/useTransactionState";
 
 export interface ProfileCardProps {
   address: string;
 
   votingAddress: string;
   setVotingAddress: (votingAddress: string) => Promise<void>;
-  setVotingAddressState: StaticTransactionStateInfo;
+  setVotingAddressState: TransactionStateInfo;
 
   isXGov: boolean;
   xGovSignupCost: bigint;
 
   subscribeXgov: () => Promise<void>;
   unsubscribeXgov: () => Promise<void>;
-  subscribeXGovState: StaticTransactionStateInfo;
+  subscribeXGovState: TransactionStateInfo;
 
   proposer?: { isProposer: boolean } & ProposerBoxState;
   proposerSignupCost: bigint;
   subscribeProposer: () => Promise<void>;
-  subscribeProposerState: StaticTransactionStateInfo;
+  subscribeProposerState: TransactionStateInfo;
   
   activeAddress: string | null;
   className?: string;

@@ -21,15 +21,16 @@ export function EditProposalIsland({ proposal }: EditProposalProps) {
   );
 }
 
-export function EditProposalForm({
-  proposal,
-}: {
-  proposal?: ProposalMainCardDetails;
-}) {
-  const { activeAddress, transactionSigner } = useWallet();
+export function EditProposalForm({ proposal }: { proposal?: ProposalMainCardDetails; }) {
+  const { activeAddress, transactionSigner: innerSigner } = useWallet();
   const registry = useRegistry();
 
-  const { status, setStatus, errorMessage, isPending } = useTransactionState();
+  const {
+    status,
+    setStatus,
+    errorMessage,
+    isPending
+  } = useTransactionState();
 
   return (
     <ProposalForm
@@ -66,20 +67,16 @@ export function EditProposalForm({
           console.error("Proposal metadata can only be edited, not funding or focus");
         }
 
-        try {
-          await updateMetadata(
-            activeAddress,
-            data,
-            transactionSigner,
-            proposal,
-            setStatus,
-          )
+        await updateMetadata({
+          activeAddress,
+          innerSigner,
+          setStatus,
+          refetch: [],
+          data,
+          proposal
+        })
 
-          navigate(`/proposal/${proposal.id}`);
-        } catch (e) {
-          console.error(e);
-          console.error("Failed to update proposal");
-        }
+        navigate(`/proposal/${proposal.id}`);
       }}
     />
   );

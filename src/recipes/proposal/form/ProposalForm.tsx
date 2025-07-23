@@ -22,7 +22,7 @@ import {
   ProposalFundingType,
   type ProposalMainCardDetails,
 } from "@/api";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon.tsx";
 import { cn } from "@/functions";
@@ -35,7 +35,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
 import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationModal";
-import type { StaticTransactionStateInfo } from "@/hooks/useTransactionState";
+import type { TransactionStateInfo } from "@/api/types/transaction_state";
 
 export function ProposalForm({
   type,
@@ -51,8 +51,8 @@ export function ProposalForm({
   bps?: bigint;
   minRequestedAmount?: bigint;
   maxRequestedAmount?: bigint;
-  onSubmit: (data: z.infer<typeof proposalFormSchema>) => void;
-  txnState: StaticTransactionStateInfo;
+  onSubmit: (data: z.infer<typeof proposalFormSchema>) => Promise<void>;
+  txnState: TransactionStateInfo;
 }) {
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
 
@@ -589,7 +589,10 @@ export function ProposalForm({
               ) : undefined
             }
             submitText={type === "edit" ? "Update Proposal" : "Submit Proposal"}
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(async (data) => {
+              await onSubmit(data)
+              setSubmitModalOpen(false);
+            })}
             txnState={txnState}
           />
         </form>

@@ -1,15 +1,11 @@
 import { useState } from "react";
 import { RefreshCcwIcon } from "lucide-react";
-import { decodeAddress } from "algosdk";
-
-import type { ProposerBoxState } from "@/api";
-import { algod, network, registryClient } from "@/api";
+import type { ProposerBoxState, SetProposerKYCNoWallet } from "@/api";
+import { setProposerKYC } from "@/api";
 import { useAllProposers } from "@/hooks";
-
 import { KYCCard } from "@/components/KYCCard/KYCCard";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 import { Button } from "@/components/ui/button";
-import { wrapTransactionSigner, type TransactionState } from "@/hooks/useTransactionState";
 
 export interface KYCData {
   address: string;
@@ -37,21 +33,10 @@ function sortKYC(a: ProposerBoxes, b: ProposerBoxes) {
   return 1
 }
 
-export interface TransactionStateBaseProps {
-  setStatus: (status: TransactionState) => void
-  setErrorMessage: (err: string) => void
-}
-
-export interface CallSetProposerKYCProps extends TransactionStateBaseProps {
-  proposalAddress: string;
-  kycStatus: boolean;
-  expiration: number;
-}
-
 export const KYCBox = ({
   kycProvider,
   activeAddress,
-  transactionSigner: innerTransactionSigner,
+  transactionSigner,
 }: {
   kycProvider: string;
   activeAddress: string;
@@ -69,96 +54,6 @@ export const KYCBox = ({
       })).sort(sortKYC)
     : [];
 
-  async function callSetProposerKYC({
-    proposalAddress,
-    kycStatus,
-    expiration,
-    setStatus,
-    setErrorMessage,
-  }: CallSetProposerKYCProps) {
-    const transactionSigner = wrapTransactionSigner(innerTransactionSigner, setStatus)
-
-    setStatus("loading");
-
-    console.log(
-      "Setting KYC status of",
-      proposalAddress,
-      "to",
-      kycStatus,
-      "with expiration date",
-      expiration,
-    );
-
-    if (!activeAddress || !registryClient) {
-      setErrorMessage("Active address or registry client not available.");
-      return false;
-    }
-
-    const addr = decodeAddress(proposalAddress).publicKey;
-    const proposerBoxName = new Uint8Array(
-      Buffer.concat([Buffer.from("p"), addr]),
-    );
-
-    try {
-      // fund proposers on testnet if they have < 200A balance
-      let shouldFund = false;
-      if (network === "testnet" && kycStatus === true) {
-        const { amount } = await algod.accountInformation(proposalAddress).do();
-        if (amount < 200_000_000) {
-          shouldFund = true;
-        }
-      }
-
-      let builder = registryClient.newGroup().setProposerKyc({
-        sender: activeAddress,
-        signer: transactionSigner,
-        args: {
-          proposer: proposalAddress,
-          kycStatus: kycStatus,
-          kycExpiring: expiration,
-        },
-        boxReferences: [proposerBoxName],
-      });
-
-      if (shouldFund) {
-        builder = builder.addTransaction(
-          await registryClient.algorand.createTransaction.payment({
-            sender: activeAddress,
-            receiver: proposalAddress,
-            amount: (200).algos(),
-          }),
-          transactionSigner,
-        );
-      }
-      const res = await builder.send();
-
-      const {
-        confirmations: [confirmation],
-      } = res;
-
-      if (
-        confirmation.confirmedRound !== undefined &&
-        confirmation.confirmedRound > 0 &&
-        confirmation.poolError === ""
-      ) {
-        setStatus("confirmed");
-        setTimeout(() => {
-          setStatus("idle");
-          allProposers.refetch();
-        }, 800);
-
-        return true;
-      }
-
-      console.log("Transaction failed to confirm:", res);
-      setErrorMessage("Transaction failed to confirm.");
-      return false;
-    } catch (error) {
-      console.error("Failed to set KYC status", error);
-      setErrorMessage("Failed to set KYC status. Please try again.");
-      return false;
-    }
-  }
 
   if (kycProvider === undefined || kycProvider !== activeAddress) {
     return <div>You are not set as the KYC provider</div>;
@@ -218,7 +113,13 @@ export const KYCBox = ({
               key={proposerBox.parsedAddress}
               proposalAddress={proposerBox.parsedAddress}
               values={proposerBox.values}
-              callSetProposerKYC={callSetProposerKYC}
+              setProposerKYC={
+                (props: SetProposerKYCNoWallet) => setProposerKYC({
+                  ...props,
+                  activeAddress,
+                  innerSigner: transactionSigner
+                })
+              }
             />
           ))
         )}

@@ -32,7 +32,7 @@ const activeProposalTypes = [
 ];
 
 export function ProposalCreate() {
-  const { activeAddress, transactionSigner, activeWallet } = useWallet();
+  const { activeAddress, transactionSigner: innerSigner, activeWallet } = useWallet();
   const userBalance = useBalance(activeAddress);
   const registry = useRegistry();
   const proposalsData = useProposalsByProposer(activeAddress);
@@ -46,7 +46,6 @@ export function ProposalCreate() {
     status,
     setStatus,
     errorMessage,
-    setErrorMessage,
     reset,
     isPending
   } = useTransactionState();
@@ -77,14 +76,14 @@ export function ProposalCreate() {
 
   const maxRequestedAmount =
     !!userBalance.data?.available &&
-    userBalance.data.available.microAlgos > 1_000n &&
-    !!registry.data?.proposalCommitmentBps
+      userBalance.data.available.microAlgos > 1_000n &&
+      !!registry.data?.proposalCommitmentBps
       ? BigInt(
-          Math.floor(
-            Number(userBalance.data.available.microAlgos - 100_000n) /
-              (Number(registry.data?.proposalCommitmentBps) / 10000),
-          ),
-        )
+        Math.floor(
+          Number(userBalance.data.available.microAlgos - 100_000n) /
+          (Number(registry.data?.proposalCommitmentBps) / 10000),
+        ),
+      )
       : 0n;
 
   useEffect(() => {
@@ -105,41 +104,37 @@ export function ProposalCreate() {
         isPending
       }}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
-        // TODO
         if (!activeAddress) {
-          setErrorMessage("No active address");
+          setStatus(new Error("No active address"));
           return;
         }
 
         if (!activeWallet) {
-          setErrorMessage("No active wallet");
+          setStatus(new Error("No active wallet"));
           return;
         }
 
         if (!registry.data?.proposalCommitmentBps) {
-          setErrorMessage("No proposal commitment bps");
+          setStatus(new Error("No proposal commitment bps"));
           return;
         }
 
         if (!appId) {
-          setErrorMessage("No appId set for Lute proposal");
+          setStatus(new Error("No appId set for Lute proposal"));
           return;
         }
 
-        try {
-          await submitProposal(
-            activeAddress,
-            data,
-            transactionSigner,
-            appId,
-            registry.data?.proposalCommitmentBps,
-            setStatus,
-          );
+        await submitProposal({
+          activeAddress,
+          innerSigner,
+          setStatus,
+          refetch: [],
+          data,
+          appId,
+          bps: registry.data?.proposalCommitmentBps,
+        });
 
-          navigate(`/proposal/${appId}`);
-        } catch (e) {
-          console.error(e);
-        }
+        navigate(`/proposal/${appId}`);
       }}
     />
   );

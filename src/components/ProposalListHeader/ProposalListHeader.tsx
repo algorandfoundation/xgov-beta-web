@@ -50,7 +50,6 @@ export function ProposalListHeader({
     status,
     setStatus,
     errorMessage,
-    setErrorMessage,
     reset,
     isPending
   } = useTransactionState();
@@ -102,24 +101,17 @@ export function ProposalListHeader({
                 }
                 submitText="Confirm"
                 onSubmit={async () => {
-                  if (!activeAddress) {
-                    console.error("No active address");
-                    return;
-                  }
+                  const appId = await openProposal({
+                    activeAddress,
+                    innerSigner: transactionSigner,
+                    setStatus,
+                    refetch: []
+                  })
 
-                  try {
-                    const appId = await openProposal(
-                      activeAddress,
-                      transactionSigner,
-                      setStatus
-                    )
-
-                    if (appId) {
-                      queryClient.invalidateQueries({ queryKey: ["getProposalsByProposer", activeAddress] })
-                      navigate(`/new?appId=${appId}`)
-                    }
-                  } catch (error) {
-                    console.error("Error opening proposal:", error);
+                  if (appId) {
+                    setShowOpenProposalModal(false);
+                    queryClient.invalidateQueries({ queryKey: ["getProposalsByProposer", activeAddress] })
+                    navigate(`/new?appId=${appId}`)
                   }
                 }}
                 txnState={{

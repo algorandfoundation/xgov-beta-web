@@ -50,7 +50,7 @@ export function ProfilePageIsland({ address }: { address: string }) {
 }
 
 export function ProfilePageController({ address }: { address: string }) {
-  const { transactionSigner, activeAddress } = useWallet();
+  const { transactionSigner: innerSigner, activeAddress } = useWallet();
   const registry = useRegistry();
   const xgov = useXGov(address);
   const proposer = useProposer(address);
@@ -80,18 +80,18 @@ export function ProfilePageController({ address }: { address: string }) {
     <ProfilePage
       address={address}
       activeAddress={activeAddress}
-      transactionSigner={transactionSigner}
+      innerSigner={innerSigner}
     />
   );
 }
 export function ProfilePage({
   address,
   activeAddress,
-  transactionSigner,
+  innerSigner,
 }: {
   address: string;
   activeAddress: string | null;
-  transactionSigner: TransactionSigner;
+  innerSigner: TransactionSigner;
 }) {
   const registry = useRegistry();
   const xgov = useXGov(address);
@@ -170,13 +170,13 @@ export function ProfilePage({
       <ProfileCard
         address={address}
         votingAddress={xgov.data?.votingAddress || ""}
-        setVotingAddress={(address) => setVotingAddress(
+        setVotingAddress={(address) => setVotingAddress({
           activeAddress,
-          transactionSigner,
-          setVotAddrStatus,
-          address,
-          proposer.refetch
-        )}
+          innerSigner,
+          setStatus: setVotAddrStatus,
+          newAddress: address,
+          refetch: [proposer.refetch]
+        })}
         setVotingAddressState={{
           status: votAddrStatus,
           errorMessage: votAddrErrorMessage,
@@ -184,19 +184,19 @@ export function ProfilePage({
         }}
         isXGov={(address && xgov.data?.isXGov) || false}
         xGovSignupCost={registry.data?.xgovFee || 0n}
-        subscribeXgov={() => subscribeXgov(
+        subscribeXgov={() => subscribeXgov({
           activeAddress,
-          transactionSigner,
-          setSubXGovStatus,
-          registry.data?.xgovFee,
-          xgov.refetch
-        )}
-        unsubscribeXgov={() => unsubscribeXgov(
+          innerSigner,
+          setStatus: setSubXGovStatus,
+          xgovFee: registry.data?.xgovFee,
+          refetch: [xgov.refetch]
+        })}
+        unsubscribeXgov={() => unsubscribeXgov({
           activeAddress,
-          transactionSigner,
-          setSubXGovStatus,
-          [xgov.refetch, proposer.refetch],
-        )}
+          innerSigner,
+          setStatus: setSubXGovStatus,
+          refetch: [xgov.refetch, proposer.refetch],
+        })}
         subscribeXGovState={{
           status: subXgovStatus,
           errorMessage: subXGovErrorMessage,
@@ -204,13 +204,13 @@ export function ProfilePage({
         }}
         proposer={proposer.data}
         proposerSignupCost={registry.data?.proposerFee || 0n}
-        subscribeProposer={() => subscribeProposer(
+        subscribeProposer={() => subscribeProposer({
           activeAddress,
-          transactionSigner,
-          setSubProposerStatus,
-          registry.data?.proposerFee!,
-          proposer.refetch
-        )}
+          innerSigner,
+          setStatus: setSubProposerStatus,
+          refetch: [proposer.refetch],
+          amount: registry.data?.proposerFee!,
+        })}
         subscribeProposerState={{
           status: subProposerStatus,
           errorMessage: subProposerErrorMessage,
@@ -260,26 +260,21 @@ export function ProfilePage({
                   }
                   submitText="Confirm"
                   onSubmit={async () => {
-                    if (!activeAddress) {
-                      console.error("No active address");
-                      return;
-                    }
+                    const appId = await openProposal({
+                      activeAddress,
+                      innerSigner,
+                      setStatus: setOpenStatus,
+                      refetch: []
+                    });
 
-                    try {
-                      const appId = await openProposal(
-                        activeAddress,
-                        transactionSigner,
-                        setOpenStatus,
-                      );
+                    console.log('open proposal stats: ', openStatus, openErrorMessage);
 
-                      if (appId) {
-                        queryClient.invalidateQueries({
-                          queryKey: ["getProposalsByProposer", activeAddress],
-                        });
-                        navigate(`/new?appId=${appId}`);
-                      }
-                    } catch (error) {
-                      console.error("Error opening proposal:", error);
+                    if (appId) {
+                      setShowOpenProposalModal(false);
+                      queryClient.invalidateQueries({
+                        queryKey: ["getProposalsByProposer", activeAddress],
+                      });
+                      navigate(`/new?appId=${appId}`);
                     }
                   }}
                   txnState={{

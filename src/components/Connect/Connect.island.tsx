@@ -31,8 +31,6 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
   const nfd = useNFD(manager.activeAddress)
   const xgov = useXGov(manager.activeAddress);
   const proposer = useProposer(manager.activeAddress);
-  // const [subscribeXGovLoading, setSubscribeXGovLoading] = useState<boolean>(false);
-  // const [subscribeProposerLoading, setSubscribeProposerLoading] = useState<boolean>(false);
 
   const {
     status: subXGovStatus,
@@ -97,13 +95,13 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
         activeAddress={manager.activeAddress}
         isXGov={xgov.data?.isXGov || false}
         xGovSignupCost={registry.data?.xgovFee || 0n}
-        subscribeXgov={() => subscribeXgov(
-          manager.activeAddress,
-          manager.transactionSigner,
-          setSubXGovStatus,
-          registry.data?.xgovFee,
-          xgov.refetch
-        )}
+        subscribeXgov={() => subscribeXgov({
+          activeAddress: manager.activeAddress,
+          innerSigner: manager.transactionSigner,
+          setStatus: setSubXGovStatus,
+          refetch: [xgov.refetch],
+          xgovFee: registry.data?.xgovFee,
+        })}
         subscribeXgovTxnState={{
           status: subXGovStatus,
           errorMessage: subXGovErrorMessage,
@@ -111,13 +109,13 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
         }}
         isProposer={proposer.data?.isProposer || false}
         proposerSignupCost={registry.data?.proposerFee || 0n}
-        subscribeProposer={() => subscribeProposer(
-          manager.activeAddress,
-          manager.transactionSigner,
-          setSubProposerStatus,
-          registry.data?.proposerFee!,
-          proposer.refetch
-        )}
+        subscribeProposer={() => subscribeProposer({
+          activeAddress: manager.activeAddress,
+          innerSigner: manager.transactionSigner,
+          setStatus: setSubProposerStatus,
+          refetch: [proposer.refetch],
+          amount: registry.data?.proposerFee!,
+        })}
         subscribeProposerTxnState={{
           status: subProposerStatus,
           errorMessage: subProposerErrorMessage,

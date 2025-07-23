@@ -7,6 +7,7 @@ import {
   ProposalStatus,
   registryClient,
   callUnassign,
+  proposerBoxName,
 } from "@/api";
 import { ALGORAND_MIN_TX_FEE, encodeAddress } from "algosdk";
 import { UseWallet } from "@/hooks/useWallet.tsx";
@@ -59,9 +60,6 @@ export function ProposalPayorCard({
     }
 
     const proposerAddr = encodeAddress(proposer.asByteArray()!);
-    const proposerBoxName = new Uint8Array(
-      Buffer.concat([Buffer.from("p"), proposer.asByteArray()!]),
-    );
 
     try {
       const res = await registryClient.send.payGrantProposal({
@@ -70,7 +68,7 @@ export function ProposalPayorCard({
         args: {
           proposalId,
         },
-        boxReferences: [proposerBoxName],
+        boxReferences: [proposerBoxName(proposerAddr)],
         appReferences: [proposalId],
         accountReferences: [proposerAddr],
         extraFee: (ALGORAND_MIN_TX_FEE * 3).microAlgos(),

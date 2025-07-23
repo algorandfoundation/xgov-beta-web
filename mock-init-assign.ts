@@ -32,6 +32,7 @@ import {
   WEIGHTED_QUORUM_SMALL,
   XGOV_FEE,
 } from "@/constants";
+import { proposerBoxName, xGovBoxName } from "@/api";
 
 // Define committee pair interface for later use
 interface CommitteePair {
@@ -258,12 +259,7 @@ for (const committeeMember of committeeMembers) {
       }),
     },
     boxReferences: [
-      new Uint8Array(
-        Buffer.concat([
-          Buffer.from("x"),
-          algosdk.decodeAddress(committeeMember.addr).publicKey,
-        ]),
-      ),
+      xGovBoxName(committeeMember.addr),
     ],
   });
 }
@@ -306,9 +302,6 @@ for (let i = 0; i < mockProposals.length; i++) {
   proposerAccounts.push(account);
 
   const addr = algosdk.decodeAddress(account.addr).publicKey;
-  const proposerBoxName = new Uint8Array(
-    Buffer.concat([Buffer.from("p"), addr]),
-  );
 
   // Subscribe as proposer
   await registryClient.send.subscribeProposer({
@@ -322,7 +315,7 @@ for (let i = 0; i < mockProposals.length; i++) {
         suggestedParams,
       }),
     },
-    boxReferences: [proposerBoxName],
+    boxReferences: [proposerBoxName(account.addr)],
   });
 
   try {
@@ -335,7 +328,7 @@ for (let i = 0; i < mockProposals.length; i++) {
         kycStatus: true,
         kycExpiring: BigInt(oneYearFromNow),
       },
-      boxReferences: [proposerBoxName],
+      boxReferences: [proposerBoxName(account.addr)],
     });
   } catch (e) {
     console.error("Failed to approve proposer KYC");
@@ -354,7 +347,7 @@ for (let i = 0; i < mockProposals.length; i++) {
         suggestedParams,
       }),
     },
-    boxReferences: [proposerBoxName],
+    boxReferences: [proposerBoxName(account.addr)],
     extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
   });
 

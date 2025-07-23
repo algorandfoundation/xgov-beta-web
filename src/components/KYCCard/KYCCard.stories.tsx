@@ -13,7 +13,7 @@ const meta: Meta<typeof KYCCard> = {
     proposalAddress:
       "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ",
     values: [false, false, BigInt(0).toString()] as unknown as ProposerBoxState,
-    callSetProposerKYC: async () => true,
+    setProposerKYC: async () => {},
   },
   argTypes: {
     proposalAddress: {
@@ -24,7 +24,7 @@ const meta: Meta<typeof KYCCard> = {
       control: "object",
       description: "The KYC status and expiration date of the address",
     },
-    callSetProposerKYC: {
+    setProposerKYC: {
       control: undefined,
       description: "Function to set the KYC status",
     },

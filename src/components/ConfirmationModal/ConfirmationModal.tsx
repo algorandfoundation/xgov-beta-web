@@ -8,9 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { type StaticTransactionStateInfo, type TransactionState } from "@/hooks/useTransactionState";
+
 import { LoadingSpinner } from "../LoadingSpinner/LoadingSpinner";
 import { CheckIcon } from "lucide-react";
+import type { TransactionStateInfo } from "@/api/types/transaction_state";
 
 export interface ConfirmationModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export interface ConfirmationModalProps {
   | undefined;
   submitText?: string;
   onSubmit: () => Promise<void>;
-  txnState: StaticTransactionStateInfo;
+  txnState: TransactionStateInfo;
   errorMessage?: string;
 }
 
@@ -63,7 +64,7 @@ export function ConfirmationModal({
           )}
           {!!warning && warning}
         </DialogHeader>
-        {txnState instanceof Error && <p className="text-algo-red">{txnState.errorMessage}</p>}
+        {txnState.status instanceof Error && <p className="text-algo-red">{txnState.errorMessage}</p>}
         <DialogFooter className="mt-8">
           <Button variant="ghost" onClick={onClose} disabled={txnState.isPending}>
             Cancel

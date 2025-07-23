@@ -1,14 +1,6 @@
+import type { TransactionState } from "@/api/types/transaction_state";
 import type { TransactionSigner } from "algosdk";
 import { useMemo, useState } from "react";
-
-export type TransactionState =
-  | "idle"
-  | "loading"
-  | "signing"
-  | "sending"
-  | "confirmed"
-  | Error;
-
 
 export function isLoadingState(state: TransactionState) {
   return (
@@ -18,17 +10,6 @@ export function isLoadingState(state: TransactionState) {
     state === "confirmed" // confirmed is also considered a loading state to ensure we have time to give the user feedback on the result
   )
 }
-
-export type TransactionStateInfo = {
-  status: TransactionState;
-  setStatus: React.Dispatch<React.SetStateAction<TransactionState>>
-  errorMessage?: string;
-  setErrorMessage: (err: string) => void;
-  reset: () => void;
-  isPending: boolean;
-}
-
-export type StaticTransactionStateInfo = Omit<TransactionStateInfo, "setStatus" | "setErrorMessage" | "reset">;
 
 export function useTransactionState() {
   const [status, setStatus] = useState<TransactionState>("idle");

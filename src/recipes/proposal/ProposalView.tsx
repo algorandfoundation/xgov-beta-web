@@ -19,6 +19,7 @@ import {
   getGlobalState,
   callFinalize,
   type ProposalMainCardDetailsWithNFDs,
+  dropProposal,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -51,6 +52,8 @@ import { formatDistanceToNow, set } from "date-fns";
 import { ProposalPayorCard } from "@/components/ProposalPayorCard/ProposalPayorCard";
 import { useTransactionState, wrapTransactionSigner } from "@/hooks/useTransactionState";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
+import { TransactionStateLoader } from "@/components/TransactionStateLoader/TransactionStateLoader";
+import type { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 
 export const defaultsStatusCardMap = {
   [ProposalStatus.ProposalStatusEmpty]: {
@@ -263,8 +266,7 @@ function DiscussionStatusCard({
           isOpen={isDropModalOpen}
           onClose={() => setIsDropModalOpen(false)}
           proposalId={proposal.id}
-          refetchAllProposals={() => { }}
-          refetchProposal={() => proposalQuery.refetch()}
+          refetch={[proposalQuery.refetch]}
           activeAddress={activeAddress}
           transactionSigner={transactionSigner}
         />
@@ -950,8 +952,7 @@ interface DropModalProps {
   proposalId: bigint;
   activeAddress: string | null;
   transactionSigner: any;
-  refetchProposal: () => void;
-  refetchAllProposals: () => void;
+  refetch: ((options?: RefetchOptions) => Promise<QueryObserverResult<any, Error>>)[];
 }
 
 export function DropModal({
@@ -960,8 +961,7 @@ export function DropModal({
   proposalId,
   activeAddress,
   transactionSigner,
-  refetchProposal,
-  refetchAllProposals,
+  refetch,
 }: DropModalProps) {
   const { activeWallet } = useWallet();
   const walletName = activeWallet?.metadata.name;
@@ -974,150 +974,7 @@ export function DropModal({
     isPending,
   } = useTransactionState();
 
-  const handleDrop = async () => {
-    if (!activeAddress || !transactionSigner) {
-      setStatus(new Error("Wallet not connected."));
-      return;
-    }
-
-    const wrappedTransactionSigner = wrapTransactionSigner(transactionSigner, setStatus)
-    setStatus("loading");
-
-    try {
-      const proposalFactory = new ProposalFactory({ algorand });
-      const proposalClient = proposalFactory.getAppClientById({
-        appId: proposalId,
-      });
-
-      let grp = (
-        await (
-          await proposalClient
-            .newGroup()
-            .uploadMetadata({
-              sender: activeAddress,
-              signer: wrappedTransactionSigner,
-              args: {
-                payload: new Uint8Array(Buffer.from("M")),
-                isFirstInGroup: true
-              },
-              appReferences: [registryClient.appId],
-              boxReferences: [
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-              ]
-            })
-            .uploadMetadata({
-              sender: activeAddress,
-              signer: wrappedTransactionSigner,
-              args: {
-                payload: new Uint8Array(Buffer.from("M")),
-                isFirstInGroup: false
-              },
-              appReferences: [registryClient.appId],
-              boxReferences: [
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-              ],
-            })
-            .uploadMetadata({
-              sender: activeAddress,
-              signer: wrappedTransactionSigner,
-              args: {
-                payload: new Uint8Array(Buffer.from("M")),
-                isFirstInGroup: false
-              },
-              appReferences: [registryClient.appId],
-              boxReferences: [
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-              ],
-              note: '1'
-            })
-            .uploadMetadata({
-              sender: activeAddress,
-              signer: wrappedTransactionSigner,
-              args: {
-                payload: new Uint8Array(Buffer.from("M")),
-                isFirstInGroup: false
-              },
-              appReferences: [registryClient.appId],
-              boxReferences: [
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-              ],
-              note: '2'
-            })
-            .composer()
-        ).build()
-      ).transactions
-
-      grp = grp.map((txn) => { txn.txn.group = undefined; return txn })
-
-      const addr = algosdk.decodeAddress(activeAddress).publicKey;
-      const proposerBoxName = new Uint8Array(Buffer.concat([Buffer.from('p'), addr]));
-
-      const res = await registryClient
-        .newGroup()
-        .addTransaction(grp[0].txn, grp[0].signer)
-        .addTransaction(grp[1].txn, grp[1].signer)
-        .addTransaction(grp[2].txn, grp[2].signer)
-        .addTransaction(grp[3].txn, grp[3].signer)
-        .dropProposal({
-          sender: activeAddress,
-          signer: wrappedTransactionSigner,
-          args: { proposalId },
-          appReferences: [registryClient.appId],
-          accountReferences: [activeAddress],
-          boxReferences: [
-            proposerBoxName,
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-          ],
-          extraFee: (2000).microAlgos(),
-        })
-        .send()
-
-      if (
-        res.confirmations[4].confirmedRound !== undefined &&
-        res.confirmations[4].confirmedRound > 0 &&
-        res.confirmations[4].poolError === ""
-      ) {
-        setStatus("confirmed");
-        setTimeout(() => {
-          reset();
-          onClose();
-          refetchProposal();
-          refetchAllProposals();
-          navigate("/");
-        }, 800)
-        return;
-      }
-
-      setStatus(new Error("Transaction not confirmed."));
-    } catch (error) {
-      setStatus(new Error("An error occurred while dropping the proposal."));
-    }
-  };
+  
 
   return (
     <Dialog open={isOpen}>
@@ -1142,23 +999,20 @@ export function DropModal({
           <Button
             className="group"
             variant="destructive"
-            onClick={handleDrop}
+            onClick={async () => {
+              await dropProposal({
+                activeAddress,
+                innerSigner: transactionSigner,
+                setStatus,
+                refetch,
+                appId: proposalId,
+              })
+              onClose();
+              navigate("/");
+            }}
             disabled={isPending}
           >
-            {
-              (isPending && status === 'confirmed')
-                ? <CheckIcon className="text-algo-green h-4 w-4 mr-2 dark:text-algo-black" />
-                : isPending
-                  ? <LoadingSpinner className="mr-2" size="xs" variant='secondary' />
-                  : null
-            }
-            {
-              status === "signing"
-                ? `Sign in ${walletName}`
-                : status === "sending"
-                  ? "Executing"
-                  : "Delete"
-            }
+            <TransactionStateLoader defaultText="Delete" txnState={{ status, errorMessage, isPending }} />
           </Button>
         </DialogFooter>
       </DialogContent>
