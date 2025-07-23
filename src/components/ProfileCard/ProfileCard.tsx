@@ -11,7 +11,7 @@ import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispens
 
 import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
 import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
-import type { TransactionStateInfo } from "@/hooks/useTransactionState";
+import type { TransactionStateInfo } from "@/api/types/transaction_state";
 
 export interface ProfileCardProps {
   address: string;
