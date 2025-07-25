@@ -7,7 +7,7 @@ import {
   UseWallet,
 } from "@/hooks";
 import { ProposalForm, proposalFormSchema } from "@/recipes";
-import { ProposalStatus, submitProposal } from "@/api";
+import { ProposalStatus, openProposal } from "@/api";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useEffect, useState } from "react";
 import { navigate } from "astro:transitions/client";
@@ -27,7 +27,7 @@ export function ProposalCreateIsland() {
 
 const activeProposalTypes = [
   ProposalStatus.ProposalStatusDraft,
-  ProposalStatus.ProposalStatusFinal,
+  ProposalStatus.ProposalStatusSubmitted,
   ProposalStatus.ProposalStatusVoting,
 ];
 
@@ -124,7 +124,7 @@ export function ProposalCreate() {
           return;
         }
 
-        await submitProposal({
+        await openProposal({
           activeAddress,
           innerSigner,
           setStatus,

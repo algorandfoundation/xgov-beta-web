@@ -17,7 +17,7 @@ import {
   getVoteQuorum,
   getVotingDuration,
   getGlobalState,
-  callFinalize,
+  callAssignVoters,
   type ProposalMainCardDetailsWithNFDs,
   dropProposal,
   voteProposal,
@@ -49,10 +49,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { formatDistanceToNow, set } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { ProposalPayorCard } from "@/components/ProposalPayorCard/ProposalPayorCard";
-import { useTransactionState, wrapTransactionSigner } from "@/hooks/useTransactionState";
-import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
+import { useTransactionState } from "@/hooks/useTransactionState";
 import { TransactionStateLoader } from "@/components/TransactionStateLoader/TransactionStateLoader";
 import type { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 
@@ -71,7 +70,7 @@ export const defaultsStatusCardMap = {
     icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: 'View the discussion',
   },
-  [ProposalStatus.ProposalStatusFinal]: {
+  [ProposalStatus.ProposalStatusSubmitted]: {
     header: 'Proposal is being discussed',
     subHeader: 'Take part in the discussion and help shape public sentiment on this proposal.',
     sideHeader: '',
@@ -190,10 +189,10 @@ function DiscussionStatusCard({
   const { activeAddress, transactionSigner } = useWallet();
   const proposalQuery = useProposal(proposal.id, proposal);
 
-  const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isDropModalOpen, setIsDropModalOpen] = useState(false);
 
-  const finalizable = discussionDuration > minimumDiscussionDuration;
+  const submitable = discussionDuration > minimumDiscussionDuration;
   const [days, hours, minutes] = useTimeLeft(
     Date.now() + (Number(minimumDiscussionDuration) - discussionDuration),
   );
@@ -201,7 +200,7 @@ function DiscussionStatusCard({
 
   let header = 'Proposal is being discussed';
   let icon = <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />;
-  if (!finalizable && proposal.proposer === activeAddress) {
+  if (!submitable && proposal.proposer === activeAddress) {
     header = "Your proposal is in the drafting & discussion phase";
     icon = (
       <SquarePenIcon
@@ -242,12 +241,12 @@ function DiscussionStatusCard({
         </Button>
 
         <InfinityMirrorButton
-          onClick={() => setIsFinalizeModalOpen(true)}
+          onClick={() => setIsSubmitModalOpen(true)}
           type="button"
           variant="secondary"
-          disabled={!finalizable}
+          disabled={!submitable}
           disabledMessage={
-            finalizable
+            submitable
               ? undefined
               : `Discussion is ongoing. ${remainingTime}`
           }
@@ -255,9 +254,9 @@ function DiscussionStatusCard({
           Submit
         </InfinityMirrorButton>
 
-        <FinalizeModal
-          isOpen={isFinalizeModalOpen}
-          onClose={() => setIsFinalizeModalOpen(false)}
+        <SubmitModal
+          isOpen={isSubmitModalOpen}
+          onClose={() => setIsSubmitModalOpen(false)}
           proposalId={proposal.id}
           refetchProposal={() => proposalQuery.refetch()}
           activeAddress={activeAddress}
@@ -830,7 +829,7 @@ export function ProposalInfo({
                   //
                 </span>
                 <span className="text-algo-black-50 dark:text-white">
-                  {formatDistanceToNow(new Date((Number(proposal.submissionTs) * 1000)), { addSuffix: true }).replace('about ', '').replace(' minutes', 'm').replace(' minute', 'm').replace(' hours', 'h').replace(' hour', 'h').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}
+                  {formatDistanceToNow(new Date((Number(proposal.openTs) * 1000)), { addSuffix: true }).replace('about ', '').replace(' minutes', 'm').replace(' minute', 'm').replace(' hours', 'h').replace(' hour', 'h').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}
                 </span>
               </div>
 
@@ -867,7 +866,7 @@ export function ProposalInfo({
   );
 }
 
-interface FinalizeModalProps {
+interface SubmitModalProps {
   isOpen: boolean;
   onClose: () => void;
   proposalId: bigint;
@@ -876,14 +875,14 @@ interface FinalizeModalProps {
   refetchProposal: () => void;
 }
 
-export function FinalizeModal({
+export function SubmitModal({
   isOpen,
   onClose,
   proposalId,
   activeAddress,
   transactionSigner,
   refetchProposal,
-}: FinalizeModalProps) {
+}: SubmitModalProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async () => {
@@ -900,13 +899,12 @@ export function FinalizeModal({
         appId: proposalId,
       });
 
-      const res = await proposalClient.send.finalize({
+      const res = await proposalClient.send.submit({
         sender: activeAddress,
         signer: transactionSigner,
         args: {},
         appReferences: [registryClient.appId],
         accountReferences: [activeAddress, xgovDaemon],
-        boxReferences: [new Uint8Array(Buffer.from("M"))],
         extraFee: (1000).microAlgos(),
       });
 
@@ -920,11 +918,11 @@ export function FinalizeModal({
         onClose();
         refetchProposal();
 
-        // call backend to finalize
+        // call backend to assign voters
         try {
-          await callFinalize(proposalId);
+          await callAssignVoters(proposalId);
         } catch (e) {
-          console.warn("Failed to finalize:", e);
+          console.warn("Failed to assign voters:", e);
         }
         refetchProposal();
 
@@ -935,7 +933,7 @@ export function FinalizeModal({
       setErrorMessage("Transaction not confirmed.");
       return false;
     } catch (error) {
-      console.error("Error during finalize:", error);
+      console.error("Error during assign voters:", error);
       setErrorMessage("An error occurred calling the proposal contract.");
       return false;
     }

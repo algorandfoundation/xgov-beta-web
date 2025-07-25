@@ -100,8 +100,8 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
               fundingCategory: existsAndValue(state, "funding_category")
                 ? (Number(state["funding_category"].value) as ProposalCategory)
                 : 0,
-              submissionTs: existsAndValue(state, "submission_timestamp")
-                ? BigInt(state["submission_timestamp"].value)
+              openTs: existsAndValue(state, "open_timestamp")
+                ? BigInt(state["open_timestamp"].value)
                 : 0n,
               approvals: existsAndValue(state, "approvals")
                 ? BigInt(state.approvals.value)
@@ -118,8 +118,8 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
               registryAppId: existsAndValue(state, "registry_app_id")
                 ? BigInt(state["registry_app_id"].value)
                 : 0n,
-              finalizationTs: existsAndValue(state, "finalization_timestamp")
-                ? BigInt(state["finalization_timestamp"].value)
+              submissionTs: existsAndValue(state, "submission_timestamp")
+                ? BigInt(state["submission_timestamp"].value)
                 : 0n,
               voteOpenTs: existsAndValue(state, "vote_opening_timestamp")
                 ? BigInt(state["vote_opening_timestamp"].value)
@@ -134,6 +134,9 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
               votedMembers: existsAndValue(state, "voted_members")
                 ? BigInt(state["voted_members"].value)
                 : 0n,
+                finalized: existsAndValue(state, "finalized")
+                ? Boolean(state.finalized.value)
+                : false,
             };
           } catch (error) {
             console.error("Error processing app data:", error);
@@ -163,18 +166,18 @@ export async function getProposalsByProposer(
 }
 
 /**
- * Retrieves all proposals with status FINAL.
+ * Retrieves all proposals with status SUBMITTED.
  *
  * This function fetches all proposals and filters them to return only those
  * with a status of FINAL.
  *
- * @return A promise that resolves to an array of ProposalSummaryCardDetails with status FINAL.
+ * @return A promise that resolves to an array of ProposalSummaryCardDetails with status SUBMITTED.
  */
-export async function getFinalProposals(): Promise<
+export async function getSubmittedProposals(): Promise<
   ProposalSummaryCardDetails[]
 > {
   return (await getAllProposals()).filter(
-    (proposal) => proposal.status === ProposalStatus.ProposalStatusFinal,
+    (proposal) => proposal.status === ProposalStatus.ProposalStatusSubmitted,
   );
 }
 
@@ -257,8 +260,8 @@ export async function getProposal(
     fundingCategory: existsAndValue(state, "funding_category")
       ? (Number(state["funding_category"].value) as ProposalCategory)
       : 0,
-    submissionTs: existsAndValue(state, "submission_timestamp")
-      ? BigInt(state["submission_timestamp"].value)
+    openTs: existsAndValue(state, "open_timestamp")
+      ? BigInt(state["open_timestamp"].value)
       : 0n,
     approvals: existsAndValue(state, "approvals")
       ? BigInt(state.approvals.value)
@@ -273,8 +276,8 @@ export async function getProposal(
     registryAppId: existsAndValue(state, "registry_app_id")
       ? BigInt(state["registry_app_id"].value)
       : 0n,
-    finalizationTs: existsAndValue(state, "finalization_timestamp")
-      ? BigInt(state["finalization_timestamp"].value)
+    submissionTs: existsAndValue(state, "submission_timestamp")
+      ? BigInt(state["submission_timestamp"].value)
       : 0n,
     voteOpenTs: existsAndValue(state, "vote_opening_timestamp")
       ? BigInt(state["vote_opening_timestamp"].value)
@@ -289,16 +292,19 @@ export async function getProposal(
     votedMembers: existsAndValue(state, "voted_members")
       ? BigInt(state["voted_members"].value)
       : 0n,
+    finalized: existsAndValue(state, "finalized")
+      ? Boolean(state.finalized.value)
+      : false,
     ...proposalMetadata,
   };
 }
 
-export async function getFinalProposal(
+export async function getSubmittedProposal(
   id: bigint,
 ): Promise<ProposalMainCardDetails> {
   const proposalData = await getProposal(id);
-  if (proposalData.status !== ProposalStatus.ProposalStatusFinal) {
-    throw new Error("Proposal not in final state");
+  if (proposalData.status !== ProposalStatus.ProposalStatusSubmitted) {
+    throw new Error("Proposal not in submitted state");
   }
   return proposalData;
 }
@@ -484,7 +490,7 @@ export function getVotingDuration(
   }
 }
 
-export async function openProposal({
+export async function createEmptyProposal({
   activeAddress,
   innerSigner,
   setStatus,
@@ -544,13 +550,13 @@ export async function openProposal({
   }
 }
 
-export interface SubmitProposalProps extends TransactionHandlerProps {
+export interface OpenProposalProps extends TransactionHandlerProps {
   data: any,
   appId: bigint;
   bps: bigint;
 }
 
-export async function submitProposal({
+export async function openProposal({
   activeAddress,
   innerSigner,
   setStatus,
@@ -558,7 +564,7 @@ export async function submitProposal({
   data,
   appId,
   bps
-}: SubmitProposalProps) {
+}: OpenProposalProps) {
   if (!innerSigner) return;
 
   const transactionSigner = wrapTransactionSigner(
@@ -608,7 +614,7 @@ export async function submitProposal({
       Number((requestedAmount * bps) / BigInt(10_000)),
     );
 
-    const submitGroup = proposalClient.newGroup().submit({
+    const openGroup = proposalClient.newGroup().open({
       sender: activeAddress,
       signer: transactionSigner,
       args: {
@@ -627,7 +633,7 @@ export async function submitProposal({
     });
 
     chunkedMetadata.map((chunk, index) => {
-      submitGroup.uploadMetadata({
+      openGroup.uploadMetadata({
         sender: activeAddress,
         signer: transactionSigner,
         args: {
@@ -639,7 +645,7 @@ export async function submitProposal({
       });
     });
 
-    await submitGroup.send();
+    await openGroup.send();
 
     setStatus("confirmed");
     await sleep(800);
@@ -647,9 +653,9 @@ export async function submitProposal({
     await Promise.all(refetch.map(r => r()));
   } catch (e: any) {
     if (e.message.includes("tried to spend")) {
-      setStatus(new Error("Insufficient funds to submit proposal."));
+      setStatus(new Error("Insufficient funds to open proposal."));
     } else {
-      setStatus(new Error("Failed to submit proposal."));
+      setStatus(new Error("Failed to open proposal."));
     }
     return;
   }
@@ -789,10 +795,10 @@ export async function updateMetadata({
       chunkedMetadata.push(chunk);
     }
 
-    const resubmitGroup = proposalClient.newGroup();
+    const updateMetadataGroup = proposalClient.newGroup();
 
     chunkedMetadata.map((chunk, index) => {
-      resubmitGroup.uploadMetadata({
+      updateMetadataGroup.uploadMetadata({
         sender: activeAddress,
         signer: transactionSigner,
         args: {
@@ -815,7 +821,7 @@ export async function updateMetadata({
     const opUpsNeeded = (refCountNeeded - chunkedMetadata.length * 7) / 7;
     if (opUpsNeeded > 0) {
       for (let i = 0; i < opUpsNeeded; i++) {
-        resubmitGroup.opUp({
+        updateMetadataGroup.opUp({
           sender: activeAddress,
           signer: transactionSigner,
           args: {},
@@ -833,7 +839,7 @@ export async function updateMetadata({
       }
     }
 
-    await resubmitGroup.send();
+    await updateMetadataGroup.send();
 
     setStatus("confirmed");
     await sleep(800);
@@ -1041,8 +1047,8 @@ export async function callScrutinize(
   }
 }
 
-export async function callFinalize(proposalId: bigint) {
-  console.log("Staring finalize call", proposalId);
+export async function callAssignVoters(proposalId: bigint) {
+  console.log("Starting AssignVoters call", proposalId);
   const response = await fetch("/api/assign", {
     method: "POST",
     headers: {
@@ -1052,9 +1058,9 @@ export async function callFinalize(proposalId: bigint) {
       proposalIds: [proposalId],
     }),
   });
-  console.log("Finished finalize call");
+  console.log("Finished AssignVoters call");
   const data = await response.json();
-  console.log("Finalize data:", data);
+  console.log("AssignVoters data:", data);
 }
 
 export async function callUnassign(

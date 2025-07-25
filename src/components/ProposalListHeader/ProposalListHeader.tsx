@@ -4,7 +4,7 @@ import { useProposer, UseQuery, useRegistry, UseWallet } from "@/hooks";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { ProposalFilter } from "@/recipes";
 import { ConfirmationModal } from "../ConfirmationModal/ConfirmationModal";
-import { openProposal } from "@/api";
+import { createEmptyProposal } from "@/api";
 import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { WarningNotice } from "../WarningNotice/WarningNotice";
 import { AlgorandIcon } from "../icons/AlgorandIcon";
@@ -37,8 +37,8 @@ export function ProposalListHeader({
   const registry = useRegistry();
   const proposer = useProposer(activeAddress);
   const [showOpenProposalModal, setShowOpenProposalModal] = useState(false);
-  // const [openProposalLoading, setOpenProposalLoading] = useState(false);
-  // const [openProposalError, setOpenProposalError] = useState<string>('');
+  // const [createEmptyProposalLoading, setCreateEmptyProposalLoading] = useState(false);
+  // const [createEmptyProposalError, setCreateEmptyProposalError] = useState<string>('');
 
   const validProposer =
     (proposer?.data &&
@@ -101,7 +101,7 @@ export function ProposalListHeader({
                 }
                 submitText="Confirm"
                 onSubmit={async () => {
-                  const appId = await openProposal({
+                  const appId = await createEmptyProposal({
                     activeAddress,
                     innerSigner: transactionSigner,
                     setStatus,

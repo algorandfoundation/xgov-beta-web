@@ -54,7 +54,7 @@ export function ProposalForm({
   onSubmit: (data: z.infer<typeof proposalFormSchema>) => Promise<void>;
   txnState: TransactionStateInfo;
 }) {
-  const [submitModalOpen, setSubmitModalOpen] = useState(false);
+  const [openModalOpen, setOpenModalOpen] = useState(false);
 
   const minRequestedAmountInWholeAlgos = Number(minRequestedAmount) / 1e6;
   const maxRequestedAmountInWholeAlgos = Number(maxRequestedAmount) / 1e6;
@@ -545,7 +545,7 @@ export function ProposalForm({
           <div className="flex items-center justify-end">
             <Button
               type="button"
-              onClick={() => setSubmitModalOpen(true)}
+              onClick={() => setOpenModalOpen(true)}
               disabled={!form.formState.isDirty || !form.formState.isValid || txnState.isPending}
             >
               {txnState.isPending ? (
@@ -553,19 +553,19 @@ export function ProposalForm({
               ) : type === "edit" ? (
                 "Update"
               ) : (
-                "Submit"
+                "Open"
               )}
             </Button>
           </div>
 
           <ConfirmationModal
-            isOpen={submitModalOpen}
-            onClose={() => setSubmitModalOpen(false)}
-            title={type === "edit" ? "Update Proposal?" : "Submit Proposal?"}
+            isOpen={openModalOpen}
+            onClose={() => setOpenModalOpen(false)}
+            title={type === "edit" ? "Update Proposal?" : "Open Proposal?"}
             description={
               type === "edit"
                 ? "Are you sure you want to update this proposal?"
-                : "Once submitted you will only be able to edit the forum link, description, team info, additional info & adoption metrics without needing to create a new proposal."
+                : "Once opened you will only be able to edit the forum link, description, team info, additional info & adoption metrics without needing to create a new proposal."
             }
             warning={
               type !== "edit" ? (
@@ -588,10 +588,10 @@ export function ProposalForm({
                 />
               ) : undefined
             }
-            submitText={type === "edit" ? "Update Proposal" : "Submit Proposal"}
+            submitText={type === "edit" ? "Update Proposal" : "Open Proposal"}
             onSubmit={form.handleSubmit(async (data) => {
               await onSubmit(data)
-              setSubmitModalOpen(false);
+              setOpenModalOpen(false);
             })}
             txnState={txnState}
           />

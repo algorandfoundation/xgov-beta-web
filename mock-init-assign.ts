@@ -44,6 +44,20 @@ interface CommitteePair {
   }[];
 }
 
+function range(start: bigint, stop?: bigint, step?: bigint): bigint[] {
+  if (stop === undefined) {
+    stop = start;
+    start = 0n;
+  }
+  if (step === undefined) {
+    step = 1n;
+  }
+
+  const length = Math.ceil(Number((stop - start) / step));
+  return Array.from({ length }, (_, i) => start + BigInt(i) * step);
+}
+
+
 /**
  * Converts a committee ID buffer to a base64url safe filename
  *
@@ -268,7 +282,7 @@ for (const committeeMember of committeeMembers) {
 const proposerAccounts: (TransactionSignerAccount & {
   account: algosdk.Account;
 })[] = [];
-const proposalIds: bigint[] = [];
+const proposalIds: bigint[] = range(BigInt(mockProposals.length));
 const proposerFee = PROPOSER_FEE.microAlgo();
 const proposalFee = PROPOSAL_FEE.microAlgo();
 
@@ -281,169 +295,12 @@ const proposalFactory = new ProposalFactory({ algorand });
 
 const metadataBoxName = new Uint8Array(Buffer.from("M"))
 
-for (let i = 0; i < mockProposals.length; i++) {
-  let account: TransactionSignerAccount & { account: algosdk.Account };
-
-  if (i == 0) {
-    // First proposal is by the KMD default account (i.e., adminAccount)
-    account = adminAccount;
-  } else {
-    account = algorand.account.random();
-  }
-
-  console.log("\nproposer account", account.addr);
-
-  await algorand.account.ensureFunded(
-    account.addr,
-    dispenser,
-    (1000000).algo(),
-  );
-
-  proposerAccounts.push(account);
-
-  const addr = algosdk.decodeAddress(account.addr).publicKey;
-
-  // Subscribe as proposer
-  await registryClient.send.subscribeProposer({
-    sender: account.addr,
-    signer: account.signer,
-    args: {
-      payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-        amount: proposerFee.microAlgos,
-        from: account.addr,
-        to: registryClient.appAddress,
-        suggestedParams,
-      }),
-    },
-    boxReferences: [proposerBoxName(account.addr)],
-  });
-
-  try {
-    // Approve proposer KYC
-    await registryClient.send.setProposerKyc({
-      sender: kycProvider.addr,
-      signer: kycProvider.signer,
-      args: {
-        proposer: account.addr,
-        kycStatus: true,
-        kycExpiring: BigInt(oneYearFromNow),
-      },
-      boxReferences: [proposerBoxName(account.addr)],
-    });
-  } catch (e) {
-    console.error("Failed to approve proposer KYC");
-    process.exit(1);
-  }
-
-  // Create a proposal
-  const result = await registryClient.send.openProposal({
-    sender: account.addr,
-    signer: account.signer,
-    args: {
-      payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-        amount: proposalFee.microAlgos,
-        from: account.addr,
-        to: registryClient.appAddress,
-        suggestedParams,
-      }),
-    },
-    boxReferences: [proposerBoxName(account.addr)],
-    extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
-  });
-
-  // Store proposal ID if available
-  if (!result.return) {
-    console.error("Proposal creation failed");
-    process.exit(1);
-  }
-
-  console.log(`\nNew Proposal: ${result.return}\n`);
-
-  proposalIds.push(result.return);
-
-  // instance a new proposal client
-  const proposalClient = proposalFactory.getAppClientById({
-    appId: result.return,
-  });
-
-  const metadata = new Uint8Array(Buffer.from(JSON.stringify(
-    mockProposals[i].proposalJson,
-    (_, value) => (typeof value === "bigint" ? value.toString() : value), // return everything else unchanged
-  )));
-
-  let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
-  for (let j = 0; j < metadata.length; j += 2041) {
-    const chunk = metadata.slice(j, j + 2041);
-    chunkedMetadata.push(chunk);
-  }
-
-  const proposalSubmissionFee = Math.trunc(
-    Number(
-      (mockProposals[i].requestedAmount.algos().microAlgos * BigInt(1_000)) /
-      BigInt(10_000),
-    ),
-  );
-
-  console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
-  console.log(`Title: ${mockProposals[i].title}\n`);
-  console.log(`Funding Type: ${mockProposals[i].fundingType}\n`);
-  console.log(
-    `Requested Amount: ${mockProposals[i].requestedAmount.algos().microAlgos}\n`,
-  );
-  console.log(`Focus: ${mockProposals[i].focus}\n\n`);
-
-  try {
-    const submitGroup = proposalClient
-      .newGroup()
-      .submit({
-        sender: account.addr,
-        signer: account.signer,
-        args: {
-          payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-            amount: proposalSubmissionFee,
-            from: account.addr,
-            to: proposalClient.appAddress,
-            suggestedParams,
-          }),
-          title: mockProposals[i].title,
-          fundingType: mockProposals[i].fundingType,
-          requestedAmount: mockProposals[i].requestedAmount.algos().microAlgos,
-          focus: mockProposals[i].focus,
-        },
-        appReferences: [registryClient.appId],
-      })
-
-    chunkedMetadata.map((chunk, index) => {
-      submitGroup.uploadMetadata({
-        sender: account.addr,
-        signer: account.signer,
-        args: {
-          payload: chunk,
-          isFirstInGroup: index === 0,
-        },
-        appReferences: [registryClient.appId],
-        boxReferences: [metadataBoxName, metadataBoxName]
-      });
-    })
-
-    await submitGroup.send()
-  } catch (e) {
-    console.log(e);
-
-    console.error("Failed to submit proposal");
-
-    process.exit(1);
-  }
-}
-
 // Before time warp, create random committee pairs
 // Each pair of proposals gets assigned a random committee of 200 members
 console.log("\nCreating random committee pairs for proposals...");
 
-// Skip the first proposal (index 0) as it's not going to be finalized
-const proposalsToAssign = proposalIds.slice(1);
 // Shuffle the proposals to create random pairs
-const shuffledProposals = [...proposalsToAssign].sort(() => Math.random() - 0.5);
+const shuffledProposals = [...proposalIds].sort(() => Math.random() - 0.5);
 
 // Create pairs of proposals (handle odd number by having one triple if necessary)
 const proposalPairs: bigint[][] = [];
@@ -503,7 +360,7 @@ for (const pair of proposalPairs) {
   const filePath = path.join(committeesDir, `${safeFileName}.json`);
   fs.writeFileSync(filePath, committeeJson, "utf-8");
 
-  // Store committee data for later use when finalizing
+  // Store committee data for later use when submitting
   const committeeInfo = {
     committeeId,
     size: committeeData.xGovs.length,
@@ -526,17 +383,60 @@ proposalToCommitteeMap.forEach((committeeId, proposalId) => {
   console.log(`Proposal ${proposalId}: Committee ${committeeIdToSafeFileName(committeeId)}`);
 });
 
-// Time warp to move proposals to the next phase
-const ts = (await getLatestTimestamp()) + 86400 * 5;
-await timeWarp(ts);
-console.log("finished time warp, new ts: ", await getLatestTimestamp());
 
-// Let's finalize all proposals except the first one, owned by admin
-// This moves them to the voting phase
-for (let i = 1; i < mockProposals.length; i++) {
-  const proposalClient = proposalFactory.getAppClientById({
-    appId: proposalIds[i],
+for (let i = 0; i < mockProposals.length; i++) {
+  let account: TransactionSignerAccount & { account: algosdk.Account };
+
+  if (i == 0) {
+    // First proposal is by the KMD default account (i.e., adminAccount)
+    account = adminAccount;
+  } else {
+    account = algorand.account.random();
+  }
+
+  console.log("\nproposer account", account.addr);
+
+  await algorand.account.ensureFunded(
+    account.addr,
+    dispenser,
+    (1000000).algo(),
+  );
+
+  proposerAccounts.push(account);
+
+  const addr = algosdk.decodeAddress(account.addr).publicKey;
+
+  // Subscribe as proposer
+  await registryClient.send.subscribeProposer({
+    sender: account.addr,
+    signer: account.signer,
+    args: {
+      payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+        amount: proposerFee.microAlgos,
+        from: account.addr,
+        to: registryClient.appAddress,
+        suggestedParams,
+      }),
+    },
+    boxReferences: [proposerBoxName(account.addr)],
   });
+
+  try {
+    // Approve proposer KYC
+    await registryClient.send.setProposerKyc({
+      sender: kycProvider.addr,
+      signer: kycProvider.signer,
+      args: {
+        proposer: account.addr,
+        kycStatus: true,
+        kycExpiring: BigInt(oneYearFromNow),
+      },
+      boxReferences: [proposerBoxName(account.addr)],
+    });
+  } catch (e) {
+    console.error("Failed to approve proposer KYC");
+    process.exit(1);
+  }
 
   // Get the committee ID for this proposal
   const committeeId = proposalToCommitteeMap.get(proposalIds[i]);
@@ -546,7 +446,7 @@ for (let i = 1; i < mockProposals.length; i++) {
     process.exit(1);
   }
 
-  console.log(`Preparing to finalize proposal ${proposalIds[i]} with committee ID ${committeeIdToSafeFileName(committeeId)}`);
+  console.log(`Preparing to declareCommittee proposal ${proposalIds[i]} with committee ID ${committeeIdToSafeFileName(committeeId)}`);
 
   // For this specific proposal, get its committee's vote info
   const committeeFilePath = path.join(committeesDir, `${committeeIdToSafeFileName(committeeId)}.json`);
@@ -554,7 +454,7 @@ for (let i = 1; i < mockProposals.length; i++) {
   const committeeData = JSON.parse(committeeDataStr);
   const committeeVoteSum = committeeData.xGovs.reduce((sum: number, member: any) => sum + member.votes, 0);
 
-  // Declare this committee right before finalizing the proposal
+  // Declare this committee right before submitting the proposal
   console.log(`Declaring committee ${committeeIdToSafeFileName(committeeId)} for proposal ${proposalIds[i]}`);
   await registryClient.send.declareCommittee({
     sender: adminAccount.addr,
@@ -566,9 +466,122 @@ for (let i = 1; i < mockProposals.length; i++) {
     },
   });
 
-  // Now finalize the proposal immediately after declaring its committee
-  console.log(`Finalizing proposal ${proposalIds[i]}`);
-  await proposalClient.send.finalize({
+  // Create a proposal
+  const result = await registryClient.send.openProposal({
+    sender: account.addr,
+    signer: account.signer,
+    args: {
+      payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+        amount: proposalFee.microAlgos,
+        from: account.addr,
+        to: registryClient.appAddress,
+        suggestedParams,
+      }),
+    },
+    boxReferences: [proposerBoxName(account.addr)],
+    extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
+  });
+
+  // Store proposal ID if available
+  if (!result.return) {
+    console.error("Proposal creation failed");
+    process.exit(1);
+  }
+
+  console.log(`\nNew Proposal: ${result.return}\n`);
+
+  // instance a new proposal client
+  const proposalClient = proposalFactory.getAppClientById({
+    appId: result.return,
+  });
+
+  const metadata = new Uint8Array(Buffer.from(JSON.stringify(
+    mockProposals[i].proposalJson,
+    (_, value) => (typeof value === "bigint" ? value.toString() : value), // return everything else unchanged
+  )));
+
+  let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
+  for (let j = 0; j < metadata.length; j += 2041) {
+    const chunk = metadata.slice(j, j + 2041);
+    chunkedMetadata.push(chunk);
+  }
+
+  const proposalSubmissionFee = Math.trunc(
+    Number(
+      (mockProposals[i].requestedAmount.algos().microAlgos * BigInt(1_000)) /
+      BigInt(10_000),
+    ),
+  );
+
+  console.log(`Payment Amount: ${proposalSubmissionFee}\n`);
+  console.log(`Title: ${mockProposals[i].title}\n`);
+  console.log(`Funding Type: ${mockProposals[i].fundingType}\n`);
+  console.log(
+    `Requested Amount: ${mockProposals[i].requestedAmount.algos().microAlgos}\n`,
+  );
+  console.log(`Focus: ${mockProposals[i].focus}\n\n`);
+
+  try {
+    const openGroup = proposalClient
+      .newGroup()
+      .open({
+        sender: account.addr,
+        signer: account.signer,
+        args: {
+          payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+            amount: proposalSubmissionFee,
+            from: account.addr,
+            to: proposalClient.appAddress,
+            suggestedParams,
+          }),
+          title: mockProposals[i].title,
+          fundingType: mockProposals[i].fundingType,
+          requestedAmount: mockProposals[i].requestedAmount.algos().microAlgos,
+          focus: mockProposals[i].focus,
+        },
+        appReferences: [registryClient.appId],
+      })
+
+    chunkedMetadata.map((chunk, index) => {
+      openGroup.uploadMetadata({
+        sender: account.addr,
+        signer: account.signer,
+        args: {
+          payload: chunk,
+          isFirstInGroup: index === 0,
+        },
+        appReferences: [registryClient.appId],
+        boxReferences: [metadataBoxName, metadataBoxName]
+      });
+    })
+
+    console.log(`Openning proposal ${proposalIds[i]}...`);
+    await openGroup.send()
+  } catch (e) {
+    console.log(e);
+
+    console.error("Failed to open proposal");
+
+    process.exit(1);
+  }
+}
+
+// Time warp to move proposals to the next phase
+const ts = (await getLatestTimestamp()) + 86400 * 5;
+await timeWarp(ts);
+console.log("finished time warp, new ts: ", await getLatestTimestamp());
+
+// Let's submit all proposals except the first one, owned by admin
+// This moves them to the voting phase
+for (let i = 1; i < mockProposals.length; i++) {
+  const proposalClient = proposalFactory.getAppClientById({
+    appId: proposalIds[i],
+  });
+
+
+  // Now submit the proposal immediately after declaring its committee
+  console.log(`Submitting proposal ${proposalIds[i]}`);
+  await proposalClient.send.submit({
     sender: proposerAccounts[i].addr,
     signer: proposerAccounts[i].signer,
     args: {},

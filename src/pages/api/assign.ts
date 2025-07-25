@@ -1,6 +1,6 @@
 import {
-  getFinalProposal,
-  getFinalProposals,
+  getSubmittedProposal,
+  getSubmittedProposals,
   type ProposalSummaryCardDetails,
   getAlgodClient,
   getIndexerClient,
@@ -159,10 +159,7 @@ async function loadCommitteeFromAPI(
     return null;
   }
 
-  // Append committee ID to URL if needed
-  const url = apiUrl.includes("?")
-    ? `${apiUrl}&committeeId=${safeCommitteeId}`
-    : `${apiUrl}?committeeId=${safeCommitteeId}`;
+  const url = `${apiUrl}/committees/${safeCommitteeId}.json`;
 
   try {
     logger.info(
@@ -917,8 +914,8 @@ function aggregateResults(proposalResults: ProposalResult[]): ResultsSummary {
 }
 
 /**
- * POST endpoint to assign voters to all final proposals.
- * This assigns voters from the committee to each proposal with status FINAL.
+ * POST endpoint to assign voters to all submitted proposals.
+ * This assigns voters from the committee to each proposal with status SUBMITTED.
  *
  * @param context The Astro API context
  * @returns A JSON response with the results of the assignment operation
@@ -940,15 +937,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (proposalIds?.length) {
       proposalsToProcess = await Promise.all(
-        proposalIds.map((id) => getFinalProposal(id)),
+        proposalIds.map((id) => getSubmittedProposal(id)),
       );
     } else {
-      // Get all final proposals
-      const allFinalProposals = await getFinalProposals();
+      // Get all submitted proposals
+      const allSubmittedProposals = await getSubmittedProposals();
 
-      if (!allFinalProposals || allFinalProposals.length === 0) {
+      if (!allSubmittedProposals || allSubmittedProposals.length === 0) {
         return new Response(
-          JSON.stringify({ message: "No final proposals found" }),
+          JSON.stringify({ message: "No submitted proposals found" }),
           {
             status: 200,
             headers: {
@@ -958,7 +955,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         );
       }
 
-      proposalsToProcess = allFinalProposals;
+      proposalsToProcess = allSubmittedProposals;
     }
 
     // Setup xgov daemon
@@ -1038,7 +1035,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         message:
           proposalIds && proposalIds.length > 0
             ? `Processed ${proposalsToProcess.length} specific proposals in ${executionTimeSeconds}s using parallel processing`
-            : `Processed ${proposalsToProcess.length} final proposals in ${executionTimeSeconds}s using parallel processing`,
+            : `Processed ${proposalsToProcess.length} submitted proposals in ${executionTimeSeconds}s using parallel processing`,
         results,
         processingDetails: {
           concurrencyLevel: maxConcurrentProposals,
@@ -1056,7 +1053,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error("Error in POST /api/assign:", error);
     return new Response(
       JSON.stringify({
-        error: "Failed to process final proposals",
+        error: "Failed to process submitted proposals",
         details: error instanceof Error ? error.message : String(error),
       }),
       {

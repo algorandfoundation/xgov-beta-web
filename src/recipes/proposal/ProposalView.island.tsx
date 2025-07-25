@@ -69,7 +69,7 @@ export function ViewProposalController({
   const _proposal = proposalQuery.data || proposal;
   const _registry = registryQuery.data || registry;
 
-  const _discussionDuration = Date.now() - Number(_proposal.submissionTs) * 1000;
+  const _discussionDuration = Date.now() - Number(_proposal.openTs) * 1000;
   const _minimumDiscussionDuration =
     getDiscussionDuration(proposal.fundingCategory, [
       _registry.discussionDurationLarge || 0n,
