@@ -555,7 +555,7 @@ for (let i = 0; i < mockProposals.length; i++) {
       });
     })
 
-    console.log(`Openning proposal ${proposalIds[i]}...`);
+    console.log(`Opening proposal ${proposalIds[i]}...`);
     await openGroup.send()
   } catch (e) {
     console.log(e);
