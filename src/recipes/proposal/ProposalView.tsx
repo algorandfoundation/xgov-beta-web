@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { CoinsIcon, ExternalLinkIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
+import { CheckIcon, CoinsIcon, ExternalLinkIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
 
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { UserPill } from "@/components/UserPill/UserPill";
@@ -17,8 +17,10 @@ import {
   getVoteQuorum,
   getVotingDuration,
   getGlobalState,
-  callFinalize,
+  callAssignVoters,
   type ProposalMainCardDetailsWithNFDs,
+  dropProposal,
+  voteProposal,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -49,6 +51,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
 import { ProposalPayorCard } from "@/components/ProposalPayorCard/ProposalPayorCard";
+import { useTransactionState } from "@/hooks/useTransactionState";
+import { TransactionStateLoader } from "@/components/TransactionStateLoader/TransactionStateLoader";
+import type { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 
 export const defaultsStatusCardMap = {
   [ProposalStatus.ProposalStatusEmpty]: {
@@ -65,7 +70,7 @@ export const defaultsStatusCardMap = {
     icon: <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: 'View the discussion',
   },
-  [ProposalStatus.ProposalStatusFinal]: {
+  [ProposalStatus.ProposalStatusSubmitted]: {
     header: 'Proposal is being discussed',
     subHeader: 'Take part in the discussion and help shape public sentiment on this proposal.',
     sideHeader: '',
@@ -192,10 +197,10 @@ function DiscussionStatusCard({
   const { activeAddress, transactionSigner } = useWallet();
   const proposalQuery = useProposal(proposal.id, proposal);
 
-  const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isDropModalOpen, setIsDropModalOpen] = useState(false);
 
-  const finalizable = discussionDuration > minimumDiscussionDuration;
+  const submitable = discussionDuration > minimumDiscussionDuration;
   const [days, hours, minutes] = useTimeLeft(
     Date.now() + (Number(minimumDiscussionDuration) - discussionDuration),
   );
@@ -203,7 +208,7 @@ function DiscussionStatusCard({
 
   let header = 'Proposal is being discussed';
   let icon = <ChatBubbleLeftIcon aria-hidden="true" className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />;
-  if (!finalizable && proposal.proposer === activeAddress) {
+  if (!submitable && proposal.proposer === activeAddress) {
     header = "Your proposal is in the drafting & discussion phase";
     icon = (
       <SquarePenIcon
@@ -245,12 +250,12 @@ function DiscussionStatusCard({
         </Button>
 
         <InfinityMirrorButton
-          onClick={() => setIsFinalizeModalOpen(true)}
+          onClick={() => setIsSubmitModalOpen(true)}
           type="button"
           variant="secondary"
-          disabled={!finalizable}
+          disabled={!submitable}
           disabledMessage={
-            finalizable
+            submitable
               ? undefined
               : `Discussion is ongoing. ${remainingTime}`
           }
@@ -258,9 +263,9 @@ function DiscussionStatusCard({
           Submit
         </InfinityMirrorButton>
 
-        <FinalizeModal
-          isOpen={isFinalizeModalOpen}
-          onClose={() => setIsFinalizeModalOpen(false)}
+        <SubmitModal
+          isOpen={isSubmitModalOpen}
+          onClose={() => setIsSubmitModalOpen(false)}
           proposalId={proposal.id}
           refetchProposal={() => proposalQuery.refetch()}
           activeAddress={activeAddress}
@@ -270,8 +275,7 @@ function DiscussionStatusCard({
           isOpen={isDropModalOpen}
           onClose={() => setIsDropModalOpen(false)}
           proposalId={proposal.id}
-          refetchAllProposals={() => { }}
-          refetchProposal={() => proposalQuery.refetch()}
+          refetch={[proposalQuery.refetch]}
           activeAddress={activeAddress}
           transactionSigner={transactionSigner}
         />
@@ -308,12 +312,33 @@ function VotingStatusCard({
   weightedQuorums,
   votingDurations,
 }: VotingStatusCardProps) {
-  const { activeAddress, transactionSigner } = useWallet();
+  const { activeAddress, transactionSigner: innerSigner } = useWallet();
   const proposalQuery = useProposal(proposal.id, proposal);
   const voterInfoQuery = useVoterBox(Number(proposal.id), activeAddress);
 
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [votesExceeded, setVotesExceeded] = useState(false);
+
+  const {
+    status: advancedStatus,
+    setStatus: setAdvancedStatus,
+    errorMessage: advancedErrorMessage,
+    isPending: advancedIsPending
+  } = useTransactionState();
+
+  const {
+    status: rejectStatus,
+    setStatus: setRejectStatus,
+    errorMessage: rejectErrorMessage,
+    isPending: rejectIsPending
+  } = useTransactionState();
+
+  const {
+    status: approveStatus,
+    setStatus: setApproveStatus,
+    errorMessage: approveErrorMessage,
+    isPending: approveIsPending
+  } = useTransactionState();
 
   const voterInfo = voterInfoQuery.data || undefined;
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
@@ -350,52 +375,17 @@ function VotingStatusCard({
 
   const usedFormVotes = form.watch("approvals") + form.watch("rejections") + form.watch("nulls");
 
-  const voteProposal = async (approvals: number, rejections: number) => {
-    if (!activeAddress || !transactionSigner) {
-      console.log('Wallet not connected');
-      return false;
-    }
-
-    if (!voterInfo) {
-      console.log('Voter info not found');
-      return false;
-    }
-
-    const addr = algosdk.decodeAddress(activeAddress).publicKey;
-    const xgovBoxName = new Uint8Array(Buffer.concat([Buffer.from('x'), addr]));
-    const voterBoxName = new Uint8Array(Buffer.concat([Buffer.from('V'), addr]));
-
-    const res = await registryClient.send.voteProposal({
-      sender: activeAddress,
-      signer: transactionSigner,
-      args: {
-        proposalId: proposal.id,
-        xgovAddress: activeAddress,
-        approvalVotes: approvals,
-        rejectionVotes: rejections,
-      },
-      appReferences: [proposal.id],
-      accountReferences: [activeAddress],
-      boxReferences: [
-        xgovBoxName,
-        { appId: proposal.id, name: voterBoxName }
-      ],
-      extraFee: (1000).microAlgos(),
+  const onSubmit = async ({ approvals, rejections }: z.infer<typeof votingSchema>) => {
+    await voteProposal({
+      activeAddress,
+      innerSigner,
+      setStatus: setAdvancedStatus,
+      refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
+      appId: proposal.id,
+      approvals,
+      rejections,
+      voterInfo
     });
-
-    if (res.confirmation.confirmedRound !== undefined && res.confirmation.confirmedRound > 0 && res.confirmation.poolError === '') {
-      console.log('Transaction confirmed');
-      proposalQuery.refetch();
-      voterInfoQuery.refetch();
-      return true;
-    }
-
-    console.log('Transaction not confirmed');
-    return false;
-  }
-
-  const onSubmit = async (data: z.infer<typeof votingSchema>) => {
-    await voteProposal(data.approvals, data.rejections);
   }
 
   let subheader = (
@@ -464,19 +454,53 @@ function VotingStatusCard({
             <div className="flex gap-4 items-center">
               <Button
                 type='button'
-                onClick={() => voteProposal(Number(voterInfo.votes), 0)}
+                onClick={() => voteProposal({
+                  activeAddress,
+                  innerSigner,
+                  setStatus: setApproveStatus,
+                  refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
+                  appId: proposal.id,
+                  approvals: Number(voterInfo.votes),
+                  rejections: 0,
+                  voterInfo: voterInfo,
+                })}
+                disabled={rejectIsPending || approveIsPending}
               >
-                Approve
+                <TransactionStateLoader
+                  defaultText="Approve"
+                  txnState={{
+                    status: approveStatus,
+                    errorMessage: approveErrorMessage,
+                    isPending: approveIsPending
+                  }}
+                />
               </Button>
 
               <Button
                 type='button'
                 variant='destructive'
-                onClick={() => voteProposal(0, Number(voterInfo.votes))}
+                onClick={() => voteProposal({
+                  activeAddress,
+                  innerSigner,
+                  setStatus: setRejectStatus,
+                  refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
+                  appId: proposal.id,
+                  approvals: 0,
+                  rejections: Number(voterInfo.votes),
+                  voterInfo: voterInfo,
+                })}
+                disabled={rejectIsPending || approveIsPending}
               >
-                Reject
+                <TransactionStateLoader
+                  defaultText="Reject"
+                  txnState={{
+                    status: rejectStatus,
+                    errorMessage: rejectErrorMessage,
+                    isPending: rejectIsPending
+                  }}
+                />
               </Button>
-            </div>
+            </div >
           </>
         )
       } else {
@@ -580,7 +604,7 @@ function VotingStatusCard({
 
                   <Button
                     type='submit'
-                    disabled={votesExceeded}
+                    disabled={votesExceeded || advancedIsPending}
                   >
                     Submit
                   </Button>
@@ -886,7 +910,7 @@ export function ProposalInfo({
                   //
                 </span>
                 <span className="text-algo-black-50 dark:text-white">
-                  {formatDistanceToNow(new Date((Number(proposal.submissionTs) * 1000)), { addSuffix: true }).replace('about ', '').replace(' minutes', 'm').replace(' minute', 'm').replace(' hours', 'h').replace(' hour', 'h').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}
+                  {formatDistanceToNow(new Date((Number(proposal.openTs) * 1000)), { addSuffix: true }).replace('about ', '').replace(' minutes', 'm').replace(' minute', 'm').replace(' hours', 'h').replace(' hour', 'h').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}
                 </span>
               </div>
 
@@ -923,7 +947,7 @@ export function ProposalInfo({
   );
 }
 
-interface FinalizeModalProps {
+interface SubmitModalProps {
   isOpen: boolean;
   onClose: () => void;
   proposalId: bigint;
@@ -932,14 +956,14 @@ interface FinalizeModalProps {
   refetchProposal: () => void;
 }
 
-export function FinalizeModal({
+export function SubmitModal({
   isOpen,
   onClose,
   proposalId,
   activeAddress,
   transactionSigner,
   refetchProposal,
-}: FinalizeModalProps) {
+}: SubmitModalProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSubmit = async () => {
@@ -956,13 +980,12 @@ export function FinalizeModal({
         appId: proposalId,
       });
 
-      const res = await proposalClient.send.finalize({
+      const res = await proposalClient.send.submit({
         sender: activeAddress,
         signer: transactionSigner,
         args: {},
         appReferences: [registryClient.appId],
         accountReferences: [activeAddress, xgovDaemon],
-        boxReferences: [new Uint8Array(Buffer.from("M"))],
         extraFee: (1000).microAlgos(),
       });
 
@@ -976,11 +999,11 @@ export function FinalizeModal({
         onClose();
         refetchProposal();
 
-        // call backend to finalize
+        // call backend to assign voters
         try {
-          await callFinalize(proposalId);
+          await callAssignVoters(proposalId);
         } catch (e) {
-          console.warn("Failed to finalize:", e);
+          console.warn("Failed to assign voters:", e);
         }
         refetchProposal();
 
@@ -991,7 +1014,7 @@ export function FinalizeModal({
       setErrorMessage("Transaction not confirmed.");
       return false;
     } catch (error) {
-      console.error("Error during finalize:", error);
+      console.error("Error during assign voters:", error);
       setErrorMessage("An error occurred calling the proposal contract.");
       return false;
     }
@@ -1029,8 +1052,7 @@ interface DropModalProps {
   proposalId: bigint;
   activeAddress: string | null;
   transactionSigner: any;
-  refetchProposal: () => void;
-  refetchAllProposals: () => void;
+  refetch: ((options?: RefetchOptions) => Promise<QueryObserverResult<any, Error>>)[];
 }
 
 export function DropModal({
@@ -1039,154 +1061,20 @@ export function DropModal({
   proposalId,
   activeAddress,
   transactionSigner,
-  refetchProposal,
-  refetchAllProposals,
+  refetch,
 }: DropModalProps) {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { activeWallet } = useWallet();
+  const walletName = activeWallet?.metadata.name;
 
-  const handleDrop = async () => {
-    try {
-      if (!activeAddress || !transactionSigner) {
-        setErrorMessage("Wallet not connected.");
-        return false;
-      }
+  const {
+    status,
+    setStatus,
+    errorMessage,
+    reset,
+    isPending,
+  } = useTransactionState();
 
-      const proposalFactory = new ProposalFactory({ algorand });
-      const proposalClient = proposalFactory.getAppClientById({
-        appId: proposalId,
-      });
 
-      let grp = (
-        await (
-          await proposalClient
-            .newGroup()
-            .uploadMetadata({
-              sender: activeAddress,
-              signer: transactionSigner,
-              args: {
-                payload: new Uint8Array(Buffer.from("M")),
-                isFirstInGroup: true
-              },
-              appReferences: [registryClient.appId],
-              boxReferences: [
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-              ]
-            })
-            .uploadMetadata({
-              sender: activeAddress,
-              signer: transactionSigner,
-              args: {
-                payload: new Uint8Array(Buffer.from("M")),
-                isFirstInGroup: false
-              },
-              appReferences: [registryClient.appId],
-              boxReferences: [
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-              ],
-            })
-            .uploadMetadata({
-              sender: activeAddress,
-              signer: transactionSigner,
-              args: {
-                payload: new Uint8Array(Buffer.from("M")),
-                isFirstInGroup: false
-              },
-              appReferences: [registryClient.appId],
-              boxReferences: [
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-              ],
-              note: '1'
-            })
-            .uploadMetadata({
-              sender: activeAddress,
-              signer: transactionSigner,
-              args: {
-                payload: new Uint8Array(Buffer.from("M")),
-                isFirstInGroup: false
-              },
-              appReferences: [registryClient.appId],
-              boxReferences: [
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-                new Uint8Array(Buffer.from("M")),
-              ],
-              note: '2'
-            })
-            .composer()
-        ).build()
-      ).transactions
-
-      grp = grp.map((txn) => { txn.txn.group = undefined; return txn })
-
-      const addr = algosdk.decodeAddress(activeAddress).publicKey;
-      const proposerBoxName = new Uint8Array(Buffer.concat([Buffer.from('p'), addr]));
-
-      const res = await registryClient
-        .newGroup()
-        .addTransaction(grp[0].txn, grp[0].signer)
-        .addTransaction(grp[1].txn, grp[1].signer)
-        .addTransaction(grp[2].txn, grp[2].signer)
-        .addTransaction(grp[3].txn, grp[3].signer)
-        .dropProposal({
-          sender: activeAddress,
-          signer: transactionSigner,
-          args: { proposalId },
-          appReferences: [registryClient.appId],
-          accountReferences: [activeAddress],
-          boxReferences: [
-            proposerBoxName,
-            new Uint8Array(Buffer.from("M")),
-            new Uint8Array(Buffer.from("M")),
-          ],
-          extraFee: (2000).microAlgos(),
-        })
-        .send()
-
-      if (
-        res.confirmations[4].confirmedRound !== undefined &&
-        res.confirmations[4].confirmedRound > 0 &&
-        res.confirmations[4].poolError === ""
-      ) {
-        console.log("Transaction confirmed");
-        setErrorMessage(null);
-        onClose();
-        refetchProposal();
-        refetchAllProposals();
-        navigate("/");
-        return true;
-      }
-
-      console.log("Transaction not confirmed");
-      setErrorMessage("Transaction not confirmed.");
-      return false;
-    } catch (error) {
-      console.error("Error during drop:", error);
-      setErrorMessage("An error occurred calling the proposal contract.");
-      return false;
-    }
-  };
 
   return (
     <Dialog open={isOpen}>
@@ -1208,8 +1096,23 @@ export function DropModal({
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={handleDrop}>
-            Delete
+          <Button
+            className="group"
+            variant="destructive"
+            onClick={async () => {
+              await dropProposal({
+                activeAddress,
+                innerSigner: transactionSigner,
+                setStatus,
+                refetch,
+                appId: proposalId,
+              })
+              onClose();
+              navigate("/");
+            }}
+            disabled={isPending}
+          >
+            <TransactionStateLoader defaultText="Delete" txnState={{ status, errorMessage, isPending }} />
           </Button>
         </DialogFooter>
       </DialogContent>

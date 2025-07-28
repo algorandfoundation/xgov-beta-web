@@ -4,10 +4,11 @@ import { useWallet } from "@txnlab/use-wallet-react";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner.tsx";
 import { ConnectIsland } from "@/components/Connect/Connect.island.tsx";
 
-import { signup } from "@/api/registry.ts";
 import { UseQuery } from "@/hooks/useQuery.tsx";
 import { UseWallet } from "@/hooks/useWallet.tsx";
 import { useProposer, useRegistry } from "@/hooks/useRegistry.ts";
+import { subscribeProposer } from "@/api";
+import { useTransactionState } from "@/hooks/useTransactionState";
 
 /**
  * SignupIsland is a function component that sets up the signup process within the application.
@@ -35,20 +36,25 @@ export function SignupIsland() {
  * a loading spinner, or the Signup component.
  */
 export function SignupController() {
-  const [error, setError] = useState<string | null>(null);
   const { activeAddress, transactionSigner } = useWallet();
   const registry = useRegistry();
   const proposer = useProposer(activeAddress);
+
+  const {
+    status,
+    setStatus,
+    errorMessage,
+  } = useTransactionState()
 
   const isError = registry.isError || proposer.isError;
   const qError = registry.error || proposer.error;
   const isLoading = registry.isLoading || proposer.isLoading;
 
-  if (error || isError) {
-    return <p>{isError ? qError!.message : error}</p>;
+  if (status instanceof Error || isError) {
+    return <p>{isError ? qError!.message : errorMessage}</p>;
   }
 
-  if (isLoading) {
+  if (isLoading || !registry.data || !registry.data.proposerFee) {
     return <LoadingSpinner />;
   }
 
@@ -65,9 +71,13 @@ export function SignupController() {
     <Signup
       isRegistered={proposer.data?.isProposer || false}
       onSignup={() =>
-        signup(activeAddress as string, transactionSigner, registry?.data?.proposerFee!)
-          .then(() => proposer.refetch())
-          .catch((e) => setError(e.message))
+        subscribeProposer({
+          activeAddress,
+          innerSigner: transactionSigner,
+          setStatus,
+          refetch: [proposer.refetch],
+          amount: registry?.data?.proposerFee!,
+        })
       }
     />
   );

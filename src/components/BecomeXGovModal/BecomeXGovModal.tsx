@@ -4,14 +4,17 @@ import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { WarningNotice } from "../WarningNotice/WarningNotice";
 import { LoadingSpinner } from "../LoadingSpinner/LoadingSpinner";
+import { useWallet } from "@txnlab/use-wallet-react";
+import { CheckIcon } from "lucide-react";
+import type { TransactionStateInfo } from "@/api/types/transaction_state";
+import { TransactionStateLoader } from "../TransactionStateLoader/TransactionStateLoader";
 
 export interface BecomeXGovModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSignup: () => Promise<void>;
   costs: bigint;
-  loading?: boolean;
-  errorMessage?: string;
+  txnState: TransactionStateInfo
 }
 
 export function BecomeXGovModal({
@@ -19,9 +22,11 @@ export function BecomeXGovModal({
   onClose,
   onSignup,
   costs,
-  loading = false,
-  errorMessage,
+  txnState
 }: BecomeXGovModalProps) {
+  const { activeWallet } = useWallet();
+  const walletName = activeWallet?.metadata.name;
+
   const onSubmit = async () => {
     try {
       await onSignup();
@@ -57,13 +62,21 @@ export function BecomeXGovModal({
             }
           />
         </DialogHeader>
-        {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
+        {txnState.errorMessage && <p className="text-algo-red">{txnState.errorMessage}</p>}
         <DialogFooter className="mt-8">
-          <Button variant="ghost" onClick={onClose}>
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            disabled={txnState.isPending}
+          >
             Cancel
           </Button>
-          <Button onClick={onSubmit}>
-            { loading ? (<LoadingSpinner size="xs" />) : 'Signup' }
+          <Button
+            className="group"
+            onClick={onSubmit}
+            disabled={txnState.isPending}
+          >
+            <TransactionStateLoader defaultText="Signup" txnState={txnState} />
           </Button>
         </DialogFooter>
       </DialogContent>

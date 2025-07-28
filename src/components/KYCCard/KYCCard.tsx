@@ -1,49 +1,53 @@
 import { useState, useEffect } from "react";
 import { cn, shortenAddress } from "@/functions";
-import type { ProposerBoxState } from "@/api";
+import type { ProposerBoxState, SetProposerKYCNoWallet } from "@/api";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { ConfirmationModal } from "../ConfirmationModal/ConfirmationModal";
-import { useAllProposers, useProposer } from "@/hooks";
+import { useAllProposers } from "@/hooks";
+import { useTransactionState } from "@/hooks/useTransactionState";
 
 export interface KYCCardProps {
   proposalAddress: string;
   values: ProposerBoxState;
-  callSetProposerKYC: (
-    proposalAddress: string,
-    status: boolean,
-    expiration: number,
-  ) => Promise<boolean>;
+  setProposerKYC: (props: SetProposerKYCNoWallet) => Promise<void>;
 }
 
 export function KYCCard({
   proposalAddress,
   values,
-  callSetProposerKYC,
+  setProposerKYC,
 }: KYCCardProps) {
   const kyc_status = values.kycStatus;
   const expiry_date = Number(values.kycExpiring);
-  const expity_humanDate = new Date(expiry_date * 1000).toLocaleDateString();
-
-  const allProposers = useAllProposers();
+  const expiry_humanDate = new Date(expiry_date * 1000).toLocaleDateString();
 
   const [action, setAction] = useState<
     "approve" | "disqualify" | "expire" | undefined
   >(undefined);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [loading, setLoading] = useState(false);
+
   const [isExpired, setIsExpired] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [currentKYCStatus, setCurrentKYCStatus] = useState(kyc_status);
   const [currentExpiryDate, setCurrentExpiryDate] = useState(expiry_date);
 
+  const allProposers = useAllProposers()
+
+  const {
+    status,
+    setStatus,
+    errorMessage,
+    setErrorMessage,
+    reset,
+    isPending
+  } = useTransactionState();
+
   // reset error messages/loading state whenever dialog is closed
   useEffect(() => {
     if (!showConfirmDialog) {
-      setErrorMessage("");
-      setLoading(false);
+      reset();
     }
   }, [showConfirmDialog]);
 
@@ -53,56 +57,36 @@ export function KYCCard({
     );
   }, [currentExpiryDate]);
 
-  const handleApprove = (date: Date) => {
-    setLoading(true);
-
+  const handleApprove = async (date: Date) => {
     const dateInSeconds = Math.floor(date.getTime() / 1000);
 
-    callSetProposerKYC(proposalAddress, true, dateInSeconds)
-      .then((success) => {
-        if (success) {
-          setCurrentKYCStatus(true);
-          setCurrentExpiryDate(dateInSeconds);
-          setShowConfirmDialog(false);
-          allProposers.refetch();
-        } else {
-          setErrorMessage("Failed to approve KYC status.");
-        }
-      })
-      .finally(() => setLoading(false));
+    await setProposerKYC({
+      proposalAddress,
+      kycStatus: true,
+      expiration: dateInSeconds,
+      setStatus,
+      refetch: [allProposers.refetch]
+    })
   };
 
-  const handleDisqualify = () => {
-    setLoading(true);
-
-    callSetProposerKYC(proposalAddress, false, 0)
-      .then((success) => {
-        if (success) {
-          setCurrentKYCStatus(false);
-          setCurrentExpiryDate(0);
-          setShowConfirmDialog(false);
-          allProposers.refetch();
-        } else {
-          setErrorMessage("Failed to disqualify KYC status.");
-        }
-      })
-      .finally(() => setLoading(false));
+  const handleDisqualify = async () => {
+    await setProposerKYC({
+      proposalAddress,
+      kycStatus: false,
+      expiration: 0,
+      setStatus,
+      refetch: [allProposers.refetch],
+    })
   };
 
-  const handleReset = () => {
-    setLoading(true);
-
-    callSetProposerKYC(proposalAddress, false, 0)
-      .then((success) => {
-        if (success) {
-          setCurrentKYCStatus(false);
-          setCurrentExpiryDate(0);
-          allProposers.refetch();
-        } else {
-          setErrorMessage("Failed to reset KYC status.");
-        }
-      })
-      .finally(() => setLoading(false));
+  const handleReset = async () => {
+    await setProposerKYC({
+      proposalAddress,
+      kycStatus: false,
+      expiration: 0,
+      setStatus,
+      refetch: [allProposers.refetch],
+    });
   };
 
   const handleButtonClick = (e: any) => {
@@ -127,10 +111,9 @@ export function KYCCard({
     setSelectedDate(date);
   };
 
-  const handleConfirmExpiredKYC = () => {
+  const handleConfirmExpiredKYC = async () => {
     if (selectedDate) {
-      handleApprove(selectedDate);
-      setShowConfirmDialog(false);
+      await handleApprove(selectedDate);
     }
   };
 
@@ -152,7 +135,10 @@ export function KYCCard({
           </span>
           <span className="text-xs">
             {currentKYCStatus ? (
-              <>KYC { isExpired ? "Expired on " : "Approved - Expires" } {expity_humanDate}</>
+              <>
+                KYC {isExpired ? "Expired on " : "Approved - Expires"}{" "}
+                {expiry_humanDate}
+              </>
             ) : (
               <>KYC {isExpired ? "Expired" : "Requested"}</>
             )}
@@ -210,12 +196,18 @@ export function KYCCard({
         submitVariant={action !== "approve" ? "destructive" : "default"}
         onSubmit={async () => {
           action === "approve"
-            ? handleApprove(selectedDate!)
+            ? await handleApprove(selectedDate!)
             : selectedDate && Date.now() > selectedDate.getTime()
-              ? handleConfirmExpiredKYC()
-              : handleDisqualify();
+              ? await handleConfirmExpiredKYC()
+              : await handleDisqualify();
+
+          setShowConfirmDialog(false);
         }}
-        loading={loading}
+        txnState={{
+          status,
+          errorMessage,
+          isPending,
+        }}
         errorMessage={errorMessage}
       />
     </div>

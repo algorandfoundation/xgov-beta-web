@@ -5,8 +5,8 @@ import { z } from "zod";
 import { updateMetadata, type ProposalMainCardDetails } from "@/api";
 import { proposalFormSchema, ProposalForm } from "@/recipes";
 import { UseQuery, useRegistry, UseWallet } from "@/hooks";
-import { useState } from "react";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
+import { useTransactionState } from "@/hooks/useTransactionState";
 
 export type EditProposalProps = {
   proposal?: ProposalMainCardDetails;
@@ -21,22 +21,26 @@ export function EditProposalIsland({ proposal }: EditProposalProps) {
   );
 }
 
-export function EditProposalForm({
-  proposal,
-}: {
-  proposal?: ProposalMainCardDetails;
-}) {
-  const { activeAddress, transactionSigner } = useWallet();
+export function EditProposalForm({ proposal }: { proposal?: ProposalMainCardDetails; }) {
+  const { activeAddress, transactionSigner: innerSigner } = useWallet();
   const registry = useRegistry();
-  const [editProposalLoading, setEditProposalLoading] = useState(false);
-  const [editProposalError, setEditProposalError] = useState<string | undefined>(undefined);
+
+  const {
+    status,
+    setStatus,
+    errorMessage,
+    isPending
+  } = useTransactionState();
 
   return (
     <ProposalForm
       type="edit"
       proposal={proposal}
-      loading={editProposalLoading}
-      error={editProposalError}
+      txnState={{
+        status,
+        errorMessage,
+        isPending
+      }}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
         if (!activeAddress) {
           console.error("No active address");
@@ -59,25 +63,20 @@ export function EditProposalForm({
 
         const metadataOnlyChange = data.title === proposal.title && Number(data.fundingType) === proposal.fundingType && requestedAmount === proposal.requestedAmount && Number(data.focus) === proposal.focus;
 
-        if (!metadataOnlyChange) {  
+        if (!metadataOnlyChange) {
           console.error("Proposal metadata can only be edited, not funding or focus");
         }
 
-        try {
-          await updateMetadata(
-            activeAddress,
-            data,
-            transactionSigner,
-            proposal,
-            setEditProposalLoading,
-            setEditProposalError
-          )
+        await updateMetadata({
+          activeAddress,
+          innerSigner,
+          setStatus,
+          refetch: [],
+          data,
+          proposal
+        })
 
-          navigate(`/proposal/${proposal.id}`);
-        } catch (e) {
-          console.error(e);
-          console.error("Failed to update proposal");
-        }
+        navigate(`/proposal/${proposal.id}`);
       }}
     />
   );

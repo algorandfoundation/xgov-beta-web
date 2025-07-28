@@ -26,8 +26,19 @@ import {
 
 import { PROPOSAL_FEE } from "@/constants.ts";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
+import { wrapTransactionSigner } from "@/hooks/useTransactionState";
+import { proposerBoxName, xGovBoxName } from "./registry";
+import type { TransactionHandlerProps } from "./types/transaction_state";
+import { sleep } from "./nfd";
 
 export const proposalFactory = new ProposalFactory({ algorand });
+
+export const metadataBoxName = new Uint8Array(Buffer.from("M"));
+
+export function voterBoxName(address: string): Uint8Array {
+  const addr = algosdk.decodeAddress(address).publicKey;
+  return new Uint8Array(Buffer.concat([Buffer.from('V'), addr]));
+}
 
 function existsAndValue(appState: AppState, key: string): boolean {
   return key in appState && "value" in appState[key];
@@ -89,8 +100,8 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
               fundingCategory: existsAndValue(state, "funding_category")
                 ? (Number(state["funding_category"].value) as ProposalCategory)
                 : 0,
-              submissionTs: existsAndValue(state, "submission_timestamp")
-                ? BigInt(state["submission_timestamp"].value)
+              openTs: existsAndValue(state, "open_timestamp")
+                ? BigInt(state["open_timestamp"].value)
                 : 0n,
               approvals: existsAndValue(state, "approvals")
                 ? BigInt(state.approvals.value)
@@ -107,8 +118,8 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
               registryAppId: existsAndValue(state, "registry_app_id")
                 ? BigInt(state["registry_app_id"].value)
                 : 0n,
-              finalizationTs: existsAndValue(state, "finalization_timestamp")
-                ? BigInt(state["finalization_timestamp"].value)
+              submissionTs: existsAndValue(state, "submission_timestamp")
+                ? BigInt(state["submission_timestamp"].value)
                 : 0n,
               voteOpenTs: existsAndValue(state, "vote_opening_timestamp")
                 ? BigInt(state["vote_opening_timestamp"].value)
@@ -123,6 +134,9 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
               votedMembers: existsAndValue(state, "voted_members")
                 ? BigInt(state["voted_members"].value)
                 : 0n,
+                finalized: existsAndValue(state, "finalized")
+                ? Boolean(state.finalized.value)
+                : false,
             };
           } catch (error) {
             console.error("Error processing app data:", error);
@@ -152,18 +166,18 @@ export async function getProposalsByProposer(
 }
 
 /**
- * Retrieves all proposals with status FINAL.
+ * Retrieves all proposals with status SUBMITTED.
  *
  * This function fetches all proposals and filters them to return only those
  * with a status of FINAL.
  *
- * @return A promise that resolves to an array of ProposalSummaryCardDetails with status FINAL.
+ * @return A promise that resolves to an array of ProposalSummaryCardDetails with status SUBMITTED.
  */
-export async function getFinalProposals(): Promise<
+export async function getSubmittedProposals(): Promise<
   ProposalSummaryCardDetails[]
 > {
   return (await getAllProposals()).filter(
-    (proposal) => proposal.status === ProposalStatus.ProposalStatusFinal,
+    (proposal) => proposal.status === ProposalStatus.ProposalStatusSubmitted,
   );
 }
 
@@ -193,7 +207,7 @@ export async function getProposal(
   const results = await Promise.allSettled([
     algorand.client.algod.getApplicationByID(Number(id)).do(),
     proposalClient.appClient.getGlobalState(),
-    algorand.app.getBoxValue(id, new Uint8Array(Buffer.from("M"))),
+    algorand.app.getBoxValue(id, metadataBoxName),
   ]);
 
   const data = results[0].status === "fulfilled" ? results[0].value : null;
@@ -246,8 +260,8 @@ export async function getProposal(
     fundingCategory: existsAndValue(state, "funding_category")
       ? (Number(state["funding_category"].value) as ProposalCategory)
       : 0,
-    submissionTs: existsAndValue(state, "submission_timestamp")
-      ? BigInt(state["submission_timestamp"].value)
+    openTs: existsAndValue(state, "open_timestamp")
+      ? BigInt(state["open_timestamp"].value)
       : 0n,
     approvals: existsAndValue(state, "approvals")
       ? BigInt(state.approvals.value)
@@ -262,8 +276,8 @@ export async function getProposal(
     registryAppId: existsAndValue(state, "registry_app_id")
       ? BigInt(state["registry_app_id"].value)
       : 0n,
-    finalizationTs: existsAndValue(state, "finalization_timestamp")
-      ? BigInt(state["finalization_timestamp"].value)
+    submissionTs: existsAndValue(state, "submission_timestamp")
+      ? BigInt(state["submission_timestamp"].value)
       : 0n,
     voteOpenTs: existsAndValue(state, "vote_opening_timestamp")
       ? BigInt(state["vote_opening_timestamp"].value)
@@ -278,16 +292,19 @@ export async function getProposal(
     votedMembers: existsAndValue(state, "voted_members")
       ? BigInt(state["voted_members"].value)
       : 0n,
+    finalized: existsAndValue(state, "finalized")
+      ? Boolean(state.finalized.value)
+      : false,
     ...proposalMetadata,
   };
 }
 
-export async function getFinalProposal(
+export async function getSubmittedProposal(
   id: bigint,
 ): Promise<ProposalMainCardDetails> {
   const proposalData = await getProposal(id);
-  if (proposalData.status !== ProposalStatus.ProposalStatusFinal) {
-    throw new Error("Proposal not in final state");
+  if (proposalData.status !== ProposalStatus.ProposalStatusSubmitted) {
+    throw new Error("Proposal not in submitted state");
   }
   return proposalData;
 }
@@ -340,7 +357,7 @@ export async function getVoterBox(
 export async function getMetadata(id: bigint): Promise<ProposalJSON> {
   const metadata = await algorand.app.getBoxValue(
     id,
-    new Uint8Array(Buffer.from("M")),
+    metadataBoxName,
   );
 
   let proposalMetadata: ProposalJSON;
@@ -473,76 +490,98 @@ export function getVotingDuration(
   }
 }
 
-export async function openProposal(
-  address: string,
-  transactionSigner: TransactionSigner,
-  setOpenProposalLoading: (state: boolean) => void,
-  setError: (error: string) => void,
-) {
-  setOpenProposalLoading(true);
+export async function createEmptyProposal({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+}: TransactionHandlerProps) {
+  if (!innerSigner) return;
+
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus
+  );
+  setStatus("loading");
+
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
 
   try {
     const proposalFee = PROPOSAL_FEE.microAlgo();
-    const addr = algosdk.decodeAddress(address).publicKey;
-    const proposerBoxName = new Uint8Array(
-      Buffer.concat([Buffer.from("p"), addr]),
-    );
 
     const suggestedParams = await algorand.getSuggestedParams();
 
-    // open a proposal
     const result = await registryClient.send.openProposal({
-      sender: address,
+      sender: activeAddress,
       signer: transactionSigner,
       args: {
         payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
           amount: proposalFee.microAlgos,
-          from: address,
+          from: activeAddress,
           to: registryClient.appAddress,
           suggestedParams,
         }),
       },
-      boxReferences: [proposerBoxName],
+      boxReferences: [proposerBoxName(activeAddress)],
       extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
     });
 
     // Store proposal ID if available
     if (!result.return) {
-      setOpenProposalLoading(false);
-      setError("Proposal creation failed");
+      setStatus(new Error("Proposal creation failed"));
       return;
     }
 
-    setOpenProposalLoading(false);
+    setStatus("confirmed");
+    await sleep(800);
+    setStatus("idle");
+    await Promise.all(refetch.map(r => r()));
 
     return result.return;
   } catch (e: any) {
-    setOpenProposalLoading(false);
     if (e.message.includes("tried to spend")) {
-      setError("Insufficient funds to create proposal.");
+      setStatus(new Error("Insufficient funds to create proposal."));
     } else {
-      setError("Failed to create proposal.");
+      setStatus(new Error("Failed to create proposal."));
     }
   }
 }
 
-export async function submitProposal(
-  address: string,
+export interface OpenProposalProps extends TransactionHandlerProps {
   data: any,
-  transactionSigner: TransactionSigner,
-  appId: bigint,
-  bps: bigint,
-  setSubmitProposalLoading: (state: boolean) => void,
-  setError: (error: string) => void,
-) {
-  setSubmitProposalLoading(true);
+  appId: bigint;
+  bps: bigint;
+}
+
+export async function openProposal({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+  data,
+  appId,
+  bps
+}: OpenProposalProps) {
+  if (!innerSigner) return;
+
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
 
   try {
-    const metadataBoxName = new Uint8Array(Buffer.from("M"));
-
     const suggestedParams = await algorand.getSuggestedParams();
 
-    // instance a new proposal client
     const proposalClient = proposalFactory.getAppClientById({ appId });
 
     const metadata = new Uint8Array(
@@ -575,13 +614,13 @@ export async function submitProposal(
       Number((requestedAmount * bps) / BigInt(10_000)),
     );
 
-    const submitGroup = proposalClient.newGroup().submit({
-      sender: address,
+    const openGroup = proposalClient.newGroup().open({
+      sender: activeAddress,
       signer: transactionSigner,
       args: {
         payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
           amount: proposalSubmissionFee,
-          from: address,
+          from: activeAddress,
           to: proposalClient.appAddress,
           suggestedParams,
         }),
@@ -594,8 +633,8 @@ export async function submitProposal(
     });
 
     chunkedMetadata.map((chunk, index) => {
-      submitGroup.uploadMetadata({
-        sender: address,
+      openGroup.uploadMetadata({
+        sender: activeAddress,
         signer: transactionSigner,
         args: {
           payload: chunk,
@@ -606,158 +645,126 @@ export async function submitProposal(
       });
     });
 
-    await submitGroup.send();
-    setSubmitProposalLoading(false);
+    await openGroup.send();
+
+    setStatus("confirmed");
+    await sleep(800);
+    setStatus("idle");
+    await Promise.all(refetch.map(r => r()));
   } catch (e: any) {
-    setSubmitProposalLoading(false);
     if (e.message.includes("tried to spend")) {
-      setError("Insufficient funds to submit proposal.");
+      setStatus(new Error("Insufficient funds to open proposal."));
     } else {
-      setError("Failed to submit proposal.");
+      setStatus(new Error("Failed to open proposal."));
     }
+    return;
   }
 }
 
-// export async function createProposal(
-//   address: string,
-//   data: any,
-//   transactionSigner: TransactionSigner,
-//   emptyProposal: ProposalSummaryCardDetails | null,
-//   bps: bigint,
-//   setCreateProposalLoading: (state: boolean) => void,
-// ) {
-//   setCreateProposalLoading(true);
-//   try {
-//     const proposalFee = PROPOSAL_FEE.microAlgo();
-//     const addr = algosdk.decodeAddress(address).publicKey;
-//     const proposerBoxName = new Uint8Array(
-//       Buffer.concat([Buffer.from("p"), addr]),
-//     );
-//     const metadataBoxName = new Uint8Array(Buffer.from("M"));
+export interface VoteProposalProps extends TransactionHandlerProps {
+  appId: bigint;
+  approvals: number;
+  rejections: number;
+  voterInfo?: { votes: bigint; voted: boolean; };
+}
 
-//     const suggestedParams = await algorand.getSuggestedParams();
+export async function voteProposal({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+  appId,
+  approvals,
+  rejections,
+  voterInfo
+}: VoteProposalProps) {
+  if (!innerSigner) return;
 
-//     let appId: bigint = BigInt(0);
-//     if (!emptyProposal) {
-//       // open a proposal
-//       const result = await registryClient.send.openProposal({
-//         sender: address,
-//         signer: transactionSigner,
-//         args: {
-//           payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-//             amount: proposalFee.microAlgos,
-//             from: address,
-//             to: registryClient.appAddress,
-//             suggestedParams,
-//           }),
-//         },
-//         boxReferences: [proposerBoxName],
-//         extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
-//       });
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus,
+  );
 
-//       // Store proposal ID if available
-//       if (!result.return) {
-//         console.error("Proposal creation failed");
-//         setCreateProposalLoading(false);
-//         return;
-//       }
+  setStatus("loading");
 
-//       console.log(`\nNew Proposal: ${result.return}\n`);
-//       appId = result.return;
-//     } else {
-//       appId = emptyProposal.id;
-//     }
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
 
-//     // instance a new proposal client
-//     const proposalClient = proposalFactory.getAppClientById({ appId });
-
-//     const metadata = new Uint8Array(Buffer.from(JSON.stringify(
-//       {
-//         description: data.description,
-//         team: data.team,
-//         additionalInfo: data.additionalInfo,
-//         openSource: data.openSource,
-//         adoptionMetrics: data.adoptionMetrics,
-//         forumLink: data.forumLink,
-//       },
-//       (_, value) =>
-//         typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
-//     )))
-
-//     let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
-//     for (let j = 0; j < metadata.length; j += 2041) {
-//       const chunk = metadata.slice(j, j + 2041);
-//       chunkedMetadata.push(chunk);
-//     }
-
-//     const requestedAmount = AlgoAmount.Algos(
-//       BigInt(data.requestedAmount),
-//     ).microAlgos;
-
-//     const proposalSubmissionFee = Math.trunc(
-//       Number((requestedAmount * bps) / BigInt(10_000)),
-//     );
-
-//     const submitGroup = proposalClient
-//       .newGroup()
-//       .submit({
-//         sender: address,
-//         signer: transactionSigner,
-//         args: {
-//           payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-//             amount: proposalSubmissionFee,
-//             from: address,
-//             to: proposalClient.appAddress,
-//             suggestedParams,
-//           }),
-//           title: data.title,
-//           fundingType: Number(data.fundingType),
-//           requestedAmount,
-//           focus: Number(data.focus),
-//         },
-//         appReferences: [registryClient.appId],
-//       });
-
-//     chunkedMetadata.map((chunk, index) => {
-//       submitGroup.uploadMetadata({
-//         sender: address,
-//         signer: transactionSigner,
-//         args: {
-//           payload: chunk,
-//           isFirstInGroup: index === 0,
-//         },
-//         appReferences: [registryClient.appId],
-//         boxReferences: [metadataBoxName, metadataBoxName]
-//       })
-//     })
-
-//     console.log('metadata.length', metadata.length);
-
-//     await submitGroup.send()
-
-//     console.log("Proposal submitted");
-
-//     return appId;
-//   } catch (e) {
-//     console.error(e)
-//   }
-//   setCreateProposalLoading(false);
-// }
-
-export async function updateMetadata(
-  activeAddress: string,
-  data: any,
-  transactionSigner: TransactionSigner,
-  proposal: ProposalSummaryCardDetails,
-  setUpdateMetadataLoading: (state: boolean) => void,
-  setError: (error: string) => void,
-) {
-  setUpdateMetadataLoading(false);
+  if (!voterInfo) {
+    console.log('Voter info not found');
+    return false;
+  }
 
   try {
-    const metadataBoxName = new Uint8Array(Buffer.from("M"));
+    const res = await registryClient.send.voteProposal({
+      sender: activeAddress,
+      signer: transactionSigner,
+      args: {
+        proposalId: appId,
+        xgovAddress: activeAddress,
+        approvalVotes: approvals,
+        rejectionVotes: rejections,
+      },
+      appReferences: [appId],
+      accountReferences: [activeAddress],
+      boxReferences: [
+        xGovBoxName(activeAddress),
+        { appId: appId, name: voterBoxName(activeAddress) }
+      ],
+      extraFee: (1000).microAlgos(),
+    });
 
-    // instance a new proposal client
+    if (
+      res.confirmation.confirmedRound !== undefined &&
+      res.confirmation.confirmedRound > 0 &&
+      res.confirmation.poolError === ''
+    ) {
+      setStatus("confirmed");
+      await sleep(800);
+      setStatus("idle");
+      await Promise.all(refetch.map(r => r()));
+      return;
+    }
+
+    console.error("Vote proposal failed:", res);
+    setStatus(new Error("Failed to vote on the proposal."));
+  } catch (e: any) {
+    console.error("Error during voting:", e.message);
+    setStatus(new Error("An error occurred while voting on the proposal."));
+    return;
+  }
+}
+
+export interface UpdateMetadataProps extends TransactionHandlerProps {
+  data: any;
+  proposal: ProposalSummaryCardDetails;
+}
+
+export async function updateMetadata({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+  data,
+  proposal,
+}: UpdateMetadataProps) {
+  if (!innerSigner) return;
+
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  try {
     const proposalClient = proposalFactory.getAppClientById({
       appId: proposal.id,
     });
@@ -788,10 +795,10 @@ export async function updateMetadata(
       chunkedMetadata.push(chunk);
     }
 
-    const resubmitGroup = proposalClient.newGroup();
+    const updateMetadataGroup = proposalClient.newGroup();
 
     chunkedMetadata.map((chunk, index) => {
-      resubmitGroup.uploadMetadata({
+      updateMetadataGroup.uploadMetadata({
         sender: activeAddress,
         signer: transactionSigner,
         args: {
@@ -814,7 +821,7 @@ export async function updateMetadata(
     const opUpsNeeded = (refCountNeeded - chunkedMetadata.length * 7) / 7;
     if (opUpsNeeded > 0) {
       for (let i = 0; i < opUpsNeeded; i++) {
-        resubmitGroup.opUp({
+        updateMetadataGroup.opUp({
           sender: activeAddress,
           signer: transactionSigner,
           args: {},
@@ -832,19 +839,178 @@ export async function updateMetadata(
       }
     }
 
-    await resubmitGroup.send();
-    setUpdateMetadataLoading(false);
+    await updateMetadataGroup.send();
+
+    setStatus("confirmed");
+    await sleep(800);
+    setStatus("idle");
+    await Promise.all(refetch.map(r => r()));
 
     return proposal.id;
   } catch (e: any) {
-    setUpdateMetadataLoading(false);
     if (e.message.includes("tried to spend")) {
-      setError("Insufficient funds to update proposal metadata.");
+      setStatus(new Error("Insufficient funds to update proposal metadata."));
     } else {
-      setError("Failed to update proposal metadata.");
+      setStatus(new Error("Failed to update proposal metadata."));
     }
+    return null;
   }
 }
+
+export interface DropProposalProps extends TransactionHandlerProps {
+  appId: bigint;
+}
+
+export async function dropProposal({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+  appId,
+}: DropProposalProps) {
+  if (!innerSigner) return;
+
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  try {
+    const proposalFactory = new ProposalFactory({ algorand });
+    const proposalClient = proposalFactory.getAppClientById({ appId });
+
+    let grp = (
+      await (
+        await proposalClient
+          .newGroup()
+          .uploadMetadata({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: {
+              payload: metadataBoxName,
+              isFirstInGroup: true
+            },
+            appReferences: [registryClient.appId],
+            boxReferences: [
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+            ]
+          })
+          .uploadMetadata({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: {
+              payload: metadataBoxName,
+              isFirstInGroup: false
+            },
+            appReferences: [registryClient.appId],
+            boxReferences: [
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+            ],
+          })
+          .uploadMetadata({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: {
+              payload: metadataBoxName,
+              isFirstInGroup: false
+            },
+            appReferences: [registryClient.appId],
+            boxReferences: [
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+            ],
+            note: '1'
+          })
+          .uploadMetadata({
+            sender: activeAddress,
+            signer: transactionSigner,
+            args: {
+              payload: metadataBoxName,
+              isFirstInGroup: false
+            },
+            appReferences: [registryClient.appId],
+            boxReferences: [
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+              metadataBoxName,
+            ],
+            note: '2'
+          })
+          .composer()
+      ).build()
+    ).transactions
+
+    grp = grp.map((txn) => { txn.txn.group = undefined; return txn })
+
+    const addr = algosdk.decodeAddress(activeAddress).publicKey;
+    const proposerBoxName = new Uint8Array(Buffer.concat([Buffer.from('p'), addr]));
+
+    const res = await registryClient
+      .newGroup()
+      .addTransaction(grp[0].txn, grp[0].signer)
+      .addTransaction(grp[1].txn, grp[1].signer)
+      .addTransaction(grp[2].txn, grp[2].signer)
+      .addTransaction(grp[3].txn, grp[3].signer)
+      .dropProposal({
+        sender: activeAddress,
+        signer: transactionSigner,
+        args: { proposalId: appId },
+        appReferences: [registryClient.appId],
+        accountReferences: [activeAddress],
+        boxReferences: [
+          proposerBoxName,
+          metadataBoxName,
+          metadataBoxName,
+        ],
+        extraFee: (2000).microAlgos(),
+      })
+      .send()
+
+    if (
+      res.confirmations[4].confirmedRound !== undefined &&
+      res.confirmations[4].confirmedRound > 0 &&
+      res.confirmations[4].poolError === ""
+    ) {
+      setStatus("confirmed");
+      await sleep(800);
+      setStatus("idle");
+      await Promise.all(refetch.map(r => r()));
+      return;
+    }
+
+    setStatus(new Error("Transaction not confirmed."));
+  } catch (error) {
+    setStatus(new Error("An error occurred while dropping the proposal."));
+  }
+};
 
 export async function callScrutinize(
   address: string,
@@ -881,8 +1047,8 @@ export async function callScrutinize(
   }
 }
 
-export async function callFinalize(proposalId: bigint) {
-  console.log("Staring finalize call", proposalId);
+export async function callAssignVoters(proposalId: bigint) {
+  console.log("Starting AssignVoters call", proposalId);
   const response = await fetch("/api/assign", {
     method: "POST",
     headers: {
@@ -892,9 +1058,9 @@ export async function callFinalize(proposalId: bigint) {
       proposalIds: [proposalId],
     }),
   });
-  console.log("Finished finalize call");
+  console.log("Finished AssignVoters call");
   const data = await response.json();
-  console.log("Finalize data:", data);
+  console.log("AssignVoters data:", data);
 }
 
 export async function callUnassign(
@@ -914,101 +1080,3 @@ export async function callUnassign(
   const data = await response.json();
   console.log("Unassign data:", data);
 }
-
-// export async function resubmitProposal(
-//   activeAddress: string,
-//   data: any,
-//   transactionSigner: TransactionSigner,
-//   proposal: ProposalSummaryCardDetails,
-//   bps: bigint,
-//   setResubmitProposalLoading: (state: boolean) => void,
-// ) {
-//   setResubmitProposalLoading(true);
-
-//   try {
-//     const metadataBoxName = new Uint8Array(Buffer.from("M"))
-//     const suggestedParams = await algorand.getSuggestedParams();
-
-//     // instance a new proposal client
-//     const proposalClient = proposalFactory.getAppClientById({
-//       appId: proposal.id,
-//     });
-
-//     const metadata = new Uint8Array(Buffer.from(JSON.stringify(
-//       {
-//         description: data.description,
-//         team: data.team,
-//         additionalInfo: data.additionalInfo,
-//         openSource: data.openSource,
-//         adoptionMetrics: data.adoptionMetrics,
-//         forumLink: data.forumLink,
-//       },
-//       (_, value) =>
-//         typeof value === "bigint" ? value.toString() : value, // return everything else unchanged
-//     )))
-
-//     let chunkedMetadata: Uint8Array<ArrayBuffer>[] = []
-//     for (let j = 0; j < metadata.length; j += 2041) {
-//       const chunk = metadata.slice(j, j + 2041);
-//       chunkedMetadata.push(chunk);
-//     }
-
-//     const requestedAmount = AlgoAmount.Algos(
-//       BigInt(data.requestedAmount),
-//     ).microAlgos;
-
-//     const proposalSubmissionFee = Math.trunc(
-//       Number((requestedAmount * bps) / BigInt(10_000)),
-//     );
-
-//     const resubmitGroup = proposalClient
-//       .newGroup()
-//       .drop({
-//         sender: activeAddress,
-//         signer: transactionSigner,
-//         args: {},
-//         appReferences: [registryClient.appId],
-//         accountReferences: [activeAddress],
-//         extraFee: (1000).microAlgos(),
-//       })
-//       .submit({
-//         sender: activeAddress,
-//         signer: transactionSigner,
-//         args: {
-//           payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-//             amount: proposalSubmissionFee,
-//             from: activeAddress,
-//             to: proposalClient.appAddress,
-//             suggestedParams,
-//           }),
-//           title: data.title,
-//           fundingType: Number(data.fundingType),
-//           requestedAmount,
-//           focus: Number(data.focus),
-//         },
-//         appReferences: [registryClient.appId],
-//       })
-
-//     chunkedMetadata.map((chunk, index) => {
-//       resubmitGroup.uploadMetadata({
-//         sender: activeAddress,
-//         signer: transactionSigner,
-//         args: {
-//           payload: chunk,
-//           isFirstInGroup: index === 0,
-//         },
-//         appReferences: [registryClient.appId],
-//         boxReferences: [metadataBoxName, metadataBoxName],
-//       })
-//     })
-
-//     await resubmitGroup.send()
-
-//     console.log("Proposal updated");
-
-//     return proposal.id;
-//   } catch (e) {
-//     console.log(e)
-//   }
-//   setResubmitProposalLoading(false);
-// }

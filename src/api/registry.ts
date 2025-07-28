@@ -1,24 +1,42 @@
-import {env} from '@/constants'
+import { env } from '@/constants'
 import algosdk, {
   ABIType,
   ALGORAND_MIN_TX_FEE,
   makePaymentTxnWithSuggestedParamsFromObject,
-  type TransactionSigner,
   encodeAddress
 } from "algosdk";
-
-import type { ProposerBoxState, RegistryGlobalState } from "./types";
-import { algorand, network, RegistryAppID, registryClient } from "./algorand";
-
+import type { RegistryGlobalState } from "./types";
+import { algod, algorand, network, RegistryAppID, registryClient } from "./algorand";
+import type { ProposerBoxValue, XGovRegistryComposer } from '@algorandfoundation/xgov/registry';
+import { fundingLogicSig, fundingLogicSigSigner } from '@/api/testnet-funding-logicsig';
+import type { TransactionHandlerProps } from '@/api/types/transaction_state';
+import { wrapTransactionSigner } from '@/hooks/useTransactionState';
 import { Buffer } from "buffer";
+import { sleep } from './nfd';
 if (globalThis.Buffer === undefined) {
   globalThis.Buffer = Buffer;
 }
-import type { XGovRegistryComposer } from '@algorandfoundation/xgov/registry';
-import { fundingLogicSig, fundingLogicSigSigner } from './testnet-funding-logicsig';
 
 console.log("registry app id", env.PUBLIC_REGISTRY_APP_ID);
 const registryAppID: number = env.PUBLIC_REGISTRY_APP_ID;
+
+export function proposerBoxName(address: string): Uint8Array {
+  return new Uint8Array(
+    Buffer.concat([
+      Buffer.from("p"),
+      algosdk.decodeAddress(address).publicKey,
+    ]),
+  );
+}
+
+export function xGovBoxName(address: string): Uint8Array {
+  return new Uint8Array(
+    Buffer.concat([
+      Buffer.from("x"),
+      algosdk.decodeAddress(address).publicKey,
+    ]),
+  );
+}
 
 export async function getGlobalState(): Promise<RegistryGlobalState | undefined> {
   try {
@@ -43,24 +61,19 @@ export async function getGlobalState(): Promise<RegistryGlobalState | undefined>
 export async function getIsXGov(
   address: string,
 ): Promise<{ isXGov: boolean; votingAddress: string }> {
-  const addr = algosdk.decodeAddress(address).publicKey;
-  const xGovBoxName = new Uint8Array(Buffer.concat([Buffer.from("x"), addr]));
-
   try {
-    const xgovBoxValue = await algorand.app.getBoxValueFromABIType({
-      appId: BigInt(registryAppID),
-      boxName: xGovBoxName,
-      type: ABIType.from("(address,uint64,uint64)"),
+    const xgovBoxValue = await registryClient.getXgovBox({
+      args: {
+        xgovAddress: address,
+      },
+      boxReferences: [
+        xGovBoxName(address),
+      ],
     });
-
-    let votingAddress: string = "";
-    if (!!xgovBoxValue && Array.isArray(xgovBoxValue)) {
-      votingAddress = xgovBoxValue[0] as string;
-    }
 
     return {
       isXGov: true,
-      votingAddress,
+      votingAddress: xgovBoxValue.votingAddress,
     };
   } catch (e) {
     console.error(e);
@@ -73,33 +86,22 @@ export async function getIsXGov(
 
 export async function getIsProposer(
   address: string,
-): Promise<{ isProposer: boolean } & ProposerBoxState> {
-  const addr = algosdk.decodeAddress(address).publicKey;
-  const proposerBoxName = new Uint8Array(
-    Buffer.concat([Buffer.from("p"), addr]),
-  );
-
+): Promise<{ isProposer: boolean } & ProposerBoxValue> {
   try {
-    const proposerBoxValue = await algorand.app.getBoxValueFromABIType({
-      appId: BigInt(registryAppID),
-      boxName: proposerBoxName,
-      type: ABIType.from("(bool,bool,uint64)"),
+    const proposerBoxValue = await registryClient.getProposerBox({
+      args: {
+        proposerAddress: address,
+      },
+      boxReferences: [
+        proposerBoxName(address),
+      ],
     });
-
-    if (!Array.isArray(proposerBoxValue) || proposerBoxValue.length !== 3) {
-      return {
-        isProposer: false,
-        activeProposal: false,
-        kycStatus: false,
-        kycExpiring: BigInt(0),
-      };
-    }
 
     return {
       isProposer: true,
-      activeProposal: proposerBoxValue[0] as boolean,
-      kycStatus: proposerBoxValue[1] as boolean,
-      kycExpiring: proposerBoxValue[2] as bigint,
+      activeProposal: proposerBoxValue.activeProposal,
+      kycStatus: proposerBoxValue.kycStatus,
+      kycExpiring: proposerBoxValue.kycExpiring,
     };
   } catch (e) {
     console.error(e);
@@ -113,9 +115,9 @@ export async function getIsProposer(
 }
 
 export async function getAllProposers(): Promise<{
-  [key: string]: ProposerBoxState;
+  [key: string]: ProposerBoxValue;
 }> {
-  const proposers: { [key: string]: ProposerBoxState } = {};
+  const proposers: { [key: string]: ProposerBoxValue } = {};
   const boxes = await algorand.client.algod
     .getApplicationBoxes(registryAppID)
     .do();
@@ -125,25 +127,11 @@ export async function getAllProposers(): Promise<{
       continue;
     }
 
-    const proposerBoxValue = await algorand.app.getBoxValueFromABIType({
-      appId: BigInt(registryAppID),
-      boxName: box.name,
-      type: ABIType.from("(bool,bool,uint64)"),
-    });
-
-    if (!Array.isArray(proposerBoxValue) || proposerBoxValue.length !== 3) {
-      throw new Error("invalid proposer box value");
-    }
-
-    const proposer: ProposerBoxState = {
-      activeProposal: proposerBoxValue[0] as boolean,
-      kycStatus: proposerBoxValue[1] as boolean,
-      kycExpiring: proposerBoxValue[2] as bigint,
-    };
-
     const addr = encodeAddress(Buffer.from(box.name.slice(1)));
 
-    proposers[addr] = proposer;
+    const proposerBoxValue = await getIsProposer(addr);
+
+    proposers[addr] = proposerBoxValue;
   }
 
   return proposers;
@@ -164,15 +152,156 @@ export async function getAllSubscribedXGovs(): Promise<string[]> {
   });
 }
 
-export async function signup(
-  address: string,
-  transactionSigner: TransactionSigner,
-  amount: bigint,
-) {
+export interface SubscribeXGovProps extends TransactionHandlerProps {
+  xgovFee?: bigint
+}
+
+export async function subscribeXgov({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+  xgovFee,
+}: SubscribeXGovProps) {
+  if (!innerSigner) return;
+
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  if (!xgovFee) {
+    setStatus(new Error("xgovFee is not set"));
+    return;
+  }
+
   const suggestedParams = await algorand.getSuggestedParams();
 
   const payment = makePaymentTxnWithSuggestedParamsFromObject({
-    from: address,
+    from: activeAddress,
+    to: algosdk.getApplicationAddress(RegistryAppID),
+    amount: xgovFee,
+    suggestedParams,
+  });
+
+  let builder: XGovRegistryComposer<any> = registryClient.newGroup();
+
+  if (network === "testnet") {
+    builder = builder.addTransaction(
+      await registryClient.algorand.createTransaction.payment({
+        sender: fundingLogicSig.address(),
+        receiver: activeAddress,
+        amount: (100).algos(),
+      }),
+      fundingLogicSigSigner,
+    );
+  }
+
+  builder = builder.subscribeXgov({
+    sender: activeAddress,
+    signer: transactionSigner,
+    args: {
+      payment,
+      votingAddress: activeAddress,
+    },
+    boxReferences: [
+      xGovBoxName(activeAddress),
+    ],
+  });
+
+  try {
+    await builder.send();
+    setStatus("confirmed");
+    await sleep(800);
+    setStatus("idle");
+    await Promise.all(refetch.map(r => r()));
+  } catch (e: any) {
+    console.error("Error during subscribeXgov:", e.message);
+    setStatus(new Error(`Failed to subscribe to be a xGov`));
+    return;
+  }
+};
+
+export async function unsubscribeXgov({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+}: TransactionHandlerProps): Promise<void> {
+  if (!innerSigner) return;
+
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  try {
+    await registryClient.send.unsubscribeXgov({
+      sender: activeAddress,
+      signer: transactionSigner,
+      args: {
+        xgovAddress: activeAddress,
+      },
+      extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
+      boxReferences: [
+        xGovBoxName(activeAddress),
+      ],
+    });
+  } catch (e: any) {
+    console.error("Error during unsubscribeXgov:", e.message);
+    setStatus(new Error(`Failed to unsubscribe from xGov`));
+    return;
+  }
+
+  setStatus("confirmed");
+  await sleep(800);
+  setStatus("idle");
+  await Promise.all(refetch.map(r => r()));
+}
+
+export interface SubscribeProposerProps extends TransactionHandlerProps {
+  amount: bigint
+}
+
+export async function subscribeProposer({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+  amount,
+}: SubscribeProposerProps) {
+  if (!innerSigner) return;
+
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  const suggestedParams = await algorand.getSuggestedParams();
+
+  const payment = makePaymentTxnWithSuggestedParamsFromObject({
+    from: activeAddress,
     to: algosdk.getApplicationAddress(RegistryAppID),
     amount,
     suggestedParams,
@@ -184,7 +313,7 @@ export async function signup(
     builder = builder.addTransaction(
       await registryClient.algorand.createTransaction.payment({
         sender: fundingLogicSig.address(),
-        receiver: address,
+        receiver: activeAddress,
         amount: (100).algos(),
       }),
       fundingLogicSigSigner,
@@ -192,40 +321,158 @@ export async function signup(
   }
 
   builder = builder.subscribeProposer({
-    sender: address,
+    sender: activeAddress,
     signer: transactionSigner,
     args: { payment },
     boxReferences: [
-      new Uint8Array(
-        Buffer.concat([
-          Buffer.from("p"),
-          algosdk.decodeAddress(address).publicKey,
-        ]),
-      ),
+      proposerBoxName(activeAddress),
     ],
   });
 
-  return builder.send();
+  try {
+    await builder.send();
+  } catch (e: any) {
+    console.error("Error during subscribeProposer:", e.message);
+    setStatus(new Error(`Failed to subscribe to be a proposer`));
+    return;
+  }
+
+  setStatus("confirmed");
+  await sleep(800);
+  setStatus("idle");
+  await Promise.all(refetch.map(r => r()));
 }
 
-export async function unsubscribe(
-  address: string,
-  transactionSigner: TransactionSigner,
-) {
-  return registryClient.send.unsubscribeXgov({
-    sender: address,
-    signer: transactionSigner,
-    args: {
-      xgovAddress: address,
-    },
-    extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
-    boxReferences: [
-      new Uint8Array(
-        Buffer.concat([
-          Buffer.from("x"),
-          algosdk.decodeAddress(address).publicKey,
-        ]),
-      ),
-    ],
-  });
+export interface SetVotingAddressProps extends TransactionHandlerProps {
+  newAddress: string
+}
+
+export async function setVotingAddress({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+  newAddress,
+}: SetVotingAddressProps): Promise<void> {
+  if (!innerSigner) return;
+
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  try {
+    await registryClient.send.setVotingAccount({
+      sender: activeAddress,
+      signer: transactionSigner,
+      args: {
+        xgovAddress: activeAddress,
+        votingAddress: newAddress,
+      },
+      boxReferences: [
+        xGovBoxName(activeAddress),
+      ],
+    });
+  } catch (e: any) {
+    console.error("Error during setVotingAddress:", e.message);
+    setStatus(new Error('Failed to set voting address'));
+    return;
+  }
+
+  setStatus("confirmed");
+  await sleep(800);
+  setStatus("idle");
+  await Promise.all(refetch.map(r => r()));
+}
+
+export type SetProposerKYCNoWallet = Omit<SetProposerKYCProps, "innerSigner" | "activeAddress">
+
+export interface SetProposerKYCProps extends TransactionHandlerProps {
+  proposalAddress: string;
+  kycStatus: boolean;
+  expiration: number;
+}
+
+export async function setProposerKYC({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+  proposalAddress,
+  kycStatus,
+  expiration
+}: SetProposerKYCProps) {
+  if (!innerSigner) return;
+
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  try {
+    // fund proposers on testnet if they have < 200A balance
+    let shouldFund = false;
+    if (network === "testnet" && kycStatus === true) {
+      const { amount } = await algod.accountInformation(proposalAddress).do();
+      if (amount < 200_000_000) {
+        shouldFund = true;
+      }
+    }
+
+    let builder = registryClient.newGroup().setProposerKyc({
+      sender: activeAddress,
+      signer: transactionSigner,
+      args: {
+        proposer: proposalAddress,
+        kycStatus: kycStatus,
+        kycExpiring: expiration,
+      },
+      boxReferences: [proposerBoxName(proposalAddress)],
+    });
+
+    if (shouldFund) {
+      builder = builder.addTransaction(
+        await registryClient.algorand.createTransaction.payment({
+          sender: activeAddress,
+          receiver: proposalAddress,
+          amount: (200).algos(),
+        }),
+        transactionSigner,
+      );
+    }
+
+    const { confirmations: [confirmation] } = await builder.send();
+
+    if (
+      confirmation.confirmedRound !== undefined &&
+      confirmation.confirmedRound > 0 &&
+      confirmation.poolError === ""
+    ) {
+      setStatus("confirmed");
+      await sleep(800);
+      setStatus("idle");
+      await Promise.all(refetch.map(r => r()));
+      return;
+    }
+
+    setStatus(new Error("Failed to confirm transaction submission"));
+  } catch (e: any) {
+    console.error("Error during setVotingAddress:", e.message);
+    setStatus(new Error(`Failed to set proposer KYC`));
+    return;
+  }
 }

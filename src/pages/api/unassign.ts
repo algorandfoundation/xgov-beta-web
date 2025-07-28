@@ -506,30 +506,29 @@ async function processProposal(
         `${voterCount} voters unassigned, `
     );
 
-    // extra step, decommission the proposal
-    /* try {
+    // extra step, finalize the proposal
+    try {
       logger.info(
-        `Decommissioning proposal ${proposal.id} after unassigning voters`,
+        `Finalizing proposal ${proposal.id} after unassigning voters`,
       );
-      await registryClient.send.decommissionProposal({
+      await registryClient.send.finalizeProposal({
         sender: xgovDaemon.addr,
         signer: xgovDaemon.signer,
         args: {
           proposalId: proposal.id,
         },
         appReferences: [proposal.id],
-        boxReferences: [{appId: proposal.id, name: "M"}],
         extraFee: (1000).microAlgo(), // Extra fee for inner transaction
       });
       logger.info(
-        `Successfully decommissioned proposal ${proposal.id}`,
+        `Successfully finalized proposal ${proposal.id}`,
       );
-    } catch (decommissionError) {
+    } catch (finalizationError) {
       logger.error(
-        `Failed to decommission proposal ${proposal.id} after unassigning voters`,
-        decommissionError,
+        `Failed to finalize proposal ${proposal.id} after unassigning voters`,
+        finalizationError,
       );
-    } */
+    }
 
     // Return successful result
     return {
@@ -756,7 +755,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         message:
           proposalIds && proposalIds.length > 0
             ? `Processed ${proposalsToProcess.length} specific proposals in ${executionTimeSeconds}s using parallel processing`
-            : `Processed ${proposalsToProcess.length} final proposals in ${executionTimeSeconds}s using parallel processing`,
+            : `Processed ${proposalsToProcess.length} proposals in ${executionTimeSeconds}s using parallel processing`,
         results,
         processingDetails: {
           concurrencyLevel: maxConcurrentProposals,
@@ -774,7 +773,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error("Error in POST /api/unassign:", error);
     return new Response(
       JSON.stringify({
-        error: "Failed to process final proposals",
+        error: "Failed to process proposals",
         details: error instanceof Error ? error.message : String(error),
       }),
       {

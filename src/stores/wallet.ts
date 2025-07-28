@@ -10,6 +10,10 @@ let walletProviders: SupportedWallet[] = [
   WalletId.EXODUS,
   WalletId.KIBISIS,
   { id: WalletId.LUTE, options: { siteName: "XGov Beta" } },
+  /* {
+      id: WalletId.WALLETCONNECT,
+      options: { projectId: '<TBD>' }
+  }, */
 ];
 
 if (import.meta.env.PUBLIC_NETWORK === "localnet") {

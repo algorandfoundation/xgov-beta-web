@@ -7,12 +7,13 @@ import {
   UseWallet,
 } from "@/hooks";
 import { ProposalForm, proposalFormSchema } from "@/recipes";
-import { ProposalStatus, submitProposal } from "@/api";
+import { ProposalStatus, openProposal } from "@/api";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useEffect, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { z } from "zod";
 import { useBalance } from "@/hooks/useBalance";
+import { useTransactionState } from "@/hooks/useTransactionState";
 
 export function ProposalCreateIsland() {
   return (
@@ -26,23 +27,28 @@ export function ProposalCreateIsland() {
 
 const activeProposalTypes = [
   ProposalStatus.ProposalStatusDraft,
-  ProposalStatus.ProposalStatusFinal,
+  ProposalStatus.ProposalStatusSubmitted,
   ProposalStatus.ProposalStatusVoting,
 ];
 
 export function ProposalCreate() {
-  const { activeAddress, transactionSigner, activeWallet } = useWallet();
+  const { activeAddress, transactionSigner: innerSigner, activeWallet } = useWallet();
   const userBalance = useBalance(activeAddress);
   const registry = useRegistry();
   const proposalsData = useProposalsByProposer(activeAddress);
-  const [proposalSubmitLoading, setProposalSubmitLoading] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
   const [searchParams] = useSearchParams();
   const [_searchParams, setSearchParams] = useState(searchParams);
   useSearchParamsObserver((searchParams) => {
     setSearchParams(searchParams);
   });
+
+  const {
+    status,
+    setStatus,
+    errorMessage,
+    reset,
+    isPending
+  } = useTransactionState();
 
   const emptyProposals =
     !!proposalsData.data &&
@@ -55,6 +61,10 @@ export function ProposalCreate() {
   const appId =
     emptyProposal?.id || BigInt(Number(_searchParams.get("appId"))) || null;
 
+  useEffect(() => {
+    reset(); // reset transaction status and errors
+  }, [appId])
+
   const currentProposals =
     !!proposalsData.data &&
     proposalsData.data?.filter((proposal) =>
@@ -66,14 +76,14 @@ export function ProposalCreate() {
 
   const maxRequestedAmount =
     !!userBalance.data?.available &&
-    userBalance.data.available.microAlgos > 1_000n &&
-    !!registry.data?.proposalCommitmentBps
+      userBalance.data.available.microAlgos > 1_000n &&
+      !!registry.data?.proposalCommitmentBps
       ? BigInt(
-          Math.floor(
-            Number(userBalance.data.available.microAlgos - 100_000n) /
-              (Number(registry.data?.proposalCommitmentBps) / 10000),
-          ),
-        )
+        Math.floor(
+          Number(userBalance.data.available.microAlgos - 100_000n) /
+          (Number(registry.data?.proposalCommitmentBps) / 10000),
+        ),
+      )
       : 0n;
 
   useEffect(() => {
@@ -88,45 +98,43 @@ export function ProposalCreate() {
       bps={registry.data?.proposalCommitmentBps || 0n}
       minRequestedAmount={registry.data?.minRequestedAmount || 1000000n}
       maxRequestedAmount={maxRequestedAmount}
-      loading={proposalSubmitLoading}
-      error={submitError || undefined}
+      txnState={{
+        status,
+        errorMessage,
+        isPending
+      }}
       onSubmit={async (data: z.infer<typeof proposalFormSchema>) => {
-        // TODO
         if (!activeAddress) {
-          console.error("No active address");
+          setStatus(new Error("No active address"));
           return;
         }
 
         if (!activeWallet) {
-          console.error("No active wallet");
+          setStatus(new Error("No active wallet"));
           return;
         }
 
         if (!registry.data?.proposalCommitmentBps) {
-          console.error("No proposal commitment bps");
+          setStatus(new Error("No proposal commitment bps"));
           return;
         }
 
         if (!appId) {
-          console.error("No appId set for Lute proposal");
+          setStatus(new Error("No appId set for Lute proposal"));
           return;
         }
 
-        try {
-          await submitProposal(
-            activeAddress,
-            data,
-            transactionSigner,
-            appId,
-            registry.data?.proposalCommitmentBps,
-            setProposalSubmitLoading,
-            setSubmitError,
-          );
+        await openProposal({
+          activeAddress,
+          innerSigner,
+          setStatus,
+          refetch: [],
+          data,
+          appId,
+          bps: registry.data?.proposalCommitmentBps,
+        });
 
-          navigate(`/proposal/${appId}`);
-        } catch (e) {
-          console.error(e);
-        }
+        navigate(`/proposal/${appId}`);
       }}
     />
   );
