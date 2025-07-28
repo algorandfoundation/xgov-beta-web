@@ -367,9 +367,9 @@ for (let i = 0; i < mockProposals.length; i++) {
   console.log(`Focus: ${mockProposals[i].focus}\n\n`);
 
   try {
-    const submitGroup = proposalClient
+    const openGroup = proposalClient
       .newGroup()
-      .submit({
+      .open({
         sender: account.addr,
         signer: account.signer,
         args: {
@@ -388,7 +388,7 @@ for (let i = 0; i < mockProposals.length; i++) {
       })
 
     chunkedMetadata.map((chunk, index) => {
-      submitGroup.uploadMetadata({
+      openGroup.uploadMetadata({
         sender: account.addr,
         signer: account.signer,
         args: {
@@ -400,11 +400,11 @@ for (let i = 0; i < mockProposals.length; i++) {
       });
     })
 
-    await submitGroup.send()
+    await openGroup.send()
   } catch (e) {
     console.log(e);
 
-    console.error("Failed to submit proposal");
+    console.error("Failed to open proposal");
 
     process.exit(1);
   }
@@ -414,13 +414,13 @@ const ts = (await getLatestTimestamp()) + 86400 * 5;
 await timeWarp(ts);
 console.log("finished time warp, new ts: ", await getLatestTimestamp());
 
-// Let's finalize all proposals except the first one, owned by admin
+// Let's submit all proposals except the first one, owned by admin
 for (let i = 1; i < mockProposals.length; i++) {
   const proposalClient = proposalFactory.getAppClientById({
     appId: proposalIds[i],
   });
 
-  await proposalClient.send.finalize({
+  await proposalClient.send.submit({
     sender: proposerAccounts[i].addr,
     signer: proposerAccounts[i].signer,
     args: {},

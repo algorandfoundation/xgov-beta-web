@@ -1,6 +1,5 @@
 import {
   FocusReverseMap,
-  getUrl,
   ProposalFundingTypeReverseMap,
   ProposalStatus,
   ProposalStatusMap,
@@ -119,13 +118,13 @@ function StackedListItem({ proposal, activeAddress }: {
     proposer,
     approvals,
     rejections,
-    submissionTs
+    openTs
   } = proposal;
 
   const phase = ProposalStatusMap[status];
 
-  const metadata = useMetadata(id, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusFinal))
-  const discourse = useDiscourseTopic(metadata.data?.forumLink, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusFinal));
+  const metadata = useMetadata(id, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusSubmitted))
+  const discourse = useDiscourseTopic(metadata.data?.forumLink, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusSubmitted));
   const votedAddresses = useProposalVoters(Number(id), status === ProposalStatus.ProposalStatusVoting);
   const nfds = useNFDs(votedAddresses?.data, status === ProposalStatus.ProposalStatusVoting);
   const avatars = useUrls(nfds?.data, status === ProposalStatus.ProposalStatusVoting);
@@ -185,7 +184,7 @@ function StackedListItem({ proposal, activeAddress }: {
           </div>
           <FundingTypeAndTimeDetail
             fundingType={fundingType}
-            time={formatDistanceToNow(new Date((Number(submissionTs) * 1000)), { addSuffix: true })}
+            time={formatDistanceToNow(new Date((Number(openTs) * 1000)), { addSuffix: true })}
           />
         </div>
       </div>
@@ -219,7 +218,7 @@ function StackedListItem({ proposal, activeAddress }: {
           </div>
           <FundingTypeAndTimeDetail
             fundingType={fundingType}
-            time={formatDistanceToNow(new Date((Number(submissionTs) * 1000)), { addSuffix: true })}
+            time={formatDistanceToNow(new Date((Number(openTs) * 1000)), { addSuffix: true })}
           />
         </div>
       </dl>

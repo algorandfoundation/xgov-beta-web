@@ -5,9 +5,9 @@ import algosdk, {
   makePaymentTxnWithSuggestedParamsFromObject,
   encodeAddress
 } from "algosdk";
-import type { ProposerBoxState, RegistryGlobalState } from "./types";
+import type { RegistryGlobalState } from "./types";
 import { algod, algorand, network, RegistryAppID, registryClient } from "./algorand";
-import type { XGovRegistryComposer } from '@algorandfoundation/xgov/registry';
+import type { ProposerBoxValue, XGovRegistryComposer } from '@algorandfoundation/xgov/registry';
 import { fundingLogicSig, fundingLogicSigSigner } from '@/api/testnet-funding-logicsig';
 import type { TransactionHandlerProps } from '@/api/types/transaction_state';
 import { wrapTransactionSigner } from '@/hooks/useTransactionState';
@@ -62,20 +62,18 @@ export async function getIsXGov(
   address: string,
 ): Promise<{ isXGov: boolean; votingAddress: string }> {
   try {
-    const xgovBoxValue = await algorand.app.getBoxValueFromABIType({
-      appId: BigInt(registryAppID),
-      boxName: xGovBoxName(address),
-      type: ABIType.from("(address,uint64,uint64)"),
+    const xgovBoxValue = await registryClient.getXgovBox({
+      args: {
+        xgovAddress: address,
+      },
+      boxReferences: [
+        xGovBoxName(address),
+      ],
     });
-
-    let votingAddress: string = "";
-    if (!!xgovBoxValue && Array.isArray(xgovBoxValue)) {
-      votingAddress = xgovBoxValue[0] as string;
-    }
 
     return {
       isXGov: true,
-      votingAddress,
+      votingAddress: xgovBoxValue.votingAddress,
     };
   } catch (e) {
     console.error(e);
@@ -88,28 +86,22 @@ export async function getIsXGov(
 
 export async function getIsProposer(
   address: string,
-): Promise<{ isProposer: boolean } & ProposerBoxState> {
+): Promise<{ isProposer: boolean } & ProposerBoxValue> {
   try {
-    const proposerBoxValue = await algorand.app.getBoxValueFromABIType({
-      appId: BigInt(registryAppID),
-      boxName: proposerBoxName(address),
-      type: ABIType.from("(bool,bool,uint64)"),
+    const proposerBoxValue = await registryClient.getProposerBox({
+      args: {
+        proposerAddress: address,
+      },
+      boxReferences: [
+        proposerBoxName(address),
+      ],
     });
-
-    if (!Array.isArray(proposerBoxValue) || proposerBoxValue.length !== 3) {
-      return {
-        isProposer: false,
-        activeProposal: false,
-        kycStatus: false,
-        kycExpiring: BigInt(0),
-      };
-    }
 
     return {
       isProposer: true,
-      activeProposal: proposerBoxValue[0] as boolean,
-      kycStatus: proposerBoxValue[1] as boolean,
-      kycExpiring: proposerBoxValue[2] as bigint,
+      activeProposal: proposerBoxValue.activeProposal,
+      kycStatus: proposerBoxValue.kycStatus,
+      kycExpiring: proposerBoxValue.kycExpiring,
     };
   } catch (e) {
     console.error(e);
@@ -123,9 +115,9 @@ export async function getIsProposer(
 }
 
 export async function getAllProposers(): Promise<{
-  [key: string]: ProposerBoxState;
+  [key: string]: ProposerBoxValue;
 }> {
-  const proposers: { [key: string]: ProposerBoxState } = {};
+  const proposers: { [key: string]: ProposerBoxValue } = {};
   const boxes = await algorand.client.algod
     .getApplicationBoxes(registryAppID)
     .do();
@@ -135,25 +127,11 @@ export async function getAllProposers(): Promise<{
       continue;
     }
 
-    const proposerBoxValue = await algorand.app.getBoxValueFromABIType({
-      appId: BigInt(registryAppID),
-      boxName: box.name,
-      type: ABIType.from("(bool,bool,uint64)"),
-    });
-
-    if (!Array.isArray(proposerBoxValue) || proposerBoxValue.length !== 3) {
-      throw new Error("invalid proposer box value");
-    }
-
-    const proposer: ProposerBoxState = {
-      activeProposal: proposerBoxValue[0] as boolean,
-      kycStatus: proposerBoxValue[1] as boolean,
-      kycExpiring: proposerBoxValue[2] as bigint,
-    };
-
     const addr = encodeAddress(Buffer.from(box.name.slice(1)));
 
-    proposers[addr] = proposer;
+    const proposerBoxValue = await getIsProposer(addr);
+
+    proposers[addr] = proposerBoxValue;
   }
 
   return proposers;
@@ -476,7 +454,7 @@ export async function setProposerKYC({
         transactionSigner,
       );
     }
-    
+
     const { confirmations: [confirmation] } = await builder.send();
 
     if (

@@ -1,20 +1,17 @@
 import { ProfileCard } from "@/components/ProfileCard/ProfileCard";
 
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
 import {
-  openProposal,
-  registryClient,
+  createEmptyProposal,
   setVotingAddress,
   subscribeProposer,
   subscribeXgov,
   unsubscribeXgov,
 } from "@/api";
-import algosdk, {
-  ALGORAND_MIN_TX_FEE,
+import {
   type TransactionSigner,
 } from "algosdk";
-import { Buffer } from "buffer";
 
 import { XGovProposerStatusPill } from "@/components/XGovProposerStatusPill/XGovProposerStatusPill";
 import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton";
@@ -36,7 +33,6 @@ import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
 import { queryClient } from "@/stores";
 import { useTransactionState } from "@/hooks/useTransactionState";
-import { set } from "date-fns";
 
 
 export function ProfilePageIsland({ address }: { address: string }) {
@@ -260,7 +256,7 @@ export function ProfilePage({
                   }
                   submitText="Confirm"
                   onSubmit={async () => {
-                    const appId = await openProposal({
+                    const appId = await createEmptyProposal({
                       activeAddress,
                       innerSigner,
                       setStatus: setOpenStatus,

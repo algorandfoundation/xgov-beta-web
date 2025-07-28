@@ -169,7 +169,7 @@ export const mockProposals: MockProposalCreationData[] = [
     focus: ProposalFocus.FocusLibraries,
   },
   {
-    status: PS.ProposalStatusFinal,
+    status: PS.ProposalStatusSubmitted,
     title: "AlgoNFT Marketplace",
     proposalJson: {
       description:
@@ -186,7 +186,7 @@ export const mockProposals: MockProposalCreationData[] = [
     focus: ProposalFocus.FocusNFT,
   },
   {
-    status: PS.ProposalStatusFinal,
+    status: PS.ProposalStatusSubmitted,
     title: "AlgoSwap",
     proposalJson: {
       description:
@@ -203,7 +203,7 @@ export const mockProposals: MockProposalCreationData[] = [
     focus: ProposalFocus.FocusDeFi,
   },
   {
-    status: PS.ProposalStatusFinal,
+    status: PS.ProposalStatusSubmitted,
     title: "Auto-Compounding Farms",
     proposalJson: {
       description:
@@ -253,7 +253,7 @@ export const mockProposals: MockProposalCreationData[] = [
     focus: ProposalFocus.FocusLibraries,
   },
   {
-    status: PS.ProposalStatusFinal,
+    status: PS.ProposalStatusSubmitted,
     title: 'AlgoNFT Marketplace',
     proposalJson: {
       description: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
@@ -268,7 +268,7 @@ export const mockProposals: MockProposalCreationData[] = [
     focus: ProposalFocus.FocusNFT,
   },
   {
-    status: PS.ProposalStatusFinal,
+    status: PS.ProposalStatusSubmitted,
     title: 'AlgoSwap',
     proposalJson: {
       description: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
@@ -283,7 +283,7 @@ export const mockProposals: MockProposalCreationData[] = [
     focus: ProposalFocus.FocusDeFi,
   },
   {
-    status: PS.ProposalStatusFinal,
+    status: PS.ProposalStatusSubmitted,
     title: 'Auto-Compounding Farms',
     proposalJson: {
       description: 'This is a retroactive proposal for impact delivered via CompX auto-compounding farms. These farms went live in 2023, and have been giving Algorand users',
@@ -331,7 +331,7 @@ export const mockProposals: MockProposalCreationData[] = [
     focus: ProposalFocus.FocusLibraries,
   },
   {
-    status: PS.ProposalStatusFinal,
+    status: PS.ProposalStatusSubmitted,
     title: "AlgoNFT Marketplace",
     proposalJson: {
       description:
@@ -348,7 +348,7 @@ export const mockProposals: MockProposalCreationData[] = [
     focus: ProposalFocus.FocusNFT,
   },
   {
-    status: PS.ProposalStatusFinal,
+    status: PS.ProposalStatusSubmitted,
     title: "AlgoSwap",
     proposalJson: {
       description:

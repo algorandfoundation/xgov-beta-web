@@ -5,7 +5,7 @@ import type { NFD } from "../nfd";
 export enum ProposalStatus {
   ProposalStatusEmpty = 0,
   ProposalStatusDraft = 10,
-  ProposalStatusFinal = 20,
+  ProposalStatusSubmitted = 20,
   ProposalStatusVoting = 25,
   ProposalStatusApproved = 30,
   ProposalStatusRejected = 40,
@@ -18,7 +18,7 @@ export enum ProposalStatus {
 export type Status =
   | "Empty"
   | "Draft"
-  | "Final"
+  | "Submitted"
   | "Voting"
   | "Approved"
   | "Rejected"
@@ -29,7 +29,7 @@ export type Status =
 export const ProposalStatusMap = {
   [ProposalStatus.ProposalStatusEmpty]: "Empty",
   [ProposalStatus.ProposalStatusDraft]: "Discussion",
-  [ProposalStatus.ProposalStatusFinal]: "Discussion",
+  [ProposalStatus.ProposalStatusSubmitted]: "Discussion",
   [ProposalStatus.ProposalStatusVoting]: "Voting",
   [ProposalStatus.ProposalStatusApproved]: "Approved",
   [ProposalStatus.ProposalStatusRejected]: "Rejected",
@@ -41,7 +41,7 @@ export const ProposalStatusMap = {
 
 export const ProposalStatusReverseMap: { [key: string]: ProposalStatus[] } = {
   Empty: [ProposalStatus.ProposalStatusEmpty],
-  Discussion: [ProposalStatus.ProposalStatusDraft, ProposalStatus.ProposalStatusFinal],
+  Discussion: [ProposalStatus.ProposalStatusDraft, ProposalStatus.ProposalStatusSubmitted],
   Voting: [ProposalStatus.ProposalStatusVoting],
   Approved: [ProposalStatus.ProposalStatusApproved],
   Rejected: [ProposalStatus.ProposalStatusRejected],
@@ -159,7 +159,7 @@ export interface ProposalJSON {
 export const statusToPhase = {
   [ProposalStatus.ProposalStatusEmpty]: "null",
   [ProposalStatus.ProposalStatusDraft]: "draft",
-  [ProposalStatus.ProposalStatusFinal]: "discussion",
+  [ProposalStatus.ProposalStatusSubmitted]: "discussion",
   [ProposalStatus.ProposalStatusVoting]: "voting",
   [ProposalStatus.ProposalStatusApproved]: "closure",
   [ProposalStatus.ProposalStatusRejected]: "closure",

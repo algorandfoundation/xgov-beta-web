@@ -100,7 +100,7 @@ Afterwards, make sure to re-comment the two lines from `src/layouts/Layout.astro
 
 The application includes a POST endpoint at `/api/assign` that:
 
-1. Gets all proposals with status FINAL
+1. Gets all proposals with status SUBMITTED
 2. For each proposal, retrieves the committee ID from its global state
 3. Loads committee members from bundled JSON files or external API
 4. Assigns committee members as voters to each proposal using parallel processing
@@ -169,7 +169,7 @@ curl -X POST https://your-domain/api/assign \
 
 #### Request Body Options:
 
-* `proposalIds` (optional): Array of specific proposal IDs to process (if omitted, all FINAL proposals will be processed)
+* `proposalIds` (optional): Array of specific proposal IDs to process (if omitted, all SUBMITTED proposals will be processed)
 
 #### Response Format:
 
