@@ -9,11 +9,11 @@ export function BracketedPhaseDetail({ phase }: { phase: string }) {
       </span>
       <span
         className={cn(
-          phase === "Draft" ? "text-algo-black-60" : "",
-          phase === "Submission" ? "text-algo-blue dark:text-algo-teal" : "",
-          phase === "Discussion" ? "text-algo-blue dark:text-algo-teal" : "",
-          phase === "Voting" ? "text-algo-teal dark:text-algo-blue-30" : "",
-
+          phase === "Empty" ? "text-algo-black-60" : "",
+          phase === "Discussion" ? "text-algo-black dark:text-white" : "",
+          phase === "Voting" ? "text-algo-orange dark:text-algo-yellow" : "",
+          ["Approved", "Reviewed", "Funded"].includes(phase) ? "text-algo-blue dark:text-algo-teal" : "",
+          ["Rejected", "Blocked", "Deleted"].includes(phase) ? "text-algo-red" : "",
           "p-0.5 px-1.5 text-base lg:text-lg",
         )}
       >
