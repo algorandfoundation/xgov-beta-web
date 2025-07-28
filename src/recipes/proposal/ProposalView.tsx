@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { CoinsIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
+import { CoinsIcon, ExternalLinkIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
 
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { UserPill } from "@/components/UserPill/UserPill";
@@ -144,7 +144,7 @@ function StatusCardTemplate({
     <div
       className={cn(
         className,
-        "w-full lg:min-w-[30rem] xl:min-w-[40rem] bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-50 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between sm:flex-nowrap relative transition overflow-hidden",
+        "w-full lg:min-w-[30rem] xl:min-w-[40rem] bg-algo-blue-10 dark:bg-algo-black-90 rounded-3xl flex flex-wrap items-center justify-between sm:flex-nowrap relative transition overflow-hidden",
       )}
     >
       <div className="w-full px-4 py-5 sm:px-6">
@@ -208,9 +208,10 @@ function DiscussionStatusCard({
   let action = (
     <Link
       to={proposal.forumLink}
-      className="mt-2 px-4 py-2 bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-md hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50"
+      className="flex gap-2 mt-2 px-4 py-2 bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-md hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50"
     >
       View the discussion
+      <ExternalLinkIcon  />
     </Link>
   )
 
