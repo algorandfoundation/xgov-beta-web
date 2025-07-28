@@ -521,7 +521,7 @@ async function processProposal(
         extraFee: (1000).microAlgo(), // Extra fee for inner transaction
       });
       logger.info(
-        `Successfully finalizeed proposal ${proposal.id}`,
+        `Successfully finalized proposal ${proposal.id}`,
       );
     } catch (finalizationError) {
       logger.error(
