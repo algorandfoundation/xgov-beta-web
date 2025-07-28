@@ -7,7 +7,7 @@ import algosdk, {
 } from "algosdk";
 import type { RegistryGlobalState } from "./types";
 import { algod, algorand, network, RegistryAppID, registryClient } from "./algorand";
-import type { ProposerBoxValue, XGovRegistryComposer } from '@algorandfoundation/xgov/registry';
+import type { ProposerBoxValue, XGovBoxValue, XGovRegistryComposer } from '@algorandfoundation/xgov/registry';
 import { fundingLogicSig, fundingLogicSigSigner } from '@/api/testnet-funding-logicsig';
 import type { TransactionHandlerProps } from '@/api/types/transaction_state';
 import { wrapTransactionSigner } from '@/hooks/useTransactionState';
@@ -62,14 +62,17 @@ export async function getIsXGov(
   address: string,
 ): Promise<{ isXGov: boolean; votingAddress: string }> {
   try {
-    const xgovBoxValue = await registryClient.getXgovBox({
+    const xgovBoxValue = (await registryClient.newGroup().getXgovBox({
+      sender: address,
       args: {
         xgovAddress: address,
       },
       boxReferences: [
         xGovBoxName(address),
       ],
-    });
+    }).simulate({
+      skipSignatures: true,
+    })).returns[0] as XGovBoxValue;
 
     return {
       isXGov: true,
@@ -88,14 +91,17 @@ export async function getIsProposer(
   address: string,
 ): Promise<{ isProposer: boolean } & ProposerBoxValue> {
   try {
-    const proposerBoxValue = await registryClient.getProposerBox({
+    const proposerBoxValue = (await registryClient.newGroup().getProposerBox({
+      sender: address,
       args: {
         proposerAddress: address,
       },
       boxReferences: [
         proposerBoxName(address),
       ],
-    });
+    }).simulate({
+      skipSignatures: true,
+    })).returns[0] as ProposerBoxValue;
 
     return {
       isProposer: true,
