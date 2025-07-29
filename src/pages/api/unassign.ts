@@ -5,6 +5,7 @@ import {
   getRegistryClient,
   getProposalToUnassign,
   getAllProposalsToUnassign,
+  proposerBoxName,
 } from "@/api";
 import {
   ProposalClient,
@@ -12,7 +13,7 @@ import {
   type CallParams,
   type ProposalArgs,
 } from "@algorandfoundation/xgov";
-import algosdk, { type TransactionSigner } from "algosdk";
+import algosdk, { encodeAddress, type TransactionSigner } from "algosdk";
 import type { APIRoute } from "astro";
 import { createLogger } from "@/utils/logger";
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
@@ -52,6 +53,7 @@ interface ProposalResult {
     voters: number;
     status: "success" | "failed";
     error?: string;
+    finalized?: boolean; // Whether the proposal was finalized
   };
 }
 
@@ -446,22 +448,6 @@ async function processProposal(
       `Found ${existingVoters.length} assigned voters for proposal ${proposalClient.appId}`,
     );
 
-    // Nothing to do if all voters are already unassigned
-    if (existingVoters.length === 0) {
-      logger.info(
-        `All voters already unassigned from proposal ${proposal.id}, skipping`,
-      );
-      return {
-        success: true,
-        details: {
-          id: proposal.id,
-          title: proposal.title,
-          voters: 0,
-          status: "success" as const,
-        },
-      };
-    }
-
     let voterCount = 0;
 
     // Unsssign voters in batches for better efficiency
@@ -507,10 +493,13 @@ async function processProposal(
     );
 
     // extra step, finalize the proposal
+    let finalized = false;
     try {
       logger.info(
         `Finalizing proposal ${proposal.id} after unassigning voters`,
       );
+      const proposer = await proposalClient.state.global.proposer();
+      const proposerAddr = encodeAddress(proposer.asByteArray()!);
       await registryClient.send.finalizeProposal({
         sender: xgovDaemon.addr,
         signer: xgovDaemon.signer,
@@ -518,11 +507,13 @@ async function processProposal(
           proposalId: proposal.id,
         },
         appReferences: [proposal.id],
-        extraFee: (1000).microAlgo(), // Extra fee for inner transaction
+        boxReferences: [proposerBoxName(proposerAddr)],
+        extraFee: (2000).microAlgo(), // Extra fee for inner transaction
       });
       logger.info(
         `Successfully finalized proposal ${proposal.id}`,
       );
+      finalized = true;
     } catch (finalizationError) {
       logger.error(
         `Failed to finalize proposal ${proposal.id} after unassigning voters`,
@@ -538,6 +529,7 @@ async function processProposal(
         title: proposal.title,
         voters: voterCount,
         status: "success" as const,
+        finalized,
       },
     };
   } catch (error) {
