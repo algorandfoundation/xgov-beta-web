@@ -186,9 +186,11 @@ export async function getAllProposalsToUnassign(): Promise<
 > {
   return (await getAllProposals()).filter(
     (proposal) =>
+    (
       proposal.status === ProposalStatus.ProposalStatusFunded ||
       proposal.status === ProposalStatus.ProposalStatusBlocked ||
-      proposal.status === ProposalStatus.ProposalStatusRejected,
+      proposal.status === ProposalStatus.ProposalStatusRejected
+    ) && !proposal.finalized,
   );
 }
 
@@ -314,9 +316,11 @@ export async function getProposalToUnassign(
 ): Promise<ProposalMainCardDetails> {
   const proposalData = await getProposal(id);
   if (
-    proposalData.status !== ProposalStatus.ProposalStatusFunded &&
-    proposalData.status !== ProposalStatus.ProposalStatusBlocked &&
-    proposalData.status !== ProposalStatus.ProposalStatusRejected
+    (
+      proposalData.status !== ProposalStatus.ProposalStatusFunded &&
+      proposalData.status !== ProposalStatus.ProposalStatusBlocked &&
+      proposalData.status !== ProposalStatus.ProposalStatusRejected
+    ) || proposalData.finalized
   ) {
     throw new Error("Proposal not in unassignable state");
   }
