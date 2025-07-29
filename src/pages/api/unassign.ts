@@ -446,22 +446,6 @@ async function processProposal(
       `Found ${existingVoters.length} assigned voters for proposal ${proposalClient.appId}`,
     );
 
-    // Nothing to do if all voters are already unassigned
-    if (existingVoters.length === 0) {
-      logger.info(
-        `All voters already unassigned from proposal ${proposal.id}, skipping`,
-      );
-      return {
-        success: true,
-        details: {
-          id: proposal.id,
-          title: proposal.title,
-          voters: 0,
-          status: "success" as const,
-        },
-      };
-    }
-
     let voterCount = 0;
 
     // Unsssign voters in batches for better efficiency
