@@ -169,9 +169,9 @@ function StatusCardTemplate({
           <p className="text-algo-blue dark:text-algo-teal">{sideHeader}</p>
         </div>
 
-        <p className="mt-3 max-w-[30rem] text-wrap text-sm text-algo-black-50 dark:text-algo-black-30">
+        <div className="mt-3 max-w-[30rem] text-wrap text-sm text-algo-black-50 dark:text-algo-black-30">
           {subHeader}
-        </p>
+        </div>
         <div className="flex flex-col items-center justify-center gap-10 w-full h-96">
           {icon}
           {action}
