@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { CheckIcon, CoinsIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
+import { CoinsIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
 
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { UserPill } from "@/components/UserPill/UserPill";
@@ -336,12 +336,12 @@ function VotingStatusCard({
 
   const xgovQuorum = getXGovQuorum(proposal.fundingCategory, quorums);
   const voteQuorum = getVoteQuorum(proposal.fundingCategory, weightedQuorums);
-  const votingDuration = Date.now() - Number(proposal.voteOpenTs) * 1000;
+  const voteStartTime = Number(proposal.voteOpenTs) * 1000;
   const minimumVotingDuration = getVotingDuration(proposal.fundingCategory, votingDurations);
+  const voteEndTime = voteStartTime + minimumVotingDuration;
+  const votingTimeElapsed = Date.now() - voteStartTime;
 
-  const [days, hours, minutes] = useTimeLeft(
-    Date.now() + (minimumVotingDuration - votingDuration),
-  );
+  const [days, hours, minutes] = useTimeLeft(voteEndTime);
   const remainingTime = `${days}d ${hours}h ${minutes}m`;
 
   const votingSchema = z.object({
@@ -615,7 +615,7 @@ function VotingStatusCard({
       className={className}
       header="Vote on this proposal"
       subHeader={subheader}
-      sideHeader={votingDuration > minimumVotingDuration ? 'Voting window elapsed!' : remainingTime}
+      sideHeader={votingTimeElapsed > minimumVotingDuration ? 'Voting window elapsed!' : remainingTime}
       icon={<VoteIcon className="size-24 stroke-[1] stroke-algo-blue dark:stroke-algo-teal" />}
       action={action}
     />
@@ -695,9 +695,9 @@ export function ProposalInfo({
   const phase = ProposalStatusMap[proposal.status];
 
   const _pastProposals = (pastProposals || []).filter((p) =>
-    [
+    ![
       ProposalStatus.ProposalStatusEmpty,
-      ProposalStatus.ProposalStatusDraft,
+      ProposalStatus.ProposalStatusDelete,
     ].includes(p.status) && p.id !== proposal.id
   )
 
@@ -844,7 +844,7 @@ export function ProposalInfo({
                       return (
                         <li
                           key={pastProposal.id}
-                          className="bg-algo-blue-10 dark:bg-algo-black-90 border-l-4 border-b-[3px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-x-xl rounded-2xl flex flex-wrap items-center justify-between gap-x-6 gap-y-4 p-2.5 sm:flex-nowrap relative transition overflow-hidden text-wrap"
+                          className="bg-algo-blue-10 dark:bg-algo-black-90 rounded-x-xl rounded-2xl flex flex-wrap items-center justify-between gap-x-6 gap-y-4 p-2.5 sm:flex-nowrap relative transition overflow-hidden text-wrap"
                         >
                           <Link
                             className="absolute left-0 top-0 w-full h-full hover:bg-algo-blue/30 dark:hover:bg-algo-teal/30"
@@ -982,8 +982,6 @@ export function DropModal({
   transactionSigner,
   refetch,
 }: DropModalProps) {
-  const { activeWallet } = useWallet();
-  const walletName = activeWallet?.metadata.name;
 
   const {
     status,
@@ -992,8 +990,6 @@ export function DropModal({
     reset,
     isPending,
   } = useTransactionState();
-
-
 
   return (
     <Dialog open={isOpen}>
@@ -1012,7 +1008,10 @@ export function DropModal({
         </DialogHeader>
         {errorMessage && <p className="text-algo-red">{errorMessage}</p>}
         <DialogFooter className="mt-8">
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={() => {
+            reset();
+            onClose();
+          }}>
             Cancel
           </Button>
           <Button
