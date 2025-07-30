@@ -11,7 +11,7 @@ export function FundingTypeAndTimeDetail({
     <div className="flex items-center gap-2 md:gap-4 text-xs md:text-lg text-algo-black dark:text-white/80">
       {ProposalFundingTypeMap[fundingType]}
       <span className="font-bold text-algo-blue dark:text-algo-teal">//</span>
-      <p className="w-10 text-nowrap md:w-16 text-end">
+      <p className="min-w-10 md:min-w-16 text-nowrap text-end">
         <time>{time.replace('about ', '').replace(' minutes', 'm').replace(' minute', 'm').replace(' hours', 'h').replace(' hour', 'h').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}</time>
       </p>
     </div>

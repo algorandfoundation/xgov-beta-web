@@ -23,6 +23,7 @@ import {
   ProposalFundingTypeReverseMap,
   ProposalStatusFilterKeys,
 } from "@/api";
+import { FilterIcon } from "lucide-react";
 
 export interface ProposalFilterProps {
   className?: string;
@@ -103,9 +104,7 @@ export function ProposalFilter({ className }: ProposalFilterProps) {
                   )}
                   onClick={() => setDialogOpen(true)}
                 >
-                  <AlgoShapeIcon11 className="absolute opacity-0 translate-y-2 translate-x-2 fill-algo-blue-40 dark:fill-algo-teal-40 group-hover:opacity-100 group-hover:translate-y-1 group-hover:translate-x-1 rotate-180 size-6 transition duration-500" />
-                  <AlgoShapeIcon11 className="absolute translate-y-1 translate-x-1 fill-algo-blue-40 dark:fill-algo-teal-40 group-hover:fill-white dark:group-hover:fill-algo-black group-hover:translate-y-0 group-hover:translate-x-0 rotate-180 size-6 transition duration-500" />
-                  <AlgoShapeIcon11 className="fill-algo-blue dark:fill-algo-teal group-hover:fill-white dark:group-hover:fill-algo-black group-hover:opacity-0 group-hover:-translate-y-1 group-hover:-translate-x-1 rotate-180 size-6 transition duration-500" />
+                  <FilterIcon className="text-algo-blue group-hover:text-white dark:text-algo-teal dark:group-hover:text-algo-black" />
                 </button>
               </TooltipTrigger>
             </DialogTrigger>

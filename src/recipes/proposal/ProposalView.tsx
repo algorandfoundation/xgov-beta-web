@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { CoinsIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
+import { CheckIcon, CoinsIcon, ExternalLinkIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
 
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { UserPill } from "@/components/UserPill/UserPill";
@@ -88,7 +88,7 @@ export const defaultsStatusCardMap = {
     header: 'Proposal Approved!',
     subHeader: 'The proposal has been approved by the xGov community! Once the proposal is verified to meet requirements, it will be funded!',
     sideHeader: '',
-    icon: <PartyPopperIcon className="size-40 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
+    icon: <PartyPopperIcon className="size-24 stroke-[1] text-algo-blue dark:text-algo-teal group-hover:text-white" />,
     action: 'woo hoo! 🎉',
   },
   [ProposalStatus.ProposalStatusRejected]: {
@@ -128,6 +128,14 @@ export const defaultsStatusCardMap = {
   },
 }
 
+const PostVotingStates = [
+  ProposalStatus.ProposalStatusApproved,
+  ProposalStatus.ProposalStatusRejected,
+  ProposalStatus.ProposalStatusReviewed,
+  ProposalStatus.ProposalStatusFunded,
+  ProposalStatus.ProposalStatusBlocked
+]
+
 interface StatusCardTemplateProps {
   className?: string;
   header?: string;
@@ -149,7 +157,7 @@ function StatusCardTemplate({
     <div
       className={cn(
         className,
-        "w-full lg:min-w-[30rem] xl:min-w-[40rem] bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-50 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-wrap items-center justify-between sm:flex-nowrap relative transition overflow-hidden",
+        "w-full lg:min-w-[30rem] xl:min-w-[40rem] bg-algo-blue-10 dark:bg-algo-black-90 rounded-3xl flex flex-wrap items-center justify-between sm:flex-nowrap relative transition overflow-hidden",
       )}
     >
       <div className="w-full px-4 py-5 sm:px-6">
@@ -213,9 +221,10 @@ function DiscussionStatusCard({
   let action = (
     <Link
       to={proposal.forumLink}
-      className="mt-2 px-4 py-2 bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-md hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50"
+      className="flex gap-2 mt-2 px-4 py-2 bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-md hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50"
     >
       View the discussion
+      <ExternalLinkIcon />
     </Link>
   )
 
@@ -632,6 +641,68 @@ export interface StatusCardProps {
   votingDurations: [bigint, bigint, bigint, bigint];
 }
 
+interface PostVotingStatusCardProps {
+  className?: string;
+  proposal: ProposalMainCardDetails;
+  quorums: [bigint, bigint, bigint];
+  weightedQuorums: [bigint, bigint, bigint];
+}
+
+function PostVotingStatusCard({
+  className = "",
+  proposal,
+  quorums,
+  weightedQuorums,
+}: PostVotingStatusCardProps) {
+  const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
+
+  const xgovQuorum = getXGovQuorum(proposal.fundingCategory, quorums);
+  const voteQuorum = getVoteQuorum(proposal.fundingCategory, weightedQuorums);
+
+  const defaults = defaultsStatusCardMap[proposal.status];
+
+  const voteMetricsAction = (
+    <div className="w-full flex flex-col items-center justify-center gap-4">
+      <VoteCounter
+        approvals={Number(proposal.approvals)}
+        rejections={Number(proposal.rejections)}
+        nulls={Number(proposal.nulls)}
+      />
+      <div className="flex gap-2">
+        <XGovQuorumMetPill
+          approved={Number(proposal.votedMembers) > Number(proposal.committeeMembers) * (xgovQuorum / 100)}
+          quorumRequirement={xgovQuorum}
+          label="xgov quorum met"
+        />
+        <VoteQuorumMetPill
+          approved={totalVotes > Number(proposal.committeeVotes) * (voteQuorum / 100)}
+          quorumRequirement={voteQuorum}
+          label="vote quorum met"
+        />
+        <MajorityApprovedPill
+          approved={proposal.approvals > proposal.rejections}
+          label="majority approved"
+        />
+      </div>
+      <VoteBar
+        total={Number(proposal.committeeVotes)}
+        approvals={Number(proposal.approvals)}
+        rejections={Number(proposal.rejections)}
+        nulls={Number(proposal.nulls)}
+      />
+    </div>
+  )
+
+  return <StatusCardTemplate
+    className={className}
+    header={defaults.header}
+    subHeader={defaults.subHeader}
+    sideHeader={defaults.sideHeader}
+    icon={defaults.icon}
+    action={voteMetricsAction}
+  />
+}
+
 export function StatusCard({
   className = "",
   proposal,
@@ -658,6 +729,16 @@ export function StatusCard({
       quorums={quorums}
       weightedQuorums={weightedQuorums}
       votingDurations={votingDurations}
+    />
+  }
+
+  // States that should show vote metrics: Approved, Rejected, Reviewed, Funded, Blocked
+  if (PostVotingStates.includes(proposal.status)) {
+    return <PostVotingStatusCard
+      className={className}
+      proposal={proposal}
+      quorums={quorums}
+      weightedQuorums={weightedQuorums}
     />
   }
 

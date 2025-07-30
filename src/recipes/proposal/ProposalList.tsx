@@ -142,7 +142,7 @@ function StackedListItem({ proposal, activeAddress }: {
   return (
     <div
       key={id}
-      className="w-full bg-algo-blue-10 dark:bg-algo-black-90 border-l-8 border-b-[6px] border-algo-blue-50 dark:border-algo-teal-90 hover:border-algo-blue dark:hover:border-algo-teal rounded-3xl flex flex-col gap-x-6 gap-y-4 p-5 relative transition overflow-hidden"
+      className="w-full bg-algo-blue-10 dark:bg-algo-black-90 rounded-3xl flex flex-col gap-x-6 gap-y-4 p-5 relative transition overflow-hidden"
     >
       <a
         className="absolute left-0 top-0 w-full h-full hover:bg-algo-blue/30 dark:hover:bg-algo-teal/30"
