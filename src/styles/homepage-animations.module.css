@@ -5,7 +5,7 @@
 
 @media all and (display-mode: standalone) {
   .intro {
-    height: calc(100% + env(safe-area-inset-top) + env(safe-area-inset-bottom));
+    height: 100%;
   }
 }
 
