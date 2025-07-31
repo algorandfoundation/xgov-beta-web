@@ -72,7 +72,7 @@ export function StackedListQuery({
   if (_proposals.length === 0) {
     return (
       <div className="h-80 flex justify-center items-center text-2xl dark:text-algo-teal">
-        No Results
+        No Proposals
       </div>
     );
   }
