@@ -94,12 +94,17 @@ const formatNumber = (num: number): string => {
         animations.descriptionFadeIn,
         "relative mt-8 md:mt-4 w-fit"
       )}>
-        <ConnectIsland
-          client:only="react"
-          cta="Get Started"
-          openTutorial
-          hideIcon
-        />
+        <div class="h-9 px-4 py-2 flex items-center justify-center whitespace-nowrap rounded-md text-lg font-medium bg-white dark:bg-algo-black text-algo-black dark:text-white border border-white dark:border-algo-black">
+          <span>Get Started</span>
+        </div>
+        <div class="absolute inset-0">
+          <ConnectIsland
+            client:only="react"
+            cta="Get Started"
+            openTutorial
+            hideIcon
+          />
+        </div>
       </div>
     </div>
   </div>

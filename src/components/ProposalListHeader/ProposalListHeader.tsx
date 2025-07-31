@@ -55,75 +55,68 @@ export function ProposalListHeader({
   } = useTransactionState();
 
   return (
-    <div className="flex items-center justify-between mb-4 px-3">
-      <div className="sm:flex-auto">
-        <h1 id="list-header-title" className="text-lg sm:text-2xl md:text-4xl font-semibold text-algo-blue dark:text-algo-teal">
-          {title}
-        </h1>
-      </div>
-      <div className="sm:ml-16 sm:mt-0 sm:flex-none flex flex-wrap-reverse justify-end items-center gap-2 md:gap-6">
-        {children}
-        {
-          validProposer && (
-            <>
-              <InfinityMirrorButton
-                variant="secondary"
-                size="sm"
-                onClick={() => setShowOpenProposalModal(true)}
-                disabled={proposer.data?.activeProposal}
-                disabledMessage="You already have an active proposal"
-              >
-                {
-                  isPending
-                    ? (<div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>)
-                    : "Create Proposal"
-                }
-              </InfinityMirrorButton>
-              <ConfirmationModal
-                isOpen={showOpenProposalModal}
-                onClose={() => {
-                  setShowOpenProposalModal(false)
-                  reset();
-                }}
-                title="Create Proposal"
-                description="Are you sure you want to create a new proposal? You can only have one active proposal at a time."
-                warning={
-                  <WarningNotice
-                    title="Proposal Fee"
-                    description={<>
-                      It will cost
-                      <span className="inline-flex items-center mx-1 gap-1">
-                        <AlgorandIcon className="size-2.5" />{Number(registry.data?.openProposalFee || 0n) / 1_000_000}
-                      </span>
-                      to create a proposal.
-                    </>}
-                  />
-                }
-                submitText="Confirm"
-                onSubmit={async () => {
-                  const appId = await createEmptyProposal({
-                    activeAddress,
-                    innerSigner: transactionSigner,
-                    setStatus,
-                    refetch: []
-                  })
+    <div className="sm:ml-16 sm:mt-0 sm:flex-none flex flex-wrap-reverse justify-end items-center gap-2 md:gap-6">
+      {children}
+      {
+        validProposer && (
+          <>
+            <InfinityMirrorButton
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowOpenProposalModal(true)}
+              disabled={proposer.data?.activeProposal}
+              disabledMessage="You already have an active proposal"
+            >
+              {
+                isPending
+                  ? (<div className="animate-spin h-4 w-4 border-2 border-white dark:border-algo-black border-t-transparent dark:border-t-transparent rounded-full"></div>)
+                  : "Create Proposal"
+              }
+            </InfinityMirrorButton>
+            <ConfirmationModal
+              isOpen={showOpenProposalModal}
+              onClose={() => {
+                setShowOpenProposalModal(false)
+                reset();
+              }}
+              title="Create Proposal"
+              description="Are you sure you want to create a new proposal? You can only have one active proposal at a time."
+              warning={
+                <WarningNotice
+                  title="Proposal Fee"
+                  description={<>
+                    It will cost
+                    <span className="inline-flex items-center mx-1 gap-1">
+                      <AlgorandIcon className="size-2.5" />{Number(registry.data?.openProposalFee || 0n) / 1_000_000}
+                    </span>
+                    to create a proposal.
+                  </>}
+                />
+              }
+              submitText="Confirm"
+              onSubmit={async () => {
+                const appId = await createEmptyProposal({
+                  activeAddress,
+                  innerSigner: transactionSigner,
+                  setStatus,
+                  refetch: []
+                })
 
-                  if (appId) {
-                    setShowOpenProposalModal(false);
-                    queryClient.invalidateQueries({ queryKey: ["getProposalsByProposer", activeAddress] })
-                    navigate(`/new?appId=${appId}`)
-                  }
-                }}
-                txnState={{
-                  status,
-                  errorMessage,
-                  isPending
-                }}
-              />
-            </>
-          )
-        }
-      </div>
+                if (appId) {
+                  setShowOpenProposalModal(false);
+                  queryClient.invalidateQueries({ queryKey: ["getProposalsByProposer", activeAddress] })
+                  navigate(`/new?appId=${appId}`)
+                }
+              }}
+              txnState={{
+                status,
+                errorMessage,
+                isPending
+              }}
+            />
+          </>
+        )
+      }
     </div>
   );
 }
