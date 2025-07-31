@@ -12,6 +12,8 @@ import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispens
 import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
 import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
 import type { TransactionStateInfo } from "@/api/types/transaction_state";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Button } from "../ui/button";
 
 export interface ProfileCardProps {
   address: string;
@@ -31,7 +33,7 @@ export interface ProfileCardProps {
   proposerSignupCost: bigint;
   subscribeProposer: () => Promise<void>;
   subscribeProposerState: TransactionStateInfo;
-  
+
   activeAddress: string | null;
   className?: string;
 }
@@ -69,7 +71,7 @@ export function ProfileCard({
         )}
       >
         <div className="w-full flex flex-col gap-4">
-          <TestnetDispenserBanner /> 
+          <TestnetDispenserBanner />
 
           <div>
             <div className="flex items-center gap-6">
@@ -118,15 +120,33 @@ export function ProfileCard({
               }
 
               {!proposer?.isProposer && (
-                <ActionButton
-                  type="button"
-                  onClick={() => setShowBecomeProposerTermsModal(true)}
-                  disabled={subscribeProposerState.isPending}
-                >
-                  {subscribeProposerState.isPending
-                    ? "Loading..."
-                    : "Become a Proposer"}
-                </ActionButton>
+                // <ActionButton
+                //   type="button"
+                //   onClick={() => setShowBecomeProposerTermsModal(true)}
+                //   disabled={subscribeProposerState.isPending}
+                // >
+                //   {subscribeProposerState.isPending
+                //     ? "Loading..."
+                //     : "Become a Proposer"}
+                // </ActionButton>
+                <Popover>
+                  <PopoverTrigger aria-label={`Info: Become a Proposer`}>
+                    <Button
+                      type='button'
+                      size="sm"
+                    >
+                      Become a Proposer
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="bottom"
+                    sideOffset={8}
+                    className="text-sm"
+                    role="tooltip"
+                  >
+                    Signups to become a Proposer will open in September.
+                  </PopoverContent>
+                </Popover>
               )}
             </div>
           </div>

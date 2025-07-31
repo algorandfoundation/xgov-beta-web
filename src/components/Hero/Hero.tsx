@@ -103,13 +103,11 @@ export function Hero({
           </div>
         </div>
       </div>
-      <div className="w-full flex mt-8 lg:mt-6 p-4 bg-white/10 rounded-t-3xl">
-        <div
-          className={cn(
-            animations.popUpInCohort,
-            "relative w-full flex flex-col md:px-4",
-          )}
-        >
+      <div className={cn(
+        animations.popUpInCohort,
+        "w-full flex mt-8 lg:mt-6 p-4 bg-white/10 rounded-t-3xl"
+      )}>
+        <div className="relative w-full flex flex-col md:px-4">
           <h1 className="text-2xl mb-2 font-bold">Current Stats</h1>
           <ul className="flex flex-wrap gap-x-8 gap-y-4 sm:gap-x-14 md:gap-x-20 lg:gap-x-40 text-sm font-mono text-white dark:text-algo-black">
             <li className="flex flex-col">
