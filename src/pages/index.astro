@@ -19,7 +19,7 @@ let registry = await getGlobalState();
 let proposals = await getAllProposals();
 ---
 
-<Layout title={title} description={description}>
+<Layout description={description}>
   <HeroAnimation />
   <LandingPage>
     <Hero
@@ -37,7 +37,7 @@ let proposals = await getAllProposals();
     >
     </div>
     <TestnetDispenserBannerIsland client:only="react" />
-    <div class="flex items-center justify-between mb-4 px-3">
+    <div class="min-h-10 flex items-center justify-between mb-4 px-3">
       <div class="sm:flex-auto">
         <h1
           id="list-header-title"

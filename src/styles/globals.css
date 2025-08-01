@@ -11,7 +11,7 @@
     --sat: env(safe-area-inset-top);
     --sab: env(safe-area-inset-bottom);
   }
-  
+
   html {
     padding-top: var(--sat);
   }
@@ -51,6 +51,16 @@ html::-webkit-scrollbar {
 html.dark::-webkit-scrollbar {
   background-color: #001324;
   width: 6px;
+}
+
+body[data-scroll-locked] header {
+  margin-right: calc(0.5rem + var(--removed-body-scroll-bar-size)) !important;
+}
+
+@media (min-width: 768px) {
+  body[data-scroll-locked] header {
+    padding-right: calc(1rem + var(--removed-body-scroll-bar-size)) !important;
+  }
 }
 
 pera-wallet-sign-txn-toast {
