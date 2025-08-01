@@ -23,11 +23,11 @@ BigInt.prototype.toJSON = function () {
 const queryCache = new QueryClient();
 
 let walletProviders: SupportedWallet[] = [
-  WalletId.DEFLY,
   WalletId.PERA,
+  WalletId.DEFLY,
+  { id: WalletId.LUTE, options: { siteName: "XGov Beta" } },
   WalletId.EXODUS,
   WalletId.KIBISIS,
-  { id: WalletId.LUTE, options: { siteName: "XGov Beta" } },
 ];
 
 if (import.meta.env.PUBLIC_KMD_SERVER) {

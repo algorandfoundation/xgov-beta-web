@@ -1,10 +1,10 @@
-import { AlertOctagonIcon, ShowerHead, XIcon } from "lucide-react";
-import { BecomeAnXGovIcon } from "../icons/BecomeAnXGovIcon";
+import { AlertOctagonIcon, XIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { useEffect, useState, type MouseEventHandler } from "react";
 import { useBalance } from "@/hooks/useBalance";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { UseQuery, UseWallet } from "@/hooks";
+import { network } from "@/api/algorand";
 
 export function TestnetDispenserBanner() {
   const { activeAddress } = useWallet();
@@ -14,8 +14,10 @@ export function TestnetDispenserBanner() {
   useEffect(() => {
     // show if account is unfunded OR has less than 0.1 ALGO spendable
     if (
-      balance?.amount.algo === 0 ||
-      (balance?.amount.algo && balance?.available.algo < 0.1)
+      network === "testnet" && (
+        balance?.amount.algo === 0 ||
+        (balance?.amount.algo && balance?.available.algo < 0.1)
+      )
     ) {
       setShowing(true);
     } else if (balance !== undefined) {

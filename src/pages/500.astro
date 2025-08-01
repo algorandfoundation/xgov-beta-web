@@ -16,7 +16,7 @@ const message =
     : DEFAULT_MESSAGE;
 ---
 
-<Layout title={error?.name || "Error"}>
+<Layout title={error?.name || "Error"} description="An unexpected error occurred">
   <Page class="w-full">
     <ErrorCard title={error.name} message={message} />
   </Page>

@@ -7,30 +7,30 @@
 }
 
 @media all and (display-mode: standalone) {
+  :root {
+    --sat: env(safe-area-inset-top);
+    --sab: env(safe-area-inset-bottom);
+  }
+  
   html {
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--sat);
   }
 
   .pwa-header {
-    transform: translateY(calc(-1 * env(safe-area-inset-top)));
+    transform: translateY(calc(-1 * var(--sat)));
   }
 
   .pwa-header div {
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--sat);
   }
 
   div[role="dialog"] {
-    padding-top: calc(1.5rem + env(safe-area-inset-top));
+    padding-top: calc(1.5rem + var(--sat));
   }
 }
 
 :root {
   --color-primary: #2d2df1;
-}
-
-html,
-body {
-  height: 100%;
 }
 
 html {
