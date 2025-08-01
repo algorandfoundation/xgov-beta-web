@@ -14,7 +14,7 @@ const path = Astro.url.pathname;
   <Header path={path}>
     <ConnectIsland client:only="react" path={path} />
     <ThemeToggle client:load />
-    <div class="relative" slot="mobile-nav">
+    <div class="lg:hidden relative" slot="mobile-nav">
       <div class="size-10"></div>
       <div class="absolute inset-0">
         <MobileNavIsland client:only="react" />
