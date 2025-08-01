@@ -53,7 +53,9 @@ const tutorialSteps = [
         description: "Participate in governance by becoming an xGov voter.",
         content: `An xGov is an Algorand address that:
             - Has voting power derived from consensus participation through produced blocks.
-            - Enrolled as an xGov in this platform by paying the one-time enrollment fee of 100 Algo.
+            - Enrolled as an xGov in this platform by paying the one-time enrollment fee of 10 Algo.
+
+            Note: The enrollment fee will be set to 1 ALGO until August 14th to encourage sign-ups. For the remainder of August, it will increase to 5 ALGO. From September, the enrollment fee will be set to 10 ALGO.
 
             Voting power is calculated by looking at all blocks produced during an observation window of 3,000,000 blocks. For the first xGov cohort the observation window is the three million blocks leading up to block 51,000,000. The cohort list will be updated every millionth block thereafter. 
 
