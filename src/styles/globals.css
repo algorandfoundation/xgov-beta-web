@@ -20,7 +20,7 @@
     transform: translateY(calc(-1 * var(--sat)));
   }
 
-  .pwa-header div {
+  .pwa-header .pwa-item {
     padding-top: var(--sat);
   }
 
