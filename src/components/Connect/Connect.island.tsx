@@ -2,7 +2,7 @@ import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useEffect, useState } from "react";
 
-import { Connect } from "@/components/Connect/Connect.tsx";
+import { Connect } from "@/components/Connect/Connect";
 import { UseWallet } from "@/hooks/useWallet";
 
 import { TutorialDialog } from "@/components/TutorialDialog/TutorialDialog";
