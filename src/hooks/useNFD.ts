@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { getNonFungibleDomainName, getNonFungibleDomainNames } from "@/api";
+import { getNFD, getNFDs } from "@/api";
 import { env } from "@/constants";
 
 const isLocalnet = env.PUBLIC_NETWORK === "localnet"
 
 function toNFDsOptions(addresses: string[] | undefined, enabled: boolean = true) {
   return {
-    queryKey: ["getNonFungibleDomainNames", addresses],
-    queryFn: () => getNonFungibleDomainNames(addresses!),
+    queryKey: ["getNFDs", addresses],
+    queryFn: () => getNFDs(addresses!),
     enabled: enabled && addresses !== undefined && !isLocalnet,
   };
 }
@@ -18,8 +18,8 @@ export function useNFDs(addresses: string[] | undefined, enabled: boolean = true
 
 function toNFDOptions(address: string | null) {
   return {
-    queryKey: ["getNonFungibleDomainName", address],
-    queryFn: () => getNonFungibleDomainName(address!),
+    queryKey: ["getNFD", address],
+    queryFn: () => getNFD(address!),
     enabled: !!address && !isLocalnet,
   };
 }

@@ -4,7 +4,7 @@ import Layout from "@/layouts/Layout.astro";
 import Page from "@/layouts/Page.astro";
 
 import { shortenAddress } from "@/functions";
-import { getNonFungibleDomainName } from "@/api";
+import { getNFD } from "@/api";
 
 import {
   Breadcrumb,
@@ -31,22 +31,27 @@ if (!query || (!query.includes(".algo") && !isValidAddress(query))) {
   });
 }
 
-let isNfd = false;
+let isNfdQuery = query.includes(".algo");
+let hasNfd = false;
 let address = query;
 
 try {
-  await getNonFungibleDomainName(address).then((nfd) => {
-    isNfd = true;
-    query = nfd.name;
+  const nfd = await getNFD(query);
+  query = nfd.name;
+  if (isNfdQuery) {
     address = nfd.owner;
-    console.log("NFD found:", nfd);
-  });
+  }
+  hasNfd = true;
+  console.log("NFD found:", nfd);
 } catch (e) {
   console.log(e);
 }
 ---
 
-<Layout title={`Profile: ${isNfd ? query : address}`} description="xGov Profile Page">
+<Layout
+  title={`Profile: ${hasNfd ? query : address}`}
+  description="xGov Profile Page"
+>
   <Page>
     <Breadcrumb slot="breadcrumb">
       <BreadcrumbList>
@@ -63,10 +68,10 @@ try {
             !!address && (
               <>
                 <BreadcrumbPage className="hidden md:inline">
-                  {isNfd ? query : address}
+                  {hasNfd ? query : address}
                 </BreadcrumbPage>
                 <BreadcrumbPage className="inline md:hidden">
-                  {isNfd ? query : shortenAddress(address)}
+                  {hasNfd ? query : shortenAddress(address)}
                 </BreadcrumbPage>
               </>
             )
