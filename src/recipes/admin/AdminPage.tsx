@@ -10,6 +10,8 @@ import { registryClient } from "@/api";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 import { UseQuery, UseWallet, useRegistry } from "@/hooks";
 import { DepositFundsCard } from "@/components/DepositFundsCard/DepositFundsCard";
+import { useAllRequestBoxes } from "@/hooks/useRequestBoxes";
+import { SubscribeRequestList } from "@/components/SubscribeRequestList/SubscribeRequestList";
 export function AdminPageIsland() {
   return (
     <UseQuery>
@@ -22,6 +24,7 @@ export function AdminPageIsland() {
 export function AdminPage() {
   const { activeAddress, transactionSigner, activeNetwork } = useWallet();
   const registryGlobalState = useRegistry();
+  const requests = useAllRequestBoxes();
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");
 
@@ -121,15 +124,16 @@ export function AdminPage() {
   }
 
   return (
-    <div className="w-full">
+    <div className="mx-auto w-full max-w-[120rem]">
       <h1 className="text-wrap lg:text-4xl max-w-3xl text-algo-black dark:text-white font-bold my-4">
         Admin Panel
       </h1>
       {activeAddress ? (
         <>
-          {registryGlobalState.data?.xgovManager &&
+          {
+            registryGlobalState.data?.xgovManager &&
             activeAddress === registryGlobalState.data?.xgovManager && (
-              <div className="mx-auto max-w-[120rem] mb-10">
+              <div className="mb-10">
                 <h2 className="text-xl font-semibold text-wrap text-algo-black dark:text-white mb-2">
                   Roles
                 </h2>
@@ -146,10 +150,21 @@ export function AdminPage() {
                   handleSetRole={handleSetRole}
                 />
               </div>
-            )}
-          {registryGlobalState.data?.kycProvider &&
+            )
+          }
+
+          <div className="mb-10">
+            <h2 className="text-xl font-semibold text-wrap text-algo-black dark:text-white mb-2">
+              xGov Subscribe Requests
+            </h2>
+
+            <SubscribeRequestList requests={requests.data} />
+          </div>
+
+          {
+            registryGlobalState.data?.kycProvider &&
             activeAddress === registryGlobalState.data?.kycProvider && (
-              <div className="mx-auto max-w-[120rem] mb-10">
+              <div className="mb-10">
                 {registryGlobalState.data?.kycProvider && (
                   <KYCBox
                     kycProvider={registryGlobalState.data?.kycProvider}
@@ -158,7 +173,8 @@ export function AdminPage() {
                   />
                 )}
               </div>
-            )}
+            )
+          }
           <div className="w-full relative text-algo-black dark:text-white">
             <PanelStatistics network={activeNetwork} />
           </div>
