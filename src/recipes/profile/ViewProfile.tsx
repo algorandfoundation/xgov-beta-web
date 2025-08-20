@@ -153,6 +153,8 @@ export function ProfilePage({
     }));
   }, [proposalsQuery.data, nfd.data]);
 
+  console.log('proposalsWithNFDs', proposalsWithNFDs)
+
   if (!address || isLoading) {
     return <LoadingSpinner />;
   }
@@ -282,10 +284,11 @@ export function ProfilePage({
               </>
             )}
           </div>
-          {!!proposalsWithNFDs && (
-            <StackedList proposals={proposalsWithNFDs} activeAddress={activeAddress} />
-          )}
         </>
+      )}
+
+      {!!proposalsWithNFDs && (
+        <StackedList proposals={proposalsWithNFDs} activeAddress={activeAddress} />
       )}
     </>
   );
