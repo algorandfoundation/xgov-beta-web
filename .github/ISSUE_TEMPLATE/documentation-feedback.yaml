@@ -1,6 +1,6 @@
-name: \U0001F9F9 Documentation Feedback
+name: Documentation Feedback
 description: Provide feedback on the xGov documentation.
-title: "\U0001F9F9 [Feedback]: "
+title: "[Feedback]: "
 labels: ["feedback"]
 body:
   - type: markdown
