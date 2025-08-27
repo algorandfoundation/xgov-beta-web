@@ -46,6 +46,10 @@ export const DifferentTimeFormats: Story = {
 
 // Dark mode
 export const DarkMode: Story = {
+  args: {
+    fundingType: ProposalFundingType.Retroactive,
+    time: '3d 6h',
+  },
   parameters: {
     backgrounds: { default: 'dark' },
   },
@@ -60,6 +64,10 @@ export const DarkMode: Story = {
 
 // Responsive view
 export const Mobile: Story = {
+  args: {
+    fundingType: ProposalFundingType.Retroactive,
+    time: '3d 6h',
+  },
   parameters: {
     viewport: {
       defaultViewport: 'mobile1',
@@ -69,6 +77,10 @@ export const Mobile: Story = {
 
 // Component in context
 export const InContext: Story = {
+  args: {
+    fundingType: ProposalFundingType.Retroactive,
+    time: '3d 6h',
+  },
   decorators: [
     (Story) => (
       <div className="p-6 max-w-md bg-white dark:bg-algo-black-90 rounded-lg shadow">
