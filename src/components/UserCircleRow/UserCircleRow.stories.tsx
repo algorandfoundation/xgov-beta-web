@@ -7,6 +7,9 @@ const meta: Meta<typeof UserCircleRow> = {
   parameters: {
     layout: 'centered',
   },
+  args: {
+    users: ['https://sea2.discourse-cdn.com/flex016/user_avatar/forum.algorand.co/ghostofmcafee/48/3235_2.png'],
+  },
   tags: ['autodocs'],
 };
 

@@ -3,7 +3,7 @@ export function UserCircleRow({ users }: { users: string[] }) {
     <div className="flex flex-shrink-0 -space-x-0.5 py-0.5">
       <dt className="sr-only">Commenters</dt>
       {users
-        .map((url) => (
+        ?.map((url) => (
           <dd key={url}>
             <img
               alt={url}
