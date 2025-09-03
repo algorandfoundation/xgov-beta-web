@@ -49,6 +49,12 @@ export function requestBoxName(id: number): Uint8Array {
   );
 }
 
+export function proposalApprovalBoxName(): Uint8Array {
+  return new Uint8Array(
+    Buffer.from("pa")
+  );
+}
+
 export async function getGlobalState(): Promise<RegistryGlobalState | undefined> {
   try {
     const state = await registryClient.state.global.getAll()
