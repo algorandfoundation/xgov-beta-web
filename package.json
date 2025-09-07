@@ -75,6 +75,7 @@
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.6.3",
+    "xgov-beta-ghost-sdk": "file:../xgov-beta-ghost/projects/xgov-beta-ghost-sdk",
     "zod": "^3.24.1"
   },
   "devDependencies": {

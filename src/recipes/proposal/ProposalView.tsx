@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
-import { CheckIcon, CoinsIcon, ExternalLinkIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
+import { CoinsIcon, ExternalLinkIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
 
 import { ProposalFactory } from "@algorandfoundation/xgov";
 import { UserPill } from "@/components/UserPill/UserPill";
@@ -43,7 +43,7 @@ import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill"
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
 import VoteBar from "@/components/VoteBar/VoteBar";
 import algosdk from "algosdk";
-import { useNFD, useProposal, useVoterBox } from "@/hooks";
+import { useNFD, useProposal, useVoterBox, useVoterBoxes, useXGovDelegates } from "@/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -54,6 +54,8 @@ import { ProposalPayorCard } from "@/components/ProposalPayorCard/ProposalPayorC
 import { useTransactionState } from "@/hooks/useTransactionState";
 import { TransactionStateLoader } from "@/components/TransactionStateLoader/TransactionStateLoader";
 import type { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { shortenAddress } from "@/functions";
 
 export const defaultsStatusCardMap = {
   [ProposalStatus.ProposalStatusEmpty]: {
@@ -314,15 +316,16 @@ function VotingStatusCard({
 }: VotingStatusCardProps) {
   const { activeAddress, transactionSigner: innerSigner } = useWallet();
   const proposalQuery = useProposal(proposal.id, proposal);
-  const voterInfoQuery = useVoterBox(Number(proposal.id), activeAddress);
+  const delegates = useXGovDelegates(activeAddress)
+  const infoQueryAddresses = [activeAddress, ...(delegates?.data?.map(d => d.xgov) || [])].filter(a => !!a) as string[];
+  const voterInfoQuery = useVoterBoxes(Number(proposal.id), infoQueryAddresses);
 
+  const [selectedVotingAs, setSelectedVotingAs] = useState(activeAddress);
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [votesExceeded, setVotesExceeded] = useState(false);
 
   const {
-    status: advancedStatus,
     setStatus: setAdvancedStatus,
-    errorMessage: advancedErrorMessage,
     isPending: advancedIsPending
   } = useTransactionState();
 
@@ -340,7 +343,7 @@ function VotingStatusCard({
     isPending: approveIsPending
   } = useTransactionState();
 
-  const voterInfo = voterInfoQuery.data || undefined;
+  const voterInfo = voterInfoQuery.data?.[selectedVotingAs!] || undefined;
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
 
   const xgovQuorum = getXGovQuorum(proposal.fundingCategory, quorums);
@@ -378,6 +381,7 @@ function VotingStatusCard({
   const onSubmit = async ({ approvals, rejections }: z.infer<typeof votingSchema>) => {
     await voteProposal({
       activeAddress,
+      xgovAddress: selectedVotingAs,
       innerSigner,
       setStatus: setAdvancedStatus,
       refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
@@ -389,13 +393,9 @@ function VotingStatusCard({
   }
 
   let subheader = (
-    <Button
-      className="-ml-4"
-      variant='link'
-      onClick={() => setMode(mode === 'simple' ? 'advanced' : 'simple')}
-    >
-      {mode === 'simple' ? 'Advanced' : 'Simple'} Mode
-    </Button>
+    <>
+
+    </>
   )
 
   let baseAction = (
@@ -427,6 +427,38 @@ function VotingStatusCard({
         rejections={Number(proposal.rejections)}
         nulls={Number(proposal.nulls)}
       />
+      <div className="w-full flex items-center justify-between">
+        <Button
+          className="-ml-4"
+          variant='link'
+          onClick={() => setMode(mode === 'simple' ? 'advanced' : 'simple')}
+        >
+          {mode === 'simple' ? 'Advanced' : 'Simple'} Mode
+        </Button>
+        <div className="flex items-center gap-2">
+          <span className="text-xxs font-semibold">Voting For</span>
+          <Select
+            onValueChange={setSelectedVotingAs}
+            defaultValue={activeAddress!}
+          >
+            <SelectTrigger id="voting-as" className="w-40" aria-label="Select voting as">
+              <SelectValue placeholder="Select voting as" />
+            </SelectTrigger>
+            <SelectContent>
+              {
+                [
+                  ...Object.keys(voterInfoQuery?.data ?? {})
+                    .filter(key => (voterInfoQuery?.data?.[key]?.votes ?? 0) > 0 && !voterInfoQuery?.data?.[key]?.voted)
+                ].map(address => (
+                  <SelectItem key={address} value={address}>
+                    {shortenAddress(address)}
+                  </SelectItem>
+                ))
+              }
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
     </div>
   )
 
@@ -456,6 +488,7 @@ function VotingStatusCard({
                 type='button'
                 onClick={() => voteProposal({
                   activeAddress,
+                  xgovAddress: selectedVotingAs,
                   innerSigner,
                   setStatus: setApproveStatus,
                   refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
@@ -481,6 +514,7 @@ function VotingStatusCard({
                 variant='destructive'
                 onClick={() => voteProposal({
                   activeAddress,
+                  xgovAddress: selectedVotingAs,
                   innerSigner,
                   setStatus: setRejectStatus,
                   refetch: [proposalQuery.refetch, voterInfoQuery.refetch],

@@ -14,6 +14,9 @@ import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
 import type { TransactionStateInfo } from "@/api/types/transaction_state";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
+import { VotingFor } from "../VotingFor/VotingFor";
+import type { XGovBoxValue } from "node_modules/xgov-beta-ghost-sdk/dist/esm/generated/XGovBoxClient";
+import { useXGovDelegates } from "@/hooks";
 
 export interface ProfileCardProps {
   address: string;
@@ -58,6 +61,7 @@ export function ProfileCard({
   activeAddress,
   className = "",
 }: ProfileCardProps) {
+  const delegates = useXGovDelegates(address);
   const [showBecomeXGovModal, setShowBecomeXGovModal] = useState(false);
   const [showBecomeProposerModal, setShowBecomeProposerModal] = useState(false);
   const [showBecomeProposerTermsModal, setShowBecomeProposerTermsModal] = useState(false);
@@ -110,6 +114,12 @@ export function ProfileCard({
               />
             )
           }
+
+          <VotingFor
+            delegates={delegates.data || []}
+            isLoading={delegates.isLoading}
+            isError={delegates.isError}
+          />
 
           <div>
             <div className="flex items-center gap-6">

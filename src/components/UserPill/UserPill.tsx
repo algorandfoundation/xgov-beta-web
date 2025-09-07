@@ -29,7 +29,7 @@ export interface UserPillProps extends VariantProps<typeof pillVariants> {
 export function UserPill({ variant, address, nfdName }: UserPillProps) {
   return (
     <Link to={`/profile/${address}`} className={cn(pillVariants({ variant }))}>
-      <UserCircleIcon className="size-6 -translate-x-2 group-hover:stroke-white dark:group-hover:stroke-algo-black" />
+      <UserCircleIcon className="size-6 -translate-x-2 group-hover:stroke-white" />
       { !!nfdName ?  nfdName : address.length === 58 ? shortenAddress(address) : address}
     </Link>
   );
