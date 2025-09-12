@@ -15,7 +15,7 @@ import type { TransactionHandlerProps } from '@/api/types/transaction_state';
 import { wrapTransactionSigner } from '@/hooks/useTransactionState';
 import { Buffer } from "buffer";
 import { sleep } from './nfd';
-import { getXGovs } from 'xgov-beta-ghost-sdk';
+import { getXGovs } from '@algorandfoundation/xgov-beta-ghost';
 import type { AlgorandClient } from '@algorandfoundation/algokit-utils';
 if (globalThis.Buffer === undefined) {
   globalThis.Buffer = Buffer;
