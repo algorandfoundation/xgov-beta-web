@@ -10,6 +10,7 @@
     "astro": "astro",
     "mock-init": "tsx --env-file=.env.template mock-init.ts",
     "mock-init-assign": "tsx --env-file=.env.template mock-init-assign.ts",
+    "one-off-assign-voter": "tsx --env-file=.env.development one-off-assign-voter.ts",
     "lint": "eslint .",
     "prettier": "prettier --check .",
     "storybook": "storybook dev -p 6006",

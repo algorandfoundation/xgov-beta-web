@@ -92,9 +92,6 @@ const dispenser = await algorand.account.dispenserFromEnvironment();
 
 await algorand.account.ensureFunded(adminAccount.addr, dispenser, fundAmount);
 
-// fund my local lute wallet
-await algorand.account.ensureFunded("KFLCTKV2ELKPWXPS6IS6AH3QBNA77DGSPLW3O2WT7YOLJBBLZ72S6K52EM", dispenser, (120).algo());
-
 // Create the registry
 const registryMinter = new XGovRegistryFactory({
   algorand,
@@ -181,6 +178,14 @@ await registryClient.send.setXgovDaemon({
   signer: adminAccount.signer,
   args: {
     xgovDaemon: adminAccount.addr,
+  },
+});
+
+await registryClient.send.setXgovSubscriber({
+  sender: adminAccount.addr,
+  signer: adminAccount.signer,
+  args: {
+    subscriber: adminAccount.addr,
   },
 });
 
@@ -473,6 +478,8 @@ for (let i = 1; i < mockProposals.length; i++) {
     }
   }
 }
+
+console.log('Finished voter assignment');
 
 for (let i = 1; i < 10; i++) {
 

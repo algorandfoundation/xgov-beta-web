@@ -736,8 +736,8 @@ export async function voteProposal({
       appReferences: [appId],
       accountReferences: [activeAddress],
       boxReferences: [
-        xGovBoxName(activeAddress),
-        { appId: appId, name: voterBoxName(activeAddress) }
+        xGovBoxName(xgovAddress),
+        { appId: appId, name: voterBoxName(xgovAddress) }
       ],
       extraFee: (1000).microAlgos(),
     });

@@ -448,9 +448,9 @@ function VotingStatusCard({
               {
                 [
                   ...Object.keys(voterInfoQuery?.data ?? {})
-                    .filter(key => (voterInfoQuery?.data?.[key]?.votes ?? 0) > 0 && !voterInfoQuery?.data?.[key]?.voted)
+                    // .filter(key => (voterInfoQuery?.data?.[key]?.votes ?? 0) > 0 && !voterInfoQuery?.data?.[key]?.voted)
                 ].map(address => (
-                  <SelectItem key={address} value={address}>
+                  <SelectItem key={address} value={address} disabled={!((voterInfoQuery?.data?.[address]?.votes ?? 0) > 0)}>
                     {shortenAddress(address)}
                   </SelectItem>
                 ))
@@ -475,7 +475,7 @@ function VotingStatusCard({
       action = (
         <>
           {baseAction}
-          <p className="h-9 px-4 py-2">You Voted!</p>
+          <p className="h-9 px-4 py-2">Already Voted!</p>
         </>
       )
     } else {
@@ -898,7 +898,7 @@ export function ProposalInfo({
             </div>
           </div>
         </div>
-        <div className="lg:flex lg:flex-col lg:items-end lg:fixed lg:right-0 lg:pr-8 lg:pt-6 2xl:pt-14">
+        <div className="lg:flex lg:flex-col lg:items-end lg:fixed lg:right-0 lg:pr-8 lg:pt-6 2xl:pt-14 proposal-fixed-sidebar">
           {children}
         </div>
         <div className="lg:col-span-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">
