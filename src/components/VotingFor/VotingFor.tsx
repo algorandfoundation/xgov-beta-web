@@ -1,8 +1,8 @@
 import { useNFD } from "@/hooks";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 import { UserPill } from "@/components/UserPill/UserPill";
-import type { XGovBoxValue } from "node_modules/xgov-beta-ghost-sdk/dist/esm/generated/XGovBoxClient";
 import { cn } from "@/functions";
+import type { XGovBoxValue } from "@algorandfoundation/xgov/registry";
 
 export interface VotingForProps {
   delegates: (XGovBoxValue & { xgov: string })[];

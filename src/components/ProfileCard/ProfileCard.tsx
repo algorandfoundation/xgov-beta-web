@@ -15,7 +15,6 @@ import type { TransactionStateInfo } from "@/api/types/transaction_state";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import { VotingFor } from "../VotingFor/VotingFor";
-import type { XGovBoxValue } from "node_modules/xgov-beta-ghost-sdk/dist/esm/generated/XGovBoxClient";
 import { useXGovDelegates } from "@/hooks";
 
 export interface ProfileCardProps {
