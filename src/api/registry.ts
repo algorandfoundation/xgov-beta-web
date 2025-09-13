@@ -1,4 +1,4 @@
-import { env } from '@/constants'
+import { env, FEE_SINK } from '@/constants'
 import algosdk, {
   ABIType,
   ALGORAND_MIN_TX_FEE,
@@ -76,7 +76,7 @@ export async function getIsXGov(
 ): Promise<{ isXGov: boolean; votingAddress: string }> {
   try {
     const xgovBoxValue = (await registryClient.newGroup().getXgovBox({
-      sender: address,
+      sender: FEE_SINK,
       args: {
         xgovAddress: address,
       },
@@ -105,7 +105,7 @@ export async function getIsProposer(
 ): Promise<{ isProposer: boolean } & ProposerBoxValue> {
   try {
     const proposerBoxValue = (await registryClient.newGroup().getProposerBox({
-      sender: address,
+      sender: FEE_SINK,
       args: {
         proposerAddress: address,
       },
