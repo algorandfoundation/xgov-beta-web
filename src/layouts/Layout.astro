@@ -61,6 +61,15 @@ const _title = title ? `${title} | ` : "";
       
       // Initialize theme color
       updatePWAThemeColor(check);
+
+      // Hero animation logic - check and mark as shown
+      const heroAnimationShown = localStorage.heroAnimationShown === "true";
+      if (!heroAnimationShown) {
+        // Mark as shown after animation completes (1.6s total)
+        setTimeout(() => {
+          localStorage.heroAnimationShown = "true";
+        }, 1300);
+      }
     </script>
     <ClientRouter />
   </head>
