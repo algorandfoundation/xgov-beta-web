@@ -200,6 +200,8 @@ export async function getDelegatedXGovData(account: string): Promise<(XGovBoxVal
     );
   }
 
+  console.log('delegated results', results)
+
   return results
 }
 
