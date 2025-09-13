@@ -129,15 +129,6 @@ export function ProfileCard({
               }
 
               {!proposer?.isProposer && (
-                // <ActionButton
-                //   type="button"
-                //   onClick={() => setShowBecomeProposerTermsModal(true)}
-                //   disabled={subscribeProposerState.isPending}
-                // >
-                //   {subscribeProposerState.isPending
-                //     ? "Loading..."
-                //     : "Become a Proposer"}
-                // </ActionButton>
                 <Popover>
                   <PopoverTrigger aria-label={`Info: Become a Proposer`}>
                     <Button

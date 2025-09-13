@@ -29,37 +29,22 @@ export function VotingFor({
   isError = false,
   className = ""
 }: VotingForProps) {
-
-  if (isLoading) {
-    return (
-      <div className={className}>
-        <h3 className="text-lg font-semibold mb-4">Voting For</h3>
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className={className}>
-        <h3 className="text-lg font-semibold mb-4">Voting For</h3>
-        <div className="text-red-600">Error loading delegate information</div>
-      </div>
-    );
-  }
-
-  if (!delegates || delegates.length === 0) {
-    return (<></>);
-  }
-
   return (
     <div className={cn('mb-10', className)}>
-      <h2 className="text-lg h-8 mt-0.5 mb-1.5  font-bold"> Voting For ({delegates.length})</h2>
-      <div className="inline-flex gap-2">
-        {delegates.map((delegate) => (
-          <DelegateItem key={delegate.xgov} xgov={delegate.xgov} />
-        ))}
-      </div>
+      <h2 className="text-lg h-8 mt-0.5 mb-1.5 font-bold"> Voting For {delegates.length > 0 ? `(${delegates.length})` : null}</h2>
+      {
+        isLoading ? (
+          <LoadingSpinner />
+        ) : isError ? (
+          <p className="text-red-600">Error loading delegate information</p>
+        ) : delegates.length === 0 ? (
+          <p>No delegates found</p>
+        ) : <div className="inline-flex gap-2">
+          {delegates.map((delegate) => (
+            <DelegateItem key={delegate.xgov} xgov={delegate.xgov} />
+          ))}
+        </div>
+      }
     </div>
   );
 }
