@@ -16,7 +16,7 @@ import { wrapTransactionSigner } from '@/hooks/useTransactionState';
 import { Buffer } from "buffer";
 import { sleep } from './nfd';
 import { getXGovs } from '@algorandfoundation/xgov-beta-ghost';
-import type { AlgorandClient } from '@algorandfoundation/algokit-utils';
+
 if (globalThis.Buffer === undefined) {
   globalThis.Buffer = Buffer;
 }
@@ -199,8 +199,6 @@ export async function getDelegatedXGovData(account: string): Promise<(XGovBoxVal
       )
     );
   }
-
-  console.log('delegated results', results)
 
   return results
 }
