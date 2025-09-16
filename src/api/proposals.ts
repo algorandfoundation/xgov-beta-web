@@ -31,6 +31,8 @@ import { proposalApprovalBoxName, proposerBoxName, xGovBoxName } from "./registr
 import type { TransactionHandlerProps } from "./types/transaction_state";
 import { sleep } from "./nfd";
 
+const PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT = 4;
+
 export const proposalFactory = new ProposalFactory({ algorand });
 
 export const metadataBoxName = new Uint8Array(Buffer.from("M"));
