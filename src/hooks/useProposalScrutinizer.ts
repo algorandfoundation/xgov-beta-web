@@ -11,8 +11,8 @@ import {
     type ProposalSummaryCardDetails,
 } from "@/api";
 import {
-    scrutinyFundingLogicSig,
-    scrutinyFundingLogicSigSigner,
+    getScrutinyLsig,
+    getScrutinyLsigSigner,
 } from "@/api/testnet-funding-logicsig";
 
 const SCRUTINIZE_RUN_INTERVAL = 5 * 60 * 1000; // 5 mins
@@ -34,6 +34,8 @@ export function useProposalScrutinizer(proposals: ProposalSummaryCardDetails[]) 
     const registry = useRegistry();
 
     const scrutinizeProposal = async (proposal: ProposalSummaryCardDetails) => {
+        const scrutinyFundingLogicSig = getScrutinyLsig(network);
+        const scrutinyFundingLogicSigSigner = getScrutinyLsigSigner(network);
         return Promise.all([
             callScrutinize(
                 scrutinyFundingLogicSig.address(),

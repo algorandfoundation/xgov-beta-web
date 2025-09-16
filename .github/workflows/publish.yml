@@ -1,13 +1,15 @@
 name: Deploy to Cloudflare Pages
 
-# Trigger on push to main branch and pull requests to main
+# Trigger on push to main and mainnet branches
 on:
   push:
     branches:
-      - main
+      - main      # Deploy to testnet
+      - mainnet   # Deploy to mainnet
   pull_request:
     branches:
       - main
+      - mainnet
 
 jobs:
   deploy:
@@ -34,12 +36,23 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # Step 5: Build the Astro project
-      - name: Build the project
-        run: npm run build
+      # Step 5: Determine environment and build
+      - name: Set environment variables
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/mainnet" ]; then
+            echo "ENVIRONMENT=mainnet" >> $GITHUB_ENV
+            echo "CF_PROJECT_NAME=${{ secrets.CF_PROJECT_NAME_MAINNET }}" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=testnet" >> $GITHUB_ENV
+            echo "CF_PROJECT_NAME=${{ secrets.CF_PROJECT_NAME_TESTNET }}" >> $GITHUB_ENV
+          fi
 
-      # Step 6: Deploy to Cloudflare Pages using wrangler
-      - name: Publish to Cloudflare Pages
+      # Step 6: Build the Astro project with mode
+      - name: Build the project
+        run: npm run build -- --mode ${{ env.ENVIRONMENT }}
+
+      # Step 7: Deploy to Cloudflare Pages using wrangler
+      - name: Publish to Cloudflare Pages (${{ env.ENVIRONMENT }})
         id: deploy
         uses: cloudflare/wrangler-action@v3
         with:
@@ -47,4 +60,4 @@ jobs:
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           command: |
-            pages deploy dist --project-name ${{ secrets.CF_PROJECT_NAME }}
+            pages deploy dist --project-name ${{ env.CF_PROJECT_NAME }}
