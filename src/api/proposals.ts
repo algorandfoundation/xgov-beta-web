@@ -27,7 +27,7 @@ import {
 import { PROPOSAL_FEE } from "@/constants.ts";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
 import { wrapTransactionSigner } from "@/hooks/useTransactionState";
-import { proposerBoxName, xGovBoxName } from "./registry";
+import { proposalApprovalBoxName, proposerBoxName, xGovBoxName } from "./registry";
 import type { TransactionHandlerProps } from "./types/transaction_state";
 import { sleep } from "./nfd";
 
@@ -529,7 +529,7 @@ export async function createEmptyProposal({
           suggestedParams,
         }),
       },
-      boxReferences: [proposerBoxName(activeAddress)],
+      boxReferences: [proposerBoxName(activeAddress), proposalApprovalBoxName()],
       extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
     });
 
