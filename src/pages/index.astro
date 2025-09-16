@@ -5,35 +5,50 @@ import Layout from "@/layouts/Layout.astro";
 import LandingPage from "@/layouts/LandingPage.astro";
 
 import { HeroAnimation } from "@/components/HeroAnimation/HeroAnimation";
-import { Hero } from "@/components/Hero/Hero";
+import Hero from "@/components/Hero/Hero.astro";
 import { ProposalListHeaderIsland } from "@/components/ProposalListHeader/ProposalListHeader";
 
 import { StackedListIsland } from "@/recipes";
 import { TestnetDispenserBannerIsland } from "@/components/TestnetDispenserBanner/TestnetDispenserBanner";
 
 const title = "Algorand xGov";
+const description =
+  "xGov is a decentralized, on-chain platform enabling Algorand consensus participants to fund builders across the ecosystem.";
 
-let registry = await getGlobalState()
+let registry = await getGlobalState();
 let proposals = await getAllProposals();
 ---
 
-<Layout>
+<Layout description={description}>
   <HeroAnimation />
   <LandingPage>
     <Hero
-      client:only="react"
       slot="hero"
       title={title}
-      description="xGov is a decentralized, on-chain platform enabling Algorand consensus participants to fund builders across the ecosystem."
+      description={description}
       xgovs={Number(registry?.xgovs) || 0}
       proposals={proposals.length}
-      treasury={(Number(registry?.outstandingFunds) / 1e6) || 0}
+      treasury={Number(registry?.outstandingFunds) / 1e6 || 0}
       votes={Number(registry?.committeeVotes) || 0}
     />
-    <div id="list-header-title-anchor" class="h-40 absolute top-[-5rem] pointer-events-none"></div>
+    <div
+      id="list-header-title-anchor"
+      class="h-40 absolute top-[-5rem] pointer-events-none"
+    >
+    </div>
     <TestnetDispenserBannerIsland client:only="react" />
-    <ProposalListHeaderIsland client:only="react" title="Active Proposals" />
-    <div class="flex flex-col gap-y-4">
+    <div class="min-h-10 flex items-center justify-between mb-4 px-3">
+      <div class="sm:flex-auto">
+        <h1
+          id="list-header-title"
+          class="text-lg sm:text-2xl md:text-4xl font-semibold text-algo-blue dark:text-algo-teal"
+        >
+          Active Proposals
+        </h1>
+      </div>
+      <ProposalListHeaderIsland client:only="react" title="Active Proposals" />
+    </div>
+    <div class="min-h-80 flex flex-col gap-y-4">
       <StackedListIsland client:only="react" proposals={proposals} />
     </div>
   </LandingPage>

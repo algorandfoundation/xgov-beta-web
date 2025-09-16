@@ -5,11 +5,11 @@ import {
 } from "@txnlab/use-wallet-react";
 
 let walletProviders: SupportedWallet[] = [
-  WalletId.DEFLY,
   WalletId.PERA,
+  WalletId.DEFLY,
+  { id: WalletId.LUTE, options: { siteName: "XGov Beta" } },
   WalletId.EXODUS,
   WalletId.KIBISIS,
-  { id: WalletId.LUTE, options: { siteName: "XGov Beta" } },
   /* {
       id: WalletId.WALLETCONNECT,
       options: { projectId: '<TBD>' }

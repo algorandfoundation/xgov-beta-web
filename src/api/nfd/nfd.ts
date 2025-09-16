@@ -6,11 +6,15 @@ export const BASE_NFD_API_URL = network === "testnet" ? "https://api.testnet.nf.
 
 const mutex = new Mutex();
 
-function fetchNfd(address: string, init: RequestInit = {}) {
+function fetchNfd(nameOrID: string | bigint | number, init: RequestInit = {}) {
+  return fetch(`${BASE_NFD_API_URL}/nfd/${nameOrID}`, init)
+}
+
+function fetchNfdReverseLookup(address: string, init: RequestInit = {}) {
   return fetch(`${BASE_NFD_API_URL}/nfd/lookup?address=${address}`, init)
 }
 
-function fetchNfds(addresses: string[], init: RequestInit = {}) {
+function fetchNfdReverseLookups(addresses: string[], init: RequestInit = {}) {
   return fetch(`${BASE_NFD_API_URL}/nfd/lookup?address=${addresses.join("&address=")}`, init)
 }
 
@@ -29,54 +33,63 @@ export type NFD = {
   properties: NFDProperties,
 }
 
-export async function getNonFungibleDomainName(
-  address: string,
+export async function getNFD(
+  nameIDOrAddress: string | bigint | number,
   init: RequestInit = {},
 ): Promise<NFD> {
   return mutex.runExclusive(async () => {
-    let r = await fetchNfd(address)
-    if(r.status === 404) {
+    const isString = typeof nameIDOrAddress === 'string';
+    const isNFD = !isString || nameIDOrAddress.includes('.algo');
+
+    let r = isNFD
+      ? await fetchNfd(nameIDOrAddress, init)
+      : await fetchNfdReverseLookup(nameIDOrAddress as string, init);
+
+    if (r.status === 404) {
       throw new Error("Not found")
     }
-    if(r.status === 429) {
+
+    if (r.status === 429) {
       const errRes = await r.json() as { secsRemaining?: number };
       console.log(
         `Rate limited, sleeping for ${errRes?.secsRemaining} seconds`,
       );
       await sleep((errRes?.secsRemaining || 1) * 1000 + 1000);
       console.log("Mutex Still Locked, trying again");
-      r = await fetchNfd(address, init);
+      r = isNFD
+        ? await fetchNfd(nameIDOrAddress, init)
+        : await fetchNfdReverseLookup(nameIDOrAddress as string, init);
     }
 
-    if(r.status !== 200) {
+    if (r.status !== 200) {
       throw new Error("Something went wrong")
     }
 
     const data = await r.json()
-    return data[address]
+    return isNFD ? data : data[nameIDOrAddress as string]
   })
 }
 
-export async function getNonFungibleDomainNames(
+export async function getNFDs(
   addresses: string[],
   init: RequestInit = {},
 ): Promise<{ [address: string]: NFD }> {
   return mutex.runExclusive(async () => {
-    let r = await fetchNfds(addresses, init);
-    if(r.status === 404) {
+    let r = await fetchNfdReverseLookups(addresses, init);
+    if (r.status === 404) {
       throw new Error("Not found")
     }
-    if(r.status === 429) {
+    if (r.status === 429) {
       const errRes = await r.json() as { secsRemaining?: number };
       console.log(
         `Rate limited, sleeping for ${errRes?.secsRemaining} seconds`,
       );
       await sleep((errRes?.secsRemaining || 1) * 1000 + 1000);
       console.log("Mutex Still Locked, trying again");
-      r = await fetchNfds(addresses, init);
+      r = await fetchNfdReverseLookups(addresses, init);
     }
 
-    if(r.status !== 200) {
+    if (r.status !== 200) {
       throw new Error("Something went wrong")
     }
 

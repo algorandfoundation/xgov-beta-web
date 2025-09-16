@@ -14,6 +14,7 @@ const meta = {
     title: "Voting Address",
     defaultValue: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
     loading: false,
+    disabled: false,
     onSave: (value: string) => console.log("Saved:", value),
   },
 } satisfies Meta<typeof EditableAddress>;

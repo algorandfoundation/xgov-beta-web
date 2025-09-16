@@ -7,30 +7,30 @@
 }
 
 @media all and (display-mode: standalone) {
+  :root {
+    --sat: env(safe-area-inset-top);
+    --sab: env(safe-area-inset-bottom);
+  }
+
   html {
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--sat);
   }
 
   .pwa-header {
-    transform: translateY(calc(-1 * env(safe-area-inset-top)));
+    transform: translateY(calc(-1 * var(--sat)));
   }
 
-  .pwa-header div {
-    padding-top: env(safe-area-inset-top);
+  .pwa-header .pwa-item {
+    padding-top: var(--sat);
   }
 
   div[role="dialog"] {
-    padding-top: calc(1.5rem + env(safe-area-inset-top));
+    padding-top: calc(1.5rem + var(--sat));
   }
 }
 
 :root {
   --color-primary: #2d2df1;
-}
-
-html,
-body {
-  height: 100%;
 }
 
 html {
@@ -51,6 +51,16 @@ html::-webkit-scrollbar {
 html.dark::-webkit-scrollbar {
   background-color: #001324;
   width: 6px;
+}
+
+body[data-scroll-locked] header {
+  margin-right: calc(0.5rem + var(--removed-body-scroll-bar-size)) !important;
+}
+
+@media (min-width: 768px) {
+  body[data-scroll-locked] header {
+    padding-right: calc(1rem + var(--removed-body-scroll-bar-size)) !important;
+  }
 }
 
 pera-wallet-sign-txn-toast {

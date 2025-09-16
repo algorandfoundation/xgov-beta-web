@@ -53,7 +53,9 @@ const tutorialSteps = [
         description: "Participate in governance by becoming an xGov voter.",
         content: `An xGov is an Algorand address that:
             - Has voting power derived from consensus participation through produced blocks.
-            - Enrolled as an xGov in this platform by paying the one-time enrollment fee of 100 Algo.
+            - Enrolled as an xGov in this platform by paying the one-time enrollment fee of 10 Algo.
+
+            Note: The enrollment fee will be set to 1 ALGO until August 14th to encourage sign-ups. For the remainder of August, it will increase to 5 ALGO. From September, the enrollment fee will be set to 10 ALGO.
 
             Voting power is calculated by looking at all blocks produced during an observation window of 3,000,000 blocks. For the first xGov cohort the observation window is the three million blocks leading up to block 51,000,000. The cohort list will be updated every millionth block thereafter. 
 
@@ -77,10 +79,11 @@ const tutorialSteps = [
             3. Completing the know-your-customer process
             4. Creating your first proposal and paying the refundable anti-spam fee
         `,
-        action: {
-            label: "Get Started",
-            type: "become-proposer" as const
-        }
+        action: null
+        // action: {
+        //     label: "Get Started",
+        //     type: "become-proposer" as const
+        // }
     },
     {
         title: "Manage Your Profile",
@@ -195,34 +198,34 @@ export function TutorialDialog({
             );
         }
 
-        if (type === 'become-proposer') {
-            if (isProposer) {
-                return (
-                    <div className="flex items-center gap-2 text-xs">
-                        <CheckIcon className="size-4 text-algo-green dark:text-algo-black" />
-                        Already a Proposer
-                    </div>
-                );
-            }
+        // if (type === 'become-proposer') {
+        //     if (isProposer) {
+        //         return (
+        //             <div className="flex items-center gap-2 text-xs">
+        //                 <CheckIcon className="size-4 text-algo-green dark:text-algo-black" />
+        //                 Already a Proposer
+        //             </div>
+        //         );
+        //     }
 
-            return (
-                <Button
-                    onClick={() => handleAction(type)}
-                    variant='outline'
-                    disabled={subscribeProposerTxnState.isPending}
-                    className="flex items-center gap-2"
-                >
-                    {subscribeProposerTxnState.isPending ? (
-                        <>
-                            <div className="size-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-                            Processing...
-                        </>
-                    ) : (
-                        label
-                    )}
-                </Button>
-            );
-        }
+        //     return (
+        //         <Button
+        //             onClick={() => handleAction(type)}
+        //             variant='outline'
+        //             disabled={subscribeProposerTxnState.isPending}
+        //             className="flex items-center gap-2"
+        //         >
+        //             {subscribeProposerTxnState.isPending ? (
+        //                 <>
+        //                     <div className="size-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+        //                     Processing...
+        //                 </>
+        //             ) : (
+        //                 label
+        //             )}
+        //         </Button>
+        //     );
+        // }
 
         return (
             <Button
@@ -372,8 +375,6 @@ export function TutorialDialog({
                                     {currentStepData.content}
                                 </p>
                             </div>
-
-
 
                             <DialogFooter className="flex flex-row justify-between items-center">
                                 <div className="w-full flex justify-between gap-3">

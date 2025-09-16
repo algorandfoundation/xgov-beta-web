@@ -13,6 +13,7 @@ import {
   UseWallet,
 } from "@/hooks";
 import { proposalFilter, StackedList } from "@/recipes";
+import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 
 export function StackedListIsland({
   proposals,
@@ -45,7 +46,7 @@ export function StackedListQuery({
 
   const proposalsWithNFDs = useMemo(() => {
     if (!proposalsQuery.data) return [];
-    
+
     return proposalsQuery.data.map((proposal) => ({
       ...proposal,
       nfd: nfds.data?.[proposal.proposer]
@@ -66,13 +67,17 @@ export function StackedListQuery({
   useProposalScrutinizer(proposals);
 
   if (!isReady) {
-    return null;
+    return (
+      <div className="h-80 flex justify-center items-center text-2xl dark:text-algo-teal">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   if (_proposals.length === 0) {
     return (
       <div className="h-80 flex justify-center items-center text-2xl dark:text-algo-teal">
-        No Results
+        No Proposals
       </div>
     );
   }

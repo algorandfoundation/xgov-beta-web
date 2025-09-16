@@ -3,9 +3,11 @@ import algosdk, {
   ABIType,
   ALGORAND_MIN_TX_FEE,
   makePaymentTxnWithSuggestedParamsFromObject,
-  encodeAddress
+  encodeAddress,
+  encodeUint64,
+  decodeUint64
 } from "algosdk";
-import type { RegistryGlobalState } from "./types";
+import type { RegistryGlobalState, XGovSubscribeRequestBoxValue } from "./types";
 import { algod, algorand, network, RegistryAppID, registryClient } from "./algorand";
 import type { ProposerBoxValue, XGovBoxValue, XGovRegistryComposer } from '@algorandfoundation/xgov/registry';
 import { fundingLogicSig, fundingLogicSigSigner } from '@/api/testnet-funding-logicsig';
@@ -34,6 +36,15 @@ export function xGovBoxName(address: string): Uint8Array {
     Buffer.concat([
       Buffer.from("x"),
       algosdk.decodeAddress(address).publicKey,
+    ]),
+  );
+}
+
+export function requestBoxName(id: number): Uint8Array {
+  return new Uint8Array(
+    Buffer.concat([
+      Buffer.from("r"),
+      encodeUint64(id),
     ]),
   );
 }
@@ -156,6 +167,139 @@ export async function getAllSubscribedXGovs(): Promise<string[]> {
   return xGovBoxes.map((box) => {
     return encodeAddress(Buffer.from(box.name.slice(1)));
   });
+}
+
+export async function getAllXGovSubscribeRequests(): Promise<(XGovSubscribeRequestBoxValue & { id: bigint })[]> {
+  const boxes = await algorand.client.algod
+    .getApplicationBoxes(registryAppID)
+    .do();
+
+  const RequestBoxes = boxes.boxes.filter((box) => {
+    const boxName = new TextDecoder().decode(box.name);
+    return boxName.startsWith("r");
+  });
+
+  const results = await Promise.allSettled(
+    RequestBoxes.map(async (box) => {
+      return await algorand.client.algod.getApplicationBoxByName(registryAppID, box.name).do();
+    })
+  );
+
+  const abi = ABIType.from('(address,address,uint64)');
+
+  return results.map((result) => {
+    if (result.status === "fulfilled") {
+      const box = result.value
+      const decoded = abi.decode(box.value)
+
+      if (!Array.isArray(decoded)) {
+        throw new Error("Decoded value is not an array");
+      }
+
+      return {
+        id: BigInt(decodeUint64(box.name.slice(1), "safe")),
+        xgovAddr: decoded[0] as string,
+        ownerAddr: decoded[1] as string,
+        relationType: BigInt(decoded[2] as number),
+      }
+    } else {
+      throw new Error(`Failed to fetch box: ${result.reason}`);
+    }
+  });
+}
+
+export interface SubscribeXGovRequestProps extends TransactionHandlerProps {
+  requestId: bigint;
+}
+
+export interface ApproveSubscribeXGovRequestProps extends SubscribeXGovRequestProps {
+  xgovAddress: string;
+}
+
+export async function approveSubscribeRequest({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+  requestId,
+  xgovAddress
+}: ApproveSubscribeXGovRequestProps): Promise<void> {
+  if (!innerSigner) return;
+
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  try {
+    await registryClient.send.approveSubscribeXgov({
+      sender: activeAddress,
+      signer: transactionSigner,
+      args: { requestId },
+      boxReferences: [
+        requestBoxName(Number(requestId)),
+        xGovBoxName(xgovAddress),
+      ],
+    });
+
+    setStatus("confirmed");
+    await sleep(800);
+    setStatus("idle");
+    await Promise.all(refetch.map(r => r()));
+  } catch (e: any) {
+    console.error("Error during approveSubscribeXgov:", e.message);
+    setStatus(new Error(`Failed to approve subscribe request`));
+    return;
+  }
+}
+
+export async function rejectSubscribeRequest({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+  requestId
+}: SubscribeXGovRequestProps): Promise<void> {
+  if (!innerSigner) return;
+
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  try {
+    await registryClient.send.rejectSubscribeXgov({
+      sender: activeAddress,
+      signer: transactionSigner,
+      args: { requestId },
+      boxReferences: [
+        requestBoxName(Number(requestId)),
+      ],
+    });
+
+    setStatus("confirmed");
+    await sleep(800);
+    setStatus("idle");
+    await Promise.all(refetch.map(r => r()));
+  } catch (e: any) {
+    console.error("Error during approveSubscribeXgov:", e.message);
+    setStatus(new Error(`Failed to approve subscribe request`));
+    return;
+  }
 }
 
 export interface SubscribeXGovProps extends TransactionHandlerProps {
