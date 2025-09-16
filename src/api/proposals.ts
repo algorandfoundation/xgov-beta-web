@@ -31,6 +31,8 @@ import { proposalApprovalBoxName, proposerBoxName, xGovBoxName } from "./registr
 import type { TransactionHandlerProps } from "./types/transaction_state";
 import { sleep } from "./nfd";
 
+const PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT = 4;
+
 export const proposalFactory = new ProposalFactory({ algorand });
 
 export const metadataBoxName = new Uint8Array(Buffer.from("M"));
@@ -517,6 +519,7 @@ export async function createEmptyProposal({
     const proposalFee = PROPOSAL_FEE.microAlgo();
 
     const suggestedParams = await algorand.getSuggestedParams();
+    const _proposalApprovalBoxName = proposalApprovalBoxName();
 
     const result = await registryClient.send.openProposal({
       sender: activeAddress,
@@ -529,7 +532,10 @@ export async function createEmptyProposal({
           suggestedParams,
         }),
       },
-      boxReferences: [proposerBoxName(activeAddress), proposalApprovalBoxName()],
+      boxReferences: [
+        proposerBoxName(activeAddress),
+        ...Array(PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT).fill(_proposalApprovalBoxName)
+      ],
       extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
     });
 
