@@ -517,6 +517,7 @@ export async function createEmptyProposal({
     const proposalFee = PROPOSAL_FEE.microAlgo();
 
     const suggestedParams = await algorand.getSuggestedParams();
+    const _proposalApprovalBoxName = proposalApprovalBoxName();
 
     const result = await registryClient.send.openProposal({
       sender: activeAddress,
@@ -529,7 +530,13 @@ export async function createEmptyProposal({
           suggestedParams,
         }),
       },
-      boxReferences: [proposerBoxName(activeAddress), proposalApprovalBoxName()],
+      boxReferences: [
+        proposerBoxName(activeAddress),
+        _proposalApprovalBoxName,
+        _proposalApprovalBoxName,
+        _proposalApprovalBoxName,
+        _proposalApprovalBoxName
+      ],
       extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
     });
 
