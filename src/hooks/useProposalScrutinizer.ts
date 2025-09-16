@@ -68,8 +68,8 @@ export function useProposalScrutinizer(proposals: ProposalSummaryCardDetails[]) 
     const processProposals = async () => {
         try {
             console.log("Running scrutinize interval");
-            if (network !== "testnet") return;
-            if (!registry?.data?.votingDurationXlarge) return;
+            if (network !== "testnet" && network !== "mainnet") return;
+            if (!registry?.data?.votingDurationLarge) return;
             console.log('valid to run scrutinize interval');
 
             const votingDurations = [
