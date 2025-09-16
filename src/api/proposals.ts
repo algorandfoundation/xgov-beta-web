@@ -532,10 +532,7 @@ export async function createEmptyProposal({
       },
       boxReferences: [
         proposerBoxName(activeAddress),
-        _proposalApprovalBoxName,
-        _proposalApprovalBoxName,
-        _proposalApprovalBoxName,
-        _proposalApprovalBoxName
+        ...Array(PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT).fill(_proposalApprovalBoxName)
       ],
       extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
     });
