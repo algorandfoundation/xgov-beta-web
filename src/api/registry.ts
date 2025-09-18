@@ -15,7 +15,7 @@ import type { TransactionHandlerProps } from '@/api/types/transaction_state';
 import { wrapTransactionSigner } from '@/hooks/useTransactionState';
 import { Buffer } from "buffer";
 import { sleep } from './nfd';
-import { getXGovs } from '@algorandfoundation/xgov-beta-ghost';
+import * as ghost from '@algorandfoundation/xgov-beta-ghost';
 
 if (globalThis.Buffer === undefined) {
   globalThis.Buffer = Buffer;
@@ -177,7 +177,7 @@ export async function getAllXGovData(): Promise<string[]> {
   const results: XGovBoxValue[] = [];
   for (let i = 0; i < all.length; i += 63) {
     const chunk = all.slice(i, i + 63);
-    results.push(...((await getXGovs(algorand, BigInt(registryAppID), chunk))));
+    results.push(...((await ghost.getXGovs(algorand, BigInt(registryAppID), chunk))));
   }
 
   console.log('results', results)
@@ -193,7 +193,7 @@ export async function getDelegatedXGovData(account: string): Promise<(XGovBoxVal
     const chunk = all.slice(i, i + 63);
     results.push(
       ...(
-        (await getXGovs(algorand, BigInt(registryAppID), chunk))
+        (await ghost.getXGovs(algorand, BigInt(registryAppID), chunk))
           .map((v, ii) => ({ ...v, xgov: all[i + ii] }))
           .filter(v => v.votingAddress === account && v.xgov !== account)
       )
