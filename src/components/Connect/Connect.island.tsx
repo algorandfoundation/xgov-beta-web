@@ -15,7 +15,6 @@ import { WalletIcon } from "../icons/WalletIcon";
 import { useNFD, useProposer, UseQuery, useRegistry, useXGov } from "@/hooks";
 import { subscribeProposer, subscribeXgov } from "@/api";
 import { useTransactionState } from "@/hooks/useTransactionState";
-import { set } from "date-fns";
 
 export type ConnectIslandProps = {
   path?: string;
