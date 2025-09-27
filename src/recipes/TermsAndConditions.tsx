@@ -26,7 +26,7 @@ function printString(content: string) {
   };
 }
 
-function formatMarkdownToHtml(text: string): string {
+export function formatMarkdownToHtml(text: string): string {
   return text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
