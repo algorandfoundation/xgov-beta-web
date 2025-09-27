@@ -14,6 +14,7 @@ import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
 import type { TransactionStateInfo } from "@/api/types/transaction_state";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
+import { ExternalLink } from "lucide-react";
 
 export interface ProfileCardProps {
   address: string;
@@ -118,6 +119,20 @@ export function ProfileCard({
                   <XGovProposerStatusPill proposer={proposer} />
                 )
               }
+
+              {proposer?.isProposer && (
+                <div className="flex flex-col gap-2 mb-2">
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-algo-blue dark:text-algo-teal hover:underline"
+                  >
+                    View Terms & Conditions
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              )}
 
               {!proposer?.isProposer && (
                 // <ActionButton

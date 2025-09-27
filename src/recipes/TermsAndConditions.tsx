@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Printer, ClipboardCheck, Clipboard } from "lucide-react";
+import { Printer, ClipboardCheck, Clipboard, ExternalLink } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 
 function printString(content: string) {
@@ -24,6 +24,28 @@ function printString(content: string) {
     printWindow.print();
     printWindow.close();
   };
+}
+
+// Function to convert markdown-like formatting to HTML
+function formatMarkdownToHtml(text: string): string {
+  return text
+    // Bold text **text** -> <strong>text</strong>
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    // Links [text](url) -> <a href="url">text</a>
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
+    // Email links
+    .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
+    // URL links (but not inside existing links)
+    .replace(/(?<!href=")(?<!href=')(https?:\/\/[^\s<>]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
+    // Split into paragraphs based on double line breaks
+    .split(/\n\s*\n/)
+    .map(paragraph => {
+      // Handle single line breaks within paragraphs
+      const formattedParagraph = paragraph.trim().replace(/\n/g, '<br>');
+      return formattedParagraph ? `<p class="mb-4">${formattedParagraph}</p>` : '';
+    })
+    .filter(p => p) // Remove empty paragraphs
+    .join('');
 }
 
 interface TermsAndConditionsModalProps {
@@ -70,22 +92,33 @@ export function TermsAndConditionsModal({
   return (
     <Dialog open={isOpen}>
       <DialogContent
-        className="w-full h-full max-h-full sm:h-auto sm:w-fit sm:rounded-lg overflow-y-auto"
+        className="w-full max-w-4xl h-full max-h-full sm:h-auto sm:rounded-lg overflow-hidden"
         onCloseClick={onClose}
       >
         <DialogHeader className="mt-12 flex flex-col items-start gap-2">
           <DialogTitle className="dark:text-white">{title}</DialogTitle>
           <DialogDescription className="flex flex-col">
             {description}
+            <div className="mt-2">
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-algo-blue dark:text-algo-teal hover:underline"
+              >
+                View full page
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
           </DialogDescription>
-          <div className="h-[60svh] self-center rounded-md border border-algo-blue dark:border-algo-teal p-2 text-sm text-left">
+          <div className="h-[60svh] w-full rounded-md border border-algo-blue dark:border-algo-teal px-2 text-sm text-left">
             <div
               tabIndex={0}
               onScroll={handleScroll}
               ref={scrollRef}
               id="tc-box"
-              className="h-full overflow-y-auto whitespace-pre-line sm:whitespace-pre"
-              dangerouslySetInnerHTML={{ __html: terms }}
+              className="h-full overflow-y-auto overflow-x-hidden text-sm leading-relaxed [&>p]:mb-4 [&>p]:text-sm [&>p]:leading-relaxed [&_strong]:font-bold [&_a]:text-algo-blue dark:[&_a]:text-algo-teal [&_a]:no-underline hover:[&_a]:underline"
+              dangerouslySetInnerHTML={{ __html: formatMarkdownToHtml(terms) }}
             ></div>
           </div>
         </DialogHeader>
