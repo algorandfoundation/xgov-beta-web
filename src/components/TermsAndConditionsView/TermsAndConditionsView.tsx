@@ -1,17 +1,11 @@
 import termsAndConditionsString from "../ProfileCard/TermsAndConditionsText.md?raw";
 
-// Function to convert markdown-like formatting to HTML
 function formatMarkdownToHtml(text: string): string {
   return text
-    // Bold text **text** -> <strong>text</strong>
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    // Links [text](url) -> <a href="url">text</a>
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    // Email links
     .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    // URL links
     .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    // Convert line breaks
     .replace(/\n/g, '<br>');
 }
 
