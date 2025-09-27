@@ -26,25 +26,19 @@ function printString(content: string) {
   };
 }
 
-// Function to convert markdown-like formatting to HTML
 function formatMarkdownToHtml(text: string): string {
   return text
-    // Bold text **text** -> <strong>text</strong>
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    // Links [text](url) -> <a href="url">text</a>
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    // Email links
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
     .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    // URL links (but not inside existing links)
     .replace(/(?<!href=")(?<!href=')(https?:\/\/[^\s<>]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    // Split into paragraphs based on double line breaks
     .split(/\n\s*\n/)
     .map(paragraph => {
-      // Handle single line breaks within paragraphs
       const formattedParagraph = paragraph.trim().replace(/\n/g, '<br>');
       return formattedParagraph ? `<p class="mb-4">${formattedParagraph}</p>` : '';
     })
-    .filter(p => p) // Remove empty paragraphs
+    .filter(p => p)
     .join('');
 }
 
