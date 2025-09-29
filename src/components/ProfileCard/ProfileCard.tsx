@@ -12,9 +12,9 @@ import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispens
 import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
 import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
 import type { TransactionStateInfo } from "@/api/types/transaction_state";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Button } from "../ui/button";
+
 import { ExternalLink } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export interface ProfileCardProps {
   address: string;
@@ -116,11 +116,43 @@ export function ProfileCard({
             <div className="flex items-center gap-6">
               {
                 (!proposer?.isProposer || !proposer?.kycStatus) && (
-                  <XGovProposerStatusPill proposer={proposer} />
+                  <div className="flex flex-col">
+                    <div className="flex flex-col gap-2 my-4">
+                      <a
+                        href="/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-algo-blue dark:text-algo-teal hover:underline"
+                      >
+                        View Terms & Conditions
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                    <XGovProposerStatusPill proposer={proposer} />
+                    <div className="mt-4 mb-2 p-4 bg-algo-blue/5 dark:bg-algo-teal/5 border border-algo-blue/20 dark:border-algo-teal/20 rounded-lg">
+                      <h4 className="text-sm font-medium text-algo-black dark:text-white mb-2">
+                        KYC Verification Required
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        To complete your Proposer registration, you need to verify your identity through our KYC process. 
+                        If you've already completed KYC verification, you can ignore this message.
+                      </p>
+                      <ActionButton
+                        type="button"
+                        onClick={() => window.open("https://in.sumsub.com/websdk/p/uni_nkxmvJFJATzDsSTA", "_blank", "noopener,noreferrer")}
+                        disabled={false}
+                      >
+                        <span className="inline-flex items-center gap-2 text-sm">
+                          Start KYC Verification
+                          <ExternalLink className="h-3 w-3" />
+                        </span>
+                      </ActionButton>
+                    </div>
+                  </div>
                 )
               }
 
-              {proposer?.isProposer && (
+              {proposer?.isProposer && proposer?.kycStatus && (
                 <div className="flex flex-col gap-2 mb-2">
                   <a
                     href="/terms"
