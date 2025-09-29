@@ -6,6 +6,7 @@ import {
 } from "@txnlab/use-wallet-react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "../src/components/ui/tooltip";
 import "tailwindcss/tailwind.css";
 import type { Preview } from "@storybook/react";
 
@@ -55,6 +56,11 @@ export const decorators = [
     <MemoryRouter initialEntries={["/"]}>
       <Story />
     </MemoryRouter>
+  ),
+  (Story: any) => (
+    <TooltipProvider>
+      <Story />
+    </TooltipProvider>
   ),
 ];
 

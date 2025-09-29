@@ -27,9 +27,11 @@ import {
 import { PROPOSAL_FEE } from "@/constants.ts";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
 import { wrapTransactionSigner } from "@/hooks/useTransactionState";
-import { proposerBoxName, xGovBoxName } from "./registry";
+import { proposalApprovalBoxName, proposerBoxName, xGovBoxName } from "./registry";
 import type { TransactionHandlerProps } from "./types/transaction_state";
 import { sleep } from "./nfd";
+
+const PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT = 4;
 
 export const proposalFactory = new ProposalFactory({ algorand });
 
@@ -532,6 +534,7 @@ export async function createEmptyProposal({
     const proposalFee = PROPOSAL_FEE.microAlgo();
 
     const suggestedParams = await algorand.getSuggestedParams();
+    const _proposalApprovalBoxName = proposalApprovalBoxName();
 
     const result = await registryClient.send.openProposal({
       sender: activeAddress,
@@ -544,7 +547,10 @@ export async function createEmptyProposal({
           suggestedParams,
         }),
       },
-      boxReferences: [proposerBoxName(activeAddress)],
+      boxReferences: [
+        proposerBoxName(activeAddress),
+        ...Array(PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT).fill(_proposalApprovalBoxName)
+      ],
       extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
     });
 

@@ -34,12 +34,15 @@ import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
 import { queryClient } from "@/stores";
 import { useTransactionState } from "@/hooks/useTransactionState";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function ProfilePageIsland({ address }: { address: string }) {
   return (
     <UseQuery>
       <UseWallet>
-        <ProfilePageController address={address} />
+        <TooltipProvider>
+          <ProfilePageController address={address} />
+        </TooltipProvider>
       </UseWallet>
     </UseQuery>
   );

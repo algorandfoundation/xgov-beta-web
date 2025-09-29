@@ -1,8 +1,17 @@
 import { cn } from "@/functions/utils";
 import animations from "@/styles/homepage-animations.module.css";
 import { AlgorandIcon } from "../icons/AlgorandIcon";
+import { useStore } from "@nanostores/react";
+import { $heroAnimationStore } from "@/stores/heroAnimationStore";
+
 
 export function HeroAnimation() {
+  const heroAnimationShown = useStore($heroAnimationStore);
+
+  if (heroAnimationShown === "true") {
+    return null;
+  }
+
   return (
     <div
       className={cn(
