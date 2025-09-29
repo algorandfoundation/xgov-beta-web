@@ -360,6 +360,21 @@ export async function getVoterBox(
   }
 }
 
+export async function getVoterBoxes(id: bigint, addresses: string[],
+): Promise<{ [key: string]: { votes: bigint; voted: boolean } }> {
+
+  const r = await Promise.allSettled(addresses.map((address) => getVoterBox(id, address)))
+
+  let result: { [key: string]: { votes: bigint; voted: boolean } } = {};
+  r.forEach((res, i) => {
+    if (res.status === 'fulfilled') {
+      result[addresses[i]] = res.value;
+    }
+  });
+  return result;
+}
+
+
 export async function getMetadata(id: bigint): Promise<ProposalJSON> {
   const metadata = await algorand.app.getBoxValue(
     id,
@@ -672,6 +687,7 @@ export async function openProposal({
 }
 
 export interface VoteProposalProps extends TransactionHandlerProps {
+  xgovAddress: string | null;
   appId: bigint;
   approvals: number;
   rejections: number;
@@ -680,6 +696,7 @@ export interface VoteProposalProps extends TransactionHandlerProps {
 
 export async function voteProposal({
   activeAddress,
+  xgovAddress,
   innerSigner,
   setStatus,
   refetch,
@@ -707,21 +724,26 @@ export async function voteProposal({
     return false;
   }
 
+  if (!xgovAddress) {
+    console.log('xGov address not found');
+    return false;
+  }
+
   try {
     const res = await registryClient.send.voteProposal({
       sender: activeAddress,
       signer: transactionSigner,
       args: {
         proposalId: appId,
-        xgovAddress: activeAddress,
+        xgovAddress,
         approvalVotes: approvals,
         rejectionVotes: rejections,
       },
       appReferences: [appId],
       accountReferences: [activeAddress],
       boxReferences: [
-        xGovBoxName(activeAddress),
-        { appId: appId, name: voterBoxName(activeAddress) }
+        xGovBoxName(xgovAddress),
+        { appId: appId, name: voterBoxName(xgovAddress) }
       ],
       extraFee: (1000).microAlgos(),
     });

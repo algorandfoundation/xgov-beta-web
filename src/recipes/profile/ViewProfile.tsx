@@ -25,6 +25,7 @@ import {
   useRegistry,
   useProposalsByProposer,
   useNFD,
+  useXGovDelegates,
 } from "@/hooks";
 import { StackedList } from "@/recipes";
 import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationModal";
@@ -34,7 +35,6 @@ import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
 import { queryClient } from "@/stores";
 import { useTransactionState } from "@/hooks/useTransactionState";
 import { TooltipProvider } from "@/components/ui/tooltip";
-
 
 export function ProfilePageIsland({ address }: { address: string }) {
   return (
@@ -114,7 +114,6 @@ export function ProfilePage({
   const {
     status: votAddrStatus,
     setStatus: setVotAddrStatus,
-    reset: resetVotAddr,
     errorMessage: votAddrErrorMessage,
     isPending: votAddrIsPending,
   } = useTransactionState();
@@ -155,8 +154,6 @@ export function ProfilePage({
       nfd: nfd.data
     }));
   }, [proposalsQuery.data, nfd.data]);
-
-  console.log('proposalsWithNFDs', proposalsWithNFDs)
 
   if (!address || isLoading) {
     return <LoadingSpinner />;

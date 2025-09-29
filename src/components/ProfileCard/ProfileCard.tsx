@@ -8,13 +8,12 @@ import { useState } from "react";
 import termsAndConditionsString from "./TermsAndConditionsText.md?raw";
 import { TermsAndConditionsModal } from "@/recipes";
 import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispenserBanner";
-
 import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
 import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
 import type { TransactionStateInfo } from "@/api/types/transaction_state";
-
+import { VotingFor } from "../VotingFor/VotingFor";
+import { useXGovDelegates } from "@/hooks";
 import { ExternalLink } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export interface ProfileCardProps {
   address: string;
@@ -59,6 +58,7 @@ export function ProfileCard({
   activeAddress,
   className = "",
 }: ProfileCardProps) {
+  const delegates = useXGovDelegates(address);
   const [showBecomeXGovModal, setShowBecomeXGovModal] = useState(false);
   const [showBecomeProposerModal, setShowBecomeProposerModal] = useState(false);
   const [showBecomeProposerTermsModal, setShowBecomeProposerTermsModal] = useState(false);
@@ -111,6 +111,12 @@ export function ProfileCard({
               />
             )
           }
+
+          <VotingFor
+            delegates={delegates.data || []}
+            isLoading={delegates.isLoading}
+            isError={delegates.isError}
+          />
 
           <div>
             <div className="flex items-center gap-6">

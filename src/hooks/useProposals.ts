@@ -5,6 +5,7 @@ import {
   getProposal,
   getProposalsByProposer,
   getVoterBox,
+  getVoterBoxes,
   type ProposalMainCardDetails,
 } from "@/api";
 import type { ProposalSummaryCardDetails } from "@/api";
@@ -51,6 +52,14 @@ export function useVoterBox(proposalId: number | null, activeAddress: string | n
     queryKey: ['getVoterBox', Number(proposalId!), activeAddress],
     queryFn: () => getVoterBox(BigInt(proposalId!), activeAddress!),
     enabled: !!proposalId && !!activeAddress,
+  });
+}
+
+export function useVoterBoxes(proposalId: number | null, addresses: string[] | null) {
+  return useQuery({
+    queryKey: ['getVoterBoxes', Number(proposalId!), addresses],
+    queryFn: () => getVoterBoxes(BigInt(proposalId!), addresses!),
+    enabled: !!proposalId && !!addresses && addresses.length > 0,
   });
 }
 

@@ -1,4 +1,4 @@
-import { env } from '@/constants'
+import { env, FEE_SINK } from '@/constants'
 import algosdk, {
   ABIType,
   ALGORAND_MIN_TX_FEE,
@@ -15,6 +15,8 @@ import type { TransactionHandlerProps } from '@/api/types/transaction_state';
 import { wrapTransactionSigner } from '@/hooks/useTransactionState';
 import { Buffer } from "buffer";
 import { sleep } from './nfd';
+import * as ghost from '@algorandfoundation/xgov-beta-ghost';
+
 if (globalThis.Buffer === undefined) {
   globalThis.Buffer = Buffer;
 }
@@ -80,7 +82,7 @@ export async function getIsXGov(
 ): Promise<{ isXGov: boolean; votingAddress: string }> {
   try {
     const xgovBoxValue = (await registryClient.newGroup().getXgovBox({
-      sender: address,
+      sender: FEE_SINK,
       args: {
         xgovAddress: address,
       },
@@ -109,7 +111,7 @@ export async function getIsProposer(
 ): Promise<{ isProposer: boolean } & ProposerBoxValue> {
   try {
     const proposerBoxValue = (await registryClient.newGroup().getProposerBox({
-      sender: address,
+      sender: FEE_SINK,
       args: {
         proposerAddress: address,
       },
@@ -174,6 +176,39 @@ export async function getAllSubscribedXGovs(): Promise<string[]> {
     return encodeAddress(Buffer.from(box.name.slice(1)));
   });
 }
+
+export async function getAllXGovData(): Promise<string[]> {
+  const all = await getAllSubscribedXGovs();
+
+  const results: XGovBoxValue[] = [];
+  for (let i = 0; i < all.length; i += 63) {
+    const chunk = all.slice(i, i + 63);
+    results.push(...((await ghost.getXGovs(algorand, BigInt(registryAppID), chunk))));
+  }
+
+  console.log('results', results)
+
+  return all
+}
+
+export async function getDelegatedXGovData(account: string): Promise<(XGovBoxValue & { xgov: string })[]> {
+  const all = await getAllSubscribedXGovs();
+
+  const results: (XGovBoxValue & { xgov: string })[] = [];
+  for (let i = 0; i < all.length; i += 63) {
+    const chunk = all.slice(i, i + 63);
+    results.push(
+      ...(
+        (await ghost.getXGovs(algorand, BigInt(registryAppID), chunk))
+          .map((v, ii) => ({ ...v, xgov: all[i + ii] }))
+          .filter(v => v.votingAddress === account && v.xgov !== account)
+      )
+    );
+  }
+
+  return results
+}
+
 
 export async function getAllXGovSubscribeRequests(): Promise<(XGovSubscribeRequestBoxValue & { id: bigint })[]> {
   const boxes = await algorand.client.algod
