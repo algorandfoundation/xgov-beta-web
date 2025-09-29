@@ -135,33 +135,15 @@ export function ProfileCard({
               )}
 
               {!proposer?.isProposer && (
-                // <ActionButton
-                //   type="button"
-                //   onClick={() => setShowBecomeProposerTermsModal(true)}
-                //   disabled={subscribeProposerState.isPending}
-                // >
-                //   {subscribeProposerState.isPending
-                //     ? "Loading..."
-                //     : "Become a Proposer"}
-                // </ActionButton>
-                <Popover>
-                  <PopoverTrigger aria-label={`Info: Become a Proposer`}>
-                    <Button
-                      type='button'
-                      size="sm"
-                    >
-                      Become a Proposer
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    side="bottom"
-                    sideOffset={8}
-                    className="text-sm"
-                    role="tooltip"
-                  >
-                    Signups to become a Proposer will open in September.
-                  </PopoverContent>
-                </Popover>
+                <ActionButton
+                  type="button"
+                  onClick={() => setShowBecomeProposerTermsModal(true)}
+                  disabled={subscribeProposerState.isPending}
+                >
+                  {subscribeProposerState.isPending
+                    ? "Loading..."
+                    : "Become a Proposer"}
+                </ActionButton>
               )}
             </div>
           </div>
