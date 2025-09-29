@@ -1,7 +1,10 @@
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon.tsx";
-import { cn } from "@/functions";
 
-const navigation = [
+const textLinks = [
+  {
+    name: "Terms & Conditions",
+    href: "/terms"
+  },
   {
     name: "Privacy Policy",
     href: "https://algorand.co/algorand-foundation/privacy-policy"
@@ -10,6 +13,9 @@ const navigation = [
     name: "Disclaimers",
     href: "https://algorand.co/algorand-foundation/disclaimer"
   },
+];
+
+const iconLinks = [
   {
     name: "Algorand",
     href: "https://algorand.co",
@@ -79,21 +85,37 @@ const navigation = [
 ];
 export function FooterLinks() {
   return (
-    <>
-      {navigation.map((item) => (
-        <a
-          key={item.name}
-          target="_blank"
-          href={item.href}
-          className={cn(
-            !!item.icon ? 'size-8 p-0.5' : 'py-0.5 px-2',
-            "flex justify-center items-center  text-algo-black hover:text-algo-black-60 hover:bg-white dark:hover:bg-algo-black-80 dark:text-white/60 dark:hover:text-white rounded-full"
-          )}
-        >
-          <span className="sr-only">{item.name}</span>
-          { !!item.icon ? <item.icon aria-hidden="true" className="size-6" /> : item.name }
-        </a>
-      ))}
-    </>
+    <div className="flex flex-col items-center gap-3 sm:gap-4 lg:flex-row lg:justify-end lg:gap-6">
+      {/* Text Links Group */}
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4 lg:gap-6">
+        {textLinks.map((item) => (
+          <a
+            key={item.name}
+            href={item.href}
+            target={item.href.startsWith('http') ? "_blank" : undefined}
+            rel={item.href.startsWith('http') ? "noopener noreferrer" : undefined}
+            className="py-1 px-2 sm:py-0.5 sm:px-3 flex justify-center items-center text-algo-black hover:text-algo-black-60 hover:bg-white dark:hover:bg-algo-black-80 dark:text-white/60 dark:hover:text-white rounded-full text-sm whitespace-nowrap"
+          >
+            {item.name}
+          </a>
+        ))}
+      </div>
+
+      {/* Icon Links Group */}
+      <div className="flex justify-center gap-2 sm:gap-3">
+        {iconLinks.map((item) => (
+          <a
+            key={item.name}
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="size-8 sm:size-9 p-0.5 flex justify-center items-center text-algo-black hover:text-algo-black-60 hover:bg-white dark:hover:bg-algo-black-80 dark:text-white/60 dark:hover:text-white rounded-full"
+          >
+            <span className="sr-only">{item.name}</span>
+            <item.icon aria-hidden="true" className="size-6" />
+          </a>
+        ))}
+      </div>
+    </div>
   );
 }

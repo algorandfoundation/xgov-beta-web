@@ -5,11 +5,11 @@ import Layout from "@/layouts/Layout.astro";
 import LandingPage from "@/layouts/LandingPage.astro";
 
 import { HeroAnimation } from "@/components/HeroAnimation/HeroAnimation";
-import Hero from "@/components/Hero/Hero.astro";
 import { ProposalListHeaderIsland } from "@/components/ProposalListHeader/ProposalListHeader";
 
 import { StackedListIsland } from "@/recipes";
 import { TestnetDispenserBannerIsland } from "@/components/TestnetDispenserBanner/TestnetDispenserBanner";
+import HeroIsland from "@/components/Hero/Hero";
 
 const title = "Algorand xGov";
 const description =
@@ -20,17 +20,23 @@ let proposals = await getAllProposals();
 ---
 
 <Layout description={description}>
-  <HeroAnimation />
+  <HeroAnimation client:only="react" />
   <LandingPage>
-    <Hero
-      slot="hero"
-      title={title}
-      description={description}
-      xgovs={Number(registry?.committeeMembers) || 0}
-      proposals={proposals.length}
-      treasury={Number(registry?.outstandingFunds) / 1e6 || 0}
-      votes={Number(registry?.committeeVotes) || 0}
-    />
+    <div
+      class="relative min-h-[35.8rem] md:min-h-[37.8rem] lg:min-h-[39.8rem] xl:min-h-[39.8rem] 2xl:min-h-[37.8rem] bg-algo-blue dark:bg-algo-teal rounded-b-3xl xs:px-2 mb-2 lg:px-8 overflow-hidden"
+    >
+      <HeroIsland
+        slot="hero"
+        client:only="react"
+        title={title}
+        description={description}
+        xgovs={Number(registry?.committeeMembers) || 0}
+        proposals={proposals.length}
+        treasury={Number(registry?.outstandingFunds) / 1e6 || 0}
+        votes={Number(registry?.committeeVotes) || 0}
+      />
+    </div>
+
     <div
       id="list-header-title-anchor"
       class="h-40 absolute top-[-5rem] pointer-events-none"

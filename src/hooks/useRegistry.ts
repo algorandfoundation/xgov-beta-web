@@ -5,6 +5,7 @@ import {
   getIsProposer,
   getIsXGov,
   getAllSubscribedXGovs,
+  getDelegatedXGovData,
 } from "src/api/registry";
 import type { RegistryGlobalState } from "@/api";
 
@@ -21,6 +22,14 @@ export function useXGov(address: string | null) {
   return useQuery({
     queryKey: ["getIsXGov", address],
     queryFn: () => getIsXGov(address!),
+    enabled: !!address,
+  });
+}
+
+export function useXGovDelegates(address: string | null) {
+  return useQuery({
+    queryKey: ["getDelegatedXGovs", address],
+    queryFn: () => getDelegatedXGovData(address!),
     enabled: !!address,
   });
 }

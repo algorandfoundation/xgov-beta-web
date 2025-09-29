@@ -214,3 +214,52 @@ npm run mock-init-assign
 ```
 
 Than, follow the instructions at the end of the script output.
+
+## Deployment
+
+This project uses GitHub Actions to automatically deploy to Cloudflare Pages with two environments:
+
+### Environments
+
+- **Testnet**: Deploys when pushing to `main` branch
+- **Mainnet**: Deploys when pushing to `mainnet` branch
+
+### Environment Files
+
+- `.env.testnet` - Configuration for testnet deployment (loaded with `--mode testnet`)
+- `.env.mainnet` - Configuration for mainnet deployment (loaded with `--mode mainnet`)
+
+### Required GitHub Secrets
+
+Set up the following secrets in your GitHub repository:
+
+```
+CLOUDFLARE_API_TOKEN          # Cloudflare API token
+CF_ACCOUNT_ID                 # Cloudflare account ID
+CF_PROJECT_NAME_TESTNET       # Cloudflare project name for testnet
+CF_PROJECT_NAME_MAINNET       # Cloudflare project name for mainnet
+TEMP_DEPLOY_KEY              # SSH deploy key (if needed)
+TEMP_SC_DEPLOY_KEY           # SSH deploy key for smart contracts (if needed)
+```
+
+### Deployment Workflow
+
+1. **Testnet Deployment**: Push/merge to `main` branch
+   - Builds with `--mode testnet` (automatically loads `.env.testnet`)
+   - Deploys to the testnet Cloudflare project
+
+2. **Mainnet Deployment**: Push/merge to `mainnet` branch
+   - Builds with `--mode mainnet` (automatically loads `.env.mainnet`)
+   - Deploys to the mainnet Cloudflare project
+
+### Setting Up Environment Files
+
+1. Copy the template values from `.env.template`
+2. Update `.env.testnet` with testnet-specific values:
+   - Testnet Algorand node endpoints
+   - Testnet registry app ID
+   - Testnet committee publisher mnemonic
+3. Update `.env.mainnet` with mainnet-specific values:
+   - Mainnet Algorand node endpoints
+   - Mainnet registry app ID
+   - Mainnet committee publisher mnemonic
