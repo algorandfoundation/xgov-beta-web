@@ -222,6 +222,7 @@ function DiscussionStatusCard({
 
   let action = (
     <Link
+      target="_blank"
       to={proposal.forumLink}
       className="flex gap-2 mt-2 px-4 py-2 bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-md hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50"
     >
@@ -392,10 +393,17 @@ function VotingStatusCard({
     });
   }
 
-  let subheader = (
-    <>
-
-    </>
+  const subheader = (
+    <div className="h-9 flex items-start">
+      <Link
+        target="_blank"
+        to={proposal.forumLink}
+        className="flex items-center gap-1 text-algo-black/80 dark:text-white/80 hover:underline"
+      >
+        View the discussion
+        <ExternalLinkIcon size={16} />
+      </Link>
+    </div>
   )
 
   let baseAction = (
@@ -471,7 +479,6 @@ function VotingStatusCard({
 
   if (!!voterInfo && voterInfo.votes > 0n) {
     if (voterInfo.voted) {
-      subheader = <div className="h-9 w-full"></div>
       action = (
         <>
           {baseAction}
@@ -649,8 +656,6 @@ function VotingStatusCard({
         )
       }
     }
-  } else {
-    subheader = <div className="h-9 w-full"></div>
   }
 
   return (
@@ -695,6 +700,19 @@ function PostVotingStatusCard({
 
   const defaults = defaultsStatusCardMap[proposal.status];
 
+  const subheader = (
+    <div className="h-9 flex items-start">
+      <Link
+        target="_blank"
+        to={proposal.forumLink}
+        className="flex items-center gap-1 text-algo-black/80 dark:text-white/80 hover:underline"
+      >
+        View the discussion
+        <ExternalLinkIcon size={16} />
+      </Link>
+    </div>
+  )
+
   const voteMetricsAction = (
     <div className="w-full flex flex-col items-center justify-center gap-4">
       <VoteCounter
@@ -730,7 +748,7 @@ function PostVotingStatusCard({
   return <StatusCardTemplate
     className={className}
     header={defaults.header}
-    subHeader={defaults.subHeader}
+    subHeader={subheader}
     sideHeader={defaults.sideHeader}
     icon={defaults.icon}
     action={voteMetricsAction}
