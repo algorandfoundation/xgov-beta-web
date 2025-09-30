@@ -162,7 +162,7 @@ export function ProfileCard({
                           </h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                             To complete your Proposer registration, you need to verify your identity through our KYC process.
-                            If you've already completed KYC verification, you can ignore this message.
+                            If you successfully completed the KYC process, your profile will be approved within the next business day.
                           </p>
                           <ActionButton
                             type="button"
