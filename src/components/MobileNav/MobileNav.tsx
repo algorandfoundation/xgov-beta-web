@@ -14,22 +14,55 @@ import { $themeStore, toggleTheme } from "@/stores/themeStore";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "../Link";
-import { UseWallet } from "@/hooks";
+import { UseWallet, UseQuery, useNFD, useProposer, useRegistry, useXGov } from "@/hooks";
+import { TutorialDialog } from "@/components/TutorialDialog/TutorialDialog";
+import { subscribeProposer, subscribeXgov } from "@/api";
+import { useTransactionState } from "@/hooks/useTransactionState";
 
-export function MobileNavIsland(props: { trigger?: ReactNode }) {
+export function MobileNavIsland(props: { trigger?: ReactNode; path?: string }) {
   return (
     <UseWallet>
-      <MobileNav {...props} />
+      <UseQuery>
+        <MobileNav {...props} />
+      </UseQuery>
     </UseWallet>
   );
 }
 
-export function MobileNav({ trigger }: { trigger?: ReactNode }) {
-  const { wallets, activeAddress, activeWallet } = useWallet();
+export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?: string }) {
+  const manager = useWallet();
+  const { wallets, activeAddress, activeWallet } = manager;
   const theme = useStore($themeStore);
+  const registry = useRegistry();
+  const xgov = useXGov(activeAddress);
+  const proposer = useProposer(activeAddress);
+
+  const getCurrentPage = (pathname: string): 'home' | 'profile' | 'proposals' | 'other' => {
+    if (pathname === '/') return 'home';
+    if (pathname.startsWith('/profile')) return 'profile';
+    if (pathname.startsWith('/proposal')) return 'proposals';
+    return 'other';
+  };
 
   const [open, setOpen] = useState(false);
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  const {
+    status: subXGovStatus,
+    setStatus: setSubXGovStatus,
+    errorMessage: subXGovErrorMessage,
+    setErrorMessage: setSubXGovErrorMessage,
+    isPending: isSubXGovPending
+  } = useTransactionState()
+
+  const {
+    status: subProposerStatus,
+    setStatus: setSubProposerStatus,
+    errorMessage: subProposerErrorMessage,
+    setErrorMessage: setSubProposerErrorMessage,
+    isPending: isSubProposerPending
+  } = useTransactionState()
 
   useEffect(() => {
     if (!open) {
@@ -37,24 +70,34 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
     }
   }, [open]);
 
+  const handleGetStartedClick = () => {
+    setShowTutorial(true);
+    setOpen(false);
+  };
+
+  const handleTutorialClose = () => {
+    setShowTutorial(false);
+  };
+
   return (
-    <Dialog open={open}>
-      <DialogTrigger asChild>
-        {!trigger ? (
-          <Button
-            className="lg:hidden border-none shadow-none bg-transparent hover:text-white hover:bg-transparent dark:hover:text-algo-black"
-            variant="outline"
-            size="icon"
-            onClick={() => setOpen(true)}
-          >
-            <BarsIcon className="size-10 text-white/70 dark:text-algo-black-70" />
-          </Button>
-        ) : (
-          trigger
-        )}
-      </DialogTrigger>
-      <DialogContent className="h-full" onCloseClick={() => setOpen(false)}>
-        <DialogTitle className="sr-only">Navigate</DialogTitle>
+    <>
+      <Dialog open={open}>
+        <DialogTrigger asChild>
+          {!trigger ? (
+            <Button
+              className="lg:hidden border-none shadow-none bg-transparent hover:text-white hover:bg-transparent dark:hover:text-algo-black"
+              variant="outline"
+              size="icon"
+              onClick={() => setOpen(true)}
+            >
+              <BarsIcon className="size-10 text-white/70 dark:text-algo-black-70" />
+            </Button>
+          ) : (
+            trigger
+          )}
+        </DialogTrigger>
+        <DialogContent className="h-full" onCloseClick={() => setOpen(false)}>
+          <DialogTitle className="sr-only">Navigate</DialogTitle>
 
         {!connectDialogOpen ? (
           <nav className="h-full flex flex-col items-start justify-center gap-14">
@@ -64,6 +107,15 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
             >
               Home
             </Link>
+
+            <Button
+              className="px-4 text-5xl font-bold text-algo-black dark:text-white focus:outline-none underline-offset-4 hover:underline focus-visible:ring-0 dark:focus-visible:ring-0 focus-visible:underline"
+              variant="link"
+              onClick={handleGetStartedClick}
+            >
+              Get Started
+            </Button>
+
             <Link
               className="px-4 text-5xl font-bold text-algo-black dark:text-white focus:outline-none underline-offset-4 hover:underline focus-visible:ring-0 dark:focus-visible:ring-0 focus-visible:underline"
               to="https://forum.algorand.co/c/gov-guides/32"
@@ -147,5 +199,41 @@ export function MobileNav({ trigger }: { trigger?: ReactNode }) {
         )}
       </DialogContent>
     </Dialog>
+    
+    <TutorialDialog
+      isOpen={showTutorial}
+      onClose={handleTutorialClose}
+      currentPage={getCurrentPage(path)}
+      activeAddress={activeAddress}
+      isXGov={xgov.data?.isXGov || false}
+      xGovSignupCost={registry.data?.xgovFee || 0n}
+      subscribeXgov={() => subscribeXgov({
+        activeAddress: activeAddress,
+        innerSigner: manager.transactionSigner,
+        setStatus: setSubXGovStatus,
+        refetch: [xgov.refetch],
+        xgovFee: registry.data?.xgovFee,
+      })}
+      subscribeXgovTxnState={{
+        status: subXGovStatus,
+        errorMessage: subXGovErrorMessage,
+        isPending: isSubXGovPending,
+      }}
+      isProposer={proposer.data?.isProposer || false}
+      proposerSignupCost={registry.data?.proposerFee || 0n}
+      subscribeProposer={() => subscribeProposer({
+        activeAddress: activeAddress,
+        innerSigner: manager.transactionSigner,
+        setStatus: setSubProposerStatus,
+        refetch: [proposer.refetch],
+        amount: registry.data?.proposerFee!,
+      })}
+      subscribeProposerTxnState={{
+        status: subProposerStatus,
+        errorMessage: subProposerErrorMessage,
+        isPending: isSubProposerPending,
+      }}
+    />
+    </>
   );
 }

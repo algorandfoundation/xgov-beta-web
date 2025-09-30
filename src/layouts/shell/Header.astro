@@ -3,6 +3,7 @@ import { cn } from "@/functions/utils";
 import { Link } from "@/components/Link";
 import { AlgorandIcon } from "@/components/icons/AlgorandIcon";
 import { AdminLinkIsland } from "@/layouts/shell/AdminLink";
+import { GetStartedNavIsland } from "@/components/GetStartedNav/GetStartedNav";
 interface Props {
   path: string;
 }
@@ -24,6 +25,7 @@ const path = Astro.url.pathname;
 
     <div class="hidden lg:inline-flex items-center gap-2 lg:gap-6">
       <nav class="hidden md:flex gap-6 font-bold text-lg">
+        <GetStartedNavIsland client:only="react" path={path} />
         <Link
           data-testid="header-docs-link"
           className={cn(
