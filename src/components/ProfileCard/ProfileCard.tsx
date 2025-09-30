@@ -134,26 +134,49 @@ export function ProfileCard({
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
-                    <XGovProposerStatusPill proposer={proposer} />
-                    <div className="mt-4 mb-2 p-4 bg-algo-blue/5 dark:bg-algo-teal/5 border border-algo-blue/20 dark:border-algo-teal/20 rounded-lg">
-                      <h4 className="text-sm font-medium text-algo-black dark:text-white mb-2">
-                        KYC Verification Required
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        To complete your Proposer registration, you need to verify your identity through our KYC process. 
-                        If you've already completed KYC verification, you can ignore this message.
-                      </p>
-                      <ActionButton
-                        type="button"
-                        onClick={() => window.open("https://in.sumsub.com/websdk/p/uni_nkxmvJFJATzDsSTA", "_blank", "noopener,noreferrer")}
-                        disabled={false}
-                      >
-                        <span className="inline-flex items-center gap-2 text-sm">
-                          Start KYC Verification
-                          <ExternalLink className="h-3 w-3" />
-                        </span>
-                      </ActionButton>
-                    </div>
+                    {!proposer?.isProposer
+                      ? (
+                        <div className="flex items-center gap-6">
+                          <XGovProposerStatusPill proposer={proposer} />
+                          <ActionButton
+                            type="button"
+                            onClick={() => setShowBecomeProposerTermsModal(true)}
+                            disabled={subscribeProposerState.isPending}
+                          >
+                            {subscribeProposerState.isPending
+                              ? "Loading..."
+                              : "Become a Proposer"}
+                          </ActionButton>
+                        </div>
+                      ) : (
+                        <XGovProposerStatusPill proposer={proposer} />
+                      )
+                    }
+
+
+                    {
+                      proposer?.isProposer && !proposer?.kycStatus && (
+                        <div className="mt-4 mb-2 p-4 bg-algo-blue/5 dark:bg-algo-teal/5 border border-algo-blue/20 dark:border-algo-teal/20 rounded-lg">
+                          <h4 className="text-sm font-medium text-algo-black dark:text-white mb-2">
+                            KYC Verification Required
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                            To complete your Proposer registration, you need to verify your identity through our KYC process.
+                            If you successfully completed the KYC process, your profile will be approved within the next business day.
+                          </p>
+                          <ActionButton
+                            type="button"
+                            onClick={() => window.open("https://in.sumsub.com/websdk/p/uni_nkxmvJFJATzDsSTA", "_blank", "noopener,noreferrer")}
+                            disabled={false}
+                          >
+                            <span className="inline-flex items-center gap-2 text-sm">
+                              Start KYC Verification
+                              <ExternalLink className="h-3 w-3" />
+                            </span>
+                          </ActionButton>
+                        </div>
+                      )
+                    }
                   </div>
                 )
               }
@@ -170,18 +193,6 @@ export function ProfileCard({
                     <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
-              )}
-
-              {!proposer?.isProposer && (
-                <ActionButton
-                  type="button"
-                  onClick={() => setShowBecomeProposerTermsModal(true)}
-                  disabled={subscribeProposerState.isPending}
-                >
-                  {subscribeProposerState.isPending
-                    ? "Loading..."
-                    : "Become a Proposer"}
-                </ActionButton>
               )}
             </div>
           </div>
