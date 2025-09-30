@@ -41,7 +41,6 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
   const xgov = useXGov(manager.activeAddress);
   const proposer = useProposer(manager.activeAddress);
 
-  // Determine current page based on path
   const getCurrentPage = (pathname: string): 'home' | 'profile' | 'proposals' | 'other' => {
     if (pathname === '/') return 'home';
     if (pathname.startsWith('/profile')) return 'profile';
@@ -72,7 +71,6 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
     }
   }, [manager.activeAddress]);
 
-  // Watch for wallet connection and open tutorial if user clicked "Get Started" while disconnected
   useEffect(() => {
     if (manager.activeAddress && shouldOpenTutorialAfterConnect && openTutorial) {
       setShowTutorial(true);
@@ -112,7 +110,6 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
               {cta}
             </InfinityMirrorButton>
             
-            {/* Wallet Selection Dialog for Get Started flow */}
             <Dialog open={walletDialogOpen}>
               <DialogContent
                 className="h-full sm:h-auto sm:max-w-[425px] rounded-lg"
