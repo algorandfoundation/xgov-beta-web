@@ -8,12 +8,12 @@ import { useState } from "react";
 import termsAndConditionsString from "./TermsAndConditionsText.md?raw";
 import { TermsAndConditionsModal } from "@/recipes";
 import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispenserBanner";
-
 import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
 import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
 import type { TransactionStateInfo } from "@/api/types/transaction_state";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Button } from "../ui/button";
+import { VotingFor } from "../VotingFor/VotingFor";
+import { useXGovDelegates } from "@/hooks";
+import { ExternalLink } from "lucide-react";
 
 export interface ProfileCardProps {
   address: string;
@@ -58,6 +58,7 @@ export function ProfileCard({
   activeAddress,
   className = "",
 }: ProfileCardProps) {
+  const delegates = useXGovDelegates(address);
   const [showBecomeXGovModal, setShowBecomeXGovModal] = useState(false);
   const [showBecomeProposerModal, setShowBecomeProposerModal] = useState(false);
   const [showBecomeProposerTermsModal, setShowBecomeProposerTermsModal] = useState(false);
@@ -111,42 +112,87 @@ export function ProfileCard({
             )
           }
 
+          <VotingFor
+            delegates={delegates.data || []}
+            isLoading={delegates.isLoading}
+            isError={delegates.isError}
+          />
+
           <div>
             <div className="flex items-center gap-6">
               {
                 (!proposer?.isProposer || !proposer?.kycStatus) && (
-                  <XGovProposerStatusPill proposer={proposer} />
+                  <div className="flex flex-col">
+                    <div className="flex flex-col gap-2 my-4">
+                      <a
+                        href="/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-algo-blue dark:text-algo-teal hover:underline"
+                      >
+                        View Terms & Conditions
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                    {!proposer?.isProposer
+                      ? (
+                        <div className="flex items-center gap-6">
+                          <XGovProposerStatusPill proposer={proposer} />
+                          <ActionButton
+                            type="button"
+                            onClick={() => setShowBecomeProposerTermsModal(true)}
+                            disabled={subscribeProposerState.isPending}
+                          >
+                            {subscribeProposerState.isPending
+                              ? "Loading..."
+                              : "Become a Proposer"}
+                          </ActionButton>
+                        </div>
+                      ) : (
+                        <XGovProposerStatusPill proposer={proposer} />
+                      )
+                    }
+
+
+                    {
+                      proposer?.isProposer && !proposer?.kycStatus && (
+                        <div className="mt-4 mb-2 p-4 bg-algo-blue/5 dark:bg-algo-teal/5 border border-algo-blue/20 dark:border-algo-teal/20 rounded-lg">
+                          <h4 className="text-sm font-medium text-algo-black dark:text-white mb-2">
+                            KYC Verification Required
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                            To complete your Proposer registration, you need to verify your identity through our KYC process.
+                            If you successfully completed the KYC process, your profile will be approved within the next business day.
+                          </p>
+                          <ActionButton
+                            type="button"
+                            onClick={() => window.open("https://in.sumsub.com/websdk/p/uni_nkxmvJFJATzDsSTA", "_blank", "noopener,noreferrer")}
+                            disabled={false}
+                          >
+                            <span className="inline-flex items-center gap-2 text-sm">
+                              Start KYC Verification
+                              <ExternalLink className="h-3 w-3" />
+                            </span>
+                          </ActionButton>
+                        </div>
+                      )
+                    }
+                  </div>
                 )
               }
 
-              {!proposer?.isProposer && (
-                // <ActionButton
-                //   type="button"
-                //   onClick={() => setShowBecomeProposerTermsModal(true)}
-                //   disabled={subscribeProposerState.isPending}
-                // >
-                //   {subscribeProposerState.isPending
-                //     ? "Loading..."
-                //     : "Become a Proposer"}
-                // </ActionButton>
-                <Popover>
-                  <PopoverTrigger aria-label={`Info: Become a Proposer`}>
-                    <Button
-                      type='button'
-                      size="sm"
-                    >
-                      Become a Proposer
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    side="bottom"
-                    sideOffset={8}
-                    className="text-sm"
-                    role="tooltip"
+              {proposer?.isProposer && proposer?.kycStatus && (
+                <div className="flex flex-col gap-2 mb-2">
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-algo-blue dark:text-algo-teal hover:underline"
                   >
-                    Signups to become a Proposer will open in September.
-                  </PopoverContent>
-                </Popover>
+                    View Terms & Conditions
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
               )}
             </div>
           </div>

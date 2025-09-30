@@ -1,0 +1,35 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Page from "@/layouts/Page.astro";
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+import { TermsAndConditionsView } from "@/components/TermsAndConditionsView/TermsAndConditionsView";
+---
+
+<Layout title="xGov Proposer Terms & Conditions">
+  <Page>
+    <Breadcrumb slot="breadcrumb">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>Terms & Conditions</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+    
+    <div class="flex flex-col items-center justify-center flex-1 h-full">
+      <TermsAndConditionsView client:only="react" />
+    </div>
+  </Page>
+</Layout>

@@ -63,6 +63,16 @@ body[data-scroll-locked] header {
   }
 }
 
+/* Prevent fixed elements from shifting when scroll is locked */
+body[data-scroll-locked] .lg\\:fixed {
+  right: calc(var(--removed-body-scroll-bar-size, 0px)) !important;
+}
+
+/* More specific targeting for proposal sidebar */
+body[data-scroll-locked] .proposal-fixed-sidebar {
+  right: calc(var(--removed-body-scroll-bar-size, 0px)) !important;
+}
+
 pera-wallet-sign-txn-toast {
   position: relative;
   z-index: 50 !important;

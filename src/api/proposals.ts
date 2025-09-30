@@ -27,9 +27,11 @@ import {
 import { PROPOSAL_FEE } from "@/constants.ts";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
 import { wrapTransactionSigner } from "@/hooks/useTransactionState";
-import { proposerBoxName, xGovBoxName } from "./registry";
+import { proposalApprovalBoxName, proposerBoxName, xGovBoxName } from "./registry";
 import type { TransactionHandlerProps } from "./types/transaction_state";
 import { sleep } from "./nfd";
+
+const PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT = 4;
 
 export const proposalFactory = new ProposalFactory({ algorand });
 
@@ -358,6 +360,21 @@ export async function getVoterBox(
   }
 }
 
+export async function getVoterBoxes(id: bigint, addresses: string[],
+): Promise<{ [key: string]: { votes: bigint; voted: boolean } }> {
+
+  const r = await Promise.allSettled(addresses.map((address) => getVoterBox(id, address)))
+
+  let result: { [key: string]: { votes: bigint; voted: boolean } } = {};
+  r.forEach((res, i) => {
+    if (res.status === 'fulfilled') {
+      result[addresses[i]] = res.value;
+    }
+  });
+  return result;
+}
+
+
 export async function getMetadata(id: bigint): Promise<ProposalJSON> {
   const metadata = await algorand.app.getBoxValue(
     id,
@@ -517,6 +534,7 @@ export async function createEmptyProposal({
     const proposalFee = PROPOSAL_FEE.microAlgo();
 
     const suggestedParams = await algorand.getSuggestedParams();
+    const _proposalApprovalBoxName = proposalApprovalBoxName();
 
     const result = await registryClient.send.openProposal({
       sender: activeAddress,
@@ -529,7 +547,10 @@ export async function createEmptyProposal({
           suggestedParams,
         }),
       },
-      boxReferences: [proposerBoxName(activeAddress)],
+      boxReferences: [
+        proposerBoxName(activeAddress),
+        ...Array(PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT).fill(_proposalApprovalBoxName)
+      ],
       extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
     });
 
@@ -666,6 +687,7 @@ export async function openProposal({
 }
 
 export interface VoteProposalProps extends TransactionHandlerProps {
+  xgovAddress: string | null;
   appId: bigint;
   approvals: number;
   rejections: number;
@@ -674,6 +696,7 @@ export interface VoteProposalProps extends TransactionHandlerProps {
 
 export async function voteProposal({
   activeAddress,
+  xgovAddress,
   innerSigner,
   setStatus,
   refetch,
@@ -701,21 +724,26 @@ export async function voteProposal({
     return false;
   }
 
+  if (!xgovAddress) {
+    console.log('xGov address not found');
+    return false;
+  }
+
   try {
     const res = await registryClient.send.voteProposal({
       sender: activeAddress,
       signer: transactionSigner,
       args: {
         proposalId: appId,
-        xgovAddress: activeAddress,
+        xgovAddress,
         approvalVotes: approvals,
         rejectionVotes: rejections,
       },
       appReferences: [appId],
       accountReferences: [activeAddress],
       boxReferences: [
-        xGovBoxName(activeAddress),
-        { appId: appId, name: voterBoxName(activeAddress) }
+        xGovBoxName(xgovAddress),
+        { appId: appId, name: voterBoxName(xgovAddress) }
       ],
       extraFee: (1000).microAlgos(),
     });

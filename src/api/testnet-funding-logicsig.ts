@@ -19,12 +19,24 @@ export const fundingLogicSig = new LogicSigAccount(
 export const fundingLogicSigSigner =
   makeLogicSigAccountTransactionSigner(fundingLogicSig);
 
-const scrutinyFundingLsigB64 =
+const testnetScrutinyFundingLsigB64 =
+  "CiAEAAEGAiI4AIAgvczq3xRDToawT8nH8mk3Wkz8xqrHQd2zRM+GC/vV9boSQQACI0MiOBAkEkQjOBAkEkQyBCUSQQBxMRAkEkEAajEZIhJBAGMxIDIDEkEAWyI4GIHQgqLiAhJBAE4iScIagAQmmDIAEkEAQCIjwhojOBgWEkEANCI4ATIAEkEAKyMiwhqABHNNvswSQQAdIzgBMgAlCxJBABKACA9dMgAC/tnBgAATQQACI0MiQv/7";
+
+const mainnetScrutinyFundingLsigB64 =
   "CiAEAAEGAiI4AIAguZ1f7LCMciKex+VcHTVdxuYUDR8jYKa+HwIu1yeLCpoSQQACI0MiOBAkEkQjOBAkEkQyBCUSQQBxMRAkEkEAajEZIhJBAGMxIDIDEkEAWyI4GIGS6f3cCxJBAE4iScIagAQmmDIAEkEAQCIjwhojOBgWEkEANCI4ATIAEkEAKyMiwhqABHNNvswSQQAdIzgBMgAlCxJBABKACG+zQwABux5UgAATQQACI0MiQv/7";
 
-export const scrutinyFundingLogicSig = new LogicSigAccount(
-  Buffer.from(scrutinyFundingLsigB64, "base64"),
-);
+export const getScrutinyLsig = (networkName: string) => {
+  if (networkName === "mainnet") {
+    return new LogicSigAccount(
+      Buffer.from(mainnetScrutinyFundingLsigB64, "base64"),
+    );
+  }
+  return new LogicSigAccount(
+    Buffer.from(testnetScrutinyFundingLsigB64, "base64"),
+  );
+}
 
-export const scrutinyFundingLogicSigSigner =
-  makeLogicSigAccountTransactionSigner(scrutinyFundingLogicSig);
+export const getScrutinyLsigSigner = (networkName: string) => {
+  const lsig = getScrutinyLsig(networkName);
+  return makeLogicSigAccountTransactionSigner(lsig);
+}

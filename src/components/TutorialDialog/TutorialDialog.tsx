@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { navigate } from "astro:transitions/client";
 import {
     Dialog,
     DialogContent,
@@ -79,11 +80,10 @@ const tutorialSteps = [
             3. Completing the know-your-customer process
             4. Creating your first proposal and paying the refundable anti-spam fee
         `,
-        action: null
-        // action: {
-        //     label: "Get Started",
-        //     type: "become-proposer" as const
-        // }
+        action: {
+            label: "Get Started",
+            type: "become-proposer" as const
+        }
     },
     {
         title: "Manage Your Profile",
@@ -133,6 +133,7 @@ export function TutorialDialog({
     };
 
     const handleAction = (actionType: string) => {
+        console.log('TutorialDialog handleAction:', actionType, 'currentPage:', currentPage);
         switch (actionType) {
             case 'browse-proposals':
                 if (currentPage === 'home') {
@@ -142,7 +143,16 @@ export function TutorialDialog({
                         element?.scrollIntoView({ behavior: 'smooth', inline: 'start' });
                     }, 100);
                 } else {
-                    window.location.href = '/#list-header-title-anchor';
+                    handleClose();
+                    navigate('/');
+                    const handleNavigationComplete = () => {
+                        setTimeout(() => {
+                            const element = document.getElementById('list-header-title-anchor');
+                            element?.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                        }, 100);
+                        document.removeEventListener('astro:page-load', handleNavigationComplete);
+                    };
+                    document.addEventListener('astro:page-load', handleNavigationComplete);
                 }
                 break;
 
@@ -158,7 +168,8 @@ export function TutorialDialog({
                 if (currentPage === 'profile') {
                     handleClose();
                 } else {
-                    window.location.href = `/profile/${activeAddress}`;
+                    handleClose();
+                    navigate(`/profile/${activeAddress}`);
                 }
                 break;
         }
@@ -198,34 +209,34 @@ export function TutorialDialog({
             );
         }
 
-        // if (type === 'become-proposer') {
-        //     if (isProposer) {
-        //         return (
-        //             <div className="flex items-center gap-2 text-xs">
-        //                 <CheckIcon className="size-4 text-algo-green dark:text-algo-black" />
-        //                 Already a Proposer
-        //             </div>
-        //         );
-        //     }
+        if (type === 'become-proposer') {
+            if (isProposer) {
+                return (
+                    <div className="flex items-center gap-2 text-xs">
+                        <CheckIcon className="size-4 text-algo-green dark:text-algo-black" />
+                        Already a Proposer
+                    </div>
+                );
+            }
 
-        //     return (
-        //         <Button
-        //             onClick={() => handleAction(type)}
-        //             variant='outline'
-        //             disabled={subscribeProposerTxnState.isPending}
-        //             className="flex items-center gap-2"
-        //         >
-        //             {subscribeProposerTxnState.isPending ? (
-        //                 <>
-        //                     <div className="size-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-        //                     Processing...
-        //                 </>
-        //             ) : (
-        //                 label
-        //             )}
-        //         </Button>
-        //     );
-        // }
+            return (
+                <Button
+                    onClick={() => handleAction(type)}
+                    variant='outline'
+                    disabled={subscribeProposerTxnState.isPending}
+                    className="flex items-center gap-2"
+                >
+                    {subscribeProposerTxnState.isPending ? (
+                        <>
+                            <div className="size-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                            Processing...
+                        </>
+                    ) : (
+                        label
+                    )}
+                </Button>
+            );
+        }
 
         return (
             <Button
