@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TutorialDialog } from "@/components/TutorialDialog/TutorialDialog";
 import { UseWallet, UseQuery, useNFD, useProposer, useRegistry, useXGov } from "@/hooks";
 import { subscribeProposer, subscribeXgov } from "@/api";
 import { useTransactionState } from "@/hooks/useTransactionState";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { cn } from "@/functions/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface GetStartedNavProps {
   path?: string;
@@ -13,12 +20,12 @@ interface GetStartedNavProps {
 export function GetStartedNav({ path = "/" }: GetStartedNavProps) {
   const manager = useWallet();
   const [showTutorial, setShowTutorial] = useState(false);
+  const [walletDialogOpen, setWalletDialogOpen] = useState(false);
+  const [shouldOpenTutorialAfterConnect, setShouldOpenTutorialAfterConnect] = useState(false);
   const registry = useRegistry();
-  const nfd = useNFD(manager.activeAddress)
   const xgov = useXGov(manager.activeAddress);
   const proposer = useProposer(manager.activeAddress);
 
-  // Determine current page based on path
   const getCurrentPage = (pathname: string): 'home' | 'profile' | 'proposals' | 'other' => {
     if (pathname === '/') return 'home';
     if (pathname.startsWith('/profile')) return 'profile';
@@ -42,9 +49,20 @@ export function GetStartedNav({ path = "/" }: GetStartedNavProps) {
     isPending: isSubProposerPending
   } = useTransactionState()
 
+  useEffect(() => {
+    if (manager.activeAddress && shouldOpenTutorialAfterConnect) {
+      setShowTutorial(true);
+      setShouldOpenTutorialAfterConnect(false);
+    }
+  }, [manager.activeAddress, shouldOpenTutorialAfterConnect]);
+
   const handleGetStartedClick = () => {
-    console.log('GetStartedNav: currentPage =', getCurrentPage(path), 'path =', path);
-    setShowTutorial(true);
+    if (manager.activeAddress) {
+      setShowTutorial(true);
+    } else {
+      setShouldOpenTutorialAfterConnect(true);
+      setWalletDialogOpen(true);
+    }
   };
 
   const handleTutorialClose = () => {
@@ -97,6 +115,54 @@ export function GetStartedNav({ path = "/" }: GetStartedNavProps) {
           isPending: isSubProposerPending,
         }}
       />
+
+      <Dialog open={walletDialogOpen}>
+        <DialogContent
+          className="h-full sm:h-auto sm:max-w-[425px] rounded-lg"
+          onCloseClick={() => setWalletDialogOpen(false)}
+        >
+          <DialogHeader className="mt-12 flex flex-col items-start gap-2">
+            <DialogTitle className="dark:text-white">
+              Connect your wallet
+            </DialogTitle>
+            <DialogDescription>
+              Choose a wallet to connect & use the xGov app
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="h-full flex flex-col sm:flex-row sm:flex-wrap items-start justify-center sm:justify-start gap-8 sm:gap-3 mt-6">
+            {manager.wallets.map((wallet) => (
+              <li key={wallet.id}>
+                <button
+                  className="group text-5xl sm:text-xl font-bold flex items-center gap-4 h-18 pr-5 pl-1 py-1 sm:py-0.5 sm:bg-algo-blue/10 hover:bg-algo-blue dark:sm:bg-algo-teal/10 dark:hover:bg-algo-teal dark:text-white hover:text-white dark:hover:text-algo-black rounded-2xl transition"
+                  onClick={() => {
+                    setWalletDialogOpen(false);
+                    wallet.connect();
+                  }}
+                >
+                  <div
+                    className={cn(
+                      ["exodus", "lute"].includes(
+                        wallet.metadata.name.toLowerCase(),
+                      )
+                        ? "bg-algo-black p-0.5"
+                        : "",
+                      "size-14 sm:size-6 overflow-hidden rounded-2xl group-hover:shadow-xl",
+                    )}
+                  >
+                    <img
+                      className="object-cover"
+                      src={wallet.metadata.icon}
+                      alt={`${wallet.metadata.name} icon`}
+                    />
+                  </div>
+
+                  {wallet.metadata.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -34,11 +34,9 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
   const { wallets, activeAddress, activeWallet } = manager;
   const theme = useStore($themeStore);
   const registry = useRegistry();
-  const nfd = useNFD(activeAddress)
   const xgov = useXGov(activeAddress);
   const proposer = useProposer(activeAddress);
 
-  // Determine current page based on path
   const getCurrentPage = (pathname: string): 'home' | 'profile' | 'proposals' | 'other' => {
     if (pathname === '/') return 'home';
     if (pathname.startsWith('/profile')) return 'profile';

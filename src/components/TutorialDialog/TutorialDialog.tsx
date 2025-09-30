@@ -80,11 +80,10 @@ const tutorialSteps = [
             3. Completing the know-your-customer process
             4. Creating your first proposal and paying the refundable anti-spam fee
         `,
-        action: null
-        // action: {
-        //     label: "Get Started",
-        //     type: "become-proposer" as const
-        // }
+        action: {
+            label: "Get Started",
+            type: "become-proposer" as const
+        }
     },
     {
         title: "Manage Your Profile",
@@ -146,7 +145,6 @@ export function TutorialDialog({
                 } else {
                     handleClose();
                     navigate('/');
-                    // Add a listener for when the navigation completes to scroll to the anchor
                     const handleNavigationComplete = () => {
                         setTimeout(() => {
                             const element = document.getElementById('list-header-title-anchor');
@@ -211,34 +209,34 @@ export function TutorialDialog({
             );
         }
 
-        // if (type === 'become-proposer') {
-        //     if (isProposer) {
-        //         return (
-        //             <div className="flex items-center gap-2 text-xs">
-        //                 <CheckIcon className="size-4 text-algo-green dark:text-algo-black" />
-        //                 Already a Proposer
-        //             </div>
-        //         );
-        //     }
+        if (type === 'become-proposer') {
+            if (isProposer) {
+                return (
+                    <div className="flex items-center gap-2 text-xs">
+                        <CheckIcon className="size-4 text-algo-green dark:text-algo-black" />
+                        Already a Proposer
+                    </div>
+                );
+            }
 
-        //     return (
-        //         <Button
-        //             onClick={() => handleAction(type)}
-        //             variant='outline'
-        //             disabled={subscribeProposerTxnState.isPending}
-        //             className="flex items-center gap-2"
-        //         >
-        //             {subscribeProposerTxnState.isPending ? (
-        //                 <>
-        //                     <div className="size-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-        //                     Processing...
-        //                 </>
-        //             ) : (
-        //                 label
-        //             )}
-        //         </Button>
-        //     );
-        // }
+            return (
+                <Button
+                    onClick={() => handleAction(type)}
+                    variant='outline'
+                    disabled={subscribeProposerTxnState.isPending}
+                    className="flex items-center gap-2"
+                >
+                    {subscribeProposerTxnState.isPending ? (
+                        <>
+                            <div className="size-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                            Processing...
+                        </>
+                    ) : (
+                        label
+                    )}
+                </Button>
+            );
+        }
 
         return (
             <Button
