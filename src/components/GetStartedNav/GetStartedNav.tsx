@@ -1,29 +1,16 @@
-import { navigate } from "astro:transitions/client";
-import { useWallet } from "@txnlab/use-wallet-react";
-import { useEffect, useState } from "react";
-
-import { Connect } from "@/components/Connect/Connect";
-import { UseWallet } from "@/hooks/useWallet";
-
+import { useState } from "react";
 import { TutorialDialog } from "@/components/TutorialDialog/TutorialDialog";
-import {
-  markTutorialSeen,
-  shouldShowTutorial
-} from "@/stores/firstTimeUserStore";
-import { InfinityMirrorButton } from "../button/InfinityMirrorButton/InfinityMirrorButton";
-import { WalletIcon } from "../icons/WalletIcon";
-import { useNFD, useProposer, UseQuery, useRegistry, useXGov } from "@/hooks";
+import { UseWallet, UseQuery, useNFD, useProposer, useRegistry, useXGov } from "@/hooks";
 import { subscribeProposer, subscribeXgov } from "@/api";
 import { useTransactionState } from "@/hooks/useTransactionState";
+import { useWallet } from "@txnlab/use-wallet-react";
+import { cn } from "@/functions/utils";
 
-export type ConnectIslandProps = {
+interface GetStartedNavProps {
   path?: string;
-  cta?: string;
-  openTutorial?: boolean;
-  hideIcon?: boolean;
-};
+}
 
-export function ConnectController({ path = "/", cta = 'Connect Wallet', openTutorial = false, hideIcon = false }: ConnectIslandProps) {
+export function GetStartedNav({ path = "/" }: GetStartedNavProps) {
   const manager = useWallet();
   const [showTutorial, setShowTutorial] = useState(false);
   const registry = useRegistry();
@@ -55,12 +42,10 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
     isPending: isSubProposerPending
   } = useTransactionState()
 
-  useEffect(() => {
-    if (shouldShowTutorial(!!manager.activeAddress)) {
-      setShowTutorial(true);
-      markTutorialSeen();
-    }
-  }, [manager.activeAddress]);
+  const handleGetStartedClick = () => {
+    console.log('GetStartedNav: currentPage =', getCurrentPage(path), 'path =', path);
+    setShowTutorial(true);
+  };
 
   const handleTutorialClose = () => {
     setShowTutorial(false);
@@ -68,32 +53,15 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
 
   return (
     <>
-      {
-        openTutorial && !!manager.activeWallet ? (
-          <InfinityMirrorButton
-            className="flex items-center gap-2.5 text-lg rounded-md"
-            variant="default"
-            onClick={() => {
-              setShowTutorial(true);
-            }}
-          >
-            {!hideIcon && <WalletIcon className="size-6 stroke-algo-black group-hover:stroke-white dark:stroke-white dark:group-hover:stroke-algo-black stroke-[1.5]" />}
-            {cta}
-          </InfinityMirrorButton>
-        ) : (
-          <Connect
-            cta={cta}
-            hideIcon={hideIcon}
-            onLogOut={() => {
-              manager.activeWallet!.disconnect();
-              path.includes("profile") && navigate("/");
-            }}
-            {...manager}
-            path={path}
-            nfdName={nfd.data?.name || ""}
-          />
-        )
-      }
+      <button
+        data-testid="header-get-started-link"
+        className={cn(
+          "px-2 py-1 hover:bg-white/10 dark:hover:bg-algo-black/10 rounded-md font-bold text-lg",
+        )}
+        onClick={handleGetStartedClick}
+      >
+        Get Started
+      </button>
 
       <TutorialDialog
         isOpen={showTutorial}
@@ -133,11 +101,11 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
   );
 }
 
-export function ConnectIsland(props: ConnectIslandProps) {
+export function GetStartedNavIsland(props: GetStartedNavProps) {
   return (
     <UseWallet>
       <UseQuery>
-        <ConnectController {...props} />
+        <GetStartedNav {...props} />
       </UseQuery>
     </UseWallet>
   );

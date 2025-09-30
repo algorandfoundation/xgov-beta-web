@@ -54,7 +54,7 @@ export function XGovProposerStatusPill({ proposer }: XGovProposerStatusPill) {
           !proposer?.isProposer ? (
             "You are not a Proposer."
           ) : proposer?.isProposer && !proposer.kycStatus ? (
-            "Your KYC is being processed. This may take a few days."
+            "Becoming a Proposer requires KYC verification. Once submitted, this may take a few days to process."
           ) : proposer?.isProposer &&
             proposer.kycStatus &&
             proposer.kycExpiring < Date.now() / 1000 ? (

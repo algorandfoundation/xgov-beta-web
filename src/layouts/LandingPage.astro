@@ -17,7 +17,7 @@ const path = Astro.url.pathname;
     <div class="lg:hidden relative" slot="mobile-nav">
       <div class="size-10"></div>
       <div class="absolute inset-0">
-        <MobileNavIsland client:only="react" />
+        <MobileNavIsland client:only="react" path={path} />
       </div>
     </div>
   </Header>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { navigate } from "astro:transitions/client";
 import {
     Dialog,
     DialogContent,
@@ -133,6 +134,7 @@ export function TutorialDialog({
     };
 
     const handleAction = (actionType: string) => {
+        console.log('TutorialDialog handleAction:', actionType, 'currentPage:', currentPage);
         switch (actionType) {
             case 'browse-proposals':
                 if (currentPage === 'home') {
@@ -142,7 +144,17 @@ export function TutorialDialog({
                         element?.scrollIntoView({ behavior: 'smooth', inline: 'start' });
                     }, 100);
                 } else {
-                    window.location.href = '/#list-header-title-anchor';
+                    handleClose();
+                    navigate('/');
+                    // Add a listener for when the navigation completes to scroll to the anchor
+                    const handleNavigationComplete = () => {
+                        setTimeout(() => {
+                            const element = document.getElementById('list-header-title-anchor');
+                            element?.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+                        }, 100);
+                        document.removeEventListener('astro:page-load', handleNavigationComplete);
+                    };
+                    document.addEventListener('astro:page-load', handleNavigationComplete);
                 }
                 break;
 
@@ -158,7 +170,8 @@ export function TutorialDialog({
                 if (currentPage === 'profile') {
                     handleClose();
                 } else {
-                    window.location.href = `/profile/${activeAddress}`;
+                    handleClose();
+                    navigate(`/profile/${activeAddress}`);
                 }
                 break;
         }
