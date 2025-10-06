@@ -910,7 +910,7 @@ export function ProposalInfo({
                 {proposal.title}
               </h1>
 
-              <p className="mt-6 text-xl/8 text-algo-black-70 dark:text-algo-black-30">
+              <p className="whitespace-pre-line mt-6 text-xl/8 text-algo-black-70 dark:text-algo-black-30">
                 {proposal.description}
               </p>
             </div>
@@ -922,14 +922,14 @@ export function ProposalInfo({
         <div className="lg:col-span-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8">
           <div className="lg:pr-4">
             <div className="max-w-xl text-lg/8 text-algo-black-70 dark:text-algo-black-30 sm:max-w-lg md:max-w-[unset]">
-              <p className="mb-8">
+              <p className="whitespace-pre-line mb-8">
                 <strong className="font-semibold text-algo-black dark:text-white">
                   About the team
                   <br />
                 </strong>
                 {proposal.team}
               </p>
-              <p className="mb-4">
+              <p className="whitespace-pre-line mb-4">
                 <strong className="font-semibold text-algo-black dark:text-white">
                   Additional Info
                   <br />
