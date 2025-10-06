@@ -874,10 +874,7 @@ export function ProposalInfo({
       </div>
       <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-6 lg:mx-0 lg:max-w-none lg:grid-cols-2 lg:items-start lg:gap-y-10">
         {
-          xGovCouncil
-          && activeAddress
-          && activeAddress === xGovCouncil
-          && (
+          proposal.status === ProposalStatus.ProposalStatusApproved && (
             <div className="lg:col-span-2">
               <ProposalCouncilCard
                 proposalId={proposal.id}

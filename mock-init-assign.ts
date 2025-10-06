@@ -268,7 +268,7 @@ for (const committeeMember of committeeMembers) {
       payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         amount: 1_000_000,
         from: committeeMember.addr,
-        to: registryClient.appAddress,
+        to: registryClient.appAddress.toString(),
         suggestedParams: await algorand.getSuggestedParams(),
       }),
     },
@@ -414,7 +414,7 @@ for (let i = 0; i < mockProposals.length; i++) {
       payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         amount: proposerFee.microAlgos,
         from: account.addr,
-        to: registryClient.appAddress,
+        to: registryClient.appAddress.toString(),
         suggestedParams,
       }),
     },
@@ -474,7 +474,7 @@ for (let i = 0; i < mockProposals.length; i++) {
       payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         amount: proposalFee.microAlgos,
         from: account.addr,
-        to: registryClient.appAddress,
+        to: registryClient.appAddress.toString(),
         suggestedParams,
       }),
     },
@@ -531,7 +531,7 @@ for (let i = 0; i < mockProposals.length; i++) {
           payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
             amount: proposalSubmissionFee,
             from: account.addr,
-            to: proposalClient.appAddress,
+            to: proposalClient.appAddress.toString(),
             suggestedParams,
           }),
           title: mockProposals[i].title,
@@ -628,7 +628,7 @@ const envFile = fs.readFileSync("./.env.template", "utf-8");
 fs.writeFileSync(
   ".env.development",
   envFile.replace(
-    "<REPLACE_WITH_APPLICATION_ID>",
+    "<REPLACE_WITH_REGISTRY_APP_ID>",
     results.appClient.appId.toString(),
   ).replace(
     "<REPLACE_WITH_DAEMON_MNEMONIC>",

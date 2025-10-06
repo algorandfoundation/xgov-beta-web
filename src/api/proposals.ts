@@ -59,7 +59,7 @@ function existsAndValue(appState: AppState, key: string): boolean {
 export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
   try {
     const response = await algorand.client.algod
-      .accountInformation(registryClient.appAddress)
+      .accountInformation(registryClient.appAddress.toString())
       .do();
     console.log("Account info received, processing apps...");
 
@@ -543,7 +543,7 @@ export async function createEmptyProposal({
         payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
           amount: proposalFee.microAlgos,
           from: activeAddress,
-          to: registryClient.appAddress,
+          to: registryClient.appAddress.toString(),
           suggestedParams,
         }),
       },
@@ -646,7 +646,7 @@ export async function openProposal({
         payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
           amount: proposalSubmissionFee,
           from: activeAddress,
-          to: proposalClient.appAddress,
+          to: proposalClient.appAddress.toString(),
           suggestedParams,
         }),
         title: data.title,
