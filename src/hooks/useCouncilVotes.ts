@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCouncilVotes, getAllCouncilMembers } from "@/api";
+import { getCouncilVotes, getAllCouncilMembers, getCouncilGlobalState } from "@/api";
 
 export function useCouncilVotes(proposalId: number, enabled: boolean = true) {
   return useQuery({
@@ -8,6 +8,14 @@ export function useCouncilVotes(proposalId: number, enabled: boolean = true) {
     enabled,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+}
+
+export function useCouncilGlobalState() {
+    return useQuery({
+        queryKey: ["councilGlobalState"],
+        queryFn: getCouncilGlobalState,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    });
 }
 
 export function useCouncilMembers() {

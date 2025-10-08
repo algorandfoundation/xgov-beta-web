@@ -34,7 +34,7 @@ export const DepositFundsCard = ({}: {}) => {
           payment: makePaymentTxnWithSuggestedParamsFromObject({
             amount: amount,
             from: activeAddress,
-            to: registryClient.appAddress,
+            to: registryClient.appAddress.toString(),
             suggestedParams,
           }),
         },
@@ -70,7 +70,7 @@ export const DepositFundsCard = ({}: {}) => {
 
   return (
     <>
-      <div className="flex flex-col justify-between gap-4 mt-8 mb-4">
+      <div className="flex flex-col justify-between gap-4 mt-8 mb-10">
         <h2 className="text-xl font-semibold text-wrap text-algo-black dark:text-white m-0">
           Deposit Funds
         </h2>
