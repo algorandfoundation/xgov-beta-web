@@ -1,6 +1,9 @@
 import algosdk, { ABIType, encodeAddress, encodeUint64 } from "algosdk";
-import { algod, algorand, network, CouncilAppID, registryClient } from "./algorand";
+import { algod, algorand, network, CouncilAppID, registryClient, councilClient, RegistryAppID } from "./algorand";
 import { env } from "@/constants";
+import { wrapTransactionSigner } from "@/hooks/useTransactionState";
+import type { TransactionHandlerProps } from "./types/transaction_state";
+import { sleep } from "./nfd";
 
 const councilAppID: number = env.PUBLIC_COUNCIL_APP_ID;
 
@@ -68,5 +71,71 @@ export async function getCouncilVotes(proposalId: number): Promise<{ address: st
   } catch (error) {
     console.error("getting voter box value:", error);
     return []
+  }
+}
+
+export interface CouncilVoteProps extends TransactionHandlerProps {
+  appId: bigint;
+  block: boolean;
+  lastVoter: boolean;
+}
+
+export async function councilVote({
+  activeAddress,
+  innerSigner,
+  setStatus,
+  refetch,
+  appId,
+  block,
+  lastVoter
+}: CouncilVoteProps) {
+  if (!innerSigner) return;
+
+  const transactionSigner = wrapTransactionSigner(
+    innerSigner,
+    setStatus,
+  );
+
+  setStatus("loading");
+
+  if (!activeAddress || !transactionSigner) {
+    setStatus(new Error("No active address or transaction signer"));
+    return;
+  }
+
+  try {
+    const res = await councilClient.send.vote({
+      sender: activeAddress,
+      signer: transactionSigner,
+      args: {
+        proposalId: appId,
+        block
+      },
+      appReferences: [appId, RegistryAppID],
+      boxReferences: [
+        CouncilVoteBoxName(Number(appId)),
+        CouncilMemberBoxName(activeAddress)
+      ],
+      extraFee: lastVoter ? (2_000).microAlgo() : (1_000).microAlgo()
+    });
+
+    if (
+      res.confirmation.confirmedRound !== undefined &&
+      res.confirmation.confirmedRound > 0 &&
+      res.confirmation.poolError === ''
+    ) {
+      setStatus("confirmed");
+      await sleep(800);
+      setStatus("idle");
+      await Promise.all(refetch.map(r => r()));
+      return;
+    }
+
+    console.error("Vote failed:", res);
+    setStatus(new Error("Failed to vote."));
+  } catch (e: any) {
+    console.error("Error during voting:", e.message);
+    setStatus(new Error("An error occurred while voting."));
+    return;
   }
 }

@@ -6,6 +6,7 @@ import { ProposalClient as XGovProposalClient } from "@algorandfoundation/xgov/p
 import { algorand } from "./algo-client";
 import { env } from "@/constants";
 import type { AlgorandClient } from "@algorandfoundation/algokit-utils";
+import { CouncilClient } from "@algorandfoundation/xgov/council";
 
 const DEFAULT_REGISTRY_APP_ID = 16324508;
 export const RegistryAppID: bigint = BigInt(
@@ -52,3 +53,7 @@ export function getProposalClientById(appId: bigint) {
   return algorand.client.getTypedAppClientById(XGovProposalClient, { appId });
 }
 
+export const councilClient = algorand.client.getTypedAppClientById(
+  CouncilClient,
+  { appId: CouncilAppID },
+);

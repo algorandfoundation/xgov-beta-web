@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
 import {
-  RegistryAppID,
-  getProposalClientById,
   type ProposalMainCardDetails,
   ProposalStatus,
-  callUnassign,
+  councilVote,
 } from "@/api";
-import { ALGORAND_MIN_TX_FEE } from "algosdk";
 import { UseWallet } from "@/hooks/useWallet.tsx";
-import { useProposal, UseQuery, useCouncilVotes, useCouncilMembers } from "@/hooks";
+import { UseQuery, useCouncilVotes, useCouncilMembers, useProposal } from "@/hooks";
 import { CheckIcon, XIcon, HelpCircleIcon, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import VoteBar from "../VoteBar/VoteBar";
+import { TransactionStateLoader } from "../TransactionStateLoader/TransactionStateLoader";
+import { useTransactionState } from "@/hooks/useTransactionState";
+import { cn } from "@/functions";
 
 export function CouncilCardIsland({
   proposal,
@@ -35,8 +35,22 @@ export function ProposalCouncilCard({
   proposalId: bigint;
   status: ProposalStatus;
 }) {
-  const { activeAddress, transactionSigner } = useWallet();
+  const { activeAddress, transactionSigner: innerSigner } = useWallet();
   const proposalQuery = useProposal(proposalId);
+
+  const {
+    status: blockStatus,
+    setStatus: setBlockStatus,
+    errorMessage: blockErrorMessage,
+    isPending: blockIsPending
+  } = useTransactionState();
+
+  const {
+    status: approveStatus,
+    setStatus: setApproveStatus,
+    errorMessage: approveErrorMessage,
+    isPending: approveIsPending
+  } = useTransactionState();
 
   // Always fetch council data to show the status bar
   const councilVotesQuery = useCouncilVotes(Number(proposalId), true);
@@ -54,56 +68,6 @@ export function ProposalCouncilCard({
   // Check if current user is a council member and their vote status
   const isCouncilMember = activeAddress && councilMembersQuery.data?.includes(activeAddress);
   const userVote = activeAddress ? councilVotes.find(vote => vote.address === activeAddress) : undefined;
-
-  const handleReviewBlock = async (bool: boolean) => {
-    const proposalClient = getProposalClientById(proposalId);
-
-    if (!activeAddress || !proposalClient) {
-      setErrorMessage(
-        "Failed to get proposal client or active address is missing.",
-      );
-      return false;
-    }
-
-    try {
-      const res = await proposalClient.send.review({
-        sender: activeAddress,
-        signer: transactionSigner,
-        args: {
-          block: bool,
-        },
-        appReferences: [RegistryAppID],
-        extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
-      });
-
-      if (
-        res.confirmation.confirmedRound !== undefined &&
-        res.confirmation.confirmedRound > 0 &&
-        res.confirmation.poolError === ""
-      ) {
-        console.log("Transaction confirmed");
-        // call backend to unassign voters
-        try {
-          await callUnassign(proposalId);
-        } catch (e) {
-          console.warn("Failed to Unassign:", e);
-
-        }
-        setErrorMessage(null);
-        proposalQuery.refetch();
-        councilVotesQuery.refetch(); // Refresh council votes
-        return true;
-      }
-
-      console.log("Transaction not confirmed");
-      setErrorMessage("Transaction not confirmed.");
-      return false;
-    } catch (error) {
-      console.error("Error during review:", error);
-      setErrorMessage("An error occurred calling the proposal contract.");
-      return false;
-    }
-  };
 
   return (
     <div className="mt-16 max-w-xl">
@@ -128,7 +92,7 @@ export function ProposalCouncilCard({
           </PopoverContent>
         </Popover>
       </div>
-      <div className="bg-white dark:bg-algo-black-90 p-4 rounded-lg border">
+      <div className="bg-white dark:bg-algo-black-90 p-4 rounded-lg border dark:border-algo-black-90">
         <div className="flex justify-start gap-2 text-sm text-algo-black-60 dark:text-white/60 mb-2">
           <div className="flex items-center gap-1 px-2 py-1 bg-algo-blue/10 text-algo-blue dark:bg-algo-teal/10 dark:text-algo-teal rounded-full">
             <ArrowUpIcon className="text-algo-blue dark:text-algo-teal" size={16} />
@@ -154,11 +118,17 @@ export function ProposalCouncilCard({
           </div>
         )}
 
-        {/* Council voting actions */}
         {status === ProposalStatus.ProposalStatusApproved && (
           <div className="mt-4 pt-4 border-t border-algo-black-20 dark:border-white/20">
             {userVote ? (
-              <div className="flex items-center gap-2 p-3 bg-algo-black-10 dark:bg-algo-black-80 rounded-lg">
+              <div
+                className={cn(
+                  "flex items-center gap-2 p-3 rounded-lg",
+                  userVote.block
+                    ? "bg-algo-red/10 dark:bg-algo-red/20"
+                    : "bg-algo-green/10 dark:bg-algo-green/20"
+                )}
+              >
                 {userVote.block ? (
                   <>
                     <XIcon className="text-algo-red" size={20} />
@@ -178,22 +148,52 @@ export function ProposalCouncilCard({
                 </h3>
                 <div className="flex gap-2">
                   <Button
-                    onClick={() => handleReviewBlock(false)}
-                    size="sm"
-                    className="flex-1 bg-algo-blue dark:bg-algo-teal hover:bg-algo-blue/90 text-white border-0"
+                    type='button'
+                    onClick={() => councilVote({
+                      activeAddress,
+                      innerSigner,
+                      setStatus: setApproveStatus,
+                      refetch: [councilVotesQuery.refetch, proposalQuery.refetch],
+                      appId: proposalId,
+                      block: false,
+                      lastVoter: (approvingCouncilMembers + blockingCouncilMembers + 1) === totalCouncilMembers
+                    })}
+                    disabled={blockIsPending || approveIsPending}
                   >
-                    <CheckIcon size={16} className="mr-1" />
-                    Approve
+                    <TransactionStateLoader
+                      defaultText="Approve"
+                      txnState={{
+                        status: approveStatus,
+                        errorMessage: approveErrorMessage,
+                        isPending: approveIsPending
+                      }}
+                    />
                   </Button>
+
                   <Button
-                    onClick={() => handleReviewBlock(true)}
-                    size="sm"
+                    type='button'
                     variant="destructive"
-                    className="flex-1"
+                    onClick={() => councilVote({
+                      activeAddress,
+                      innerSigner,
+                      setStatus: setBlockStatus,
+                      refetch: [councilVotesQuery.refetch, proposalQuery.refetch],
+                      appId: proposalId,
+                      block: true,
+                      lastVoter: (approvingCouncilMembers + blockingCouncilMembers + 1) === totalCouncilMembers
+                    })}
+                    disabled={blockIsPending || approveIsPending}
                   >
-                    <XIcon size={16} className="mr-1" />
-                    Block
+                    <TransactionStateLoader
+                      defaultText="Block"
+                      txnState={{
+                        status: blockStatus,
+                        errorMessage: blockErrorMessage,
+                        isPending: blockIsPending
+                      }}
+                    />
                   </Button>
+
                 </div>
                 {errorMessage && (
                   <p className="text-algo-red text-sm mt-2">{errorMessage}</p>

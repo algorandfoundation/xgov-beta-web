@@ -34,7 +34,7 @@ import {
   XGOV_FEE,
 } from "@/constants";
 import { proposalApprovalBoxName, proposerBoxName, xGovBoxName } from "@/api";
-import { CouncilMemberBoxName } from "@/api/council";
+import { CouncilMemberBoxName, CouncilVoteBoxName } from "@/api/council";
 
 const MAX_APP_TOTAL_ARG_LEN = 2048
 const METHOD_SELECTOR_LENGTH = 4
@@ -108,7 +108,7 @@ const dispenser = await algorand.account.dispenserFromEnvironment();
 
 await algorand.account.ensureFunded(adminAccount.addr, dispenser, fundAmount);
 
-await algorand.account.ensureFunded('KFLCTKV2ELKPWXPS6IS6AH3QBNA77DGSPLW3O2WT7YOLJBBLZ72S6K52EM', dispenser, (200).algo());
+await algorand.account.ensureFunded('<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>', dispenser, (200).algo());
 
 // Create the registry
 const registryMinter = new XGovRegistryFactory({
@@ -210,12 +210,14 @@ await councilClient.send.addMember({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: {
-    address: 'KFLCTKV2ELKPWXPS6IS6AH3QBNA77DGSPLW3O2WT7YOLJBBLZ72S6K52EM',
+    address: '<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>',
   },
   boxReferences: [
-    CouncilMemberBoxName('KFLCTKV2ELKPWXPS6IS6AH3QBNA77DGSPLW3O2WT7YOLJBBLZ72S6K52EM')
+    CouncilMemberBoxName('<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>')
   ]
 });
+
+let councilMembers = []
 
 for (let i = 0; i < 10; i++) {
   const randomAccount = algorand.account.random();
@@ -238,6 +240,8 @@ for (let i = 0; i < 10; i++) {
       CouncilMemberBoxName(randomAccount.addr)
     ]
   });
+
+  councilMembers.push(randomAccount);
 }
 
 // Generate KYC provider account
@@ -712,12 +716,22 @@ await proposalFactory
     extraFee: (1000).microAlgo()
   })
 
-// Set admin account as xGov Council to avoid having to click through admin panel
-await registryClient.send.setXgovCouncil({
-  sender: adminAccount.addr,
-  signer: adminAccount.signer,
-  args: [adminAccount.addr],
-});
+for (let i = 0; i < councilMembers.length; i++) {
+  await councilClient.send.vote({
+    sender: councilMembers[i].addr,
+    signer: councilMembers[i].signer,
+    args: {
+      proposalId: proposalIds[1],
+      block: i < 5 ? true : false,
+    },
+    appReferences: [proposalIds[1], registryClient.appId],
+    boxReferences: [
+      CouncilVoteBoxName(Number(proposalIds[1])),
+      CouncilMemberBoxName(councilMembers[i].addr)
+    ],
+    extraFee: (1_000).microAlgo()
+  })
+}
 
 console.log({
   adminAccount,
