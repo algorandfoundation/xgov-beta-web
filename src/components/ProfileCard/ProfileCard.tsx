@@ -166,7 +166,7 @@ export function ProfileCard({
                           </p>
                           <ActionButton
                             type="button"
-                            onClick={() => window.open("https://in.sumsub.com/websdk/p/uni_nkxmvJFJATzDsSTA", "_blank", "noopener,noreferrer")}
+                            onClick={() => window.open("https://in.sumsub.com/websdk/p/uni_pgqnodCSebEEYB5P", "_blank", "noopener,noreferrer")}
                             disabled={false}
                           >
                             <span className="inline-flex items-center gap-2 text-sm">
