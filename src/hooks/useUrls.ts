@@ -13,9 +13,9 @@ export function useUrls(nfdProperties: { [address: string]: NFD } | undefined, e
 
     return useQueries({
       queries: Object.values(nfdProperties).map((nfd) => ({
-        queryKey: ["useUrl", nfd!.properties.internal!.name],
-        queryFn: () => getUrl(nfd!.properties),
-        enabled: enabled && !!nfd && !isLocalnet,
+        queryKey: ["useUrl", nfd?.properties?.internal?.name],
+        queryFn: () => getUrl(nfd?.properties),
+        enabled: enabled && !!nfd && !isLocalnet && !!nfd?.properties?.internal?.name,
       })),
     })
 }
