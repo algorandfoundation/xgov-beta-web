@@ -125,9 +125,11 @@ function StackedListItem({ proposal, activeAddress }: {
 
   const metadata = useMetadata(id, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusSubmitted))
   const discourse = useDiscourseTopic(metadata.data?.forumLink, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusSubmitted));
-  const votedAddresses = useProposalVoters(Number(id), status === ProposalStatus.ProposalStatusVoting);
-  const nfds = useNFDs(votedAddresses?.data, status === ProposalStatus.ProposalStatusVoting);
-  const avatars = useUrls(nfds?.data, status === ProposalStatus.ProposalStatusVoting);
+
+  // disabling avatars for now, too many requests from the proposals listing page
+  // const votedAddresses = useProposalVoters(Number(id), status === ProposalStatus.ProposalStatusVoting);
+  // const nfds = useNFDs(votedAddresses?.data, status === ProposalStatus.ProposalStatusVoting);
+  // const avatars = useUrls(nfds?.data, status === ProposalStatus.ProposalStatusVoting);
 
   // Filter out blocked proposals
   // Filter out empty proposals if the active address is not the proposer
@@ -157,7 +159,7 @@ function StackedListItem({ proposal, activeAddress }: {
           <div className="hidden lg:flex flex-wrap justify-end items-end gap-4">
             {phase === "Voting" && (
               <>
-                <UserCircleRow users={avatars.filter(v => !!v.data).map(v => v.data!)} />
+                {/* <UserCircleRow users={avatars.filter(v => !!v.data).map(v => v.data!)} /> */}
                 <VoteCounter
                   approvals={Number(approvals)}
                   rejections={Number(rejections)}
@@ -198,7 +200,7 @@ function StackedListItem({ proposal, activeAddress }: {
           <div className="flex flex-wrap justify-end items-end gap-4">
             {phase === "Voting" && (
               <>
-                <UserCircleRow users={avatars.filter(v => !!v.data).map(v => v.data!)} />
+                {/* <UserCircleRow users={avatars.filter(v => !!v.data).map(v => v.data!)} /> */}
                 <VoteCounter
                   approvals={Number(approvals)}
                   rejections={Number(rejections)}
