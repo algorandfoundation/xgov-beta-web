@@ -246,7 +246,7 @@ export async function getAllXGovSubscribeRequests(): Promise<(XGovSubscribeReque
     } else {
       throw new Error(`Failed to fetch box: ${result.reason}`);
     }
-  });
+  }).sort(({id: a}, {id: b}) => (a < b ? 1 : a > b ? -1 : 0));
 }
 
 export interface SubscribeXGovRequestProps extends TransactionHandlerProps {
