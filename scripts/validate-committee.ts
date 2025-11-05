@@ -1,7 +1,6 @@
 import { sha512_256 } from "js-sha512";
 import { readFileSync } from "fs";
-import Ajv, { JSONSchemaType } from "ajv";
-import { deepEqual } from "assert";
+import Ajv from "ajv";
 import { isDeepStrictEqual } from "util";
 
 // copied from api/assign.ts
@@ -32,7 +31,9 @@ if (valid) {
   errors = true;
 }
 
-const actualSort = jsonContents.xGovs.map(({ address: a }) => a);
+const actualSort = jsonContents.xGovs.map(
+  ({ address: a }: { address: string }) => a,
+);
 const expectedSort = [...actualSort].sort();
 
 if (!isDeepStrictEqual(actualSort, expectedSort)) {
@@ -49,7 +50,10 @@ const committeeId = Buffer.from(sha512_256(concatenated), "hex").toString(
 );
 
 const size = jsonContents.xGovs.length;
-const votes = jsonContents.xGovs.reduce((total, { votes }) => total + votes, 0);
+const votes = jsonContents.xGovs.reduce(
+  (total: number, { votes }: { votes: number }) => total + votes,
+  0,
+);
 
 console.log("Committee ID:", committeeId);
 console.log("Safe mode:", committeeIdToSafeFileName(committeeId));
@@ -57,6 +61,6 @@ console.log("Size:", size);
 console.log("Total power:", votes);
 
 if (errors) {
-  console.warn("ERR - Some errors were reported")
+  console.warn("ERR - Some errors were reported");
   process.exit(1);
 }
