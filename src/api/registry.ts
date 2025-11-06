@@ -160,7 +160,7 @@ export async function getAllProposers(): Promise<{
     .do();
 
   for (const box of boxes.boxes) {
-    if (box.name[0] !== 112) {
+    if (box.name[0] !== 112 && box.name.length !== 33) {
       continue;
     }
 
