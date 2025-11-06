@@ -22,7 +22,7 @@
   "dependencies": {
     "@agoralabs-sh/avm-web-provider": "^1.7.0",
     "@algorandfoundation/algokit-utils": "^7.0.0",
-    "@algorandfoundation/xgov": "github:algorandfoundation/xgov-beta-ts#feat/council-client",
+    "@algorandfoundation/xgov": "github:algorandfoundation/xgov-beta-ts",
     "@algorandfoundation/xgov-beta-ghost": "^0.0.2",
     "@astrojs/check": "^0.9.4",
     "@astrojs/cloudflare": "^12.4.0",

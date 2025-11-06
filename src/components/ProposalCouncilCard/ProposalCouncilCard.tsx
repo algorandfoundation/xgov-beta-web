@@ -119,8 +119,9 @@ export function ProposalCouncilCard({
         )}
 
         {status === ProposalStatus.ProposalStatusApproved && (
-          <div className="mt-4 pt-4 border-t border-algo-black-20 dark:border-white/20">
-            {userVote ? (
+
+          userVote ? (
+            <div className="mt-4 pt-4 border-t border-algo-black-20 dark:border-white/20">
               <div
                 className={cn(
                   "flex items-center gap-2 p-3 rounded-lg",
@@ -141,7 +142,9 @@ export function ProposalCouncilCard({
                   </>
                 )}
               </div>
-            ) : isCouncilMember ? (
+            </div>
+          ) : isCouncilMember ? (
+            <div className="mt-4 pt-4 border-t border-algo-black-20 dark:border-white/20">
               <div>
                 <h3 className="text-sm font-medium text-algo-black dark:text-white mb-3">
                   Does this proposal conform to the Terms & Conditions?
@@ -199,14 +202,8 @@ export function ProposalCouncilCard({
                   <p className="text-algo-red text-sm mt-2">{errorMessage}</p>
                 )}
               </div>
-            ) : (
-              <div className="text-center p-3 bg-algo-black-10 dark:bg-algo-black-80 rounded-lg">
-                <p className="text-sm text-algo-black-60 dark:text-white/60">
-                  Only council members can vote on reviews
-                </p>
-              </div>
-            )}
-          </div>
+            </div>
+          ) : null
         )}
       </div>
     </div>

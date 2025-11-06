@@ -194,7 +194,6 @@ const councilMinter = new CouncilFactory({
 
 const councilResults = await councilMinter.send.create.create({
   args: {
-    admin: adminAccount.addr,
     registryId: registryClient.appId,
   }
 });
@@ -236,6 +235,7 @@ for (let i = 0; i < 10; i++) {
     args: {
       address: randomAccount.addr,
     },
+    appReferences: [registryClient.appId],
     boxReferences: [
       CouncilMemberBoxName(randomAccount.addr)
     ]
