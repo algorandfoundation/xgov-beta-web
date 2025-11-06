@@ -54,12 +54,10 @@ export function ProposalPayorCard({
       return false;
     }
 
-    if (proposer?.asByteArray() === undefined) {
+    if (proposer === undefined) {
       setErrorMessage("Failed to get proposer information.");
       return false;
     }
-
-    const proposerAddr = encodeAddress(proposer.asByteArray()!);
 
     try {
       const res = await registryClient.send.payGrantProposal({
@@ -68,9 +66,9 @@ export function ProposalPayorCard({
         args: {
           proposalId,
         },
-        boxReferences: [proposerBoxName(proposerAddr)],
+        boxReferences: [proposerBoxName(proposer)],
         appReferences: [proposalId],
-        accountReferences: [proposerAddr],
+        accountReferences: [proposer],
         extraFee: (ALGORAND_MIN_TX_FEE * 3).microAlgos(),
       });
 

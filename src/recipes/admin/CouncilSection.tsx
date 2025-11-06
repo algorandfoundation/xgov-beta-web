@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { encodeAddress, isValidAddress } from "algosdk";
+import { isValidAddress } from "algosdk";
 import {
   Dialog,
   DialogClose,
@@ -16,11 +16,9 @@ import { useWallet } from "@txnlab/use-wallet-react";
 import type { TransactionState } from "@/api/types/transaction_state";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export function CouncilList() {
+export function CouncilList({ isAdmin }: { isAdmin: boolean }) {
   const { activeAddress, transactionSigner: innerSigner } = useWallet();
-  const councilGlobalStateQuery = useCouncilGlobalState();
   const councilMembersQuery = useCouncilMembers();
-  const admin = councilGlobalStateQuery?.data?.admin?.asByteArray()
 
   const [openTooltips, setOpenTooltips] = useState<{ [key: number]: boolean }>({});
 
@@ -102,7 +100,7 @@ export function CouncilList() {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    {!!admin && activeAddress === encodeAddress(admin) && (
+                    {isAdmin && (
                       <Button
                         size="xs"
                         variant="destructive"
