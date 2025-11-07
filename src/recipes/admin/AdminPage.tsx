@@ -233,7 +233,7 @@ export function AdminPage() {
                 isPending: isAddCouncilMemberPending
               }}
             />
-            <CouncilList isAdmin={activeAddress === registryGlobalState.data?.xgovManager} />
+            <CouncilList isCommitteeManager={activeAddress === registryGlobalState.data?.committeeManager} />
           </div>
         </>
       ) : (
