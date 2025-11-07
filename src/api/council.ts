@@ -1,5 +1,5 @@
 import algosdk, { ABIType, encodeAddress, encodeUint64 } from "algosdk";
-import { algod, algorand, network, CouncilAppID, registryClient, councilClient, RegistryAppID } from "./algorand";
+import { algod, algorand, councilClient, RegistryAppID } from "./algorand";
 import { env } from "@/constants";
 import { wrapTransactionSigner } from "@/hooks/useTransactionState";
 import type { TransactionHandlerProps } from "./types/transaction_state";
@@ -175,6 +175,7 @@ export async function addCouncilMember({
       args: {
         address
       },
+      appReferences: [RegistryAppID],
       boxReferences: [
         CouncilMemberBoxName(address)
       ]
@@ -230,6 +231,7 @@ export async function removeCouncilMember({
       args: {
         address
       },
+      appReferences: [RegistryAppID],
       boxReferences: [
         CouncilMemberBoxName(address)
       ]
