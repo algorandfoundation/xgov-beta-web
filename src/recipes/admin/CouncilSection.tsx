@@ -16,7 +16,7 @@ import { useWallet } from "@txnlab/use-wallet-react";
 import type { TransactionState } from "@/api/types/transaction_state";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export function CouncilList({ isAdmin }: { isAdmin: boolean }) {
+export function CouncilList({ isCommitteeManager }: { isCommitteeManager: boolean }) {
   const { activeAddress, transactionSigner: innerSigner } = useWallet();
   const councilMembersQuery = useCouncilMembers();
 
@@ -100,7 +100,7 @@ export function CouncilList({ isAdmin }: { isAdmin: boolean }) {
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    {isAdmin && (
+                    {isCommitteeManager && (
                       <Button
                         size="xs"
                         variant="destructive"
