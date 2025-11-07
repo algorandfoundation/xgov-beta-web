@@ -15,6 +15,7 @@ import { useAllRequestBoxes } from "@/hooks/useRequestBoxes";
 import { SubscribeRequestList } from "@/components/SubscribeRequestList/SubscribeRequestList";
 import { AddCouncilMemberModal, CouncilList } from "./CouncilSection";
 import { useTransactionState } from "@/hooks/useTransactionState";
+import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton";
 export function AdminPageIsland() {
   return (
     <UseQuery>
@@ -197,13 +198,15 @@ export function AdminPage() {
               <h2 className="text-xl font-semibold text-wrap text-algo-black dark:text-white">
                 Council Members <span className="ml-1 text-sm font-normal text-algo-black-60 dark:text-algo-black-20">{councilMembersQuery.data ? councilMembersQuery.data.length : 0} total</span>
               </h2>
-              <Button
-                onClick={() => setAddCouncilMemberModalIsOpen(true)}
+              <InfinityMirrorButton
                 variant="default"
                 size="sm"
+                onClick={() => setAddCouncilMemberModalIsOpen(true)}
+                disabled={activeAddress !== registryGlobalState.data?.xgovManager}
+                disabledMessage="Only the xGov Manager can add council members"
               >
                 Add Member
-              </Button>
+              </InfinityMirrorButton>
             </div>
             <AddCouncilMemberModal
               isOpen={addCouncilMemeberModalIsOpen}
