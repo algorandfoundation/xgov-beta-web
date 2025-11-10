@@ -3,12 +3,7 @@ import { readFileSync } from "fs";
 import Ajv, { JSONSchemaType } from "ajv";
 import { deepEqual } from "assert";
 import { isDeepStrictEqual } from "util";
-
-// copied from api/assign.ts
-function committeeIdToSafeFileName(committeeId: string): string {
-  // Use base64url encoding (base64 without padding, using URL-safe characters)
-  return committeeId.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
+import { committeeIdToSafeFileName } from "./utils";
 
 const filename = process.argv[2];
 

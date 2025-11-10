@@ -46,3 +46,9 @@ export async function timeWarp(algorand: AlgorandClient, to: number) {
   await roundWarp(algorand);
   await algorand.client.algod.setBlockOffsetTimestamp(0).do();
 }
+
+// copied from api/assign.ts
+export function committeeIdToSafeFileName(committeeId: string): string {
+  // Use base64url encoding (base64 without padding, using URL-safe characters)
+  return committeeId.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
