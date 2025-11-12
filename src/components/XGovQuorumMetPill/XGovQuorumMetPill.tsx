@@ -32,7 +32,7 @@ export default function XGovQuorumMetPill({ approved, quorumRequirement, votesHa
                             )
                     }
                     <h2 className="[font-size:0.5rem] md:text-xs font-bold">
-                        XGov Quorum
+                        xGov Quorum
                     </h2>
                 </div>
             </PopoverTrigger>

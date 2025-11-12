@@ -419,7 +419,7 @@ function VotingStatusCard({
           votesHave={Number(proposal.votedMembers)}
           votesNeed={Math.floor(Number(proposal.committeeMembers) * (xgovQuorum / 100))}
           quorumRequirement={xgovQuorum}
-          label="xgov quorum met"
+          label="xGov quorum met"
         />
         <VoteQuorumMetPill
           approved={totalVotes > Number(proposal.committeeVotes) * (voteQuorum / 100)}
@@ -731,7 +731,7 @@ function PostVotingStatusCard({
           votesHave={Number(proposal.votedMembers)}
           votesNeed={Math.floor(Number(proposal.committeeMembers) * (xgovQuorum / 100))}
           quorumRequirement={xgovQuorum}
-          label="xgov quorum met"
+          label="xGov quorum met"
         />
         <VoteQuorumMetPill
           approved={totalVotes > Number(proposal.committeeVotes) * (voteQuorum / 100)}
