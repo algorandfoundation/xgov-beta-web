@@ -5,6 +5,9 @@ export default {
   prefix: "",
   theme: {
     darkMode: "selector",
+    screens: {
+      xs: "24rem", // 24rem
+    },
     container: {
       center: true,
       padding: "2rem",

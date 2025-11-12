@@ -100,16 +100,16 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
           <DialogTitle className="sr-only">Navigate</DialogTitle>
 
         {!connectDialogOpen ? (
-          <nav className="h-full flex flex-col items-start justify-center gap-14">
+          <nav className="h-full flex flex-col items-start justify-center gap-10 xs:gap-14">
             <Link
-              className="px-4 text-5xl font-bold text-algo-black dark:text-white focus:outline-none underline-offset-4 hover:underline focus-visible:ring-0 dark:focus-visible:ring-0 focus-visible:underline"
+              className="px-4 text-4xl xs:text-5xl font-bold text-algo-black dark:text-white focus:outline-none underline-offset-4 hover:underline focus-visible:ring-0 dark:focus-visible:ring-0 focus-visible:underline"
               to="/"
             >
               Home
             </Link>
 
             <Button
-              className="px-4 text-5xl font-bold text-algo-black dark:text-white focus:outline-none underline-offset-4 hover:underline focus-visible:ring-0 dark:focus-visible:ring-0 focus-visible:underline"
+              className="px-4 text-4xl xs:text-5xl font-bold text-algo-black dark:text-white focus:outline-none underline-offset-4 hover:underline focus-visible:ring-0 dark:focus-visible:ring-0 focus-visible:underline"
               variant="link"
               onClick={handleGetStartedClick}
             >
@@ -117,16 +117,24 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
             </Button>
 
             <Link
-              className="px-4 text-5xl font-bold text-algo-black dark:text-white focus:outline-none underline-offset-4 hover:underline focus-visible:ring-0 dark:focus-visible:ring-0 focus-visible:underline"
-              to="https://forum.algorand.co/c/gov-guides/32"
+              className="px-4 text-4xl xs:text-5xl font-bold text-algo-black dark:text-white focus:outline-none underline-offset-4 hover:underline focus-visible:ring-0 dark:focus-visible:ring-0 focus-visible:underline"
+              to="https://algorandfoundation.github.io/xgov-beta-sc/"
             >
               Docs
+            </Link>
+
+
+            <Link
+              className="px-4 text-4xl xs:text-5xl font-bold text-algo-black dark:text-white focus:outline-none underline-offset-4 hover:underline focus-visible:ring-0 dark:focus-visible:ring-0 focus-visible:underline"
+              to="https://forum.algorand.co/c/gov-guides/32"
+            >
+              User Guides
             </Link>
 
             {
               !!activeAddress && (
                 <Link
-                  className="px-4 text-5xl font-bold text-algo-black dark:text-white focus:outline-none"
+                  className="px-4 text-4xl xs:text-5xl font-bold text-algo-black dark:text-white focus:outline-none"
                   to={`/profile/${activeAddress}`}
                 >
                   Profile
@@ -135,7 +143,7 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
             }
 
             <Button
-              className="text-5xl font-bold gap-4 ring-0 ring-transparent focus:outline-none"
+              className="text-4xl xs:text-5xl font-bold gap-4 ring-0 ring-transparent focus:outline-none"
               variant="link"
               onClick={() => {
                 if (!!activeAddress) {
@@ -149,14 +157,14 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
                 "Disconnect"
               ) : (
                 <>
-                  <WalletIcon className="stroke-algo-black dark:stroke-white size-12" />
+                  <WalletIcon className="stroke-algo-black dark:stroke-white size-10 xs:size-12" />
                   Connect
                 </>
               )}
             </Button>
 
             <Button
-              className="text-5xl font-bold gap-4 focus:outline-none"
+              className="text-4xl xs:text-5xl font-bold gap-4 focus:outline-none"
               variant="link"
               onClick={() => toggleTheme()}
             >
@@ -173,7 +181,7 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
             {wallets.map((wallet) => (
               <li key={wallet.id}>
                 <Button
-                  className="text-5xl font-bold flex gap-4 focus:outline-none"
+                  className="text-4xl xs:text-5xl font-bold flex gap-4 focus:outline-none"
                   variant="link"
                   onClick={() => {
                     wallet.connect();
