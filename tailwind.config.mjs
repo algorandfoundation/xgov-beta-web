@@ -5,9 +5,6 @@ export default {
   prefix: "",
   theme: {
     darkMode: "selector",
-    screens: {
-      xs: "24rem", // 24rem
-    },
     container: {
       center: true,
       padding: "2rem",
@@ -16,6 +13,9 @@ export default {
       },
     },
     extend: {
+      screens: {
+        xs: "24rem", // 24rem
+      },
       fontSize: {
         'xxs': ['0.7rem', { lineHeight: '1rem' }],
       },
