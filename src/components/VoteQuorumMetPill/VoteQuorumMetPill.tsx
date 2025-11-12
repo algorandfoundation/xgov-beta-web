@@ -5,11 +5,13 @@ import { cn } from "@/functions/utils";
 export interface VoteQuorumMetPillProps {
     approved: boolean
     quorumRequirement: number
+    votesHave: number
+    votesNeed: number
     className?: string
     label: string
 }
 
-export default function VoteQuorumMetPill({ approved, className, label, quorumRequirement, ...contentProps }: VoteQuorumMetPillProps) {
+export default function VoteQuorumMetPill({ approved, quorumRequirement, votesHave, votesNeed, className, label, ...contentProps }: VoteQuorumMetPillProps) {
     return (
         <Popover>
             <PopoverTrigger
@@ -42,7 +44,7 @@ export default function VoteQuorumMetPill({ approved, className, label, quorumRe
                 {...contentProps}
             >
                 Whether a weighted quorum of all xGov Committee voting power (1 vote) is reached.
-                This Proposal needs a vote quorum of {quorumRequirement}%
+                This Proposal needs a vote quorum of {quorumRequirement}% and currently has {(votesHave ?? 0).toLocaleString()} out of {(votesNeed ?? 0).toLocaleString()} required votes.
             </PopoverContent>
         </Popover>
     )

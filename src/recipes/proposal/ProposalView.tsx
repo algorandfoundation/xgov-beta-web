@@ -415,17 +415,22 @@ function VotingStatusCard({
       />
       <div className="flex gap-2">
         <XGovQuorumMetPill
-          approved={Number(proposal.votedMembers) > Number(proposal.committeeMembers) * (xgovQuorum / 100)}
+          approved={Number(proposal.votedMembers) >= Number(proposal.committeeMembers) * (xgovQuorum / 100)}
+          votesHave={Number(proposal.votedMembers)}
+          votesNeed={Math.floor(Number(proposal.committeeMembers) * (xgovQuorum / 100))}
           quorumRequirement={xgovQuorum}
-          label="xgov quorum met"
+          label="xGov quorum met"
         />
         <VoteQuorumMetPill
           approved={totalVotes > Number(proposal.committeeVotes) * (voteQuorum / 100)}
+          votesHave={totalVotes}
+          votesNeed={Math.floor(Number(proposal.committeeVotes) * (voteQuorum / 100))}
           quorumRequirement={voteQuorum}
           label="vote quorum met"
         />
         <MajorityApprovedPill
           approved={proposal.approvals > proposal.rejections}
+          percentApproved={proposal.approvals + proposal.rejections === 0n ? 0 : Math.floor((Number(proposal.approvals) / (Number(proposal.approvals) + Number(proposal.rejections))) * 100)}
           label="majority approved"
         />
       </div>
@@ -723,16 +728,21 @@ function PostVotingStatusCard({
       <div className="flex gap-2">
         <XGovQuorumMetPill
           approved={Number(proposal.votedMembers) > Number(proposal.committeeMembers) * (xgovQuorum / 100)}
+          votesHave={Number(proposal.votedMembers)}
+          votesNeed={Math.floor(Number(proposal.committeeMembers) * (xgovQuorum / 100))}
           quorumRequirement={xgovQuorum}
-          label="xgov quorum met"
+          label="xGov quorum met"
         />
         <VoteQuorumMetPill
           approved={totalVotes > Number(proposal.committeeVotes) * (voteQuorum / 100)}
+          votesHave={totalVotes}
+          votesNeed={Math.floor(Number(proposal.committeeVotes) * (voteQuorum / 100))}
           quorumRequirement={voteQuorum}
           label="vote quorum met"
         />
         <MajorityApprovedPill
           approved={proposal.approvals > proposal.rejections}
+          percentApproved={proposal.approvals + proposal.rejections === 0n ? 0 : Math.floor((Number(proposal.approvals) / (Number(proposal.approvals) + Number(proposal.rejections))) * 100)}
           label="majority approved"
         />
       </div>
