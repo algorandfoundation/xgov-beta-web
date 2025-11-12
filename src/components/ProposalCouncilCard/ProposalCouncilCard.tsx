@@ -63,9 +63,9 @@ export function ProposalCouncilCard({
   const totalCouncilMembers = councilMembersQuery.data?.length || 0;
   
   const approvingCouncilMembers = councilVotes.filter(vote => !vote.block).length;
-  const approvalsNeededToFund = (Math.ceil(totalCouncilMembers / 2) + 1) - approvingCouncilMembers;
+  const approvalsNeededToFund = Math.ceil(totalCouncilMembers / 2) - approvingCouncilMembers;
   const blockingCouncilMembers = councilVotes.filter(vote => vote.block).length;
-  const rejectionsNeededToBlock = (Math.ceil(totalCouncilMembers / 2) + 1) - blockingCouncilMembers;
+  const rejectionsNeededToBlock = Math.ceil(totalCouncilMembers / 2) - blockingCouncilMembers;
   const notVotedCouncilMembers = totalCouncilMembers - councilVotes.length;
   
 
