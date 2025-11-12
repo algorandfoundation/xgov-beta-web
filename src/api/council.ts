@@ -1,4 +1,4 @@
-import algosdk, { ABIType, encodeAddress, encodeUint64 } from "algosdk";
+import algosdk, { ABIType, encodeAddress, encodeUint64, getApplicationAddress } from "algosdk";
 import { algod, algorand, councilClient, RegistryAppID } from "./algorand";
 import { env } from "@/constants";
 import { wrapTransactionSigner } from "@/hooks/useTransactionState";
@@ -81,6 +81,7 @@ export interface CouncilVoteProps extends TransactionHandlerProps {
   appId: bigint;
   block: boolean;
   lastVoter: boolean;
+  proposerAddress: string;
 }
 
 export async function councilVote({
@@ -90,7 +91,8 @@ export async function councilVote({
   refetch,
   appId,
   block,
-  lastVoter
+  lastVoter,
+  proposerAddress
 }: CouncilVoteProps) {
   if (!innerSigner) return;
 
@@ -114,10 +116,14 @@ export async function councilVote({
         proposalId: appId,
         block
       },
+      accountReferences: [
+        getApplicationAddress(RegistryAppID),
+        proposerAddress
+      ],
       appReferences: [appId, RegistryAppID],
       boxReferences: [
         CouncilVoteBoxName(Number(appId)),
-        CouncilMemberBoxName(activeAddress)
+        CouncilMemberBoxName(activeAddress),
       ],
       extraFee: lastVoter ? (2_000).microAlgo() : (1_000).microAlgo()
     });

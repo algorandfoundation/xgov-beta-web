@@ -159,7 +159,8 @@ export function ProposalCouncilCard({
                       refetch: [councilVotesQuery.refetch, proposalQuery.refetch],
                       appId: proposalId,
                       block: false,
-                      lastVoter: (approvingCouncilMembers + blockingCouncilMembers + 1) === totalCouncilMembers
+                      lastVoter: (approvingCouncilMembers + blockingCouncilMembers + 1) === totalCouncilMembers,
+                      proposerAddress: proposalQuery.data?.proposer!
                     })}
                     disabled={blockIsPending || approveIsPending}
                   >
@@ -183,7 +184,8 @@ export function ProposalCouncilCard({
                       refetch: [councilVotesQuery.refetch, proposalQuery.refetch],
                       appId: proposalId,
                       block: true,
-                      lastVoter: (approvingCouncilMembers + blockingCouncilMembers + 1) === totalCouncilMembers
+                      lastVoter: (approvingCouncilMembers + blockingCouncilMembers + 1) === totalCouncilMembers,
+                      proposerAddress: proposalQuery.data?.proposer!
                     })}
                     disabled={blockIsPending || approveIsPending}
                   >
