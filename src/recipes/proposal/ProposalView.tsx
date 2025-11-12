@@ -290,7 +290,21 @@ function DiscussionStatusCard({
     <StatusCardTemplate
       className={className}
       header={header}
-      subHeader="Discussion is ongoing, take part and help shape public sentiment on this proposal."
+      subHeader={
+        proposal.proposer === activeAddress
+          ? (
+            <div className="h-9 flex items-start">
+              <Link
+                target="_blank"
+                to={proposal.forumLink}
+                className="flex items-center gap-1 text-algo-black/80 dark:text-white/80 hover:underline"
+              >
+                View the discussion
+                <ExternalLinkIcon size={16} />
+              </Link>
+            </div>
+          )
+          : "Discussion is ongoing, take part and help shape public sentiment on this proposal."}
       sideHeader={discussionDuration > Number(minimumDiscussionDuration) ? 'Ready to submit' : remainingTime}
       icon={icon}
       action={action}
@@ -461,7 +475,7 @@ function VotingStatusCard({
               {
                 [
                   ...Object.keys(voterInfoQuery?.data ?? {})
-                    // .filter(key => (voterInfoQuery?.data?.[key]?.votes ?? 0) > 0 && !voterInfoQuery?.data?.[key]?.voted)
+                  // .filter(key => (voterInfoQuery?.data?.[key]?.votes ?? 0) > 0 && !voterInfoQuery?.data?.[key]?.voted)
                 ].map(address => (
                   <SelectItem key={address} value={address} disabled={!((voterInfoQuery?.data?.[address]?.votes ?? 0) > 0)}>
                     {shortenAddress(address)}
