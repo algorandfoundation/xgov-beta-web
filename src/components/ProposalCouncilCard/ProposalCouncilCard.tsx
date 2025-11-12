@@ -61,9 +61,13 @@ export function ProposalCouncilCard({
   // Calculate council vote counts
   const councilVotes = councilVotesQuery.data || [];
   const totalCouncilMembers = councilMembersQuery.data?.length || 0;
+  
   const approvingCouncilMembers = councilVotes.filter(vote => !vote.block).length;
+  const approvalsNeededToFund = (Math.ceil(totalCouncilMembers / 2) + 1) - approvingCouncilMembers;
   const blockingCouncilMembers = councilVotes.filter(vote => vote.block).length;
+  const rejectionsNeededToBlock = (Math.ceil(totalCouncilMembers / 2) + 1) - blockingCouncilMembers;
   const notVotedCouncilMembers = totalCouncilMembers - councilVotes.length;
+  
 
   // Check if current user is a council member and their vote status
   const isCouncilMember = activeAddress && councilMembersQuery.data?.includes(activeAddress);
@@ -159,7 +163,7 @@ export function ProposalCouncilCard({
                       refetch: [councilVotesQuery.refetch, proposalQuery.refetch],
                       appId: proposalId,
                       block: false,
-                      lastVoter: (approvingCouncilMembers + blockingCouncilMembers + 1) === totalCouncilMembers,
+                      lastVoter: approvalsNeededToFund === 1,
                       proposerAddress: proposalQuery.data?.proposer!
                     })}
                     disabled={blockIsPending || approveIsPending}
@@ -184,7 +188,7 @@ export function ProposalCouncilCard({
                       refetch: [councilVotesQuery.refetch, proposalQuery.refetch],
                       appId: proposalId,
                       block: true,
-                      lastVoter: (approvingCouncilMembers + blockingCouncilMembers + 1) === totalCouncilMembers,
+                      lastVoter: rejectionsNeededToBlock === 1,
                       proposerAddress: proposalQuery.data?.proposer!
                     })}
                     disabled={blockIsPending || approveIsPending}
