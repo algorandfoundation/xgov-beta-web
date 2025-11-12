@@ -5,11 +5,13 @@ import { cn } from "@/functions/utils";
 export interface XGovQuorumMetPillProps {
     approved: boolean
     quorumRequirement: number
+    votesHave: number
+    votesNeed: number
     className?: string
     label: string
 }
 
-export default function XGovQuorumMetPill({ approved, className, label, quorumRequirement, ...contentProps }: XGovQuorumMetPillProps) {
+export default function XGovQuorumMetPill({ approved, quorumRequirement, votesHave, votesNeed, className,label, ...contentProps }: XGovQuorumMetPillProps) {
     return (
         <Popover>
             <PopoverTrigger
@@ -42,7 +44,7 @@ export default function XGovQuorumMetPill({ approved, className, label, quorumRe
                 {...contentProps}
             >
                 Whether a quorum of the xGov Committee (1 xGov, 1 vote) is reached. Null votes affect this quorum.
-                This Proposal needs a quorum of {quorumRequirement}%
+                This Proposal needs a quorum of {quorumRequirement}% and currently has {votesHave} out of {votesNeed} required votes.
             </PopoverContent>
         </Popover>
     )
