@@ -570,7 +570,7 @@ export async function createEmptyProposal({
     if (e.message.includes("tried to spend")) {
       setStatus(new Error("Insufficient funds to create proposal."));
     } else {
-      setStatus(new Error("Failed to create proposal."));
+      setStatus(new Error("Failed to create proposal: " + (e as Error).message));
     }
   }
 }
@@ -680,7 +680,7 @@ export async function openProposal({
     if (e.message.includes("tried to spend")) {
       setStatus(new Error("Insufficient funds to open proposal."));
     } else {
-      setStatus(new Error("Failed to open proposal."));
+      setStatus(new Error("Failed to open proposal: " + (e as Error).message));
     }
     return;
   }
@@ -764,7 +764,7 @@ export async function voteProposal({
     setStatus(new Error("Failed to vote on the proposal."));
   } catch (e: any) {
     console.error("Error during voting:", e.message);
-    setStatus(new Error("An error occurred while voting on the proposal."));
+    setStatus(new Error("An error occurred while voting on the proposal: " + (e as Error).message));
     return;
   }
 }
@@ -883,7 +883,7 @@ export async function updateMetadata({
     if (e.message.includes("tried to spend")) {
       setStatus(new Error("Insufficient funds to update proposal metadata."));
     } else {
-      setStatus(new Error("Failed to update proposal metadata."));
+      setStatus(new Error("Failed to update proposal metadata: " + (e as Error).message));
     }
     return null;
   }
@@ -1040,7 +1040,7 @@ export async function dropProposal({
 
     setStatus(new Error("Transaction not confirmed."));
   } catch (error) {
-    setStatus(new Error("An error occurred while dropping the proposal."));
+    setStatus(new Error("An error occurred while dropping the proposal: " + (error as Error).message));
   }
 };
 
