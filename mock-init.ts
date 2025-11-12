@@ -105,10 +105,11 @@ const adminAccount = await algorand.account.fromKmd(
 );
 console.log("admin account", adminAccount.addr);
 const dispenser = await algorand.account.dispenserFromEnvironment();
+const councilTestingAddress = '<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>'; // TODO: replace this value
 
 await algorand.account.ensureFunded(adminAccount.addr, dispenser, fundAmount);
 
-await algorand.account.ensureFunded('<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>', dispenser, (200).algo());
+await algorand.account.ensureFunded(councilTestingAddress, dispenser, (200).algo());
 
 // Create the registry
 const registryMinter = new XGovRegistryFactory({
@@ -209,10 +210,11 @@ await councilClient.send.addMember({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: {
-    address: '<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>',
+    address: councilTestingAddress,
   },
+  appReferences: [registryClient.appId],
   boxReferences: [
-    CouncilMemberBoxName('<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>')
+    CouncilMemberBoxName(councilTestingAddress)
   ]
 });
 
