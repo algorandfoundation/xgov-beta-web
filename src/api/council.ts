@@ -125,7 +125,7 @@ export async function councilVote({
         CouncilVoteBoxName(Number(appId)),
         CouncilMemberBoxName(activeAddress),
       ],
-      extraFee: lastVoter ? (2_000).microAlgo() : (1_000).microAlgo()
+      extraFee: lastVoter ? (3_000).microAlgo() : (1_000).microAlgo()
     });
 
     if (
