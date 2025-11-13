@@ -18,6 +18,7 @@ import { UseWallet, UseQuery, useNFD, useProposer, useRegistry, useXGov } from "
 import { TutorialDialog } from "@/components/TutorialDialog/TutorialDialog";
 import { subscribeProposer, subscribeXgov } from "@/api";
 import { useTransactionState } from "@/hooks/useTransactionState";
+import { AdminLinkController } from "@/layouts/shell/AdminLink";
 
 export function MobileNavIsland(props: { trigger?: ReactNode; path?: string }) {
   return (
@@ -162,6 +163,8 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
                 </>
               )}
             </Button>
+
+            <AdminLinkController className="pl-4 text-4xl xs:text-5xl font-bold gap-4 ring-0 ring-transparent focus:outline-none" path={path} />
 
             <Button
               className="text-4xl xs:text-5xl font-bold gap-4 focus:outline-none"
