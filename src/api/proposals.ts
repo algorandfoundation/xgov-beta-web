@@ -196,6 +196,14 @@ export async function getAllProposalsToUnassign(): Promise<
   );
 }
 
+export async function getAllProposalsToDelete(): Promise<
+  ProposalSummaryCardDetails[]
+> {
+  return (await getAllProposals()).filter(
+    (proposal) => proposal.finalized && proposal.status === ProposalStatus.ProposalStatusDraft,
+  );
+}
+
 /**
  * Retrieves proposal details for a given proposal ID.
  *
@@ -325,6 +333,18 @@ export async function getProposalToUnassign(
     ) || proposalData.finalized
   ) {
     throw new Error("Proposal not in unassignable state");
+  }
+  return proposalData;
+}
+
+export async function getProposalToDelete(
+  id: bigint,
+): Promise<ProposalMainCardDetails> {
+  const proposalData = await getProposal(id);
+  if (
+    !proposalData.finalized || proposalData.status !== ProposalStatus.ProposalStatusDraft
+  ) {
+    throw new Error("Proposal not in deletable state");
   }
   return proposalData;
 }
@@ -1111,4 +1131,22 @@ export async function callUnassign(
   console.log("Finished unassign call");
   const data = await response.json();
   console.log("Unassign data:", data);
+}
+
+export async function callDeleteProposal(
+  proposalId: bigint | null,
+): Promise<void> {
+  console.log("Starting delete call", proposalId);
+  const response = await fetch("/api/delete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      proposalIds: proposalId !== null ? [proposalId] : [],
+    }),
+  });
+  console.log("Finished delete call");
+  const data = await response.json();
+  console.log("Delete data:", data);
 }
