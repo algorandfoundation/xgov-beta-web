@@ -7,7 +7,7 @@ import {
 let walletProviders: SupportedWallet[] = [
   WalletId.PERA,
   WalletId.DEFLY,
-  { id: WalletId.LUTE, options: { siteName: "XGov Beta" } },
+  { id: WalletId.LUTE, options: { siteName: "xGov Beta" } },
   WalletId.EXODUS,
   WalletId.KIBISIS,
   /* {

@@ -290,7 +290,21 @@ function DiscussionStatusCard({
     <StatusCardTemplate
       className={className}
       header={header}
-      subHeader="Discussion is ongoing, take part and help shape public sentiment on this proposal."
+      subHeader={
+        proposal.proposer === activeAddress
+          ? (
+            <div className="h-9 flex items-start">
+              <Link
+                target="_blank"
+                to={proposal.forumLink}
+                className="flex items-center gap-1 text-algo-black/80 dark:text-white/80 hover:underline"
+              >
+                View the discussion
+                <ExternalLinkIcon size={16} />
+              </Link>
+            </div>
+          )
+          : "Discussion is ongoing, take part and help shape public sentiment on this proposal."}
       sideHeader={discussionDuration > Number(minimumDiscussionDuration) ? 'Ready to submit' : remainingTime}
       icon={icon}
       action={action}
@@ -415,17 +429,22 @@ function VotingStatusCard({
       />
       <div className="flex gap-2">
         <XGovQuorumMetPill
-          approved={Number(proposal.votedMembers) > Number(proposal.committeeMembers) * (xgovQuorum / 100)}
+          approved={Number(proposal.votedMembers) >= Number(proposal.committeeMembers) * (xgovQuorum / 100)}
+          votesHave={Number(proposal.votedMembers)}
+          votesNeed={Math.floor(Number(proposal.committeeMembers) * (xgovQuorum / 100))}
           quorumRequirement={xgovQuorum}
-          label="xgov quorum met"
+          label="xGov quorum met"
         />
         <VoteQuorumMetPill
           approved={totalVotes > Number(proposal.committeeVotes) * (voteQuorum / 100)}
+          votesHave={totalVotes}
+          votesNeed={Math.floor(Number(proposal.committeeVotes) * (voteQuorum / 100))}
           quorumRequirement={voteQuorum}
           label="vote quorum met"
         />
         <MajorityApprovedPill
           approved={proposal.approvals > proposal.rejections}
+          percentApproved={proposal.approvals + proposal.rejections === 0n ? 0 : Math.floor((Number(proposal.approvals) / (Number(proposal.approvals) + Number(proposal.rejections))) * 100)}
           label="majority approved"
         />
       </div>
@@ -456,7 +475,7 @@ function VotingStatusCard({
               {
                 [
                   ...Object.keys(voterInfoQuery?.data ?? {})
-                    // .filter(key => (voterInfoQuery?.data?.[key]?.votes ?? 0) > 0 && !voterInfoQuery?.data?.[key]?.voted)
+                  // .filter(key => (voterInfoQuery?.data?.[key]?.votes ?? 0) > 0 && !voterInfoQuery?.data?.[key]?.voted)
                 ].map(address => (
                   <SelectItem key={address} value={address} disabled={!((voterInfoQuery?.data?.[address]?.votes ?? 0) > 0)}>
                     {shortenAddress(address)}
@@ -723,16 +742,21 @@ function PostVotingStatusCard({
       <div className="flex gap-2">
         <XGovQuorumMetPill
           approved={Number(proposal.votedMembers) > Number(proposal.committeeMembers) * (xgovQuorum / 100)}
+          votesHave={Number(proposal.votedMembers)}
+          votesNeed={Math.floor(Number(proposal.committeeMembers) * (xgovQuorum / 100))}
           quorumRequirement={xgovQuorum}
-          label="xgov quorum met"
+          label="xGov quorum met"
         />
         <VoteQuorumMetPill
           approved={totalVotes > Number(proposal.committeeVotes) * (voteQuorum / 100)}
+          votesHave={totalVotes}
+          votesNeed={Math.floor(Number(proposal.committeeVotes) * (voteQuorum / 100))}
           quorumRequirement={voteQuorum}
           label="vote quorum met"
         />
         <MajorityApprovedPill
           approved={proposal.approvals > proposal.rejections}
+          percentApproved={proposal.approvals + proposal.rejections === 0n ? 0 : Math.floor((Number(proposal.approvals) / (Number(proposal.approvals) + Number(proposal.rejections))) * 100)}
           label="majority approved"
         />
       </div>
@@ -874,10 +898,7 @@ export function ProposalInfo({
       </div>
       <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-6 lg:mx-0 lg:max-w-none lg:grid-cols-2 lg:items-start lg:gap-y-10">
         {
-          xGovCouncil
-          && activeAddress
-          && activeAddress === xGovCouncil
-          && (
+          proposal.status === ProposalStatus.ProposalStatusApproved && (
             <div className="lg:col-span-2">
               <ProposalCouncilCard
                 proposalId={proposal.id}

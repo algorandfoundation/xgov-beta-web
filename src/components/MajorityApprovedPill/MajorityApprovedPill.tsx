@@ -4,11 +4,12 @@ import { cn } from "@/functions/utils";
 
 export interface MajorityApprovedPillProps {
     approved: boolean
+    percentApproved: number
     className?: string
     label: string
 }
 
-export default function MajorityApprovedPill({ approved, className, label, ...contentProps }: MajorityApprovedPillProps) {
+export default function MajorityApprovedPill({ approved, percentApproved, className, label, ...contentProps }: MajorityApprovedPillProps) {
     return (
         <Popover>
             <PopoverTrigger
@@ -42,7 +43,7 @@ export default function MajorityApprovedPill({ approved, className, label, ...co
                 role="tooltip"
                 {...contentProps}
             >
-                Whether the relative majority of Approved over Rejected votes has been reached. Abstain votes do not affect the relative majority.
+                Whether the relative majority of Approved over Rejected votes has been reached. Abstain votes do not affect the relative majority. {percentApproved}% of votes are in favor.
             </PopoverContent>
         </Popover>
     )

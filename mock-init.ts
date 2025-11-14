@@ -2,6 +2,7 @@ import fs from "node:fs";
 import crypto from "crypto";
 import algosdk, { ALGORAND_MIN_TX_FEE } from "algosdk";
 import { XGovRegistryFactory } from "@algorandfoundation/xgov/registry";
+import { CouncilFactory } from "@algorandfoundation/xgov/council";
 import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 import { algorand } from "@/api/algorand";
 import { ProposalFactory } from "@algorandfoundation/xgov";
@@ -32,7 +33,22 @@ import {
   WEIGHTED_QUORUM_SMALL,
   XGOV_FEE,
 } from "@/constants";
-import { proposerBoxName, xGovBoxName } from "@/api";
+import { proposalApprovalBoxName, proposerBoxName, xGovBoxName } from "@/api";
+import { CouncilMemberBoxName, CouncilVoteBoxName } from "@/api/council";
+
+const MAX_APP_TOTAL_ARG_LEN = 2048
+const METHOD_SELECTOR_LENGTH = 4
+const UINT64_LENGTH = 8
+const DYNAMIC_BYTE_ARRAY_LENGTH_OVERHEAD = 4
+
+function loadProposalContractDataSizePerTransaction() {
+  return (
+    MAX_APP_TOTAL_ARG_LEN
+    - METHOD_SELECTOR_LENGTH
+    - UINT64_LENGTH
+    - DYNAMIC_BYTE_ARRAY_LENGTH_OVERHEAD
+  )
+}
 
 async function getLastRound(): Promise<number> {
   return (await algorand.client.algod.status().do())["last-round"];
@@ -89,8 +105,11 @@ const adminAccount = await algorand.account.fromKmd(
 );
 console.log("admin account", adminAccount.addr);
 const dispenser = await algorand.account.dispenserFromEnvironment();
+const councilTestingAddress = '<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>'; // TODO: replace this value
 
 await algorand.account.ensureFunded(adminAccount.addr, dispenser, fundAmount);
+
+await algorand.account.ensureFunded(councilTestingAddress, dispenser, (200).algo());
 
 // Create the registry
 const registryMinter = new XGovRegistryFactory({
@@ -110,6 +129,122 @@ await registryClient.appClient.fundAppAccount({
   sender: dispenser.addr,
   amount: (100).algos(),
 });
+
+// proposal_factory = algorand_client.client.get_typed_app_factory(
+//     typed_factory=ProposalFactory,
+// )
+
+// compiled_proposal = proposal_factory.app_factory.compile()
+// client.send.init_proposal_contract(args=(len(compiled_proposal.approval_program),))
+// data_size_per_transaction = load_proposal_contract_data_size_per_transaction()
+// bulks = 1 + len(compiled_proposal.approval_program) // data_size_per_transaction
+// for i in range(bulks):
+//     chunk = compiled_proposal.approval_program[
+//         i * data_size_per_transaction : (i + 1) * data_size_per_transaction
+//     ]
+//     client.send.load_proposal_contract(
+//         args=(i * data_size_per_transaction, chunk),
+//     )
+
+const proposalMinter = new ProposalFactory({
+  algorand,
+  defaultSender: adminAccount.addr,
+  defaultSigner: adminAccount.signer,
+});
+
+const compiledProposal = await proposalMinter.appFactory.compile();
+const size = compiledProposal.approvalProgram.length;
+const dataSizePerTransaction = loadProposalContractDataSizePerTransaction();
+const bulks = 1 + Math.floor(size / dataSizePerTransaction);
+
+await registryClient.send.initProposalContract({
+  args: { size },
+  boxReferences: [
+    proposalApprovalBoxName(),
+    proposalApprovalBoxName(),
+    proposalApprovalBoxName(),
+    proposalApprovalBoxName()
+  ]
+});
+
+for (let i = 0; i < bulks; i++) {
+  const chunk = compiledProposal.approvalProgram.slice(
+    i * dataSizePerTransaction,
+    (i + 1) * dataSizePerTransaction,
+  );
+
+  await registryClient.send.loadProposalContract({
+    args: {
+      offset: (i * dataSizePerTransaction),
+      data: chunk,
+    },
+    boxReferences: [
+      proposalApprovalBoxName(),
+      proposalApprovalBoxName(),
+      proposalApprovalBoxName(),
+      proposalApprovalBoxName()
+    ],
+  });
+}
+
+const councilMinter = new CouncilFactory({
+  algorand,
+  defaultSender: adminAccount.addr,
+  defaultSigner: adminAccount.signer,
+});
+
+const councilResults = await councilMinter.send.create.create({
+  args: {
+    registryId: registryClient.appId,
+  }
+});
+
+const councilClient = councilResults.appClient;
+
+await councilClient.appClient.fundAppAccount({
+  sender: dispenser.addr,
+  amount: (100).algos(),
+});
+
+await councilClient.send.addMember({
+  sender: adminAccount.addr,
+  signer: adminAccount.signer,
+  args: {
+    address: councilTestingAddress,
+  },
+  appReferences: [registryClient.appId],
+  boxReferences: [
+    CouncilMemberBoxName(councilTestingAddress)
+  ]
+});
+
+let councilMembers = []
+
+for (let i = 0; i < 10; i++) {
+  const randomAccount = algorand.account.random();
+
+  console.log('council member', randomAccount.addr);
+
+  await algorand.account.ensureFunded(
+    randomAccount.addr,
+    dispenser,
+    (1).algo(),
+  );
+
+  await councilClient.send.addMember({
+    sender: adminAccount.addr,
+    signer: adminAccount.signer,
+    args: {
+      address: randomAccount.addr,
+    },
+    appReferences: [registryClient.appId],
+    boxReferences: [
+      CouncilMemberBoxName(randomAccount.addr)
+    ]
+  });
+
+  councilMembers.push(randomAccount);
+}
 
 // Generate KYC provider account
 const kycProvider = await algorand.account.fromKmd(
@@ -189,6 +324,12 @@ await registryClient.send.setXgovSubscriber({
   },
 });
 
+await registryClient.send.setXgovCouncil({
+  sender: adminAccount.addr,
+  signer: adminAccount.signer,
+  args: [councilClient.appAddress.toString()],
+})
+
 const admin: TransactionSignerAccount & { account: algosdk.Account; } = {
   addr: adminAccount.addr,
   signer: adminAccount.signer,
@@ -228,7 +369,7 @@ for (const committeeMember of committeeMembers) {
       payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         amount: 1_000_000,
         from: committeeMember.addr,
-        to: registryClient.appAddress,
+        to: registryClient.appAddress.toString(),
         suggestedParams: await algorand.getSuggestedParams(),
       }),
     },
@@ -293,7 +434,7 @@ for (let i = 0; i < mockProposals.length; i++) {
       payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         amount: proposerFee.microAlgos,
         from: account.addr,
-        to: registryClient.appAddress,
+        to: registryClient.appAddress.toString(),
         suggestedParams,
       }),
     },
@@ -325,11 +466,17 @@ for (let i = 0; i < mockProposals.length; i++) {
       payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         amount: proposalFee.microAlgos,
         from: account.addr,
-        to: registryClient.appAddress,
+        to: registryClient.appAddress.toString(),
         suggestedParams,
       }),
     },
-    boxReferences: [proposerBoxName(account.addr)],
+    boxReferences: [
+      proposerBoxName(account.addr),
+      proposalApprovalBoxName(),
+      proposalApprovalBoxName(),
+      proposalApprovalBoxName(),
+      proposalApprovalBoxName(),
+    ],
     extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
   });
 
@@ -381,7 +528,7 @@ for (let i = 0; i < mockProposals.length; i++) {
           payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
             amount: proposalSubmissionFee,
             from: account.addr,
-            to: proposalClient.appAddress,
+            to: proposalClient.appAddress.toString(),
             suggestedParams,
           }),
           title: mockProposals[i].title,
@@ -571,12 +718,22 @@ await proposalFactory
     extraFee: (1000).microAlgo()
   })
 
-// Set admin account as xGov Council to avoid having to click through admin panel
-await registryClient.send.setXgovCouncil({
-  sender: adminAccount.addr,
-  signer: adminAccount.signer,
-  args: [adminAccount.addr],
-});
+for (let i = 0; i < councilMembers.length; i++) {
+  await councilClient.send.vote({
+    sender: councilMembers[i].addr,
+    signer: councilMembers[i].signer,
+    args: {
+      proposalId: proposalIds[1],
+      block: i < 5 ? true : false,
+    },
+    appReferences: [proposalIds[1], registryClient.appId],
+    boxReferences: [
+      CouncilVoteBoxName(Number(proposalIds[1])),
+      CouncilMemberBoxName(councilMembers[i].addr)
+    ],
+    extraFee: (1_000).microAlgo()
+  })
+}
 
 console.log({
   adminAccount,
@@ -593,8 +750,11 @@ const envFile = fs.readFileSync("./.env.template", "utf-8");
 fs.writeFileSync(
   ".env.development",
   envFile.replace(
-    "<REPLACE_WITH_APPLICATION_ID>",
+    "<REPLACE_WITH_REGISTRY_APP_ID>",
     results.appClient.appId.toString(),
+  ).replace(
+    "<REPLACE_WITH_COUNCIL_APP_ID>",
+    councilClient.appId.toString()
   ),
   "utf-8",
 );

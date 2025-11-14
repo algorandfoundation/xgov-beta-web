@@ -153,7 +153,6 @@ export function ProfileCard({
                       )
                     }
 
-
                     {
                       proposer?.isProposer && !proposer?.kycStatus && (
                         <div className="mt-4 mb-2 p-4 bg-algo-blue/5 dark:bg-algo-teal/5 border border-algo-blue/20 dark:border-algo-teal/20 rounded-lg">

@@ -22,8 +22,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      - name: Install Astro
-        run: npm install -g astro
       - name: Install Dependencies
         run: npm install
       - name: Run Build
