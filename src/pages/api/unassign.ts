@@ -499,7 +499,10 @@ async function processProposal(
         `Finalizing proposal ${proposal.id} after unassigning voters`,
       );
       const proposer = await proposalClient.state.global.proposer();
-      const proposerAddr = encodeAddress(proposer.asByteArray()!);
+
+      if (!proposer) {
+        throw new Error(`No proposer found for proposal ${proposal.id}`);
+      }
 
       await registryClient.send.finalizeProposal({
         sender: xgovDaemon.addr,
@@ -508,7 +511,7 @@ async function processProposal(
           proposalId: proposal.id,
         },
         appReferences: [proposal.id],
-        boxReferences: [proposerBoxName(proposerAddr)],
+        boxReferences: [proposerBoxName(proposer)],
         extraFee: (2000).microAlgo(), // Extra fee for inner transaction
       });
       logger.info(

@@ -388,10 +388,7 @@ async function getCommitteeId(
 ): Promise<Buffer | null> {
   try {
     // Get committee ID from global state
-    const committeeIdBinaryState =
-      await proposalClient.state.global.committeeId();
-
-    const byteArray = committeeIdBinaryState.asByteArray();
+    const byteArray = await proposalClient.state.global.committeeId();
 
     if (byteArray) {
       const committeeId = Buffer.from(byteArray);

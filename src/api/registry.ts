@@ -62,13 +62,13 @@ export async function getGlobalState(): Promise<RegistryGlobalState | undefined>
     const state = await registryClient.state.global.getAll()
     return {
       ...state,
-      committeeManager: !!state.committeeManager ? encodeAddress(state.committeeManager.asByteArray()!) : '',
-      xgovDaemon: !!state.xgovDaemon ? encodeAddress(state.xgovDaemon.asByteArray()!) : '',
-      kycProvider: !!state.kycProvider ? encodeAddress(state.kycProvider.asByteArray()!) : '',
-      xgovManager: !!state.xgovManager ? encodeAddress(state.xgovManager.asByteArray()!) : '',
-      xgovPayor: !!state.xgovPayor ? encodeAddress(state.xgovPayor.asByteArray()!) : '',
-      xgovCouncil: !!state.xgovCouncil ? encodeAddress(state.xgovCouncil.asByteArray()!) : '',
-      xgovSubscriber: !!state.xgovSubscriber ? encodeAddress(state.xgovSubscriber.asByteArray()!) : '',
+      committeeManager: !!state.committeeManager ? state.committeeManager : '',
+      xgovDaemon: !!state.xgovDaemon ? state.xgovDaemon : '',
+      kycProvider: !!state.kycProvider ? state.kycProvider : '',
+      xgovManager: !!state.xgovManager ? state.xgovManager : '',
+      xgovPayor: !!state.xgovPayor ? state.xgovPayor : '',
+      xgovCouncil: !!state.xgovCouncil ? state.xgovCouncil : '',
+      xgovSubscriber: !!state.xgovSubscriber ? state.xgovSubscriber : '',
     }
 
   } catch (e) {
@@ -148,7 +148,7 @@ export async function getAllProposers(): Promise<{
     .do();
 
   for (const box of boxes.boxes) {
-    if (box.name[0] !== 112 && box.name.length !== 33) {
+    if (box.name[0] !== 112 || box.name.length !== 33) {
       continue;
     }
 
