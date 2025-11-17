@@ -79,13 +79,7 @@ export async function getGlobalState(): Promise<RegistryGlobalState | undefined>
 
 export async function getIsXGov(
   address: string,
-): Promise<{
-  isXGov: boolean;
-  votingAddress: string;
-  votedProposals: bigint;
-  lastVoteTimestamp: bigint;
-  subscriptionRound: bigint;
-}> {
+): Promise<{ isXGov: boolean; votingAddress: string }> {
   try {
     const xgovBoxValue = (await registryClient.newGroup().getXgovBox({
       sender: FEE_SINK,
@@ -97,23 +91,17 @@ export async function getIsXGov(
       ],
     }).simulate({
       skipSignatures: true,
-    })).returns[0] as [[string, bigint, bigint, bigint], boolean];
+    })).returns[0] as XGovBoxValue;
 
     return {
-      isXGov: xgovBoxValue[1],
-      votingAddress: xgovBoxValue[0][0],
-      votedProposals: xgovBoxValue[0][1],
-      lastVoteTimestamp: xgovBoxValue[0][2],
-      subscriptionRound: xgovBoxValue[0][3],
+      isXGov: true,
+      votingAddress: xgovBoxValue.votingAddress,
     };
   } catch (e) {
     console.error(e);
     return {
       isXGov: false,
       votingAddress: "",
-      votedProposals: BigInt(0),
-      lastVoteTimestamp: BigInt(0),
-      subscriptionRound: BigInt(0),
     };
   }
 }
@@ -132,13 +120,13 @@ export async function getIsProposer(
       ],
     }).simulate({
       skipSignatures: true,
-    })).returns[0] as [[boolean, boolean, bigint], boolean];
+    })).returns[0] as ProposerBoxValue;
 
     return {
-      activeProposal: proposerBoxValue[0][0],
-      kycStatus: proposerBoxValue[0][1],
-      kycExpiring: proposerBoxValue[0][2],
-      isProposer: proposerBoxValue[1],
+      isProposer: true,
+      activeProposal: proposerBoxValue.activeProposal,
+      kycStatus: proposerBoxValue.kycStatus,
+      kycExpiring: proposerBoxValue.kycExpiring,
     };
   } catch (e) {
     console.error(e);
@@ -160,7 +148,7 @@ export async function getAllProposers(): Promise<{
     .do();
 
   for (const box of boxes.boxes) {
-    if (box.name[0] !== 112 && box.name.length !== 33) {
+    if (box.name[0] !== 112 || box.name.length !== 33) {
       continue;
     }
 
@@ -258,7 +246,7 @@ export async function getAllXGovSubscribeRequests(): Promise<(XGovSubscribeReque
     } else {
       throw new Error(`Failed to fetch box: ${result.reason}`);
     }
-  }).sort(({id: a}, {id: b}) => (a < b ? 1 : a > b ? -1 : 0));
+  }).sort(({ id: a }, { id: b }) => (a < b ? 1 : a > b ? -1 : 0));
 }
 
 export interface SubscribeXGovRequestProps extends TransactionHandlerProps {
