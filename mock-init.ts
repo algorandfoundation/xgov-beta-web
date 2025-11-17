@@ -158,35 +158,35 @@ const size = compiledProposal.approvalProgram.length;
 const dataSizePerTransaction = loadProposalContractDataSizePerTransaction();
 const bulks = 1 + Math.floor(size / dataSizePerTransaction);
 
-// await registryClient.send.initProposalContract({
-//   args: { size },
-//   boxReferences: [
-//     proposalApprovalBoxName(),
-//     proposalApprovalBoxName(),
-//     proposalApprovalBoxName(),
-//     proposalApprovalBoxName()
-//   ]
-// });
+await registryClient.send.initProposalContract({
+  args: { size },
+  boxReferences: [
+    proposalApprovalBoxName(),
+    proposalApprovalBoxName(),
+    proposalApprovalBoxName(),
+    proposalApprovalBoxName()
+  ]
+});
 
-// for (let i = 0; i < bulks; i++) {
-//   const chunk = compiledProposal.approvalProgram.slice(
-//     i * dataSizePerTransaction,
-//     (i + 1) * dataSizePerTransaction,
-//   );
+for (let i = 0; i < bulks; i++) {
+  const chunk = compiledProposal.approvalProgram.slice(
+    i * dataSizePerTransaction,
+    (i + 1) * dataSizePerTransaction,
+  );
 
-//   await registryClient.send.loadProposalContract({
-//     args: {
-//       offset: (i * dataSizePerTransaction),
-//       data: chunk,
-//     },
-//     boxReferences: [
-//       proposalApprovalBoxName(),
-//       proposalApprovalBoxName(),
-//       proposalApprovalBoxName(),
-//       proposalApprovalBoxName()
-//     ],
-//   });
-// }
+  await registryClient.send.loadProposalContract({
+    args: {
+      offset: (i * dataSizePerTransaction),
+      data: chunk,
+    },
+    boxReferences: [
+      proposalApprovalBoxName(),
+      proposalApprovalBoxName(),
+      proposalApprovalBoxName(),
+      proposalApprovalBoxName()
+    ],
+  });
+}
 
 const councilMinter = new CouncilFactory({
   algorand,
