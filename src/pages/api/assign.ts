@@ -388,8 +388,10 @@ async function getCommitteeId(
 ): Promise<Buffer | null> {
   try {
     // Get committee ID from global state
+    const committeeIdBinaryState =
+      await proposalClient.state.global.committeeId();
 
-    const byteArray = await proposalClient.state.global.committeeId();
+    const byteArray = committeeIdBinaryState.asByteArray();
 
     if (byteArray) {
       const committeeId = Buffer.from(byteArray);
@@ -563,7 +565,7 @@ async function processVoterBatch(
     votersInThisBatch <= FIRST_TXN_VOTERS
       ? 1 // If 7 or fewer voters, only need one transaction
       : Math.ceil((votersInThisBatch - FIRST_TXN_VOTERS) / OTHER_TXN_VOTERS) +
-        1;
+      1;
 
   logger.info(
     `Batch needs ${txnsForThisBatch}/${MAX_GROUP_SIZE} transactions for ${votersInThisBatch} voters`,
@@ -581,9 +583,9 @@ async function processVoterBatch(
 
   logger.debug(
     `Voter distribution: ${votersInThisBatch} total voters - ` +
-      `1st txn: ${firstTxnVoters} voters, ` +
-      `${fullMiddleTxns} middle txns with ${OTHER_TXN_VOTERS} voters each` +
-      `${lastTxnVoters > 0 ? `, last txn: ${lastTxnVoters} voters` : ""}`,
+    `1st txn: ${firstTxnVoters} voters, ` +
+    `${fullMiddleTxns} middle txns with ${OTHER_TXN_VOTERS} voters each` +
+    `${lastTxnVoters > 0 ? `, last txn: ${lastTxnVoters} voters` : ""}`,
   );
 
   // Track processed count
@@ -656,7 +658,7 @@ async function processVoterBatch(
     // More condensed log for individual transactions
     logger.debug(
       `Txn ${txnIndex + 1}/${txnsForThisBatch}: ${batch.length} voters ` +
-        `[${txnIndex === 0 ? "First" : txnIndex === txnsForThisBatch - 1 ? "Last" : "Middle"}]`,
+      `[${txnIndex === 0 ? "First" : txnIndex === txnsForThisBatch - 1 ? "Last" : "Middle"}]`,
     );
   }
 
@@ -798,9 +800,9 @@ async function processProposal(
 
     logger.info(
       `Proposal ${proposal.id} assignment complete: ` +
-        `${voterCount} voters assigned, ` +
-        `${alreadyAssignedCount} duplicate voters skipped, ` +
-        `${totalVotersCount} total committee members`,
+      `${voterCount} voters assigned, ` +
+      `${alreadyAssignedCount} duplicate voters skipped, ` +
+      `${totalVotersCount} total committee members`,
     );
 
     // Return successful result
