@@ -504,7 +504,6 @@ async function processProposal(
         throw new Error(`No proposer found for proposal ${proposal.id}`);
       }
 
-      const proposerAddr = proposer
       await registryClient.send.finalizeProposal({
         sender: xgovDaemon.addr,
         signer: xgovDaemon.signer,
@@ -512,7 +511,7 @@ async function processProposal(
           proposalId: proposal.id,
         },
         appReferences: [proposal.id],
-        boxReferences: [proposerBoxName(proposerAddr)],
+        boxReferences: [proposerBoxName(proposer)],
         extraFee: (2000).microAlgo(), // Extra fee for inner transaction
       });
       logger.info(
