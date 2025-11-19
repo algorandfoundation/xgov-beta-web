@@ -41,7 +41,7 @@
     "@radix-ui/react-label": "^2.1.1",
     "@radix-ui/react-popover": "^1.1.5",
     "@radix-ui/react-select": "^2.1.5",
-    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tanstack/react-query": "^5.62.7",
     "@tanstack/react-query-devtools": "^5.62.9",
@@ -92,6 +92,7 @@
     "@storybook/react-vite": "^8.3.6",
     "@storybook/test": "^8.3.6",
     "@storybook/test-runner": "^0.19.1",
+    "@types/yargs": "^17.0.35",
     "@typescript-eslint/parser": "^8.29.1",
     "@vitejs/plugin-basic-ssl": "^2.0.0",
     "ajv": "^8.17.1",
@@ -107,7 +108,8 @@
     "tailwindcss": "^3.4.14",
     "tsx": "^4.19.3",
     "vite-plugin-pwa": "^1.0.0",
-    "vite-tsconfig-paths": "^5.0.1"
+    "vite-tsconfig-paths": "^5.0.1",
+    "yargs": "^18.0.0"
   },
   "peerDependencies": {
     "js-sha512": "^0.8.0"

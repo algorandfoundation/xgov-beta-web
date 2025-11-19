@@ -42,8 +42,7 @@ import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill"
 import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
 import VoteBar from "@/components/VoteBar/VoteBar";
-import algosdk from "algosdk";
-import { useNFD, useProposal, useVoterBox, useVoterBoxes, useXGovDelegates } from "@/hooks";
+import { useNFD, useProposal, useVoterBoxes, useXGovDelegates } from "@/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -351,6 +350,14 @@ function VotingStatusCard({
     isPending: rejectIsPending
   } = useTransactionState();
 
+
+  const {
+    status: abstainStatus,
+    setStatus: setAbstainStatus,
+    errorMessage: abstainErrorMessage,
+    isPending: abstainIsPending
+  } = useTransactionState();
+
   const {
     status: approveStatus,
     setStatus: setApproveStatus,
@@ -523,7 +530,7 @@ function VotingStatusCard({
                   rejections: 0,
                   voterInfo: voterInfo,
                 })}
-                disabled={rejectIsPending || approveIsPending}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending}
               >
                 <TransactionStateLoader
                   defaultText="Approve"
@@ -531,6 +538,32 @@ function VotingStatusCard({
                     status: approveStatus,
                     errorMessage: approveErrorMessage,
                     isPending: approveIsPending
+                  }}
+                />
+              </Button>
+
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => voteProposal({
+                  activeAddress,
+                  xgovAddress: selectedVotingAs,
+                  innerSigner,
+                  setStatus: setAbstainStatus,
+                  refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
+                  appId: proposal.id,
+                  approvals: 0,
+                  rejections: 0,
+                  voterInfo: voterInfo,
+                })}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending}
+              >
+                <TransactionStateLoader
+                  defaultText="Abstain"
+                  txnState={{
+                    status: abstainStatus,
+                    errorMessage: abstainErrorMessage,
+                    isPending: abstainIsPending
                   }}
                 />
               </Button>
@@ -549,7 +582,7 @@ function VotingStatusCard({
                   rejections: Number(voterInfo.votes),
                   voterInfo: voterInfo,
                 })}
-                disabled={rejectIsPending || approveIsPending}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending}
               >
                 <TransactionStateLoader
                   defaultText="Reject"
