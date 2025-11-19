@@ -545,6 +545,7 @@ function VotingStatusCard({
               <Button
                 type='button'
                 variant='outline'
+                className="bg-algo-blue-10 dark:bg-algo-black-90"
                 onClick={() => voteProposal({
                   activeAddress,
                   xgovAddress: selectedVotingAs,

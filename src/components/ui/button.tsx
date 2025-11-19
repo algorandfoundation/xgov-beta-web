@@ -9,13 +9,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-algo-blue text-white border border-algo-blue hover:bg-white hover:text-algo-black dark:bg-algo-teal dark:text-algo-black dark:border-algo-teal dark:hover:bg-algo-black dark:hover:text-white",
+          "bg-algo-blue text-white border border-algo-blue hover:bg-white hover:text-algo-blue dark:bg-algo-teal dark:text-algo-black dark:border-algo-teal dark:hover:bg-algo-black dark:hover:text-algo-teal",
         destructive:
           "group flex items-center gap-2 bg-algo-red text-white border border-algo-red hover:bg-white hover:text-algo-red dark:hover:text-algo-red dark:hover:bg-algo-black",
         success:
           "group flex items-center gap-2 bg-algo-green text-white border border-algo-green hover:bg-white hover:text-algo-green dark:hover:bg-algo-black hover:border-algo-green transition",
         outline:
-          "border border-slate-200 bg-white hover:bg-algo-black-20 hover:text-slate-900 dark:border-slate-800 dark:bg-transparent dark:hover:bg-slate-800 dark:hover:text-slate-50",
+          "border border-algo-blue bg-white hover:bg-algo-blue text-algo-blue hover:text-white dark:border-algo-teal dark:bg-algo-black dark:hover:bg-algo-teal dark:text-algo-teal dark:hover:text-algo-black",
         secondary:
           "bg-algo-black-20 text-slate-900 hover:bg-algo-black-20/80 dark:bg-slate-800 dark:text-slate-50 dark:hover:bg-slate-800/80",
         ghost:
