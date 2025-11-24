@@ -12,6 +12,12 @@ export interface VoteQuorumMetPillProps {
 }
 
 export default function VoteQuorumMetPill({ approved, quorumRequirement, votesHave, votesNeed, className, label, ...contentProps }: VoteQuorumMetPillProps) {
+    const percentFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
+    const countFormatter = new Intl.NumberFormat();
+    const formattedPercent = percentFormatter.format(Number.isFinite(quorumRequirement) ? quorumRequirement : 0);
+    const formattedVotesNeed = countFormatter.format(votesNeed ?? 0);
+    const formattedVotesHave = countFormatter.format(votesHave ?? 0);
+
     return (
         <Popover>
             <PopoverTrigger
@@ -44,7 +50,7 @@ export default function VoteQuorumMetPill({ approved, quorumRequirement, votesHa
                 {...contentProps}
             >
                 Whether a weighted quorum of all xGov Committee voting power (1 vote) is reached.
-                This Proposal needs a vote quorum of {quorumRequirement}% and currently has {(votesHave ?? 0).toLocaleString()} out of {(votesNeed ?? 0).toLocaleString()} required votes.
+                This proposal needs {formattedVotesNeed} votes in favour of quorum ({formattedPercent}% of the committee voting power) and currently has {formattedVotesHave}.
             </PopoverContent>
         </Popover>
     )

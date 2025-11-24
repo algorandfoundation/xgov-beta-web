@@ -16,6 +16,7 @@ import {
   type ProposalMainCardDetails,
   ProposalStatus,
   type ProposalSummaryCardDetails,
+  type RegistryGlobalState,
 } from "@/api/types";
 
 import {
@@ -32,6 +33,7 @@ import type { TransactionHandlerProps } from "./types/transaction_state";
 import { sleep } from "./nfd";
 
 const PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT = 4;
+const BPS = 10_000n;
 
 export const proposalFactory = new ProposalFactory({ algorand });
 
@@ -463,36 +465,67 @@ export function getDiscussionDuration(
   }
 }
 
-export function getXGovQuorum(
-  category: ProposalCategory,
-  thresholds: [bigint, bigint, bigint],
-): number {
-  switch (category) {
-    case ProposalCategory.ProposalCategorySmall:
-      return Number(thresholds[0]) / 100;
-    case ProposalCategory.ProposalCategoryMedium:
-      return Number(thresholds[1]) / 100;
-    case ProposalCategory.ProposalCategoryLarge:
-      return Number(thresholds[2]) / 100;
-    default:
-      return 0;
+export function computeQuorumThreshold(
+  registryState: RegistryGlobalState | undefined,
+  requestedAmount: bigint,
+  committeeMembers: bigint,
+): bigint {
+
+  if (!registryState) {
+    return 0n
   }
+
+  const quorumMinBps = registryState.quorumSmall
+  const quorumMaxBps = registryState.quorumLarge
+  const amountMin = registryState.minRequestedAmount
+  const amountMax = registryState.maxRequestedAmountLarge
+
+  if (!quorumMinBps || !quorumMaxBps || !amountMin || !amountMax) {
+    throw new Error("Invalid configuration: missing registry state values.");
+  }
+
+  const deltaAmount = amountMax - amountMin;
+  if (deltaAmount === 0n) {
+    throw new Error("Invalid configuration: amount range must be > 0.");
+  }
+
+  const deltaQuorumBps = quorumMaxBps - quorumMinBps;
+  const quorumBps =
+    quorumMinBps + (deltaQuorumBps * (requestedAmount - amountMin)) / deltaAmount;
+
+  return (committeeMembers * quorumBps) / BPS
 }
 
-export function getVoteQuorum(
-  category: ProposalCategory,
-  thresholds: [bigint, bigint, bigint],
-): number {
-  switch (category) {
-    case ProposalCategory.ProposalCategorySmall:
-      return Number(thresholds[0]) / 100;
-    case ProposalCategory.ProposalCategoryMedium:
-      return Number(thresholds[1]) / 100;
-    case ProposalCategory.ProposalCategoryLarge:
-      return Number(thresholds[2]) / 100;
-    default:
-      return 0;
+export function computeWeightedQuorumThreshold(
+  registryState: RegistryGlobalState | undefined,
+  requestedAmount: bigint,
+  committeeVotes: bigint
+): bigint {
+
+  if (!registryState) {
+    return 0n
   }
+
+  const weightedQuorumMinBps = registryState.weightedQuorumSmall
+  const weightedQuorumMaxBps = registryState.weightedQuorumLarge
+  const amountMin = registryState.minRequestedAmount
+  const amountMax = registryState.maxRequestedAmountLarge
+
+  if (!weightedQuorumMinBps || !weightedQuorumMaxBps || !amountMin || !amountMax) {
+    throw new Error("Invalid configuration: missing registry state values.");
+  }
+
+  const deltaAmount = amountMax - amountMin;
+  if (deltaAmount === 0n) {
+    throw new Error("Invalid configuration: amount range must be > 0.");
+  }
+
+  const weightedDeltaQuorumBps = weightedQuorumMaxBps - weightedQuorumMinBps;
+  const weightedQuorumBps =
+    weightedQuorumMinBps +
+    (weightedDeltaQuorumBps * (requestedAmount - amountMin)) / deltaAmount;
+
+  return (committeeVotes * weightedQuorumBps) / BPS
 }
 
 export function getVotingDuration(
