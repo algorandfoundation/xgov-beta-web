@@ -339,7 +339,6 @@ function VotingStatusCard({
     : []
 
   const voterInfoQuery = useVotersInfo(proposal.id, committeSubset, committeSubset.length > 0);
-  console.log('voterInfoQuery.data', voterInfoQuery.data)
   const voterList = [...Object.keys(voterInfoQuery?.data || {})]
 
   const [selectedVotingAs, setSelectedVotingAs] = useState(voterList[0]);
@@ -736,18 +735,14 @@ function PostVotingStatusCard({
   quorums,
   weightedQuorums,
 }: PostVotingStatusCardProps) {
-  const registryState = useRegistry();
-
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
   const votingStateQuery = useVotingState(proposal.id)
   const { quorumVoters, weightedQuorumVotes } = votingStateQuery.data || {};
 
-  console.log('committeeMembers', proposal.committeeMembers)
   const quorumRequirementPercent = Number(proposal.committeeMembers) === 0
     ? 0
     : (Number(quorumVoters) / Number(proposal.committeeMembers)) * 100;
 
-  console.log('quorumRequirementPercent', quorumRequirementPercent)
   const weightedQuorumRequirementPercent = Number(proposal.committeeVotes) === 0
     ? 0
     : (Number(weightedQuorumVotes) / Number(proposal.committeeVotes)) * 100;
