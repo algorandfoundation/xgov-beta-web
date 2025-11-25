@@ -6,6 +6,7 @@ import {
   getProposalsByProposer,
   getVoterBox,
   getVotersInfo,
+  getVotingState,
   type ProposalMainCardDetails,
 } from "@/api";
 import type { ProposalSummaryCardDetails } from "@/api";
@@ -44,6 +45,14 @@ export function useProposal(
     queryFn: () => getProposal(BigInt(proposalId!)),
     initialData: proposal,
     staleTime: 100,
+    enabled: !!proposalId,
+  });
+}
+
+export function useVotingState(proposalId: bigint | null) {
+  return useQuery({
+    queryKey: ['getVotingState', Number(proposalId!)],
+    queryFn: () => getVotingState(BigInt(proposalId!)),
     enabled: !!proposalId,
   });
 }

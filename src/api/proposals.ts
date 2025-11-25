@@ -5,7 +5,7 @@ import algosdk, {
   ALGORAND_MIN_TX_FEE,
   type TransactionSigner,
 } from "algosdk";
-import { ProposalFactory } from "@algorandfoundation/xgov";
+import { ProposalClient, ProposalFactory, type VotingState } from "@algorandfoundation/xgov";
 
 import {
   type ProposalBrief,
@@ -25,7 +25,7 @@ import {
   registryClient,
 } from "@/api/algorand";
 
-import { PROPOSAL_FEE } from "@/constants.ts";
+import { FEE_SINK, PROPOSAL_FEE } from "@/constants.ts";
 import { AlgoAmount } from "@algorandfoundation/algokit-utils/types/amount";
 import { wrapTransactionSigner } from "@/hooks/useTransactionState";
 import { proposalApprovalBoxName, proposerBoxName, xGovBoxName } from "./registry";
@@ -333,6 +333,16 @@ export async function getProposalToUnassign(
   return proposalData;
 }
 
+export async function getVotingState(id: bigint): Promise<VotingState> {
+  const proposalClient = getProposalClientById(id);
+  return (await proposalClient.newGroup().getVotingState({
+    sender: FEE_SINK,
+    args: {},
+  }).simulate({
+    skipSignatures: true,
+  })).returns[0] as VotingState;
+}
+
 export async function getVoterBox(
   id: bigint,
   address: string,
@@ -476,69 +486,6 @@ export function getDiscussionDuration(
     default:
       return 0;
   }
-}
-
-export function computeQuorumThreshold(
-  registryState: RegistryGlobalState | undefined,
-  requestedAmount: bigint,
-  committeeMembers: bigint,
-): bigint {
-
-  if (!registryState) {
-    return 0n
-  }
-
-  const quorumMinBps = registryState.quorumSmall
-  const quorumMaxBps = registryState.quorumLarge
-  const amountMin = registryState.minRequestedAmount
-  const amountMax = registryState.maxRequestedAmountLarge
-
-  if (!quorumMinBps || !quorumMaxBps || !amountMin || !amountMax) {
-    throw new Error("Invalid configuration: missing registry state values.");
-  }
-
-  const deltaAmount = amountMax - amountMin;
-  if (deltaAmount === 0n) {
-    throw new Error("Invalid configuration: amount range must be > 0.");
-  }
-
-  const deltaQuorumBps = quorumMaxBps - quorumMinBps;
-  const quorumBps =
-    quorumMinBps + (deltaQuorumBps * (requestedAmount - amountMin)) / deltaAmount;
-
-  return (committeeMembers * quorumBps) / BPS
-}
-
-export function computeWeightedQuorumThreshold(
-  registryState: RegistryGlobalState | undefined,
-  requestedAmount: bigint,
-  committeeVotes: bigint
-): bigint {
-
-  if (!registryState) {
-    return 0n
-  }
-
-  const weightedQuorumMinBps = registryState.weightedQuorumSmall
-  const weightedQuorumMaxBps = registryState.weightedQuorumLarge
-  const amountMin = registryState.minRequestedAmount
-  const amountMax = registryState.maxRequestedAmountLarge
-
-  if (!weightedQuorumMinBps || !weightedQuorumMaxBps || !amountMin || !amountMax) {
-    throw new Error("Invalid configuration: missing registry state values.");
-  }
-
-  const deltaAmount = amountMax - amountMin;
-  if (deltaAmount === 0n) {
-    throw new Error("Invalid configuration: amount range must be > 0.");
-  }
-
-  const weightedDeltaQuorumBps = weightedQuorumMaxBps - weightedQuorumMinBps;
-  const weightedQuorumBps =
-    weightedQuorumMinBps +
-    (weightedDeltaQuorumBps * (requestedAmount - amountMin)) / deltaAmount;
-
-  return (committeeVotes * weightedQuorumBps) / BPS
 }
 
 export function getVotingDuration(

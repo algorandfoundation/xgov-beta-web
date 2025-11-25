@@ -20,8 +20,6 @@ import {
   type ProposalMainCardDetailsWithNFDs,
   dropProposal,
   voteProposal,
-  computeWeightedQuorumThreshold,
-  computeQuorumThreshold,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -43,7 +41,7 @@ import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill"
 import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
 import VoteBar from "@/components/VoteBar/VoteBar";
-import { useCommittee, useNFD, useProposal, useRegistry, useVotersInfo, useXGov, useXGovDelegates } from "@/hooks";
+import { useCommittee, useNFD, useProposal, useRegistry, useVotersInfo, useVotingState, useXGov, useXGovDelegates } from "@/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -325,12 +323,9 @@ const votesExceededMessage = "Total votes used exceeds available votes";
 function VotingStatusCard({
   className = "",
   proposal,
-  quorums,
-  weightedQuorums,
   votingDurations,
 }: VotingStatusCardProps) {
   const { activeAddress, transactionSigner: innerSigner } = useWallet();
-  const registryState = useRegistry();
   const proposalQuery = useProposal(proposal.id, proposal);
   const activeXGovQuery = useXGov(activeAddress);
   const activeIsXGov = activeXGovQuery.data?.isXGov ?? false;
@@ -380,15 +375,16 @@ function VotingStatusCard({
   const voterInfo = voterInfoQuery.data?.[selectedVotingAs!] || undefined;
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
 
-  const quorum = computeQuorumThreshold(registryState.data, proposal.requestedAmount, proposal.committeeMembers);
-  const weightedQuorum = computeWeightedQuorumThreshold(registryState.data, proposal.requestedAmount, proposal.committeeVotes);
+  const votingStateQuery = useVotingState(proposal.id)
+  const { quorumVoters, weightedQuorumVotes } = votingStateQuery.data || {};
+
   const quorumRequirementPercent = Number(proposal.committeeMembers) === 0
     ? 0
-    : (Number(quorum) / Number(proposal.committeeMembers)) * 100;
+    : (Number(quorumVoters) / Number(proposal.committeeMembers)) * 100;
 
   const weightedQuorumRequirementPercent = Number(proposal.committeeVotes) === 0
     ? 0
-    : (Number(weightedQuorum) / Number(proposal.committeeVotes)) * 100;
+    : (Number(weightedQuorumVotes) / Number(proposal.committeeVotes)) * 100;
 
   const voteStartTime = Number(proposal.voteOpenTs) * 1000;
   const minimumVotingDuration = getVotingDuration(proposal.fundingCategory, votingDurations);
@@ -456,16 +452,16 @@ function VotingStatusCard({
       />
       <div className="flex gap-2">
         <XGovQuorumMetPill
-          approved={Number(proposal.votedMembers) >= Number(quorum)}
+          approved={Number(proposal.votedMembers) >= Number(quorumVoters)}
           votesHave={Number(proposal.votedMembers)}
-          votesNeed={Number(quorum)}
+          votesNeed={Number(quorumVoters)}
           quorumRequirement={quorumRequirementPercent}
           label="xGov quorum met"
         />
         <VoteQuorumMetPill
-          approved={totalVotes >= Number(weightedQuorum)}
+          approved={totalVotes >= Number(weightedQuorumVotes)}
           votesHave={totalVotes}
-          votesNeed={Number(weightedQuorum)}
+          votesNeed={Number(weightedQuorumVotes)}
           quorumRequirement={weightedQuorumRequirementPercent}
           label="vote quorum met"
         />
@@ -743,18 +739,18 @@ function PostVotingStatusCard({
   const registryState = useRegistry();
 
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
-  const quorum = computeQuorumThreshold(registryState.data, proposal.requestedAmount, proposal.committeeMembers);
-  const weightedQuorum = computeWeightedQuorumThreshold(registryState.data, proposal.requestedAmount, proposal.committeeVotes);
+  const votingStateQuery = useVotingState(proposal.id)
+  const { quorumVoters, weightedQuorumVotes } = votingStateQuery.data || {};
 
   console.log('committeeMembers', proposal.committeeMembers)
   const quorumRequirementPercent = Number(proposal.committeeMembers) === 0
     ? 0
-    : (Number(quorum) / Number(proposal.committeeMembers)) * 100;
+    : (Number(quorumVoters) / Number(proposal.committeeMembers)) * 100;
 
   console.log('quorumRequirementPercent', quorumRequirementPercent)
   const weightedQuorumRequirementPercent = Number(proposal.committeeVotes) === 0
     ? 0
-    : (Number(weightedQuorum) / Number(proposal.committeeVotes)) * 100;
+    : (Number(weightedQuorumVotes) / Number(proposal.committeeVotes)) * 100;
 
   const defaults = defaultsStatusCardMap[proposal.status];
 
@@ -780,16 +776,16 @@ function PostVotingStatusCard({
       />
       <div className="flex gap-2">
         <XGovQuorumMetPill
-          approved={Number(proposal.votedMembers) >= Number(quorum)}
+          approved={Number(proposal.votedMembers) >= Number(quorumVoters)}
           votesHave={Number(proposal.votedMembers)}
-          votesNeed={Number(quorum)}
+          votesNeed={Number(quorumVoters)}
           quorumRequirement={quorumRequirementPercent}
           label="xGov quorum met"
         />
         <VoteQuorumMetPill
-          approved={totalVotes >= Number(weightedQuorum)}
+          approved={totalVotes >= Number(weightedQuorumVotes)}
           votesHave={totalVotes}
-          votesNeed={Number(weightedQuorum)}
+          votesNeed={Number(weightedQuorumVotes)}
           quorumRequirement={weightedQuorumRequirementPercent}
           label="vote quorum met"
         />
