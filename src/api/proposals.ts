@@ -31,6 +31,8 @@ import { wrapTransactionSigner } from "@/hooks/useTransactionState";
 import { proposalApprovalBoxName, proposerBoxName, xGovBoxName } from "./registry";
 import type { TransactionHandlerProps } from "./types/transaction_state";
 import { sleep } from "./nfd";
+import { getCommitteeData, type CommitteeMember } from "./committee";
+import { getStringEnvironmentVariable } from "@/functions";
 
 const PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT = 4;
 const BPS = 10_000n;
@@ -138,7 +140,7 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
               votedMembers: existsAndValue(state, "voted_members")
                 ? BigInt(state["voted_members"].value)
                 : 0n,
-                finalized: existsAndValue(state, "finalized")
+              finalized: existsAndValue(state, "finalized")
                 ? Boolean(state.finalized.value)
                 : false,
             };
@@ -190,11 +192,11 @@ export async function getAllProposalsToUnassign(): Promise<
 > {
   return (await getAllProposals()).filter(
     (proposal) =>
-    (
-      proposal.status === ProposalStatus.ProposalStatusFunded ||
-      proposal.status === ProposalStatus.ProposalStatusBlocked ||
-      proposal.status === ProposalStatus.ProposalStatusRejected
-    ) && !proposal.finalized,
+      (
+        proposal.status === ProposalStatus.ProposalStatusFunded ||
+        proposal.status === ProposalStatus.ProposalStatusBlocked ||
+        proposal.status === ProposalStatus.ProposalStatusRejected
+      ) && !proposal.finalized,
   );
 }
 
@@ -334,48 +336,39 @@ export async function getProposalToUnassign(
 export async function getVoterBox(
   id: bigint,
   address: string,
-): Promise<{ votes: bigint; voted: boolean }> {
+): Promise<bigint> {
   const addr = algosdk.decodeAddress(address).publicKey;
   const voterBoxName = new Uint8Array(Buffer.concat([Buffer.from("V"), addr]));
-
-  try {
-    const voterBoxValue = await algorand.app.getBoxValueFromABIType({
-      appId: id,
-      boxName: voterBoxName,
-      type: ABIType.from("(uint64,bool)"),
-    });
-
-    if (!Array.isArray(voterBoxValue)) {
-      throw new Error("Voter box value is not an array");
-    }
-
-    return {
-      votes: voterBoxValue[0] as bigint,
-      voted: voterBoxValue[1] as boolean,
-    };
-  } catch (error) {
-    console.error("getting voter box value:", error);
-    return {
-      votes: BigInt(0),
-      voted: false,
-    };
-  }
+  return await algorand.app.getBoxValueFromABIType({
+    appId: id,
+    boxName: voterBoxName,
+    type: ABIType.from("uint64"),
+  }) as bigint;
 }
 
-export async function getVoterBoxes(id: bigint, addresses: string[],
-): Promise<{ [key: string]: { votes: bigint; voted: boolean } }> {
+export async function getVotersInfo(id: bigint, committeeSubset: CommitteeMember[]): Promise<{ [address: string]: { votes: bigint, voted: boolean } }> {
 
-  const r = await Promise.allSettled(addresses.map((address) => getVoterBox(id, address)))
+  const voterBoxes = await Promise.allSettled(
+    committeeSubset.map((member) => getVoterBox(id, member.address))
+  );
 
-  let result: { [key: string]: { votes: bigint; voted: boolean } } = {};
-  r.forEach((res, i) => {
+  let votersInfo: { [address: string]: { votes: bigint, voted: boolean } } = {};
+  voterBoxes.forEach((res, i) => {
     if (res.status === 'fulfilled') {
-      result[addresses[i]] = res.value;
+      votersInfo[committeeSubset[i].address] = {
+        votes: BigInt(committeeSubset[i].votes),
+        voted: false,
+      };
+    } else {
+      votersInfo[committeeSubset[i].address] = {
+        votes: BigInt(committeeSubset[i].votes),
+        voted: true,
+      };
     }
   });
-  return result;
-}
 
+  return votersInfo;
+}
 
 export async function getMetadata(id: bigint): Promise<ProposalJSON> {
   const metadata = await algorand.app.getBoxValue(
@@ -420,25 +413,45 @@ export async function getProposalVoters(
     .max(limit)
     .do();
 
-  let voterBoxes: Uint8Array<ArrayBufferLike>[] = []
+  let addresses: string[] = [];
   boxes.boxes.map((box) => {
     if (new TextDecoder().decode(box.name).startsWith("V")) {
-      voterBoxes.push(box.name);
-    }
-  });
-
-  let addresses: string[] = [];
-  (await algorand.app.getBoxValuesFromABIType({
-    appId: BigInt(id),
-    boxNames: voterBoxes,
-    type: algosdk.ABIType.from('(uint64,bool)')
-  })).map((value, i) => {
-    if (Array.isArray(value) && value[1]) {
-      addresses.push(algosdk.encodeAddress(Buffer.from(voterBoxes[i].slice(1))));
+      addresses.push(algosdk.encodeAddress(Buffer.from(box.name.slice(1))));
     }
   });
 
   return addresses;
+}
+
+export async function getProposalVoterData(appId: bigint): Promise<{ address: string, votes: bigint, voted: boolean }[]> {
+  const proposalClient = proposalFactory.getAppClientById({ appId });
+  const committeeByteArray = await proposalClient.state.global.committeeId();
+
+  if (!committeeByteArray) {
+    throw new Error("Committee ID not found in proposal global state");
+  }
+
+  const committeeId = Buffer.from(committeeByteArray);
+  const committeeData = await getCommitteeData(committeeId)
+
+  if (!committeeData) {
+    throw new Error("Committee data could not be retrieved");
+  }
+
+  const voterAddresses = await getProposalVoters(Number(appId));
+
+  // iterate over the committee, if the member is not in the voterAddresses, voted is true
+  let voterData: { address: string, votes: bigint, voted: boolean }[] = [];
+  for (const member of committeeData.xGovs) {
+    const voted = !voterAddresses.includes(member.address);
+    voterData.push({
+      address: member.address,
+      votes: BigInt(member.votes),
+      voted,
+    });
+  }
+
+  return voterData;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { CoinsIcon, ExternalLinkIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
@@ -13,7 +13,7 @@ import {
   ProposalStatusMap,
   type ProposalBrief,
   type ProposalMainCardDetails,
-  
+
   getVotingDuration,
   getGlobalState,
   callAssignVoters,
@@ -43,8 +43,7 @@ import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill"
 import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
 import VoteBar from "@/components/VoteBar/VoteBar";
-import algosdk from "algosdk";
-import { useNFD, useProposal, useRegistry, useVoterBox, useVoterBoxes, useXGovDelegates } from "@/hooks";
+import { useCommittee, useNFD, useProposal, useRegistry, useVotersInfo, useXGov, useXGovDelegates } from "@/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -333,11 +332,29 @@ function VotingStatusCard({
   const { activeAddress, transactionSigner: innerSigner } = useWallet();
   const registryState = useRegistry();
   const proposalQuery = useProposal(proposal.id, proposal);
+  const activeXGovQuery = useXGov(activeAddress);
+  const activeIsXGov = activeXGovQuery.data?.isXGov ?? false;
   const delegates = useXGovDelegates(activeAddress)
-  const infoQueryAddresses = [activeAddress, ...(delegates?.data?.map(d => d.xgov) || [])].filter(a => !!a) as string[];
-  const voterInfoQuery = useVoterBoxes(Number(proposal.id), infoQueryAddresses);
+  const infoQueryAddresses = [activeIsXGov ? activeAddress : null, ...(delegates?.data?.map(d => d.xgov) || [])].filter(a => !!a) as string[];
+  const committeeQuery = useCommittee(proposalQuery.data?.committeeId)
+  const committeSubset = (!!committeeQuery && !!committeeQuery.data)
+    ? infoQueryAddresses
+      .filter(address => committeeQuery!.data!.has(address))
+      .map(address => ({ address, votes: committeeQuery!.data!.get(address)! }))
+    : []
 
-  const [selectedVotingAs, setSelectedVotingAs] = useState(activeAddress);
+  const voterInfoQuery = useVotersInfo(proposal.id, committeSubset, committeSubset.length > 0);
+  console.log('voterInfoQuery.data', voterInfoQuery.data)
+  const voterList = [...Object.keys(voterInfoQuery?.data || {})]
+
+  const [selectedVotingAs, setSelectedVotingAs] = useState(voterList[0]);
+
+  useEffect(() => {
+    if (voterList.length > 0 && !selectedVotingAs) {
+      setSelectedVotingAs(voterList[0]);
+    }
+  }, [voterList.length, selectedVotingAs]);
+
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [votesExceeded, setVotesExceeded] = useState(false);
 
@@ -464,38 +481,39 @@ function VotingStatusCard({
         rejections={Number(proposal.rejections)}
         nulls={Number(proposal.nulls)}
       />
-      <div className="w-full flex items-center justify-between">
-        <Button
-          className="-ml-4"
-          variant='link'
-          onClick={() => setMode(mode === 'simple' ? 'advanced' : 'simple')}
-        >
-          {mode === 'simple' ? 'Advanced' : 'Simple'} Mode
-        </Button>
-        <div className="flex items-center gap-2">
-          <span className="text-xxs font-semibold">Voting For</span>
-          <Select
-            onValueChange={setSelectedVotingAs}
-            defaultValue={activeAddress!}
-          >
-            <SelectTrigger id="voting-as" className="w-40" aria-label="Select voting as">
-              <SelectValue placeholder="Select voting as" />
-            </SelectTrigger>
-            <SelectContent>
-              {
-                [
-                  ...Object.keys(voterInfoQuery?.data ?? {})
-                  // .filter(key => (voterInfoQuery?.data?.[key]?.votes ?? 0) > 0 && !voterInfoQuery?.data?.[key]?.voted)
-                ].map(address => (
-                  <SelectItem key={address} value={address} disabled={!((voterInfoQuery?.data?.[address]?.votes ?? 0) > 0)}>
-                    {shortenAddress(address)}
-                  </SelectItem>
-                ))
-              }
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {
+        voterList.length > 0 && (
+          <div className="w-full flex items-center justify-between">
+            <Button
+              className="-ml-4"
+              variant='link'
+              onClick={() => setMode(mode === 'simple' ? 'advanced' : 'simple')}
+            >
+              {mode === 'simple' ? 'Advanced' : 'Simple'} Mode
+            </Button>
+            <div className="flex items-center gap-2">
+              <span className="text-xxs font-semibold">Voting For</span>
+              <Select
+                onValueChange={setSelectedVotingAs}
+                defaultValue={voterList[0]}
+              >
+                <SelectTrigger id="voting-as" className="w-40" aria-label="Select voting as">
+                  <SelectValue placeholder="Select voting as" />
+                </SelectTrigger>
+                <SelectContent>
+                  {
+                    voterList.map(address => (
+                      <SelectItem key={address} value={address} disabled={!((voterInfoQuery?.data?.[address]?.votes ?? 0) > 0)}>
+                        {shortenAddress(address)}
+                      </SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )
+      }
     </div>
   )
 
@@ -727,7 +745,7 @@ function PostVotingStatusCard({
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
   const quorum = computeQuorumThreshold(registryState.data, proposal.requestedAmount, proposal.committeeMembers);
   const weightedQuorum = computeWeightedQuorumThreshold(registryState.data, proposal.requestedAmount, proposal.committeeVotes);
-  
+
   console.log('committeeMembers', proposal.committeeMembers)
   const quorumRequirementPercent = Number(proposal.committeeMembers) === 0
     ? 0
