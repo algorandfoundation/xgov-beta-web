@@ -79,7 +79,13 @@ export async function getGlobalState(): Promise<RegistryGlobalState | undefined>
 
 export async function getIsXGov(
   address: string,
-): Promise<{ isXGov: boolean; votingAddress: string }> {
+): Promise<{
+  votingAddress: string,
+  votedProposals: bigint,
+  lastVoteTimestamp: bigint,
+  subscriptionRound: bigint,
+  isXGov: boolean,
+}> {
   try {
     const xgovBoxValue = (await registryClient.newGroup().getXgovBox({
       sender: FEE_SINK,
@@ -91,17 +97,23 @@ export async function getIsXGov(
       ],
     }).simulate({
       skipSignatures: true,
-    })).returns[0] as XGovBoxValue;
+    })).returns[0] as [[string, bigint, bigint, bigint], boolean];
 
     return {
-      isXGov: true,
-      votingAddress: xgovBoxValue.votingAddress,
+      votingAddress: xgovBoxValue[0][0],
+      votedProposals: xgovBoxValue[0][1],
+      lastVoteTimestamp: xgovBoxValue[0][2],
+      subscriptionRound: xgovBoxValue[0][3],
+      isXGov: xgovBoxValue[1],
     };
   } catch (e) {
     console.error(e);
     return {
-      isXGov: false,
       votingAddress: "",
+      votedProposals: BigInt(0),
+      lastVoteTimestamp: BigInt(0),
+      subscriptionRound: BigInt(0),
+      isXGov: false,
     };
   }
 }
@@ -120,21 +132,21 @@ export async function getIsProposer(
       ],
     }).simulate({
       skipSignatures: true,
-    })).returns[0] as ProposerBoxValue;
+    })).returns[0] as [[boolean, boolean, bigint], boolean];
 
     return {
-      isProposer: true,
-      activeProposal: proposerBoxValue.activeProposal,
-      kycStatus: proposerBoxValue.kycStatus,
-      kycExpiring: proposerBoxValue.kycExpiring,
+      activeProposal: proposerBoxValue[0][0],
+      kycStatus: proposerBoxValue[0][1],
+      kycExpiring: proposerBoxValue[0][2],
+      isProposer: proposerBoxValue[1],
     };
   } catch (e) {
     console.error(e);
     return {
-      isProposer: false,
       activeProposal: false,
       kycStatus: false,
       kycExpiring: BigInt(0),
+      isProposer: false,
     };
   }
 }
@@ -444,9 +456,7 @@ export async function unsubscribeXgov({
     await registryClient.send.unsubscribeXgov({
       sender: activeAddress,
       signer: transactionSigner,
-      args: {
-        xgovAddress: activeAddress,
-      },
+      args: {},
       extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
       boxReferences: [
         xGovBoxName(activeAddress),

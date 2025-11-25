@@ -13,14 +13,15 @@ import {
   ProposalStatusMap,
   type ProposalBrief,
   type ProposalMainCardDetails,
-  getXGovQuorum,
-  getVoteQuorum,
+
   getVotingDuration,
   getGlobalState,
   callAssignVoters,
   type ProposalMainCardDetailsWithNFDs,
   dropProposal,
   voteProposal,
+  computeWeightedQuorumThreshold,
+  computeQuorumThreshold,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -43,7 +44,7 @@ import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill"
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
 import VoteBar from "@/components/VoteBar/VoteBar";
 import algosdk from "algosdk";
-import { useNFD, useProposal, useVoterBox, useVoterBoxes, useXGovDelegates } from "@/hooks";
+import { useNFD, useProposal, useRegistry, useVoterBox, useVoterBoxes, useXGovDelegates } from "@/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -330,6 +331,7 @@ function VotingStatusCard({
   votingDurations,
 }: VotingStatusCardProps) {
   const { activeAddress, transactionSigner: innerSigner } = useWallet();
+  const registryState = useRegistry();
   const proposalQuery = useProposal(proposal.id, proposal);
   const delegates = useXGovDelegates(activeAddress)
   const infoQueryAddresses = [activeAddress, ...(delegates?.data?.map(d => d.xgov) || [])].filter(a => !!a) as string[];
@@ -361,8 +363,16 @@ function VotingStatusCard({
   const voterInfo = voterInfoQuery.data?.[selectedVotingAs!] || undefined;
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
 
-  const xgovQuorum = getXGovQuorum(proposal.fundingCategory, quorums);
-  const voteQuorum = getVoteQuorum(proposal.fundingCategory, weightedQuorums);
+  const quorum = computeQuorumThreshold(registryState.data, proposal.requestedAmount, proposal.committeeMembers);
+  const weightedQuorum = computeWeightedQuorumThreshold(registryState.data, proposal.requestedAmount, proposal.committeeVotes);
+  const quorumRequirementPercent = Number(proposal.committeeMembers) === 0
+    ? 0
+    : (Number(quorum) / Number(proposal.committeeMembers)) * 100;
+
+  const weightedQuorumRequirementPercent = Number(proposal.committeeVotes) === 0
+    ? 0
+    : (Number(weightedQuorum) / Number(proposal.committeeVotes)) * 100;
+
   const voteStartTime = Number(proposal.voteOpenTs) * 1000;
   const minimumVotingDuration = getVotingDuration(proposal.fundingCategory, votingDurations);
   const voteEndTime = voteStartTime + minimumVotingDuration;
@@ -429,17 +439,17 @@ function VotingStatusCard({
       />
       <div className="flex gap-2">
         <XGovQuorumMetPill
-          approved={Number(proposal.votedMembers) >= Number(proposal.committeeMembers) * (xgovQuorum / 100)}
+          approved={Number(proposal.votedMembers) >= Number(quorum)}
           votesHave={Number(proposal.votedMembers)}
-          votesNeed={Math.floor(Number(proposal.committeeMembers) * (xgovQuorum / 100))}
-          quorumRequirement={xgovQuorum}
+          votesNeed={Number(quorum)}
+          quorumRequirement={quorumRequirementPercent}
           label="xGov quorum met"
         />
         <VoteQuorumMetPill
-          approved={totalVotes > Number(proposal.committeeVotes) * (voteQuorum / 100)}
+          approved={totalVotes >= Number(weightedQuorum)}
           votesHave={totalVotes}
-          votesNeed={Math.floor(Number(proposal.committeeVotes) * (voteQuorum / 100))}
-          quorumRequirement={voteQuorum}
+          votesNeed={Number(weightedQuorum)}
+          quorumRequirement={weightedQuorumRequirementPercent}
           label="vote quorum met"
         />
         <MajorityApprovedPill
@@ -712,10 +722,19 @@ function PostVotingStatusCard({
   quorums,
   weightedQuorums,
 }: PostVotingStatusCardProps) {
-  const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
+  const registryState = useRegistry();
 
-  const xgovQuorum = getXGovQuorum(proposal.fundingCategory, quorums);
-  const voteQuorum = getVoteQuorum(proposal.fundingCategory, weightedQuorums);
+  const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
+  const quorum = computeQuorumThreshold(registryState.data, proposal.requestedAmount, proposal.committeeMembers);
+  const weightedQuorum = computeWeightedQuorumThreshold(registryState.data, proposal.requestedAmount, proposal.committeeVotes);
+
+  const quorumRequirementPercent = Number(proposal.committeeMembers) === 0
+    ? 0
+    : (Number(quorum) / Number(proposal.committeeMembers)) * 100;
+
+  const weightedQuorumRequirementPercent = Number(proposal.committeeVotes) === 0
+    ? 0
+    : (Number(weightedQuorum) / Number(proposal.committeeVotes)) * 100;
 
   const defaults = defaultsStatusCardMap[proposal.status];
 
@@ -741,17 +760,17 @@ function PostVotingStatusCard({
       />
       <div className="flex gap-2">
         <XGovQuorumMetPill
-          approved={Number(proposal.votedMembers) > Number(proposal.committeeMembers) * (xgovQuorum / 100)}
+          approved={Number(proposal.votedMembers) >= Number(quorum)}
           votesHave={Number(proposal.votedMembers)}
-          votesNeed={Math.floor(Number(proposal.committeeMembers) * (xgovQuorum / 100))}
-          quorumRequirement={xgovQuorum}
+          votesNeed={Number(quorum)}
+          quorumRequirement={quorumRequirementPercent}
           label="xGov quorum met"
         />
         <VoteQuorumMetPill
-          approved={totalVotes > Number(proposal.committeeVotes) * (voteQuorum / 100)}
+          approved={totalVotes >= Number(weightedQuorum)}
           votesHave={totalVotes}
-          votesNeed={Math.floor(Number(proposal.committeeVotes) * (voteQuorum / 100))}
-          quorumRequirement={voteQuorum}
+          votesNeed={Number(weightedQuorum)}
+          quorumRequirement={weightedQuorumRequirementPercent}
           label="vote quorum met"
         />
         <MajorityApprovedPill
