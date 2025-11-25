@@ -13,7 +13,7 @@ import {
   ProposalStatusMap,
   type ProposalBrief,
   type ProposalMainCardDetails,
-  
+
   getVotingDuration,
   getGlobalState,
   callAssignVoters,
@@ -727,13 +727,11 @@ function PostVotingStatusCard({
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
   const quorum = computeQuorumThreshold(registryState.data, proposal.requestedAmount, proposal.committeeMembers);
   const weightedQuorum = computeWeightedQuorumThreshold(registryState.data, proposal.requestedAmount, proposal.committeeVotes);
-  
-  console.log('committeeMembers', proposal.committeeMembers)
+
   const quorumRequirementPercent = Number(proposal.committeeMembers) === 0
     ? 0
     : (Number(quorum) / Number(proposal.committeeMembers)) * 100;
 
-  console.log('quorumRequirementPercent', quorumRequirementPercent)
   const weightedQuorumRequirementPercent = Number(proposal.committeeVotes) === 0
     ? 0
     : (Number(weightedQuorum) / Number(proposal.committeeVotes)) * 100;

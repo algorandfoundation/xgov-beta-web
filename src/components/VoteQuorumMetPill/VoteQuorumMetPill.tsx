@@ -50,7 +50,7 @@ export default function VoteQuorumMetPill({ approved, quorumRequirement, votesHa
                 {...contentProps}
             >
                 Whether a weighted quorum of all xGov Committee voting power (1 vote) is reached.
-                This proposal needs {formattedVotesNeed} votes in favour of quorum ({formattedPercent}% of the committee voting power) and currently has {formattedVotesHave}.
+                This proposal needs {formattedVotesNeed} votes to reach quorum ({formattedPercent}% of the committee voting power) and currently has {formattedVotesHave}.
             </PopoverContent>
         </Popover>
     )

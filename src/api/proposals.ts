@@ -481,12 +481,14 @@ export function computeQuorumThreshold(
   const amountMax = registryState.maxRequestedAmountLarge
 
   if (!quorumMinBps || !quorumMaxBps || !amountMin || !amountMax) {
-    throw new Error("Invalid configuration: missing registry state values.");
+    console.error("Invalid configuration: missing registry state values.");
+    return 0n
   }
 
   const deltaAmount = amountMax - amountMin;
   if (deltaAmount === 0n) {
-    throw new Error("Invalid configuration: amount range must be > 0.");
+    console.error("Invalid configuration: amount range must be > 0.");
+    return 0n
   }
 
   const deltaQuorumBps = quorumMaxBps - quorumMinBps;
@@ -512,12 +514,14 @@ export function computeWeightedQuorumThreshold(
   const amountMax = registryState.maxRequestedAmountLarge
 
   if (!weightedQuorumMinBps || !weightedQuorumMaxBps || !amountMin || !amountMax) {
-    throw new Error("Invalid configuration: missing registry state values.");
+    console.error("Invalid configuration: missing registry state values.");
+    return 0n
   }
 
   const deltaAmount = amountMax - amountMin;
   if (deltaAmount === 0n) {
-    throw new Error("Invalid configuration: amount range must be > 0.");
+    console.error("Invalid configuration: amount range must be > 0.");
+    return 0n
   }
 
   const weightedDeltaQuorumBps = weightedQuorumMaxBps - weightedQuorumMinBps;
