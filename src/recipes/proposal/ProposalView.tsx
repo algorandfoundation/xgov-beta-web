@@ -334,14 +334,14 @@ function VotingStatusCard({
   const committeeQuery = useCommittee(proposalQuery.data?.committeeId)
   const committeeSubset = (!!committeeQuery && !!committeeQuery.data)
     ? infoQueryAddresses
-      .filter(address => committeeQuery!.data!.has(address))
-      .map(address => ({ address, votes: committeeQuery!.data!.get(address)! }))
+      .filter(address => committeeQuery.data.has(address))
+      .map(address => ({ address, votes: committeeQuery.data.get(address)! }))
     : []
 
   const voterInfoQuery = useVotersInfo(proposal.id, committeeSubset, committeeSubset.length > 0);
   const voterList = [...Object.keys(voterInfoQuery?.data || {})]
 
-  const [selectedVotingAs, setSelectedVotingAs] = useState(voterList[0]);
+  const [selectedVotingAs, setSelectedVotingAs] = useState<string | null>(voterList[0] ?? null);
 
   useEffect(() => {
     if (voterList.length > 0 && !selectedVotingAs) {
@@ -416,6 +416,7 @@ function VotingStatusCard({
   const usedFormVotes = form.watch("approvals") + form.watch("rejections") + form.watch("nulls");
 
   const onSubmit = async ({ approvals, rejections }: z.infer<typeof votingSchema>) => {
+    if (!selectedVotingAs) return;
     await voteProposal({
       activeAddress,
       xgovAddress: selectedVotingAs,
