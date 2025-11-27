@@ -64,19 +64,16 @@ export async function loadCommitteeFromAPI(
     return committeeData as CommitteeData;
   } catch (error) {
     console.error('Error fetching committee', error)
-    throw new Error(`Error loading committee data from API: ${error}`);
+    throw new Error(`Error loading committee data from API: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
 /**
  * Retrieves committee data for a given committee ID
  *
- * This function attempts to load committee data from multiple sources:
- * 1. Dynamic import
- * 2. External API
+ * This function attempts to load committee data from the external API.
  *
  * @param committeeId The committee ID as a Buffer
- * @param apiUrl The api url provided by the context
  * @returns Committee data if found, null otherwise
  */
 export async function getCommitteeData(committeeId: Buffer): Promise<CommitteeData | null> {
@@ -108,6 +105,6 @@ export async function getXGovCommitteeMap(committeeId: Buffer): Promise<Map<stri
   }
 
   const m = new Map<string, number>()
-  committee.xGovs.map(xgov => m.set(xgov.address, xgov.votes))
+  committee.xGovs.forEach(xgov => m.set(xgov.address, xgov.votes))
   return m
 }

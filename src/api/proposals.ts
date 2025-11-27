@@ -5,7 +5,7 @@ import algosdk, {
   ALGORAND_MIN_TX_FEE,
   type TransactionSigner,
 } from "algosdk";
-import { ProposalClient, ProposalFactory, type VotingState } from "@algorandfoundation/xgov";
+import { ProposalFactory, type VotingState } from "@algorandfoundation/xgov";
 
 import {
   type ProposalBrief,
@@ -32,7 +32,6 @@ import { proposalApprovalBoxName, proposerBoxName, xGovBoxName } from "./registr
 import type { TransactionHandlerProps } from "./types/transaction_state";
 import { sleep } from "./nfd";
 import { getCommitteeData, type CommitteeMember } from "./committee";
-import { getStringEnvironmentVariable } from "@/functions";
 
 const PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT = 4;
 const BPS = 10_000n;
@@ -442,7 +441,7 @@ export async function getProposalVoterData(appId: bigint): Promise<{ address: st
   }
 
   const committeeId = Buffer.from(committeeByteArray);
-  const committeeData = await getCommitteeData(committeeId)
+  const committeeData = await getCommitteeData(committeeId);
 
   if (!committeeData) {
     throw new Error("Committee data could not be retrieved");

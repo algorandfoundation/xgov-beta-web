@@ -10,7 +10,7 @@ import {
   type ProposalMainCardDetails,
 } from "@/api";
 import type { ProposalSummaryCardDetails } from "@/api";
-import { getCommitteeData, getXGovCommitteeMap, type CommitteeMember } from "@/api/committee";
+import { getXGovCommitteeMap, type CommitteeMember } from "@/api/committee";
 
 export function useGetAllProposals(proposals?: ProposalSummaryCardDetails[]) {
   return useQuery({
@@ -67,15 +67,19 @@ export function useVoterBox(proposalId: bigint | null, activeAddress: string | n
 
 export function useCommittee(committeeByteArray: Uint8Array<ArrayBufferLike> | undefined) {
   return useQuery({
-    queryKey: ['getCommittee', committeeByteArray],
+    queryKey: ['getCommittee', committeeByteArray ? Buffer.from(committeeByteArray).toString('base64') : undefined],
     queryFn: () => getXGovCommitteeMap(Buffer.from(committeeByteArray!)),
     enabled: !!committeeByteArray,
   })
 }
 
 export function useVotersInfo(proposalId: bigint | null, committeeSubset: CommitteeMember[] | null, enabled: boolean) {
+  // Use a stable serialized representation of committeeSubset for the query key
+  const committeeSubsetKey = committeeSubset
+    ? JSON.stringify(committeeSubset.map(member => member.address))
+    : null;
   return useQuery({
-    queryKey: ['getVotersInfo', proposalId, committeeSubset],
+    queryKey: ['getVotersInfo', proposalId, committeeSubsetKey],
     queryFn: () => getVotersInfo(proposalId!, committeeSubset!),
     enabled,
   });

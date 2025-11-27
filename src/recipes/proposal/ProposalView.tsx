@@ -41,7 +41,7 @@ import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill"
 import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
 import VoteBar from "@/components/VoteBar/VoteBar";
-import { useCommittee, useNFD, useProposal, useRegistry, useVotersInfo, useVotingState, useXGov, useXGovDelegates } from "@/hooks";
+import { useCommittee, useNFD, useProposal, useVotersInfo, useVotingState, useXGov, useXGovDelegates } from "@/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -332,13 +332,13 @@ function VotingStatusCard({
   const delegates = useXGovDelegates(activeAddress)
   const infoQueryAddresses = [activeIsXGov ? activeAddress : null, ...(delegates?.data?.map(d => d.xgov) || [])].filter(a => !!a) as string[];
   const committeeQuery = useCommittee(proposalQuery.data?.committeeId)
-  const committeSubset = (!!committeeQuery && !!committeeQuery.data)
+  const committeeSubset = (!!committeeQuery && !!committeeQuery.data)
     ? infoQueryAddresses
       .filter(address => committeeQuery!.data!.has(address))
       .map(address => ({ address, votes: committeeQuery!.data!.get(address)! }))
     : []
 
-  const voterInfoQuery = useVotersInfo(proposal.id, committeSubset, committeSubset.length > 0);
+  const voterInfoQuery = useVotersInfo(proposal.id, committeeSubset, committeeSubset.length > 0);
   const voterList = [...Object.keys(voterInfoQuery?.data || {})]
 
   const [selectedVotingAs, setSelectedVotingAs] = useState(voterList[0]);
@@ -347,7 +347,7 @@ function VotingStatusCard({
     if (voterList.length > 0 && !selectedVotingAs) {
       setSelectedVotingAs(voterList[0]);
     }
-  }, [voterList.length, selectedVotingAs]);
+  }, [voterList, selectedVotingAs]);
 
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [votesExceeded, setVotesExceeded] = useState(false);
