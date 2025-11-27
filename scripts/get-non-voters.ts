@@ -23,10 +23,8 @@ const xGovAddresses = xGovs.map((xgov: { address: string }) => xgov.address);
 
 console.log("Total addresses:", xGovAddresses.length);
 console.log("Getting voted addresses");
-const voted = await getVoters(APP_ID);
-const nonVoters = xGovAddresses.filter((addr: string) => !voted.includes(addr));
+const nonVoters = await getNonVoters(APP_ID);
 
-console.log("Voted addresses:", voted.length);
 console.log("Non-voting addresses:", nonVoters.length);
 
 console.log("\nNon-voting addresses:");
@@ -34,34 +32,20 @@ for (const addr of nonVoters) {
   console.log(addr);
 }
 
-async function getVoters(appId: bigint): Promise<string[]> {
+async function getNonVoters(appId: bigint): Promise<string[]> {
   const boxes = await algorand.client.algod
     .getApplicationBoxes(Number(appId))
     .do();
 
-  let voterBoxes: Uint8Array<ArrayBufferLike>[] = [];
+  let nonVoters: string[] = []
   boxes.boxes.map((box) => {
     if (new TextDecoder().decode(box.name).startsWith("V")) {
-      voterBoxes.push(box.name);
+      const address = algosdk.encodeAddress(box.name.slice(1))
+      nonVoters.push(address);
     }
   });
 
-  let addresses: string[] = [];
-  for (const boxName of voterBoxes) {
-    process.stderr.write(".");
-    const value = await algorand.app.getBoxValueFromABIType({
-      appId: BigInt(appId),
-      boxName: boxName,
-      type: algosdk.ABIType.from("(uint64,bool)"),
-    });
-
-    if (Array.isArray(value) && value[1]) {
-      const address = algosdk.encodeAddress(Buffer.from(boxName.slice(1)));
-      addresses.push(address);
-    }
-    await sleep(50);
-  }
-  return addresses;
+  return nonVoters
 }
 
 async function sleep(ms: number) {

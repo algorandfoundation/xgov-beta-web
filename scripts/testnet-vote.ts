@@ -11,6 +11,7 @@ import { act } from "react";
 
 const APP_ID = process.env.APP_ID ? BigInt(process.env.APP_ID) : 0n;
 const voterSeedsFilename = process.argv[2];
+const voteYes = process.argv[3] ? process.argv[3] !== "no" : true
 
 if (APP_ID === 0n) {
   throw new Error("APP_ID environment variable is not set");
@@ -93,7 +94,7 @@ async function vote({
   transactionSigner: algosdk.TransactionSigner;
 }) {
   console.log(
-    `Voting for proposal ${appId} from ${activeAddress} with ${votes}`,
+    `Voting ${voteYes ? "yes" : "no"} for proposal ${appId} from ${activeAddress} with ${votes}`,
   );
   const res = await registryClient.send.voteProposal({
     sender: activeAddress,
@@ -101,8 +102,8 @@ async function vote({
     args: {
       proposalId: appId,
       xgovAddress: activeAddress,
-      approvalVotes: votes,
-      rejectionVotes: 0n,
+      approvalVotes: voteYes ? votes : 0n,
+      rejectionVotes: voteYes ? 0n : votes,
     },
     appReferences: [appId],
     accountReferences: [activeAddress],
