@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { navigate } from "astro:transitions/client";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { CoinsIcon, ExternalLinkIcon, HeartCrackIcon, PartyPopperIcon, SquarePenIcon, TrashIcon, VoteIcon } from "lucide-react";
@@ -13,8 +13,7 @@ import {
   ProposalStatusMap,
   type ProposalBrief,
   type ProposalMainCardDetails,
-  getXGovQuorum,
-  getVoteQuorum,
+
   getVotingDuration,
   getGlobalState,
   callAssignVoters,
@@ -42,8 +41,7 @@ import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill"
 import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
 import VoteBar from "@/components/VoteBar/VoteBar";
-import algosdk from "algosdk";
-import { useNFD, useProposal, useVoterBox, useVoterBoxes, useXGovDelegates } from "@/hooks";
+import { useCommittee, useNFD, useProposal, useVotersInfo, useVotingState, useXGov, useXGovDelegates } from "@/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -325,17 +323,32 @@ const votesExceededMessage = "Total votes used exceeds available votes";
 function VotingStatusCard({
   className = "",
   proposal,
-  quorums,
-  weightedQuorums,
   votingDurations,
 }: VotingStatusCardProps) {
   const { activeAddress, transactionSigner: innerSigner } = useWallet();
   const proposalQuery = useProposal(proposal.id, proposal);
+  const activeXGovQuery = useXGov(activeAddress);
+  const activeIsXGov = activeXGovQuery.data?.isXGov ?? false;
   const delegates = useXGovDelegates(activeAddress)
-  const infoQueryAddresses = [activeAddress, ...(delegates?.data?.map(d => d.xgov) || [])].filter(a => !!a) as string[];
-  const voterInfoQuery = useVoterBoxes(Number(proposal.id), infoQueryAddresses);
+  const infoQueryAddresses = [activeIsXGov ? activeAddress : null, ...(delegates?.data?.map(d => d.xgov) || [])].filter(a => !!a) as string[];
+  const committeeQuery = useCommittee(proposalQuery.data?.committeeId)
+  const committeeSubset = (!!committeeQuery && !!committeeQuery.data)
+    ? infoQueryAddresses
+      .filter(address => committeeQuery.data.has(address))
+      .map(address => ({ address, votes: committeeQuery.data.get(address)! }))
+    : []
 
-  const [selectedVotingAs, setSelectedVotingAs] = useState(activeAddress);
+  const voterInfoQuery = useVotersInfo(proposal.id, committeeSubset, committeeSubset.length > 0);
+  const voterList = [...Object.keys(voterInfoQuery?.data || {})]
+
+  const [selectedVotingAs, setSelectedVotingAs] = useState<string | null>(voterList[0] ?? null);
+
+  useEffect(() => {
+    if (voterList.length > 0 && !selectedVotingAs) {
+      setSelectedVotingAs(voterList[0]);
+    }
+  }, [voterList, selectedVotingAs]);
+
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [votesExceeded, setVotesExceeded] = useState(false);
 
@@ -361,8 +374,17 @@ function VotingStatusCard({
   const voterInfo = voterInfoQuery.data?.[selectedVotingAs!] || undefined;
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
 
-  const xgovQuorum = getXGovQuorum(proposal.fundingCategory, quorums);
-  const voteQuorum = getVoteQuorum(proposal.fundingCategory, weightedQuorums);
+  const votingStateQuery = useVotingState(proposal.id)
+  const { quorumVoters, weightedQuorumVotes } = votingStateQuery.data || {};
+
+  const quorumRequirementPercent = Number(proposal.committeeMembers) === 0
+    ? 0
+    : (Number(quorumVoters) / Number(proposal.committeeMembers)) * 100;
+
+  const weightedQuorumRequirementPercent = Number(proposal.committeeVotes) === 0
+    ? 0
+    : (Number(weightedQuorumVotes) / Number(proposal.committeeVotes)) * 100;
+
   const voteStartTime = Number(proposal.voteOpenTs) * 1000;
   const minimumVotingDuration = getVotingDuration(proposal.fundingCategory, votingDurations);
   const voteEndTime = voteStartTime + minimumVotingDuration;
@@ -394,6 +416,7 @@ function VotingStatusCard({
   const usedFormVotes = form.watch("approvals") + form.watch("rejections") + form.watch("nulls");
 
   const onSubmit = async ({ approvals, rejections }: z.infer<typeof votingSchema>) => {
+    if (!selectedVotingAs) return;
     await voteProposal({
       activeAddress,
       xgovAddress: selectedVotingAs,
@@ -429,17 +452,17 @@ function VotingStatusCard({
       />
       <div className="flex gap-2">
         <XGovQuorumMetPill
-          approved={Number(proposal.votedMembers) >= Number(proposal.committeeMembers) * (xgovQuorum / 100)}
+          approved={Number(proposal.votedMembers) >= Number(quorumVoters)}
           votesHave={Number(proposal.votedMembers)}
-          votesNeed={Math.floor(Number(proposal.committeeMembers) * (xgovQuorum / 100))}
-          quorumRequirement={xgovQuorum}
+          votesNeed={Number(quorumVoters)}
+          quorumRequirement={quorumRequirementPercent}
           label="xGov quorum met"
         />
         <VoteQuorumMetPill
-          approved={totalVotes > Number(proposal.committeeVotes) * (voteQuorum / 100)}
+          approved={totalVotes >= Number(weightedQuorumVotes)}
           votesHave={totalVotes}
-          votesNeed={Math.floor(Number(proposal.committeeVotes) * (voteQuorum / 100))}
-          quorumRequirement={voteQuorum}
+          votesNeed={Number(weightedQuorumVotes)}
+          quorumRequirement={weightedQuorumRequirementPercent}
           label="vote quorum met"
         />
         <MajorityApprovedPill
@@ -454,38 +477,39 @@ function VotingStatusCard({
         rejections={Number(proposal.rejections)}
         nulls={Number(proposal.nulls)}
       />
-      <div className="w-full flex items-center justify-between">
-        <Button
-          className="-ml-4"
-          variant='link'
-          onClick={() => setMode(mode === 'simple' ? 'advanced' : 'simple')}
-        >
-          {mode === 'simple' ? 'Advanced' : 'Simple'} Mode
-        </Button>
-        <div className="flex items-center gap-2">
-          <span className="text-xxs font-semibold">Voting For</span>
-          <Select
-            onValueChange={setSelectedVotingAs}
-            defaultValue={activeAddress!}
-          >
-            <SelectTrigger id="voting-as" className="w-40" aria-label="Select voting as">
-              <SelectValue placeholder="Select voting as" />
-            </SelectTrigger>
-            <SelectContent>
-              {
-                [
-                  ...Object.keys(voterInfoQuery?.data ?? {})
-                  // .filter(key => (voterInfoQuery?.data?.[key]?.votes ?? 0) > 0 && !voterInfoQuery?.data?.[key]?.voted)
-                ].map(address => (
-                  <SelectItem key={address} value={address} disabled={!((voterInfoQuery?.data?.[address]?.votes ?? 0) > 0)}>
-                    {shortenAddress(address)}
-                  </SelectItem>
-                ))
-              }
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {
+        voterList.length > 0 && (
+          <div className="w-full flex items-center justify-between">
+            <Button
+              className="-ml-4"
+              variant='link'
+              onClick={() => setMode(mode === 'simple' ? 'advanced' : 'simple')}
+            >
+              {mode === 'simple' ? 'Advanced' : 'Simple'} Mode
+            </Button>
+            <div className="flex items-center gap-2">
+              <span className="text-xxs font-semibold">Voting For</span>
+              <Select
+                onValueChange={setSelectedVotingAs}
+                defaultValue={voterList[0]}
+              >
+                <SelectTrigger id="voting-as" className="w-40" aria-label="Select voting as">
+                  <SelectValue placeholder="Select voting as" />
+                </SelectTrigger>
+                <SelectContent>
+                  {
+                    voterList.map(address => (
+                      <SelectItem key={address} value={address} disabled={!((voterInfoQuery?.data?.[address]?.votes ?? 0) > 0)}>
+                        {shortenAddress(address)}
+                      </SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )
+      }
     </div>
   )
 
@@ -713,9 +737,16 @@ function PostVotingStatusCard({
   weightedQuorums,
 }: PostVotingStatusCardProps) {
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
+  const votingStateQuery = useVotingState(proposal.id)
+  const { quorumVoters, weightedQuorumVotes } = votingStateQuery.data || {};
 
-  const xgovQuorum = getXGovQuorum(proposal.fundingCategory, quorums);
-  const voteQuorum = getVoteQuorum(proposal.fundingCategory, weightedQuorums);
+  const quorumRequirementPercent = Number(proposal.committeeMembers) === 0
+    ? 0
+    : (Number(quorumVoters) / Number(proposal.committeeMembers)) * 100;
+
+  const weightedQuorumRequirementPercent = Number(proposal.committeeVotes) === 0
+    ? 0
+    : (Number(weightedQuorumVotes) / Number(proposal.committeeVotes)) * 100;
 
   const defaults = defaultsStatusCardMap[proposal.status];
 
@@ -741,17 +772,17 @@ function PostVotingStatusCard({
       />
       <div className="flex gap-2">
         <XGovQuorumMetPill
-          approved={Number(proposal.votedMembers) > Number(proposal.committeeMembers) * (xgovQuorum / 100)}
+          approved={Number(proposal.votedMembers) >= Number(quorumVoters)}
           votesHave={Number(proposal.votedMembers)}
-          votesNeed={Math.floor(Number(proposal.committeeMembers) * (xgovQuorum / 100))}
-          quorumRequirement={xgovQuorum}
+          votesNeed={Number(quorumVoters)}
+          quorumRequirement={quorumRequirementPercent}
           label="xGov quorum met"
         />
         <VoteQuorumMetPill
-          approved={totalVotes > Number(proposal.committeeVotes) * (voteQuorum / 100)}
+          approved={totalVotes >= Number(weightedQuorumVotes)}
           votesHave={totalVotes}
-          votesNeed={Math.floor(Number(proposal.committeeVotes) * (voteQuorum / 100))}
-          quorumRequirement={voteQuorum}
+          votesNeed={Number(weightedQuorumVotes)}
+          quorumRequirement={weightedQuorumRequirementPercent}
           label="vote quorum met"
         />
         <MajorityApprovedPill
