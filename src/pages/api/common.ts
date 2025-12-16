@@ -77,7 +77,7 @@ export async function parseRequestOptions(
   let proposalIds: bigint[] | undefined = undefined;
 
   try {
-    export const requestBody = await request.json();
+    const requestBody = await request.json();
 
     // Parse proposal IDs if provided
     if (
