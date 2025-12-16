@@ -80,11 +80,11 @@ export async function getGlobalState(): Promise<RegistryGlobalState | undefined>
 export async function getIsXGov(
   address: string,
 ): Promise<{
-  isXGov: boolean;
-  votingAddress: string;
-  votedProposals: bigint;
-  lastVoteTimestamp: bigint;
-  subscriptionRound: bigint;
+  votingAddress: string,
+  votedProposals: bigint,
+  lastVoteTimestamp: bigint,
+  subscriptionRound: bigint,
+  isXGov: boolean,
 }> {
   try {
     const xgovBoxValue = (await registryClient.newGroup().getXgovBox({
@@ -100,20 +100,20 @@ export async function getIsXGov(
     })).returns[0] as [[string, bigint, bigint, bigint], boolean];
 
     return {
-      isXGov: xgovBoxValue[1],
       votingAddress: xgovBoxValue[0][0],
       votedProposals: xgovBoxValue[0][1],
       lastVoteTimestamp: xgovBoxValue[0][2],
       subscriptionRound: xgovBoxValue[0][3],
+      isXGov: xgovBoxValue[1],
     };
   } catch (e) {
     console.error(e);
     return {
-      isXGov: false,
       votingAddress: "",
       votedProposals: BigInt(0),
       lastVoteTimestamp: BigInt(0),
       subscriptionRound: BigInt(0),
+      isXGov: false,
     };
   }
 }
@@ -143,10 +143,10 @@ export async function getIsProposer(
   } catch (e) {
     console.error(e);
     return {
-      isProposer: false,
       activeProposal: false,
       kycStatus: false,
       kycExpiring: BigInt(0),
+      isProposer: false,
     };
   }
 }
@@ -160,7 +160,7 @@ export async function getAllProposers(): Promise<{
     .do();
 
   for (const box of boxes.boxes) {
-    if (box.name[0] !== 112 && box.name.length !== 33) {
+    if (box.name[0] !== 112 || box.name.length !== 33) {
       continue;
     }
 
@@ -258,7 +258,7 @@ export async function getAllXGovSubscribeRequests(): Promise<(XGovSubscribeReque
     } else {
       throw new Error(`Failed to fetch box: ${result.reason}`);
     }
-  }).sort(({id: a}, {id: b}) => (a < b ? 1 : a > b ? -1 : 0));
+  }).sort(({ id: a }, { id: b }) => (a < b ? 1 : a > b ? -1 : 0));
 }
 
 export interface SubscribeXGovRequestProps extends TransactionHandlerProps {
@@ -456,9 +456,7 @@ export async function unsubscribeXgov({
     await registryClient.send.unsubscribeXgov({
       sender: activeAddress,
       signer: transactionSigner,
-      args: {
-        xgovAddress: activeAddress,
-      },
+      args: {},
       extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
       boxReferences: [
         xGovBoxName(activeAddress),

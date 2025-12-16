@@ -5,10 +5,12 @@ import {
   getProposal,
   getProposalsByProposer,
   getVoterBox,
-  getVoterBoxes,
+  getVotersInfo,
+  getVotingState,
   type ProposalMainCardDetails,
 } from "@/api";
 import type { ProposalSummaryCardDetails } from "@/api";
+import { getXGovCommitteeMap, type CommitteeMember } from "@/api/committee";
 
 export function useGetAllProposals(proposals?: ProposalSummaryCardDetails[]) {
   return useQuery({
@@ -47,7 +49,15 @@ export function useProposal(
   });
 }
 
-export function useVoterBox(proposalId: number | null, activeAddress: string | null) {
+export function useVotingState(proposalId: bigint | null) {
+  return useQuery({
+    queryKey: ['getVotingState', Number(proposalId!)],
+    queryFn: () => getVotingState(BigInt(proposalId!)),
+    enabled: !!proposalId,
+  });
+}
+
+export function useVoterBox(proposalId: bigint | null, activeAddress: string | null) {
   return useQuery({
     queryKey: ['getVoterBox', Number(proposalId!), activeAddress],
     queryFn: () => getVoterBox(BigInt(proposalId!), activeAddress!),
@@ -55,11 +65,23 @@ export function useVoterBox(proposalId: number | null, activeAddress: string | n
   });
 }
 
-export function useVoterBoxes(proposalId: number | null, addresses: string[] | null) {
+export function useCommittee(committeeByteArray: Uint8Array<ArrayBufferLike> | undefined) {
   return useQuery({
-    queryKey: ['getVoterBoxes', Number(proposalId!), addresses],
-    queryFn: () => getVoterBoxes(BigInt(proposalId!), addresses!),
-    enabled: !!proposalId && !!addresses && addresses.length > 0,
+    queryKey: ['getCommittee', committeeByteArray ? Buffer.from(committeeByteArray).toString('base64') : undefined],
+    queryFn: () => getXGovCommitteeMap(Buffer.from(committeeByteArray!)),
+    enabled: !!committeeByteArray,
+  })
+}
+
+export function useVotersInfo(proposalId: bigint | null, committeeSubset: CommitteeMember[] | null, enabled: boolean) {
+  // Use a stable serialized representation of committeeSubset for the query key
+  const committeeSubsetKey = committeeSubset
+    ? JSON.stringify(committeeSubset.map(member => member.address))
+    : null;
+  return useQuery({
+    queryKey: ['getVotersInfo', proposalId, committeeSubsetKey],
+    queryFn: () => getVotersInfo(proposalId!, committeeSubset!),
+    enabled,
   });
 }
 

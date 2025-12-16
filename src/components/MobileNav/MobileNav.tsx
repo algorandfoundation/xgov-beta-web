@@ -18,6 +18,7 @@ import { UseWallet, UseQuery, useNFD, useProposer, useRegistry, useXGov } from "
 import { TutorialDialog } from "@/components/TutorialDialog/TutorialDialog";
 import { subscribeProposer, subscribeXgov } from "@/api";
 import { useTransactionState } from "@/hooks/useTransactionState";
+import { AdminLinkController } from "@/layouts/shell/AdminLink";
 
 export function MobileNavIsland(props: { trigger?: ReactNode; path?: string }) {
   return (
@@ -118,7 +119,7 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
 
             <Link
               className="px-4 text-4xl xs:text-5xl font-bold text-algo-black dark:text-white focus:outline-none underline-offset-4 hover:underline focus-visible:ring-0 dark:focus-visible:ring-0 focus-visible:underline"
-              to="https://algorandfoundation.github.io/xgov-beta-sc/"
+              to="https://docs.xgov.algorand.co"
             >
               Docs
             </Link>
@@ -162,6 +163,8 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
                 </>
               )}
             </Button>
+
+            <AdminLinkController className="pl-4 text-4xl xs:text-5xl font-bold gap-4 ring-0 ring-transparent focus:outline-none" path={path} />
 
             <Button
               className="text-4xl xs:text-5xl font-bold gap-4 focus:outline-none"
@@ -207,7 +210,7 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
         )}
       </DialogContent>
     </Dialog>
-    
+
     <TutorialDialog
       isOpen={showTutorial}
       onClose={handleTutorialClose}
