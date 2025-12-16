@@ -140,11 +140,14 @@ export function ProfilePage({
     isPending: openIsPending,
   } = useTransactionState();
 
-  const validProposer =
-    (proposer?.data &&
-      proposer.data.kycStatus &&
-      proposer.data.kycExpiring > Date.now() / 1000) ||
-    false;
+  const validProposer = (proposer?.data && proposer.data.kycStatus) || false;
+  const proposerKycExpired = (proposer?.data && proposer.data.kycExpiring <= Date.now() / 1000) || false;
+  const createProposalDisabled = proposerKycExpired || proposer.data?.activeProposal;
+  const createProposalDisabledMessage = proposerKycExpired
+      ? "Your KYC has expired. Please renew your KYC to create a proposal"
+      : proposer.data?.activeProposal
+        ? "You already have an active proposal"
+        : "";
 
   const proposalsWithNFDs = useMemo(() => {
     if (!proposalsQuery.data) return [];
@@ -227,8 +230,8 @@ export function ProfilePage({
                   variant="secondary"
                   size="sm"
                   onClick={() => setShowOpenProposalModal(true)}
-                  disabled={proposer.data?.activeProposal}
-                  disabledMessage="You already have an active proposal"
+                  disabled={createProposalDisabled}
+                  disabledMessage={createProposalDisabledMessage}
                 >
                   Create Proposal
                 </InfinityMirrorButton>
@@ -264,8 +267,6 @@ export function ProfilePage({
                       setStatus: setOpenStatus,
                       refetch: []
                     });
-
-                    console.log('open proposal stats: ', openStatus, openErrorMessage);
 
                     if (appId) {
                       setShowOpenProposalModal(false);

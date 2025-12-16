@@ -105,10 +105,12 @@ const adminAccount = await algorand.account.fromKmd(
 );
 console.log("admin account", adminAccount.addr);
 const dispenser = await algorand.account.dispenserFromEnvironment();
+const councilTestingAddress = '<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>'; // TODO: replace this value
+const daemonAddress = algorand.account.random()
 
 await algorand.account.ensureFunded(adminAccount.addr, dispenser, fundAmount);
-
-await algorand.account.ensureFunded('<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>', dispenser, (200).algo());
+await algorand.account.ensureFunded(councilTestingAddress, dispenser, (200).algo());
+await algorand.account.ensureFunded(daemonAddress.addr, dispenser, fundAmount);
 
 // Create the registry
 const registryMinter = new XGovRegistryFactory({
@@ -209,10 +211,11 @@ await councilClient.send.addMember({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: {
-    address: '<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>',
+    address: councilTestingAddress,
   },
+  appReferences: [registryClient.appId],
   boxReferences: [
-    CouncilMemberBoxName('<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>')
+    CouncilMemberBoxName(councilTestingAddress)
   ]
 });
 
@@ -733,6 +736,14 @@ for (let i = 0; i < councilMembers.length; i++) {
   })
 }
 
+await registryClient.send.setXgovDaemon({
+  sender: adminAccount.addr,
+  signer: adminAccount.signer,
+  args: {
+    xgovDaemon: daemonAddress.addr,
+  },
+});
+
 console.log({
   adminAccount,
   kycProvider,
@@ -753,6 +764,9 @@ fs.writeFileSync(
   ).replace(
     "<REPLACE_WITH_COUNCIL_APP_ID>",
     councilClient.appId.toString()
+  ).replace(
+    "<REPLACE_WITH_DAEMON_MNEMONIC>",
+    algosdk.secretKeyToMnemonic(daemonAddress.account.sk)
   ),
   "utf-8",
 );

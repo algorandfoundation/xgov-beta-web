@@ -1,53 +1,52 @@
 {
-    "title": "xGov Commitee",
-    "description": "Selected xGov Committee with voting power and validity",
-    "type": "object",
-    "properties": {
-        "xGovs": {
-            "description": "xGovs with voting power, sorted lexicographically with respect addresses",
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "address": {
-                        "description": "xGov address used on xGov Registry",
-                        "type": "string"
-                    },
-                    "votes": {
-                        "description": "xGov voting power",
-                        "type": "number"
-                    }
-                }
-            },
-            "uniqueItems": true,
-            "required": [
-                "address",
-                "votes"
-            ]
-        },
-        "periodStart": {
-            "description": "First block of the Committee slection period (equal or greater than)",
+  "title": "xGov Committee",
+  "description": "Selected xGov Committee with voting power and validity",
+  "type": "object",
+  "properties": {
+    "xGovs": {
+      "description": "xGovs with voting power, sorted lexicographically with respect to addresses",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "address": {
+            "description": "xGov address used on xGov Registry in base32",
+            "type": "string"
+          },
+          "votes": {
+            "description": "xGov voting power",
             "type": "number"
+          }
         },
-        "periodEnd": {
-            "description": "Last block of the Committee slection period (less than)",
-            "type": "number"
-        },
-        "members": {
-            "description": "Total number of Committee members",
-            "type": "number"
-        },
-        "votes": {
-            "description": "Total number of Committee votes",
-            "type": "number"
-        }
+        "required": ["address", "votes"]
+      },
+      "uniqueItems": true
     },
-    "required": [
-        "xGovs",
-        "periodStart",
-        "periodEnd",
-        "members",
-        "votes"
-    ],
- "additionalProperties": false
+    "periodStart": {
+      "description": "First block of the Committee selection period, must ≡ 0 mod 1,000,000 and greater than registryCreation + inceptionPeriod",
+      "type": "number"
+    },
+    "periodEnd": {
+      "description": "Last block of the Committee selection period, must ≡ 0 mod 1,000,000 and greater than periodStart",
+      "type": "number"
+    },
+    "totalMembers": {
+      "description": "Total number of Committee members",
+      "type": "number"
+    },
+    "networkGenesisHash": {
+      "description": "The genesis hash of the network in base64",
+      "type": "string"
+    },
+    "registryId": {
+      "description": "xGov Registry application ID",
+      "type": "number"
+    },
+    "totalVotes": {
+      "description": "Total number of Committee votes",
+      "type": "number"
+    }
+  },
+  "required": ["networkGenesisHash", "periodEnd", "periodStart", "registryId", "totalMembers", "totalVotes", "xGovs"],
+  "additionalProperties": false
 }
