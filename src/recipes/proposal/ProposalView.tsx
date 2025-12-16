@@ -54,6 +54,7 @@ import { TransactionStateLoader } from "@/components/TransactionStateLoader/Tran
 import type { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { shortenAddress } from "@/functions";
+import { TransactionErrorDialog } from "@/components/TransactionErrorDialog/TransactionErrorDialog";
 
 export const defaultsStatusCardMap = {
   [ProposalStatus.ProposalStatusEmpty]: {
@@ -507,6 +508,8 @@ function VotingStatusCard({
                 </SelectContent>
               </Select>
             </div>
+            <TransactionErrorDialog status={approveStatus} setStatus={setApproveStatus} />
+            <TransactionErrorDialog status={rejectStatus} setStatus={setRejectStatus} />
           </div>
         )
       }
