@@ -119,7 +119,7 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
 
             <Link
               className="px-4 text-4xl xs:text-5xl font-bold text-algo-black dark:text-white focus:outline-none underline-offset-4 hover:underline focus-visible:ring-0 dark:focus-visible:ring-0 focus-visible:underline"
-              to="https://algorandfoundation.github.io/xgov-beta-sc/"
+              to="https://docs.xgov.algorand.co"
             >
               Docs
             </Link>
@@ -210,7 +210,7 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
         )}
       </DialogContent>
     </Dialog>
-    
+
     <TutorialDialog
       isOpen={showTutorial}
       onClose={handleTutorialClose}
