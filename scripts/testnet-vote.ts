@@ -7,7 +7,6 @@ import { committeeIdToSafeFileName } from "./utils";
 import {
   XGovRegistryClient,
 } from "@algorandfoundation/xgov/registry";
-import { act } from "react";
 
 const APP_ID = process.env.APP_ID ? BigInt(process.env.APP_ID) : 0n;
 const voterSeedsFilename = process.argv[2];
