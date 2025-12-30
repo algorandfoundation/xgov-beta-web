@@ -143,8 +143,6 @@ async function processBatch(
         success: false,
         details: {
           id: batch[index].id,
-          title: batch[index].title,
-          voters: 0,
           status: "failed" as const,
           error: `Uncaught error: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`,
         },
