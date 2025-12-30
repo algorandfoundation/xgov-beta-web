@@ -20,6 +20,7 @@ import {
   type ProposalMainCardDetailsWithNFDs,
   dropProposal,
   voteProposal,
+  callDeleteProposal,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -1214,6 +1215,14 @@ export function DropModal({
                 appId: proposalId,
               })
               onClose();
+
+              // call backend to delete proposal
+              try {
+                await callDeleteProposal(proposalId);
+              } catch (e) {
+                console.warn("Failed to delete proposal:", e);
+              }
+
               navigate("/");
             }}
             disabled={isPending}

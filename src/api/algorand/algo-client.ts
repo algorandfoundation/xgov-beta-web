@@ -31,12 +31,12 @@ export const algod = ClientManager.getAlgodClient({
 export const kmd: algosdk.Kmd | undefined =
   env.PUBLIC_NETWORK === "localnet"
     ? ClientManager.getKmdClient({
-        server: env.PUBLIC_KMD_SERVER || "http://localhost",
-        port: env.PUBLIC_KMD_PORT || "4002",
-        token:
-          env.PUBLIC_ALGOD_TOKEN ||
-          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      })
+      server: env.PUBLIC_KMD_SERVER || "http://localhost",
+      port: env.PUBLIC_KMD_PORT || "4002",
+      token:
+        env.PUBLIC_ALGOD_TOKEN ||
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    })
     : undefined;
 
 export const algorand = AC.fromClients({ algod, indexer, kmd });
