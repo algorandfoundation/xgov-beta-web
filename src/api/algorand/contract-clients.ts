@@ -8,7 +8,7 @@ import { env } from "@/constants";
 import type { AlgorandClient } from "@algorandfoundation/algokit-utils";
 import { CouncilClient } from "@algorandfoundation/xgov/council";
 
-const DEFAULT_REGISTRY_APP_ID = 16324508;
+const DEFAULT_REGISTRY_APP_ID = 0;
 export const RegistryAppID: bigint = BigInt(
   env.PUBLIC_REGISTRY_APP_ID !== "<REPLACE_WITH_REGISTRY_APP_ID>"
     ? env.PUBLIC_REGISTRY_APP_ID || DEFAULT_REGISTRY_APP_ID
