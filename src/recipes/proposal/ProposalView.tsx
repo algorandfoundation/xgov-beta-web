@@ -1216,7 +1216,7 @@ export function DropModal({
               })
               onClose();
 
-              // call backend to assign voters
+              // call backend to delete proposal
               try {
                 await callDeleteProposal(proposalId);
               } catch (e) {
