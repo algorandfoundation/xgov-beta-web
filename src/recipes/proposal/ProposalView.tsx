@@ -366,6 +366,14 @@ function VotingStatusCard({
     isPending: rejectIsPending
   } = useTransactionState();
 
+
+  const {
+    status: abstainStatus,
+    setStatus: setAbstainStatus,
+    errorMessage: abstainErrorMessage,
+    isPending: abstainIsPending
+  } = useTransactionState();
+
   const {
     status: approveStatus,
     setStatus: setApproveStatus,
@@ -551,7 +559,7 @@ function VotingStatusCard({
                   rejections: 0,
                   voterInfo: voterInfo,
                 })}
-                disabled={rejectIsPending || approveIsPending}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending}
               >
                 <TransactionStateLoader
                   defaultText="Approve"
@@ -559,6 +567,33 @@ function VotingStatusCard({
                     status: approveStatus,
                     errorMessage: approveErrorMessage,
                     isPending: approveIsPending
+                  }}
+                />
+              </Button>
+
+              <Button
+                type='button'
+                variant='outline'
+                className="bg-algo-blue-10 dark:bg-algo-black-90"
+                onClick={() => voteProposal({
+                  activeAddress,
+                  xgovAddress: selectedVotingAs,
+                  innerSigner,
+                  setStatus: setAbstainStatus,
+                  refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
+                  appId: proposal.id,
+                  approvals: 0,
+                  rejections: 0,
+                  voterInfo: voterInfo,
+                })}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending}
+              >
+                <TransactionStateLoader
+                  defaultText="Abstain"
+                  txnState={{
+                    status: abstainStatus,
+                    errorMessage: abstainErrorMessage,
+                    isPending: abstainIsPending
                   }}
                 />
               </Button>
@@ -577,7 +612,7 @@ function VotingStatusCard({
                   rejections: Number(voterInfo.votes),
                   voterInfo: voterInfo,
                 })}
-                disabled={rejectIsPending || approveIsPending}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending}
               >
                 <TransactionStateLoader
                   defaultText="Reject"

@@ -88,8 +88,16 @@ Now the xGov Registry should be in a good state.
 
 Rather than following the (potentially out-of-date) manual flow above, feel free to call the mock-init.ts script.
 
+The script requires you to provide an Algorand address that will be added to the council for testing purposes:
+
 ```bash
-npm run mock-init
+npm run mock-init -- --council-address YOUR_ALGORAND_ADDRESS
+```
+
+Or using the short alias:
+
+```bash
+npm run mock-init -- -c YOUR_ALGORAND_ADDRESS
 ```
 
 Run `npm run dev` and navigate to the page. The script will now run and set things up in the background.
