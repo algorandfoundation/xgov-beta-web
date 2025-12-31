@@ -10,7 +10,7 @@ import {
 import { removeCouncilMember } from "@/api";
 import { Button } from "@/components/ui/button";
 import { CopyIcon } from "lucide-react";
-import { useCouncilGlobalState, useCouncilMembers } from "@/hooks";
+import { useCouncilMembers } from "@/hooks";
 import { TransactionStateLoader } from "@/components/TransactionStateLoader/TransactionStateLoader";
 import { useWallet } from "@txnlab/use-wallet-react";
 import type { TransactionState } from "@/api/types/transaction_state";

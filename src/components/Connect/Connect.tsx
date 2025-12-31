@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { shortenAddress } from "@/functions/shortening";
-import { BaseWallet, type Wallet } from "@txnlab/use-wallet-react";
+import { useWallet, type Wallet } from "@txnlab/use-wallet-react";
 import { useState } from "react";
 import { cn } from "@/functions/utils";
 import { Link } from "@/components/Link";
@@ -25,9 +25,6 @@ export interface ConnectProps {
   path: string;
   cta?: string;
   onLogOut: () => void;
-  wallets: Wallet[];
-  activeAddress: string | null;
-  activeWallet?: BaseWallet | null;
   nfdName?: string;
   hideIcon?: boolean;
 }
@@ -35,11 +32,10 @@ export interface ConnectProps {
 export function Connect({
   cta = 'Connect Wallet',
   onLogOut,
-  wallets,
-  activeAddress,
   nfdName,
   hideIcon = false,
 }: ConnectProps) {
+  const { wallets, activeAddress } = useWallet();
   const [dialogOpen, setOpenDialog] = useState(false);
 
   if (!!activeAddress) {

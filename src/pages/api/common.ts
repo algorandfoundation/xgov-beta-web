@@ -1,6 +1,7 @@
-import algosdk, { type TransactionSigner } from "algosdk";
+import algosdk, { makeBasicAccountTransactionSigner } from "algosdk";
 import { getNumericEnvironmentVariable } from "@/functions";
 import type { Logger } from "@/utils/logger";
+import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 
 export const DEFAULT_CONCURRENT_PROPOSALS = 5; // Default number of proposals to process concurrently
 export const MAX_CONCURRENT_PROPOSALS = 20; // Maximum number of proposals to process concurrently
@@ -118,7 +119,7 @@ export async function parseRequestOptions(
 export function createXGovDaemon(
   logger: Logger,
   daemonMnemonic?: string,
-): { addr: string; signer: TransactionSigner } | null {
+): TransactionSignerAccount | null {
   // Check if we have daemon credentials
   if (!daemonMnemonic) {
     return null;
@@ -127,17 +128,10 @@ export function createXGovDaemon(
   // Create xgov daemon account from mnemonic
   const account = algosdk.mnemonicToSecretKey(daemonMnemonic);
 
-  // Create a TransactionSignerAccount from the account
-  const daemon = {
-    addr: account.addr,
-    // Implement the signer as a TransactionSigner
-    signer: (txnGroup: algosdk.Transaction[], indexesToSign: number[]) => {
-      return Promise.resolve(
-        indexesToSign.map((i) => txnGroup[i].signTxn(account.sk)),
-      );
-    },
-  };
-
   logger.info(`Using xgov daemon with address: ${account.addr}`);
-  return daemon;
+  
+  return {
+    addr: account.addr,
+    signer: makeBasicAccountTransactionSigner(account),
+  }
 }

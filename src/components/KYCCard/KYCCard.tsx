@@ -30,8 +30,6 @@ export function KYCCard({
 
   const [isExpired, setIsExpired] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [currentKYCStatus, setCurrentKYCStatus] = useState(kyc_status);
-  const [currentExpiryDate, setCurrentExpiryDate] = useState(expiry_date);
 
   const allProposers = useAllProposers()
 
@@ -39,7 +37,6 @@ export function KYCCard({
     status,
     setStatus,
     errorMessage,
-    setErrorMessage,
     reset,
     isPending
   } = useTransactionState();
@@ -53,9 +50,9 @@ export function KYCCard({
 
   useEffect(() => {
     setIsExpired(
-      currentExpiryDate ? Date.now() > currentExpiryDate * 1000 : false,
+      expiry_date ? Date.now() > expiry_date * 1000 : false,
     );
-  }, [currentExpiryDate]);
+  }, [expiry_date]);
 
   const handleApprove = async (date: Date) => {
     const dateInSeconds = Math.floor(date.getTime() / 1000);
@@ -96,7 +93,7 @@ export function KYCCard({
       // skip date picker
       // TODO need confirmation dialog actually
       e.preventDefault();
-    } else if (currentKYCStatus) {
+    } else if (kyc_status) {
       setShowConfirmDialog(true);
     }
   };
@@ -121,7 +118,7 @@ export function KYCCard({
     <div
       className={cn(
         "p-2 rounded-md dark:text-white",
-        currentKYCStatus
+        kyc_status
           ? "bg-gradient-to-r from-algo-green/20 to-algo-black-10 dark:to-algo-black-90"
           : isExpired
             ? "bg-gradient-to-r from-algo-orange/20 dark:from-algo-yellow to-algo-black-10 dark:to-algo-black-90"
@@ -134,7 +131,7 @@ export function KYCCard({
             {proposalAddress}
           </span>
           <span className="text-xs">
-            {currentKYCStatus ? (
+            {kyc_status ? (
               <>
                 KYC {isExpired ? "Expired on " : "Approved - Expires"}{" "}
                 {expiry_humanDate}
@@ -152,14 +149,14 @@ export function KYCCard({
               className={cn(
                 isExpired
                   ? "bg-algo-orange dark:bg-algo-yellow text-white border-algo-orange dark:border-algo-yellow"
-                  : currentKYCStatus
+                  : kyc_status
                     ? "bg-algo-red text-white dark:text-white border-algo-red dark:bg-algo-red dark:border-algo-red"
                     : "bg-algo-green text-white border-algo-green",
               )}
             >
               {isExpired
                 ? "Expired"
-                : currentKYCStatus
+                : kyc_status
                   ? "Disqualify"
                   : "Approve"}
             </Button>

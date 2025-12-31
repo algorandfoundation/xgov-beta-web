@@ -3,9 +3,6 @@ import { AlgorandIcon } from "../icons/AlgorandIcon";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { WarningNotice } from "../WarningNotice/WarningNotice";
-import { LoadingSpinner } from "../LoadingSpinner/LoadingSpinner";
-import { useWallet } from "@txnlab/use-wallet-react";
-import { CheckIcon } from "lucide-react";
 import type { TransactionStateInfo } from "@/api/types/transaction_state";
 import { TransactionStateLoader } from "../TransactionStateLoader/TransactionStateLoader";
 
@@ -24,8 +21,6 @@ export function BecomeXGovModal({
   costs,
   txnState
 }: BecomeXGovModalProps) {
-  const { activeWallet } = useWallet();
-  const walletName = activeWallet?.metadata.name;
 
   const onSubmit = async () => {
     try {

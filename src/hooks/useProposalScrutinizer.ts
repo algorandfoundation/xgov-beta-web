@@ -38,7 +38,7 @@ export function useProposalScrutinizer(proposals: ProposalSummaryCardDetails[]) 
         const scrutinyFundingLogicSigSigner = getScrutinyLsigSigner(network);
         return Promise.all([
             callScrutinize(
-                scrutinyFundingLogicSig.address(),
+                scrutinyFundingLogicSig.address().toString(),
                 proposal.id,
                 proposal.proposer,
                 scrutinyFundingLogicSigSigner,

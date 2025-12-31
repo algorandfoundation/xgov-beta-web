@@ -14,7 +14,7 @@ import { $themeStore, toggleTheme } from "@/stores/themeStore";
 import { useWallet } from "@txnlab/use-wallet-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "../Link";
-import { UseWallet, UseQuery, useNFD, useProposer, useRegistry, useXGov } from "@/hooks";
+import { UseWallet, UseQuery, useProposer, useRegistry, useXGov } from "@/hooks";
 import { TutorialDialog } from "@/components/TutorialDialog/TutorialDialog";
 import { subscribeProposer, subscribeXgov } from "@/api";
 import { useTransactionState } from "@/hooks/useTransactionState";
@@ -53,7 +53,6 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
     status: subXGovStatus,
     setStatus: setSubXGovStatus,
     errorMessage: subXGovErrorMessage,
-    setErrorMessage: setSubXGovErrorMessage,
     isPending: isSubXGovPending
   } = useTransactionState()
 
@@ -61,7 +60,6 @@ export function MobileNav({ trigger, path = "/" }: { trigger?: ReactNode; path?:
     status: subProposerStatus,
     setStatus: setSubProposerStatus,
     errorMessage: subProposerErrorMessage,
-    setErrorMessage: setSubProposerErrorMessage,
     isPending: isSubProposerPending
   } = useTransactionState()
 

@@ -13,14 +13,15 @@ import {
   type CallParams,
   type ProposalArgs,
 } from "@algorandfoundation/xgov";
-import algosdk, { encodeAddress, type TransactionSigner } from "algosdk";
+import algosdk from "algosdk";
 import type { APIRoute } from "astro";
 import { createLogger } from "@/utils/logger";
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
-import { chunk, getNumericEnvironmentVariable, getStringEnvironmentVariable } from "@/functions";
+import { chunk, getStringEnvironmentVariable } from "@/functions";
 import pMap from "p-map";
 import type { XGovRegistryClient } from "@algorandfoundation/xgov/registry";
 import { createXGovDaemon, parseRequestOptions } from "./common";
+import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 
 // Create logger for this file
 const logger = createLogger("unassign-api");
@@ -116,7 +117,7 @@ function createTransactionParams(
   registryClient: XGovRegistryClient,
   voters: string[],
   boxReferences: Uint8Array[],
-  xgovDaemon: { addr: string; signer: TransactionSigner },
+  xgovDaemon: TransactionSignerAccount,
   isFirstTransaction: boolean,
 ): CallParams<ProposalArgs["obj"]["unassign_voters(address[])void"]> {
   const txnParams: CallParams<
@@ -150,7 +151,7 @@ async function processVoterBatch(
   registryClient: XGovRegistryClient,
   proposalClient: ProposalClient,
   eligibleVoters: string[],
-  xgovDaemon: { addr: string; signer: TransactionSigner },
+  xgovDaemon: TransactionSignerAccount,
 ): Promise<number> {
   const totalVoters = eligibleVoters.length;
 
@@ -295,7 +296,7 @@ async function processProposal(
   registryClient: XGovRegistryClient,
   proposal: ProposalSummaryCardDetails,
   proposalFactory: ProposalFactory,
-  xgovDaemon: { addr: string; signer: TransactionSigner },
+  xgovDaemon: TransactionSignerAccount,
   maxRequestsPerProposal: number,
 ): Promise<ProposalResult> {
   try {
@@ -429,7 +430,7 @@ async function processBatch(
   registryClient: XGovRegistryClient,
   batch: ProposalSummaryCardDetails[],
   proposalFactory: ProposalFactory,
-  xgovDaemon: { addr: string; signer: TransactionSigner },
+  xgovDaemon: TransactionSignerAccount,
   maxRequestsPerProposal: number,
 ): Promise<ProposalResult[]> {
   logger.info(`Processing batch of ${batch.length} proposals`);

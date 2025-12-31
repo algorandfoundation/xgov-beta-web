@@ -18,7 +18,7 @@ export const relationMap: { [key: string]: string } = {
   "1": "Reti"
 }
 
-export function SubscribeRequestCard({ request, onApprove, onReject, approveStatus, rejectStatus, errorMessage }: SubscribeRequestCardProps) {
+export function SubscribeRequestCard({ request, onApprove, onReject }: SubscribeRequestCardProps) {
 
   const [ownerOpenTooltip, setOwnerOpenTooltip] = useState<boolean>(false);
   const [xGovOpenTooltip, setXGovOpenTooltip] = useState<boolean>(false);

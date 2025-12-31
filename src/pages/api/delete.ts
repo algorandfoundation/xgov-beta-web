@@ -8,12 +8,13 @@ import {
   RegistryAppID,
 } from "@/api";
 import { ProposalFactory } from "@algorandfoundation/xgov";
-import { type TransactionSigner } from "algosdk";
+import algosdk, { type TransactionSigner } from "algosdk";
 import type { APIRoute } from "astro";
 import { createLogger } from "@/utils/logger";
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
 import { getStringEnvironmentVariable } from "@/functions";
 import { createXGovDaemon, parseRequestOptions } from "./common";
+import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 
 // Create logger for this file
 const logger = createLogger("delete-api");
@@ -49,7 +50,7 @@ interface ResultsSummary {
 async function processProposal(
   proposal: ProposalSummaryCardDetails,
   proposalFactory: ProposalFactory,
-  xgovDaemon: { addr: string; signer: TransactionSigner },
+  xgovDaemon: TransactionSignerAccount,
 ): Promise<ProposalResult> {
   try {
     logger.info(`Processing proposal ${proposal.id}: ${proposal.title}`);
@@ -116,7 +117,7 @@ async function processProposal(
 async function processBatch(
   batch: ProposalSummaryCardDetails[],
   proposalFactory: ProposalFactory,
-  xgovDaemon: { addr: string; signer: TransactionSigner },
+  xgovDaemon: { addr: algosdk.Address; signer: TransactionSigner },
 ): Promise<ProposalResult[]> {
   logger.info(`Processing batch of ${batch.length} proposals`);
 

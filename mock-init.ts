@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import crypto from "crypto";
-import algosdk, { ALGORAND_MIN_TX_FEE } from "algosdk";
+import algosdk from "algosdk";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { XGovRegistryFactory } from "@algorandfoundation/xgov/registry";
@@ -52,21 +52,21 @@ function loadProposalContractDataSizePerTransaction() {
   )
 }
 
-async function getLastRound(): Promise<number> {
-  return (await algorand.client.algod.status().do())["last-round"];
+async function getLastRound(): Promise<bigint> {
+  return (await algorand.client.algod.status().do()).lastRound;
 }
 
-async function getLatestTimestamp(): Promise<number> {
+async function getLatestTimestamp(): Promise<bigint> {
   const lastRound = await getLastRound();
   const block = await algorand.client.algod.block(lastRound).do();
-  return block.block.ts;
+  return block.block.header.timestamp;
 }
 
-export async function roundWarp(to: number = 0) {
+export async function roundWarp(to: bigint = 0n) {
   algorand.setSuggestedParamsCacheTimeout(0);
   const dispenser = await algorand.account.dispenserFromEnvironment();
   let nRounds;
-  if (to !== 0) {
+  if (to !== 0n) {
     const lastRound = await getLastRound();
 
     if (to < lastRound) {
@@ -90,7 +90,7 @@ export async function roundWarp(to: number = 0) {
   }
 }
 
-export async function timeWarp(to: number) {
+export async function timeWarp(to: bigint) {
   algorand.setSuggestedParamsCacheTimeout(0);
   const current = await getLatestTimestamp();
   await algorand.client.algod.setBlockOffsetTimestamp(to - current).do();
@@ -214,7 +214,7 @@ await algorand.account.ensureFunded(kycProvider.addr, dispenser, fundAmount);
 await registryClient.send.setKycProvider({
   sender: adminAccount.addr,
   args: {
-    provider: kycProvider.addr,
+    provider: kycProvider.addr.toString(),
   },
 });
 
@@ -260,7 +260,7 @@ await registryClient.send.setCommitteeManager({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: {
-    manager: adminAccount.addr,
+    manager: adminAccount.addr.toString(),
   },
 });
 
@@ -268,7 +268,7 @@ await registryClient.send.setXgovDaemon({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: {
-    xgovDaemon: adminAccount.addr,
+    xgovDaemon: adminAccount.addr.toString(),
   },
 });
 
@@ -276,7 +276,7 @@ await registryClient.send.setXgovSubscriber({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: {
-    subscriber: adminAccount.addr,
+    subscriber: adminAccount.addr.toString(),
   },
 });
 
@@ -328,11 +328,11 @@ for (let i = 0; i < 10; i++) {
     sender: adminAccount.addr,
     signer: adminAccount.signer,
     args: {
-      address: randomAccount.addr,
+      address: randomAccount.addr.toString(),
     },
     appReferences: [registryClient.appId],
     boxReferences: [
-      CouncilMemberBoxName(randomAccount.addr)
+      CouncilMemberBoxName(randomAccount.addr.toString()),
     ]
   });
 
@@ -380,16 +380,16 @@ for (const committeeMember of committeeMembers) {
     sender: committeeMember.addr,
     signer: committeeMember.signer,
     args: {
-      votingAddress: committeeMember.addr,
+      votingAddress: committeeMember.addr.toString(),
       payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         amount: 1_000_000,
-        from: committeeMember.addr,
-        to: registryClient.appAddress.toString(),
+        sender: committeeMember.addr,
+        receiver: registryClient.appAddress,
         suggestedParams: await algorand.getSuggestedParams(),
       }),
     },
     boxReferences: [
-      xGovBoxName(committeeMember.addr),
+      xGovBoxName(committeeMember.addr.toString()),
     ],
   });
 }
@@ -415,7 +415,7 @@ const proposalFee = PROPOSAL_FEE.microAlgo();
 // get suggestedparams
 const suggestedParams = await algorand.getSuggestedParams();
 
-const oneYearFromNow = (await getLatestTimestamp()) + 365 * 24 * 60 * 60;
+const oneYearFromNow = (await getLatestTimestamp()) + 365n * 24n * 60n * 60n;
 
 const proposalFactory = new ProposalFactory({ algorand });
 
@@ -448,12 +448,12 @@ for (let i = 0; i < mockProposals.length; i++) {
     args: {
       payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         amount: proposerFee.microAlgos,
-        from: account.addr,
-        to: registryClient.appAddress.toString(),
+        sender: account.addr,
+        receiver: registryClient.appAddress,
         suggestedParams,
       }),
     },
-    boxReferences: [proposerBoxName(account.addr)],
+    boxReferences: [proposerBoxName(account.addr.toString())],
   });
 
   try {
@@ -462,11 +462,11 @@ for (let i = 0; i < mockProposals.length; i++) {
       sender: kycProvider.addr,
       signer: kycProvider.signer,
       args: {
-        proposer: account.addr,
+        proposer: account.addr.toString(),
         kycStatus: true,
         kycExpiring: BigInt(oneYearFromNow),
       },
-      boxReferences: [proposerBoxName(account.addr)],
+      boxReferences: [proposerBoxName(account.addr.toString())],
     });
   } catch (e) {
     console.error("Failed to approve proposer KYC");
@@ -480,19 +480,19 @@ for (let i = 0; i < mockProposals.length; i++) {
     args: {
       payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         amount: proposalFee.microAlgos,
-        from: account.addr,
-        to: registryClient.appAddress.toString(),
+        sender: account.addr,
+        receiver: registryClient.appAddress,
         suggestedParams,
       }),
     },
     boxReferences: [
-      proposerBoxName(account.addr),
+      proposerBoxName(account.addr.toString()),
       proposalApprovalBoxName(),
       proposalApprovalBoxName(),
       proposalApprovalBoxName(),
       proposalApprovalBoxName(),
     ],
-    extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
+    extraFee: (2000).microAlgos(),
   });
 
   // Store proposal ID if available
@@ -542,8 +542,8 @@ for (let i = 0; i < mockProposals.length; i++) {
         args: {
           payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
             amount: proposalSubmissionFee,
-            from: account.addr,
-            to: proposalClient.appAddress.toString(),
+            sender: account.addr,
+            receiver: proposalClient.appAddress,
             suggestedParams,
           }),
           title: mockProposals[i].title,
@@ -577,7 +577,7 @@ for (let i = 0; i < mockProposals.length; i++) {
   }
 }
 
-const ts = (await getLatestTimestamp()) + 86400 * 5;
+const ts = (await getLatestTimestamp()) + 86400n * 5n;
 await timeWarp(ts);
 console.log("finished time warp, new ts: ", await getLatestTimestamp());
 
@@ -594,7 +594,7 @@ for (let i = 1; i < mockProposals.length; i++) {
     appReferences: [registryClient.appId],
     accountReferences: [adminAccount.addr],
     boxReferences: [metadataBoxName],
-    extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
+    extraFee: (1000).microAlgos(),
   });
 }
 
@@ -611,7 +611,7 @@ for (let i = 1; i < mockProposals.length; i++) {
       const committeeMember = committeeMembers[j];
       const votes = committeeVotes[j];
 
-      const addr = algosdk.decodeAddress(committeeMember.addr).publicKey;
+      const addr = committeeMember.addr.publicKey;
 
       console.log('Committee member: ', committeeMember.addr);
       console.log('    voting power: ', votes);
@@ -622,7 +622,7 @@ for (let i = 1; i < mockProposals.length; i++) {
           sender: adminAccount.addr,
           signer: adminAccount.signer,
           args: {
-            voters: [[committeeMember.addr, votes]],
+            voters: [[committeeMember.addr.toString(), votes]],
           },
           appReferences: [registryClient.appId],
           boxReferences: [
@@ -670,19 +670,19 @@ for (let i = 1; i < 10; i++) {
       signer: committeeMembers[j].signer,
       args: {
         proposalId: proposalIds[i],
-        xgovAddress: committeeMembers[j].addr,
+        xgovAddress: committeeMembers[j].addr.toString(),
         approvalVotes: approve ? actualVotingPower : 0n,
         rejectionVotes: approve ? 0n : actualVotingPower,
       },
       accountReferences: [committeeMembers[j].addr],
       appReferences: [proposalIds[i]],
       boxReferences: [
-        new Uint8Array(Buffer.concat([Buffer.from('x'), algosdk.decodeAddress(committeeMembers[j].addr).publicKey])),
+        new Uint8Array(Buffer.concat([Buffer.from('x'), committeeMembers[j].addr.publicKey])),
         {
           appId: proposalIds[i], name: new Uint8Array(Buffer.concat([Buffer.from('V'),
-          algosdk.decodeAddress(committeeMembers[j].addr).publicKey]))
+          committeeMembers[j].addr.publicKey]))
         }],
-      extraFee: (ALGORAND_MIN_TX_FEE * 100).microAlgos(),
+      extraFee: (100_000).microAlgos(),
     })
   }
 }
@@ -696,25 +696,25 @@ try {
     signer: adminAccount.signer,
     args: {
       proposalId: proposalIds[1],
-      xgovAddress: adminAccount.addr,
+      xgovAddress: adminAccount.addr.toString(),
       approvalVotes: 10n,
       rejectionVotes: 0n,
     },
     accountReferences: [adminAccount.addr],
     appReferences: [proposalIds[1]],
     boxReferences: [
-      xGovBoxName(adminAccount.addr),
+      xGovBoxName(adminAccount.addr.toString()),
       {
         appId: proposalIds[1],
         name: new Uint8Array(
           Buffer.concat([
             Buffer.from("V"),
-            algosdk.decodeAddress(adminAccount.addr).publicKey,
+            adminAccount.addr.publicKey,
           ]),
         ),
       },
     ],
-    extraFee: (ALGORAND_MIN_TX_FEE * 100).microAlgos(),
+    extraFee: (100_000).microAlgos(),
   });
 } catch (e) {
   console.error("Failed to vote proposal");
@@ -744,7 +744,7 @@ for (let i = 0; i < councilMembers.length; i++) {
     appReferences: [proposalIds[1], registryClient.appId],
     boxReferences: [
       CouncilVoteBoxName(Number(proposalIds[1])),
-      CouncilMemberBoxName(councilMembers[i].addr)
+      CouncilMemberBoxName(councilMembers[i].addr.toString())
     ],
     extraFee: (1_000).microAlgo()
   })
@@ -754,7 +754,7 @@ await registryClient.send.setXgovDaemon({
   sender: adminAccount.addr,
   signer: adminAccount.signer,
   args: {
-    xgovDaemon: daemonAddress.addr,
+    xgovDaemon: daemonAddress.addr.toString(),
   },
 });
 

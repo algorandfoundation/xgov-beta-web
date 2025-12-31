@@ -2,7 +2,6 @@ import type { AppState } from "@algorandfoundation/algokit-utils/types/app";
 import { AppManager } from "@algorandfoundation/algokit-utils/types/app-manager";
 import algosdk, {
   ABIType,
-  ALGORAND_MIN_TX_FEE,
   type TransactionSigner,
 } from "algosdk";
 import { ProposalFactory, type VotingState } from "@algorandfoundation/xgov";
@@ -15,8 +14,7 @@ import {
   type ProposalJSON,
   type ProposalMainCardDetails,
   ProposalStatus,
-  type ProposalSummaryCardDetails,
-  type RegistryGlobalState,
+  type ProposalSummaryCardDetails
 } from "@/api/types";
 
 import {
@@ -34,7 +32,6 @@ import { sleep } from "./nfd";
 import { getCommitteeData, type CommitteeMember } from "./committee";
 
 const PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT = 4;
-const BPS = 10_000n;
 
 export const proposalFactory = new ProposalFactory({ algorand });
 
@@ -66,8 +63,12 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
       .do();
     console.log("Account info received, processing apps...");
 
+    if (!response.createdApps) {
+      throw new Error("No created apps found for registry");
+    }
+
     return await Promise.all(
-      response["created-apps"].map(
+      response.createdApps.map(
         async (data: any): Promise<ProposalSummaryCardDetails> => {
           try {
             const state = AppManager.decodeAppState(
@@ -554,8 +555,8 @@ export async function createEmptyProposal({
       args: {
         payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
           amount: proposalFee.microAlgos,
-          from: activeAddress,
-          to: registryClient.appAddress.toString(),
+          sender: activeAddress,
+          receiver: registryClient.appAddress,
           suggestedParams,
         }),
       },
@@ -563,7 +564,7 @@ export async function createEmptyProposal({
         proposerBoxName(activeAddress),
         ...Array(PROPOSAL_APPROVAL_BOX_REFERENCE_COUNT).fill(_proposalApprovalBoxName)
       ],
-      extraFee: (ALGORAND_MIN_TX_FEE * 2).microAlgos(),
+      extraFee: (2_000).microAlgos(),
     });
 
     // Store proposal ID if available
@@ -657,8 +658,8 @@ export async function openProposal({
       args: {
         payment: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
           amount: proposalSubmissionFee,
-          from: activeAddress,
-          to: proposalClient.appAddress.toString(),
+          sender: activeAddress,
+          receiver: proposalClient.appAddress,
           suggestedParams,
         }),
         title: data.title,

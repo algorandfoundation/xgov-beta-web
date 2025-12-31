@@ -52,7 +52,6 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
     status: subXGovStatus,
     setStatus: setSubXGovStatus,
     errorMessage: subXGovErrorMessage,
-    setErrorMessage: setSubXGovErrorMessage,
     isPending: isSubXGovPending
   } = useTransactionState()
 
@@ -60,7 +59,6 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
     status: subProposerStatus,
     setStatus: setSubProposerStatus,
     errorMessage: subProposerErrorMessage,
-    setErrorMessage: setSubProposerErrorMessage,
     isPending: isSubProposerPending
   } = useTransactionState()
 
@@ -165,7 +163,6 @@ export function ConnectController({ path = "/", cta = 'Connect Wallet', openTuto
               manager.activeWallet!.disconnect();
               path.includes("profile") && navigate("/");
             }}
-            {...manager}
             path={path}
             nfdName={nfd.data?.name || ""}
           />

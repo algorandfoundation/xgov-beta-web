@@ -12,14 +12,15 @@ import {
   type CallParams,
   type ProposalArgs,
 } from "@algorandfoundation/xgov";
-import algosdk, { type TransactionSigner } from "algosdk";
+import algosdk from "algosdk";
 import type { APIRoute } from "astro";
 import { createLogger } from "@/utils/logger";
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
-import { chunk, getNumericEnvironmentVariable, getStringEnvironmentVariable } from "@/functions";
+import { chunk, getStringEnvironmentVariable } from "@/functions";
 import pMap from "p-map";
 import type { XGovRegistryClient } from "@algorandfoundation/xgov/registry";
 import { createXGovDaemon, parseRequestOptions } from "./common";
+import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 
 // Create logger for this file
 const logger = createLogger("assign-api");
@@ -28,18 +29,6 @@ const logger = createLogger("assign-api");
 const MAX_GROUP_SIZE = 16; // Maximum transactions in a group
 const FIRST_TXN_VOTERS = 7; // First transaction can have up to 7 voters
 const OTHER_TXN_VOTERS = 8; // Other transactions can have up to 8 voters
-const DEFAULT_CONCURRENT_PROPOSALS = 5; // Default number of proposals to process concurrently
-const MAX_CONCURRENT_PROPOSALS = 20; // Maximum number of proposals to process concurrently
-// Environment variable for concurrent proposal processing
-const ENV_CONCURRENT_PROPOSALS = import.meta.env.MAX_CONCURRENT_PROPOSALS
-  ? parseInt(import.meta.env.MAX_CONCURRENT_PROPOSALS, 10)
-  : null;
-const DEFAULT_MAX_REQUESTS_PER_PROPOSAL = 5; // Default number of proposals to process concurrently
-const MAX_REQUESTS_PER_PROPOSAL = 20; // Maximum number of proposals to process concurrently
-// Environment variable for concurrent proposal processing
-const ENV_MAX_REQUESTS_PER_PROPOSAL = import.meta.env.MAX_REQUESTS_PER_PROPOSAL
-  ? parseInt(import.meta.env.MAX_REQUESTS_PER_PROPOSAL, 10)
-  : null;
 
 const CONFIRMATION_ROUNDS = 4; // Number of rounds to wait for transaction confirmation
 const VOTER_BOX_PREFIX_BYTE = 86; // ASCII for 'V'
@@ -388,7 +377,7 @@ function createTransactionParams(
   registryClient: XGovRegistryClient,
   voters: [string, number][],
   boxReferences: Uint8Array[],
-  xgovDaemon: { addr: string; signer: TransactionSigner },
+  xgovDaemon: TransactionSignerAccount,
   isFirstTransaction: boolean,
 ): CallParams<ProposalArgs["obj"]["assign_voters((address,uint64)[])void"]> {
   const txnParams: CallParams<
@@ -422,11 +411,9 @@ async function processVoterBatch(
   registryClient: XGovRegistryClient,
   proposalClient: ProposalClient,
   eligibleVoters: CommitteeMember[],
-  xgovDaemon: { addr: string; signer: TransactionSigner },
+  xgovDaemon: TransactionSignerAccount,
 ): Promise<number> {
   const totalVoters = eligibleVoters.length;
-  const MAX_VOTERS_PER_GROUP =
-    FIRST_TXN_VOTERS + (MAX_GROUP_SIZE - 1) * OTHER_TXN_VOTERS; // = 7 + 15*8 = 127
 
   // Calculate how many voters to process in this batch (capped by MAX_VOTERS_PER_GROUP)
   const votersInThisBatch = eligibleVoters.length;
@@ -575,7 +562,7 @@ async function processProposal(
   registryClient: XGovRegistryClient,
   proposal: ProposalSummaryCardDetails,
   proposalFactory: ProposalFactory,
-  xgovDaemon: { addr: string; signer: TransactionSigner },
+  xgovDaemon: TransactionSignerAccount,
   maxRequestsPerProposal: number,
   apiUrl?: string,
 ): Promise<ProposalResult> {
@@ -650,7 +637,7 @@ async function processProposal(
         async (eligibleVotersChunk, i) => {
           logger.debug(`Processing voter group starting at index ${i}`);
           try {
-            const processedCount = await processVoterBatch(
+            await processVoterBatch(
               registryClient,
               proposalClient,
               eligibleVotersChunk,
@@ -719,7 +706,7 @@ async function processBatch(
   registryClient: XGovRegistryClient,
   batch: ProposalSummaryCardDetails[],
   proposalFactory: ProposalFactory,
-  xgovDaemon: { addr: string; signer: TransactionSigner },
+  xgovDaemon: TransactionSignerAccount,
   maxRequestsPerProposal: number,
   apiUrl?: string,
 ): Promise<ProposalResult[]> {

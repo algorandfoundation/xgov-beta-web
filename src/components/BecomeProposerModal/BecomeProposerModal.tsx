@@ -1,4 +1,4 @@
-import { network, type ProposerBoxState } from "@/api";
+import { network } from "@/api";
 import { AlgorandIcon } from "../icons/AlgorandIcon";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";

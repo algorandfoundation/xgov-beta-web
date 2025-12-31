@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
 
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner.tsx";

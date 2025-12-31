@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { TutorialDialog } from "@/components/TutorialDialog/TutorialDialog";
-import { UseWallet, UseQuery, useNFD, useProposer, useRegistry, useXGov } from "@/hooks";
+import { UseWallet, UseQuery, useProposer, useRegistry, useXGov } from "@/hooks";
 import { subscribeProposer, subscribeXgov } from "@/api";
 import { useTransactionState } from "@/hooks/useTransactionState";
 import { useWallet } from "@txnlab/use-wallet-react";
@@ -37,7 +37,6 @@ export function GetStartedNav({ path = "/" }: GetStartedNavProps) {
     status: subXGovStatus,
     setStatus: setSubXGovStatus,
     errorMessage: subXGovErrorMessage,
-    setErrorMessage: setSubXGovErrorMessage,
     isPending: isSubXGovPending
   } = useTransactionState()
 
@@ -45,7 +44,6 @@ export function GetStartedNav({ path = "/" }: GetStartedNavProps) {
     status: subProposerStatus,
     setStatus: setSubProposerStatus,
     errorMessage: subProposerErrorMessage,
-    setErrorMessage: setSubProposerErrorMessage,
     isPending: isSubProposerPending
   } = useTransactionState()
 
