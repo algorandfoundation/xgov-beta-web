@@ -497,11 +497,11 @@ export function getDiscussionDuration(
 ): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return Number(durations[0]);
+      return Number(durations[0]) * 1000;
     case ProposalCategory.ProposalCategoryMedium:
-      return Number(durations[1]);
+      return Number(durations[1]) * 1000;
     case ProposalCategory.ProposalCategoryLarge:
-      return Number(durations[2]);
+      return Number(durations[2]) * 1000;
     default:
       return 0;
   }
