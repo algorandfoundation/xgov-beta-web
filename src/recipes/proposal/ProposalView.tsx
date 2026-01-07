@@ -20,6 +20,7 @@ import {
   type ProposalMainCardDetailsWithNFDs,
   dropProposal,
   voteProposal,
+  callDeleteProposal,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -54,6 +55,7 @@ import { TransactionStateLoader } from "@/components/TransactionStateLoader/Tran
 import type { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { shortenAddress } from "@/functions";
+import { TransactionErrorDialog } from "@/components/TransactionErrorDialog/TransactionErrorDialog";
 
 export const defaultsStatusCardMap = {
   [ProposalStatus.ProposalStatusEmpty]: {
@@ -364,6 +366,14 @@ function VotingStatusCard({
     isPending: rejectIsPending
   } = useTransactionState();
 
+
+  const {
+    status: abstainStatus,
+    setStatus: setAbstainStatus,
+    errorMessage: abstainErrorMessage,
+    isPending: abstainIsPending
+  } = useTransactionState();
+
   const {
     status: approveStatus,
     setStatus: setApproveStatus,
@@ -507,6 +517,8 @@ function VotingStatusCard({
                 </SelectContent>
               </Select>
             </div>
+            <TransactionErrorDialog status={approveStatus} setStatus={setApproveStatus} />
+            <TransactionErrorDialog status={rejectStatus} setStatus={setRejectStatus} />
           </div>
         )
       }
@@ -547,7 +559,7 @@ function VotingStatusCard({
                   rejections: 0,
                   voterInfo: voterInfo,
                 })}
-                disabled={rejectIsPending || approveIsPending}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending}
               >
                 <TransactionStateLoader
                   defaultText="Approve"
@@ -555,6 +567,33 @@ function VotingStatusCard({
                     status: approveStatus,
                     errorMessage: approveErrorMessage,
                     isPending: approveIsPending
+                  }}
+                />
+              </Button>
+
+              <Button
+                type='button'
+                variant='outline'
+                className="bg-algo-blue-10 dark:bg-algo-black-90"
+                onClick={() => voteProposal({
+                  activeAddress,
+                  xgovAddress: selectedVotingAs,
+                  innerSigner,
+                  setStatus: setAbstainStatus,
+                  refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
+                  appId: proposal.id,
+                  approvals: 0,
+                  rejections: 0,
+                  voterInfo: voterInfo,
+                })}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending}
+              >
+                <TransactionStateLoader
+                  defaultText="Abstain"
+                  txnState={{
+                    status: abstainStatus,
+                    errorMessage: abstainErrorMessage,
+                    isPending: abstainIsPending
                   }}
                 />
               </Button>
@@ -573,7 +612,7 @@ function VotingStatusCard({
                   rejections: Number(voterInfo.votes),
                   voterInfo: voterInfo,
                 })}
-                disabled={rejectIsPending || approveIsPending}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending}
               >
                 <TransactionStateLoader
                   defaultText="Reject"
@@ -1211,6 +1250,14 @@ export function DropModal({
                 appId: proposalId,
               })
               onClose();
+
+              // call backend to delete proposal
+              try {
+                await callDeleteProposal(proposalId);
+              } catch (e) {
+                console.warn("Failed to delete proposal:", e);
+              }
+
               navigate("/");
             }}
             disabled={isPending}

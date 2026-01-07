@@ -2,12 +2,7 @@ import { sha512_256 } from "js-sha512";
 import { readFileSync } from "fs";
 import Ajv from "ajv";
 import { isDeepStrictEqual } from "util";
-
-// copied from api/assign.ts
-function committeeIdToSafeFileName(committeeId: string): string {
-  // Use base64url encoding (base64 without padding, using URL-safe characters)
-  return committeeId.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
+import { committeeIdToSafeFileName } from "./utils";
 
 let errors = false;
 const filename = process.argv[2];

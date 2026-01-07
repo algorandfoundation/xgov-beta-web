@@ -199,6 +199,14 @@ export async function getAllProposalsToUnassign(): Promise<
   );
 }
 
+export async function getAllProposalsToDelete(): Promise<
+  ProposalSummaryCardDetails[]
+> {
+  return (await getAllProposals()).filter(
+    (proposal) => proposal.finalized && proposal.status === ProposalStatus.ProposalStatusDraft,
+  );
+}
+
 /**
  * Retrieves proposal details for a given proposal ID.
  *
@@ -328,6 +336,18 @@ export async function getProposalToUnassign(
     ) || proposalData.finalized
   ) {
     throw new Error("Proposal not in unassignable state");
+  }
+  return proposalData;
+}
+
+export async function getProposalToDelete(
+  id: bigint,
+): Promise<ProposalMainCardDetails> {
+  const proposalData = await getProposal(id);
+  if (
+    !proposalData.finalized || proposalData.status !== ProposalStatus.ProposalStatusDraft
+  ) {
+    throw new Error("Proposal not in deletable state");
   }
   return proposalData;
 }
@@ -477,11 +497,11 @@ export function getDiscussionDuration(
 ): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return Number(durations[0]);
+      return Number(durations[0]) * 1000;
     case ProposalCategory.ProposalCategoryMedium:
-      return Number(durations[1]);
+      return Number(durations[1]) * 1000;
     case ProposalCategory.ProposalCategoryLarge:
-      return Number(durations[2]);
+      return Number(durations[2]) * 1000;
     default:
       return 0;
   }
@@ -562,7 +582,7 @@ export async function createEmptyProposal({
     if (e.message.includes("tried to spend")) {
       setStatus(new Error("Insufficient funds to create proposal."));
     } else {
-      setStatus(new Error("Failed to create proposal."));
+      setStatus(new Error("Failed to create proposal: " + (e as Error).message));
     }
   }
 }
@@ -672,7 +692,7 @@ export async function openProposal({
     if (e.message.includes("tried to spend")) {
       setStatus(new Error("Insufficient funds to open proposal."));
     } else {
-      setStatus(new Error("Failed to open proposal."));
+      setStatus(new Error("Failed to open proposal: " + (e as Error).message));
     }
     return;
   }
@@ -756,7 +776,7 @@ export async function voteProposal({
     setStatus(new Error("Failed to vote on the proposal."));
   } catch (e: any) {
     console.error("Error during voting:", e.message);
-    setStatus(new Error("An error occurred while voting on the proposal."));
+    setStatus(new Error("An error occurred while voting on the proposal: " + (e as Error).message));
     return;
   }
 }
@@ -875,7 +895,7 @@ export async function updateMetadata({
     if (e.message.includes("tried to spend")) {
       setStatus(new Error("Insufficient funds to update proposal metadata."));
     } else {
-      setStatus(new Error("Failed to update proposal metadata."));
+      setStatus(new Error("Failed to update proposal metadata: " + (e as Error).message));
     }
     return null;
   }
@@ -1032,7 +1052,7 @@ export async function dropProposal({
 
     setStatus(new Error("Transaction not confirmed."));
   } catch (error) {
-    setStatus(new Error("An error occurred while dropping the proposal."));
+    setStatus(new Error("An error occurred while dropping the proposal: " + (error as Error).message));
   }
 };
 
@@ -1103,4 +1123,22 @@ export async function callUnassign(
   console.log("Finished unassign call");
   const data = await response.json();
   console.log("Unassign data:", data);
+}
+
+export async function callDeleteProposal(
+  proposalId: bigint | null,
+): Promise<void> {
+  console.log("Starting delete call", proposalId);
+  const response = await fetch("/api/delete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      proposalIds: proposalId !== null ? [proposalId] : [],
+    }),
+  });
+  console.log("Finished delete call");
+  const data = await response.json();
+  console.log("Delete data:", data);
 }

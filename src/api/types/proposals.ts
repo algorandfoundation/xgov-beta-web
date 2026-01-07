@@ -56,7 +56,7 @@ export enum ProposalCategory {
   ProposalCategoryNull = 0,
   ProposalCategorySmall = 10,
   ProposalCategoryMedium = 20,
-  ProposalCategoryLarge = 33,
+  ProposalCategoryLarge = 30,
 }
 
 export type Category = "Null" | "Small" | "Medium" | "Large";

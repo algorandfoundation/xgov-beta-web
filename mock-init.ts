@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import crypto from "crypto";
 import algosdk, { ALGORAND_MIN_TX_FEE } from "algosdk";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 import { XGovRegistryFactory } from "@algorandfoundation/xgov/registry";
 import { CouncilFactory } from "@algorandfoundation/xgov/council";
 import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
@@ -96,6 +98,19 @@ export async function timeWarp(to: number) {
   await algorand.client.algod.setBlockOffsetTimestamp(0).do();
 }
 
+// Parse command-line arguments
+const argv = await yargs(hideBin(process.argv))
+  .option('council-address', {
+    alias: 'c',
+    type: 'string',
+    description: 'Algorand address to be added to the council for testing',
+    demandOption: true,
+  })
+  .help()
+  .parseAsync();
+
+const councilTestingAddress = argv.councilAddress;
+console.log('Council testing address:', councilTestingAddress);
 
 algorand.setSuggestedParamsCacheTimeout(0);
 // Generate admin account (the one that creates the registry)
@@ -105,7 +120,6 @@ const adminAccount = await algorand.account.fromKmd(
 );
 console.log("admin account", adminAccount.addr);
 const dispenser = await algorand.account.dispenserFromEnvironment();
-const councilTestingAddress = '<REPLACE_WITH_COUNCIL_TESTING_ADDRESS>'; // TODO: replace this value
 const daemonAddress = algorand.account.random()
 
 await algorand.account.ensureFunded(adminAccount.addr, dispenser, fundAmount);
@@ -188,65 +202,6 @@ for (let i = 0; i < bulks; i++) {
   });
 }
 
-const councilMinter = new CouncilFactory({
-  algorand,
-  defaultSender: adminAccount.addr,
-  defaultSigner: adminAccount.signer,
-});
-
-const councilResults = await councilMinter.send.create.create({
-  args: {
-    registryId: registryClient.appId,
-  }
-});
-
-const councilClient = councilResults.appClient;
-
-await councilClient.appClient.fundAppAccount({
-  sender: dispenser.addr,
-  amount: (100).algos(),
-});
-
-await councilClient.send.addMember({
-  sender: adminAccount.addr,
-  signer: adminAccount.signer,
-  args: {
-    address: councilTestingAddress,
-  },
-  appReferences: [registryClient.appId],
-  boxReferences: [
-    CouncilMemberBoxName(councilTestingAddress)
-  ]
-});
-
-let councilMembers = []
-
-for (let i = 0; i < 10; i++) {
-  const randomAccount = algorand.account.random();
-
-  console.log('council member', randomAccount.addr);
-
-  await algorand.account.ensureFunded(
-    randomAccount.addr,
-    dispenser,
-    (1).algo(),
-  );
-
-  await councilClient.send.addMember({
-    sender: adminAccount.addr,
-    signer: adminAccount.signer,
-    args: {
-      address: randomAccount.addr,
-    },
-    appReferences: [registryClient.appId],
-    boxReferences: [
-      CouncilMemberBoxName(randomAccount.addr)
-    ]
-  });
-
-  councilMembers.push(randomAccount);
-}
-
 // Generate KYC provider account
 const kycProvider = await algorand.account.fromKmd(
   "unencrypted-default-wallet",
@@ -324,6 +279,65 @@ await registryClient.send.setXgovSubscriber({
     subscriber: adminAccount.addr,
   },
 });
+
+const councilMinter = new CouncilFactory({
+  algorand,
+  defaultSender: adminAccount.addr,
+  defaultSigner: adminAccount.signer,
+});
+
+const councilResults = await councilMinter.send.create.create({
+  args: {
+    registryId: registryClient.appId,
+  }
+});
+
+const councilClient = councilResults.appClient;
+
+await councilClient.appClient.fundAppAccount({
+  sender: dispenser.addr,
+  amount: (100).algos(),
+});
+
+await councilClient.send.addMember({
+  sender: adminAccount.addr,
+  signer: adminAccount.signer,
+  args: {
+    address: councilTestingAddress,
+  },
+  appReferences: [registryClient.appId],
+  boxReferences: [
+    CouncilMemberBoxName(councilTestingAddress)
+  ]
+});
+
+let councilMembers = []
+
+for (let i = 0; i < 10; i++) {
+  const randomAccount = algorand.account.random();
+
+  console.log('council member', randomAccount.addr);
+
+  await algorand.account.ensureFunded(
+    randomAccount.addr,
+    dispenser,
+    (1).algo(),
+  );
+
+  await councilClient.send.addMember({
+    sender: adminAccount.addr,
+    signer: adminAccount.signer,
+    args: {
+      address: randomAccount.addr,
+    },
+    appReferences: [registryClient.appId],
+    boxReferences: [
+      CouncilMemberBoxName(randomAccount.addr)
+    ]
+  });
+
+  councilMembers.push(randomAccount);
+}
 
 await registryClient.send.setXgovCouncil({
   sender: adminAccount.addr,
