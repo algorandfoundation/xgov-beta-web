@@ -57,9 +57,9 @@ export function proposalApprovalBoxName(): Uint8Array {
   );
 }
 
-export async function getGlobalState(): Promise<RegistryGlobalState | undefined> {
+export async function getGlobalState(client = registryClient): Promise<RegistryGlobalState | undefined> {
   try {
-    const state = await registryClient.state.global.getAll()
+    const state = await client.state.global.getAll()
     return {
       ...state,
       committeeManager: !!state.committeeManager ? state.committeeManager : '',

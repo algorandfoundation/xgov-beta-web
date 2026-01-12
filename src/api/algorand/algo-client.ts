@@ -1,4 +1,4 @@
-import { AlgorandClient as AC } from "@algorandfoundation/algokit-utils";
+import { AlgorandClient as AC, AlgorandClient } from "@algorandfoundation/algokit-utils";
 import { ClientManager } from "@algorandfoundation/algokit-utils/types/client-manager";
 import algosdk from "algosdk";
 import { env } from "@/constants";
@@ -84,6 +84,12 @@ export function getIndexerClient(locals: App.Locals, prefix: "PUBLIC" | "BACKEND
     port,
     token,
   });
+}
+
+export function getAlgorandClient(locals: App.Locals, prefix: "PUBLIC" | "BACKEND"): AlgorandClient {
+  const algod = getAlgodClient(locals, prefix);
+  const indexer = getIndexerClient(locals, prefix);
+  return AC.fromClients({ algod, indexer });
 }
 
 // default txn lifetime/validity is too small. 120 rounds = ~5mins+

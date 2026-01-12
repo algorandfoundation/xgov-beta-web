@@ -59,9 +59,9 @@ function existsAndValue(appState: AppState, key: string): boolean {
  *         summarized details of each proposal, including id, title, requested amount, proposer address,
  *         funding type, status, focus, category, and submission time.
  */
-export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
+export async function getAllProposals(algorandClient = algorand): Promise<ProposalSummaryCardDetails[]> {
   try {
-    const response = await algorand.client.algod
+    const response = await algorandClient.client.algod
       .accountInformation(registryClient.appAddress.toString())
       .do();
     console.log("Account info received, processing apps...");
@@ -164,8 +164,9 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
  */
 export async function getProposalsByProposer(
   address: string,
+  algorandClient = algorand,
 ): Promise<ProposalSummaryCardDetails[]> {
-  return (await getAllProposals()).filter(
+  return (await getAllProposals(algorandClient)).filter(
     (proposal) => proposal.proposer === address,
   );
 }
@@ -216,9 +217,8 @@ export async function getAllProposalsToDelete(): Promise<
  */
 export async function getProposal(
   id: bigint,
+  proposalClient = getProposalClientById(id),
 ): Promise<ProposalMainCardDetails> {
-  const proposalClient = getProposalClientById(id);
-
   const results = await Promise.allSettled([
     algorand.client.algod.getApplicationByID(Number(id)).do(),
     proposalClient.appClient.getGlobalState(),
