@@ -41,10 +41,7 @@ const network = env.PUBLIC_NETWORK
 
 const registryGlobalState = await getGlobalState();
 
-const proposal = await getProposal(BigInt(appId)).catch((e) => {
-  console.error("Error fetching proposal:", e);
-  return null;
-});
+const proposal = await getProposal(BigInt(appId))
 
 if (!proposal || !registryGlobalState) {
   console.error("No proposal found or failed to fetch global state", { proposal: !!proposal, registryGlobalState: !!registryGlobalState });
