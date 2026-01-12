@@ -10,10 +10,10 @@ const { error } = Astro.props;
 
 const DEFAULT_MESSAGE = "An error occurred";
 
-const message =
-  import.meta.env.MODE === "development"
-    ? error?.message || DEFAULT_MESSAGE
-    : DEFAULT_MESSAGE;
+const message = error?.message || DEFAULT_MESSAGE
+if (error?.stack) {
+  console.error(error.stack);
+}
 ---
 
 <Layout title={error?.name || "Error"} description="An unexpected error occurred">

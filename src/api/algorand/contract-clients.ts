@@ -22,35 +22,43 @@ export const CouncilAppID: bigint = BigInt(
     : DEFAULT_COUNCIL_APP_ID,
 );
 
-export const registryClient = algorand.client.getTypedAppClientById(
-  XGovRegistryClient,
-  { appId: RegistryAppID },
+export const registryClient = enrichRegistryClient(
+  algorand.client.getTypedAppClientById(XGovRegistryClient, {
+    appId: RegistryAppID,
+  }),
 );
 
 export function getRegistryClient(
   algorand: AlgorandClient,
 ): XGovRegistryClient {
-  return algorand.client.getTypedAppClientById(XGovRegistryClient, {
-    appId: RegistryAppID,
-  });
+  const registryClient = algorand.client.getTypedAppClientById(
+    XGovRegistryClient,
+    {
+      appId: RegistryAppID,
+    },
+  );
+  return enrichRegistryClient(registryClient);
 }
 
-registryClient.getState = async function (): Promise<TypedGlobalState> {
-  return (
-    await registryClient
-      .newGroup()
-      .getState({
-        sender: registryClient.appAddress.toString(),
-        args: {},
-      })
-      .simulate({
-        skipSignatures: true,
-      })
-  ).returns[0] as TypedGlobalState;
-};
+function enrichRegistryClient(registryClient: XGovRegistryClient) {
+  registryClient.getState = async function (): Promise<TypedGlobalState> {
+    return (
+      await registryClient
+        .newGroup()
+        .getState({
+          sender: registryClient.appAddress.toString(),
+          args: {},
+        })
+        .simulate({
+          skipSignatures: true,
+        })
+    ).returns[0] as TypedGlobalState;
+  };
+  return registryClient;
+}
 
-export function getProposalClientById(appId: bigint) {
-  return algorand.client.getTypedAppClientById(XGovProposalClient, { appId });
+export function getProposalClientById(appId: bigint, algorandClient: AlgorandClient = algorand): XGovProposalClient {
+  return algorandClient.client.getTypedAppClientById(XGovProposalClient, { appId });
 }
 
 export const councilClient = algorand.client.getTypedAppClientById(
