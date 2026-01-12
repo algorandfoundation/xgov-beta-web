@@ -19,8 +19,10 @@ const description =
 const privateAlgorand = await getAlgorandClient(Astro.locals, "BACKEND");
 const registryClient = await getRegistryClient(privateAlgorand);
 
-let registry = await getGlobalState(registryClient);
-let proposals = await getAllProposals(privateAlgorand);
+const [registry, proposals] = await Promise.all([
+  getGlobalState(registryClient),
+  getAllProposals(privateAlgorand),
+]);
 ---
 
 <Layout description={description}>
