@@ -217,9 +217,10 @@ export async function getAllProposalsToDelete(): Promise<
  */
 export async function getProposal(
   id: bigint,
-  proposalClient = getProposalClientById(id),
   algorandClient = algorand
 ): Promise<ProposalMainCardDetails> {
+  const proposalClient = getProposalClientById(id, algorandClient)
+
   const results = await Promise.allSettled([
     algorandClient.client.algod.getApplicationByID(Number(id)).do(),
     proposalClient.appClient.getGlobalState(),
