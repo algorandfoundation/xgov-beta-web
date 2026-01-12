@@ -28,6 +28,7 @@ interface Props {
 const { appId } = Astro.params;
 
 if (!appId) {
+  console.error("No appId provided in params");
   const error = await fetch(`${Astro.url}/404`);
   return new Response(error.body, {
     headers: error.headers,
@@ -46,6 +47,7 @@ const proposal = await getProposal(BigInt(appId)).catch((e) => {
 });
 
 if (!proposal || !registryGlobalState) {
+  console.error("No proposal found or failed to fetch global state", { proposal: !!proposal, registryGlobalState: !!registryGlobalState });
   return Astro.redirect("/404");
 }
 
