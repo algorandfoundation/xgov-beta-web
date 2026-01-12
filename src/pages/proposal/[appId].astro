@@ -44,7 +44,8 @@ const registryClient = await getRegistryClient(privateAlgorand);
 
 const registryGlobalState = await getGlobalState(registryClient);
 
-const proposal = await getProposal(BigInt(appId), getProposalClientById(BigInt(appId), privateAlgorand))
+const proposalClient = getProposalClientById(BigInt(appId), privateAlgorand);
+const proposal = await getProposal(BigInt(appId), proposalClient);
 
 if (!proposal || !registryGlobalState) {
   console.error("No proposal found or failed to fetch global state", { proposal: !!proposal, registryGlobalState: !!registryGlobalState });
