@@ -1,25 +1,25 @@
 ---
-import { getProposal, getProposalsByProposer, getGlobalState } from "@/api";
+import { getGlobalState, getProposal, getProposalsByProposer, getProposalClientById, getRegistryClient, getAlgorandClient } from "@/api";
 
 import Layout from "@/layouts/Layout.astro";
 import Page from "@/layouts/Page.astro";
 
-import { RequestedAmountDetail } from "../../components/RequestedAmountDetail/RequestedAmountDetail";
 import { FocusDetail } from "../../components/FocusDetail/FocusDetail";
 import { FundingTypeDetail } from "../../components/FundingTypeDetail/FundingTypeDetail";
+import { RequestedAmountDetail } from "../../components/RequestedAmountDetail/RequestedAmountDetail";
 
-import { StatusCardIsland, ProposalInfoIsland } from "@/recipes";
+import { ProposalInfoIsland, StatusCardIsland } from "@/recipes";
 
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { LoraPillLink } from "@/components/LoraPillLink/LoraPillLink";
-import {env} from '@/constants'
+import {
+Breadcrumb,
+BreadcrumbItem,
+BreadcrumbLink,
+BreadcrumbList,
+BreadcrumbPage,
+BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { env } from '@/constants';
 
 interface Props {
   appId: string;
@@ -39,16 +39,20 @@ if (!appId) {
 
 const network = env.PUBLIC_NETWORK
 
-const registryGlobalState = await getGlobalState();
+const privateAlgorand = await getAlgorandClient(Astro.locals, "BACKEND");
+const registryClient = await getRegistryClient(privateAlgorand);
 
-const proposal = await getProposal(BigInt(appId))
+const registryGlobalState = await getGlobalState(registryClient);
+
+const proposalClient = getProposalClientById(BigInt(appId), privateAlgorand);
+const proposal = await getProposal(BigInt(appId), proposalClient);
 
 if (!proposal || !registryGlobalState) {
   console.error("No proposal found or failed to fetch global state", { proposal: !!proposal, registryGlobalState: !!registryGlobalState });
   return Astro.redirect("/404");
 }
 
-const pastProposals = (await getProposalsByProposer(proposal.proposer)).filter(
+const pastProposals = (await getProposalsByProposer(proposal.proposer, privateAlgorand)).filter(
   (p) => p.id !== proposal.id,
 );
 ---
