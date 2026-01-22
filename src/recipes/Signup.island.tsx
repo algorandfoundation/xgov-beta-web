@@ -6,8 +6,7 @@ import { ConnectIsland } from "@/components/Connect/Connect.island.tsx";
 import { UseQuery } from "@/hooks/useQuery.tsx";
 import { UseWallet } from "@/hooks/useWallet.tsx";
 import { useProposer, useRegistry } from "@/hooks/useRegistry.ts";
-import { subscribeProposer } from "@/api";
-import { useTransactionState } from "@/hooks/useTransactionState";
+import { useSubscribeProposer } from "@/hooks/sdk";
 
 /**
  * SignupIsland is a function component that sets up the signup process within the application.
@@ -35,15 +34,16 @@ export function SignupIsland() {
  * a loading spinner, or the Signup component.
  */
 export function SignupController() {
-  const { activeAddress, transactionSigner } = useWallet();
+  const { activeAddress } = useWallet();
   const registry = useRegistry();
   const proposer = useProposer(activeAddress);
-
-  const {
-    status,
-    setStatus,
-    errorMessage,
-  } = useTransactionState()
+  
+  // Use the SDK mutation hook
+  const { mutate: subscribeProposer, errorMessage, status } = useSubscribeProposer({
+    onSuccess: () => {
+      proposer.refetch();
+    },
+  });
 
   const isError = registry.isError || proposer.isError;
   const qError = registry.error || proposer.error;
@@ -71,11 +71,7 @@ export function SignupController() {
       isRegistered={proposer.data?.isProposer || false}
       onSignup={() =>
         subscribeProposer({
-          activeAddress,
-          innerSigner: transactionSigner,
-          setStatus,
-          refetch: [proposer.refetch],
-          amount: registry?.data?.proposerFee!,
+          proposerFee: registry.data!.proposerFee!,
         })
       }
     />
