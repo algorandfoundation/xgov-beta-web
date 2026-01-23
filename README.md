@@ -28,6 +28,8 @@ For the frontend to properly work, you need to have an initialized xGov Registry
 For local development, use the Algokit Localnet. Create a `.env.development` file at the root of the cloned repository and fill it with the following:
 
 ```bash
+PUBLIC_NETWORK=localhost
+
 PUBLIC_ALGOD_SERVER=http://localhost
 PUBLIC_ALGOD_PORT=4001
 PUBLIC_ALGOD_TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -99,6 +101,8 @@ Or using the short alias:
 ```bash
 npm run mock-init -- -c YOUR_ALGORAND_ADDRESS
 ```
+
+A new `.env.development` will be generated. You should set the `PUBLIC_NETWORK` environment variable to `localnet`.
 
 Run `npm run dev` and navigate to the page. The script will now run and set things up in the background.
 
