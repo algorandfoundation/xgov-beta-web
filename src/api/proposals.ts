@@ -332,12 +332,14 @@ export async function getProposalToUnassign(
   const proposalData = await getProposal(id);
   if (
     (
-      proposalData.status !== ProposalStatus.ProposalStatusFunded &&
-      proposalData.status !== ProposalStatus.ProposalStatusBlocked &&
+      proposalData.status !== ProposalStatus.ProposalStatusApproved &&
       proposalData.status !== ProposalStatus.ProposalStatusRejected
-    ) || proposalData.finalized
+    )
   ) {
     throw new Error("Proposal not in unassignable state");
+  }
+  if (proposalData.finalized) {
+    throw new Error("Proposal already finalized");
   }
   return proposalData;
 }
