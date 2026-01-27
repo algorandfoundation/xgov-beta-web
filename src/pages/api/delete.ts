@@ -117,7 +117,7 @@ async function processProposal(
 async function processBatch(
   batch: ProposalSummaryCardDetails[],
   proposalFactory: ProposalFactory,
-  xgovDaemon: { addr: algosdk.Address; signer: TransactionSigner },
+  xgovDaemon: TransactionSignerAccount,
 ): Promise<ProposalResult[]> {
   logger.info(`Processing batch of ${batch.length} proposals`);
 
