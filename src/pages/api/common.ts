@@ -87,9 +87,7 @@ export async function parseRequestOptions(
       Array.isArray(requestBody.proposalIds)
     ) {
       try {
-        proposalIds = requestBody.proposalIds.map((id: string | number) =>
-          BigInt(id),
-        );
+        proposalIds = requestBody.proposalIds.map((id: string) => BigInt(id));
         if (proposalIds) {
           logger.info(
             `Request targets ${proposalIds.length} specific proposals`,

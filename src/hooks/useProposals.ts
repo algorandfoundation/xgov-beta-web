@@ -41,7 +41,7 @@ export function useProposal(
   proposal?: ProposalMainCardDetails,
 ) {
   return useQuery({
-    queryKey: ["getProposal", Number(proposalId!)],
+    queryKey: ["getProposal", proposalId!.toString()],
     queryFn: () => getProposal(BigInt(proposalId!)),
     initialData: proposal,
     staleTime: 100,
@@ -51,7 +51,7 @@ export function useProposal(
 
 export function useVotingState(proposalId: bigint | null) {
   return useQuery({
-    queryKey: ['getVotingState', Number(proposalId!)],
+    queryKey: ['getVotingState', proposalId!.toString()],
     queryFn: () => getVotingState(BigInt(proposalId!)),
     enabled: !!proposalId,
   });
@@ -59,7 +59,7 @@ export function useVotingState(proposalId: bigint | null) {
 
 export function useVoterBox(proposalId: bigint | null, activeAddress: string | null) {
   return useQuery({
-    queryKey: ['getVoterBox', Number(proposalId!), activeAddress],
+    queryKey: ['getVoterBox', proposalId!.toString(), activeAddress],
     queryFn: () => getVoterBox(BigInt(proposalId!), activeAddress!),
     enabled: !!proposalId && !!activeAddress,
   });
@@ -79,7 +79,7 @@ export function useVotersInfo(proposalId: bigint | null, committeeSubset: Commit
     ? JSON.stringify(committeeSubset.map(member => member.address))
     : null;
   return useQuery({
-    queryKey: ['getVotersInfo', proposalId, committeeSubsetKey],
+    queryKey: ['getVotersInfo', proposalId!.toString(), committeeSubsetKey],
     queryFn: () => getVotersInfo(proposalId!, committeeSubset!),
     enabled,
   });
@@ -87,7 +87,7 @@ export function useVotersInfo(proposalId: bigint | null, committeeSubset: Commit
 
 export function useMetadata(proposalId: bigint | null, enabled: boolean) {
   return useQuery({
-    queryKey: ['getMetadata', proposalId],
+    queryKey: ['getMetadata', proposalId!.toString()],
     queryFn: () => getMetadata(proposalId!),
     enabled,
   });

@@ -69,10 +69,10 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
 
     return await Promise.all(
       response.createdApps.map(
-        async (data: any): Promise<ProposalSummaryCardDetails> => {
+        async (data: algosdk.modelsv2.Application): Promise<ProposalSummaryCardDetails> => {
           try {
             const state = AppManager.decodeAppState(
-              data.params["global-state"],
+              data.params.globalState || [],
             );
 
             let committeeId: Uint8Array<ArrayBufferLike> = new Uint8Array();
@@ -227,7 +227,7 @@ export async function getProposal(
   ]);
 
   const data = results[0].status === "fulfilled" ? results[0].value : null;
-  if (!data || data.params.creator !== registryClient.appAddress) {
+  if (!data || data.params.creator.toString() !== registryClient.appAddress.toString()) {
     throw new Error("Proposal not found");
   }
 
@@ -1100,7 +1100,7 @@ export async function callAssignVoters(proposalId: bigint) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      proposalIds: [proposalId],
+      proposalIds: [proposalId.toString()],
     }),
   });
   console.log("Finished AssignVoters call");
