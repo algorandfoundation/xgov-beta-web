@@ -771,9 +771,7 @@ interface PostVotingStatusCardProps {
 
 function PostVotingStatusCard({
   className = "",
-  proposal,
-  quorums,
-  weightedQuorums,
+  proposal
 }: PostVotingStatusCardProps) {
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
   const votingStateQuery = useVotingState(proposal.id)
@@ -911,7 +909,6 @@ export interface ProposalInfoProps {
 
 export function ProposalInfo({
   activeAddress,
-  xGovCouncil,
   xGovPayor,
   proposal,
   pastProposals,

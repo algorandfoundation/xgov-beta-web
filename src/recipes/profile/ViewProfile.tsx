@@ -24,8 +24,7 @@ import {
   useXGov,
   useRegistry,
   useProposalsByProposer,
-  useNFD,
-  useXGovDelegates,
+  useNFD
 } from "@/hooks";
 import { StackedList } from "@/recipes";
 import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationModal";

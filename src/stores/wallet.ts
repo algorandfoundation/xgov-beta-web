@@ -22,5 +22,5 @@ if (import.meta.env.PUBLIC_NETWORK === "localnet") {
 
 export const walletManager = new WalletManager({
   wallets: walletProviders,
-  network: import.meta.env.PUBLIC_NETWORK,
+  defaultNetwork: import.meta.env.PUBLIC_NETWORK,
 });

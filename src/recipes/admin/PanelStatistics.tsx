@@ -1,6 +1,5 @@
 import { Link } from "@/components/Link";
 import {
-  ProposalStatus,
   ProposalStatusMap,
   type ProposalSummaryCardDetails,
 } from "@/api";
@@ -17,7 +16,7 @@ export interface PanelStatisticsData {
   proposals: ProposalSummaryCardDetails[];
 }
 
-export const PanelStatistics = ({ network = NetworkId.LOCALNET }: { network?: NetworkId; }) => {
+export const PanelStatistics = ({ network = NetworkId.LOCALNET }: { network?: string; }) => {
   const proposals = useGetAllProposals();
   const xGovs = useAllXGovs();
   const [openTooltips, setOpenTooltips] = useState<{ [key: number]: boolean }>({});

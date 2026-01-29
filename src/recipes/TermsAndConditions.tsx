@@ -13,11 +13,16 @@ import { useRef, useState, useEffect } from "react";
 function printString(content: string) {
   const printWindow = window.open("", "", "height=600,width=800");
   if (!printWindow) return;
-  printWindow.document.write(
-    `<html><head><title>Print</title></head><body style="white-space:pre">`,
-  );
-  printWindow.document.write(content);
-  printWindow.document.write("</body></html>");
+  printWindow.document.documentElement.innerHTML = `
+    <html>
+      <head>
+        <title>Print</title>
+      </head>
+      <body style="white-space:pre">
+        ${content}
+      </body>
+    </html>
+  `;
   printWindow.document.close();
   printWindow.focus();
   printWindow.onload = function () {

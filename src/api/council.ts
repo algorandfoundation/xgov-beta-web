@@ -1,5 +1,5 @@
 import algosdk, { ABIType, encodeAddress, encodeUint64, getApplicationAddress } from "algosdk";
-import { algod, algorand, councilClient, RegistryAppID } from "./algorand";
+import { algorand, councilClient, RegistryAppID } from "./algorand";
 import { env } from "@/constants";
 import { wrapTransactionSigner } from "@/hooks/useTransactionState";
 import type { TransactionHandlerProps } from "./types/transaction_state";

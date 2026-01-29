@@ -37,7 +37,7 @@ if (import.meta.env.PUBLIC_KMD_SERVER) {
 
 const walletManager = new WalletManager({
   wallets: walletProviders,
-  network: import.meta.env.PUBLIC_NETWORK || "localnet",
+  defaultNetwork: import.meta.env.PUBLIC_NETWORK || "localnet",
 });
 
 // Decorate the stories with context

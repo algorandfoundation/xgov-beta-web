@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
 import {
-  RegistryAppID,
   getProposalClientById,
   type ProposalMainCardDetails,
   ProposalStatus,
@@ -9,10 +8,9 @@ import {
   callUnassign,
   proposerBoxName,
 } from "@/api";
-import { ALGORAND_MIN_TX_FEE, encodeAddress } from "algosdk";
 import { UseWallet } from "@/hooks/useWallet.tsx";
 import { useProposal, UseQuery } from "@/hooks";
-import { CheckIcon, XIcon } from "lucide-react";
+import { CheckIcon } from "lucide-react";
 import { Button } from "../ui/button";
 
 export function PayorCardIsland({
@@ -42,7 +40,7 @@ export function ProposalPayorCard({
 
   useEffect(() => setErrorMessage(""), []);
 
-  const handlePayout = async (bool: boolean) => {
+  const handlePayout = async () => {
     setErrorMessage("");
     const proposalClient = getProposalClientById(proposalId);
     const proposer = await proposalClient.state.global.proposer();
@@ -69,7 +67,7 @@ export function ProposalPayorCard({
         boxReferences: [proposerBoxName(proposer)],
         appReferences: [proposalId],
         accountReferences: [proposer],
-        extraFee: (ALGORAND_MIN_TX_FEE * 3).microAlgos(),
+        extraFee: (3_000).microAlgos(),
       });
 
       if (
@@ -112,7 +110,7 @@ export function ProposalPayorCard({
           <div>
             <h2 className="text-xl mt-2 mb-4">Pay out this proposal?</h2>
             <div className="flex flex-row gap-2">
-              <Button onClick={() => handlePayout(false)} variant="success">
+              <Button onClick={() => handlePayout()} variant="success">
                 <CheckIcon className="text-white group-hover:text-algo-green transition" />
                 Pay out
               </Button>

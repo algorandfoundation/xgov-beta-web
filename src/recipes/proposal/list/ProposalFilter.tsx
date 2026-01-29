@@ -9,7 +9,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn, capitalizeFirstLetter } from "@/functions";
-import { AlgoShapeIcon11 } from "@/components/icons/AlgoShapeIcon11";
 import {
   Tooltip,
   TooltipContent,
@@ -20,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { useSearchParams } from "@/hooks/useSearchParams.ts";
 import {
   FocusReverseMap,
-  ProposalFundingTypeReverseMap,
   ProposalStatusFilterKeys,
 } from "@/api";
 import { FilterIcon } from "lucide-react";

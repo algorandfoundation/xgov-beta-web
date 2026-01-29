@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
 import {
   type ProposalMainCardDetails,
@@ -55,8 +54,6 @@ export function ProposalCouncilCard({
   // Always fetch council data to show the status bar
   const councilVotesQuery = useCouncilVotes(Number(proposalId), true);
   const councilMembersQuery = useCouncilMembers();
-
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Calculate council vote counts
   const councilVotes = councilVotesQuery.data || [];
@@ -204,9 +201,6 @@ export function ProposalCouncilCard({
                   </Button>
 
                 </div>
-                {errorMessage && (
-                  <p className="text-algo-red text-sm mt-2">{errorMessage}</p>
-                )}
               </div>
             </div>
           ) : null

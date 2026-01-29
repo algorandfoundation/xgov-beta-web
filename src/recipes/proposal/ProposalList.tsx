@@ -19,9 +19,8 @@ import {
   filters,
 } from "@/recipes/proposal/list/ProposalFilter.tsx";
 import { VoteCounter } from "@/components/VoteCounter/VoteCounter";
-import { useMetadata, useNFDs, useProposalVoters } from "@/hooks";
+import { useMetadata } from "@/hooks";
 import { useDiscourseTopic } from "@/hooks/useDiscourseTopic";
-import { useUrls } from "@/hooks/useUrls";
 import { formatDistanceToNow } from "date-fns";
 
 const filterKeys = Object.keys(filters);
