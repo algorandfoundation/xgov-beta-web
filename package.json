@@ -22,7 +22,7 @@
   "dependencies": {
     "@agoralabs-sh/avm-web-provider": "^1.7.0",
     "@algorandfoundation/algokit-utils": "9.2.0",
-    "@algorandfoundation/xgov": "github:algorandfoundation/xgov-beta-ts#chore/upgrade-to-algosdk-3",
+    "@algorandfoundation/xgov": "^1.0.0-canary.6",
     "@algorandfoundation/xgov-beta-ghost": "^2.0.0",
     "@astrojs/check": "^0.9.4",
     "@astrojs/cloudflare": "^12.4.0",
