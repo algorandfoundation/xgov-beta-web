@@ -4,7 +4,6 @@ First off, thank you for considering contributing to xGov Beta Web! It's people 
 
 ## Table of Contents
 
-- [Code of Conduct](#code-of-conduct)
 - [Getting Started](#getting-started)
 - [How Can I Contribute?](#how-can-i-contribute)
 - [Development Workflow](#development-workflow)
@@ -12,10 +11,6 @@ First off, thank you for considering contributing to xGov Beta Web! It's people 
 - [Commit Messages](#commit-messages)
 - [Pull Request Process](#pull-request-process)
 - [Community](#community)
-
-## Code of Conduct
-
-This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the maintainers.
 
 ## Getting Started
 
@@ -167,16 +162,10 @@ The frontend interacts with the xGov Registry smart contract. Key areas:
 - `src/api/council.ts` - Council operations
 - `src/hooks/sdk/` - SDK integration hooks
 
-When making changes that affect smart contract interactions, ensure you test against:
-1. Local AlgoKit network
-2. Testnet (if available)
-
 ## Style Guidelines
 
 ### TypeScript
 
-- Use TypeScript for all new code
-- Enable strict mode
 - Avoid `any` types when possible
 - Use descriptive variable and function names
 - Document complex logic with comments
@@ -259,31 +248,6 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 [optional body]
 
 [optional footer]
-```
-
-### Types
-
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation only
-- `style`: Code style (formatting, semicolons, etc.)
-- `refactor`: Code refactoring
-- `perf`: Performance improvements
-- `test`: Adding or updating tests
-- `build`: Build system or dependencies
-- `ci`: CI/CD changes
-- `chore`: Other changes
-
-### Examples
-
-```bash
-feat(proposals): add proposal editing capability
-
-fix(wallet): resolve connection timeout on Pera
-
-docs(readme): update installation instructions
-
-refactor(hooks): simplify useRegistry hook logic
 ```
 
 ## Pull Request Process
