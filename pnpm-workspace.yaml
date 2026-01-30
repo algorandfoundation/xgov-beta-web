@@ -1,0 +1,2 @@
+overrides:
+  '@algorandfoundation/xgov': link:../xgov-beta-ts
