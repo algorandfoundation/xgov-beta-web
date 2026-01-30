@@ -1,33 +1,74 @@
 # xGov Beta Web
 
-This repository constitutes the frontend part of the xGov Beta project.
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Built with Astro](https://img.shields.io/badge/Built%20with-Astro-BC52EE?logo=astro)](https://astro.build)
+[![Cloudflare Pages](https://img.shields.io/badge/Deployed%20on-Cloudflare%20Pages-F38020?logo=cloudflare)](https://pages.cloudflare.com)
 
-The smart contract (written in Algorand Python) repository can be found at [xgov-beta-sc](https://github.com/algorandfoundation/xgov-beta-sc).
+The official web interface for Algorand's xGov program, a decentralized public goods funding mechanism on Algorand, enabling community-driven proposal submission and voting.
 
-There is also [xgov-beta-ts](https://github.com/algorandfoundation/xgov-beta-ts), which takes xgov-beta-sc as a git submodule and produces typed clients for the smart contracts using `algokit generate client`.
+## Features
 
-Refer to the [xGov Beta](https://docs.google.com/document/d/16bVBovvmMXvz-iazF7PK_FbsL-hetjomMk0xhPJZ-2g/edit?tab=t.0) document for more information.
+- **Proposal Management**: Create, edit, and submit governance proposals
+- **Voting System**: Participate in proposal voting with weighted voting power
+- **xGov Registration**: Register and manage xGov status
+- **Council Management**: Admin tools for council members
+- **Wallet Integration**: Support for multiple Algorand wallets (Pera, Defly, Lute, WalletConnect)
+- **Real-time Updates**: Live proposal status and voting progress
+- **PWA Support**: Progressive Web App for mobile-first experience
+- **Dark Mode**: Full dark mode support with system preference detection
 
-## Local Development
+## Related Repositories
 
-This is fundamentally an [Astro project](https://astro.build), with React as the main framework.
+| Repository | Description |
+|------------|-------------|
+| [xgov-beta-sc](https://github.com/algorandfoundation/xgov-beta-sc) | Smart contracts written in Algorand Python |
+| [xgov-beta-ts](https://github.com/algorandfoundation/xgov-beta-ts) | TypeScript SDK with typed clients & SDK for the smart contracts |
 
-Run the following to spin up the project:
+## Tech Stack
+
+- **Framework**: [Astro](https://astro.build) with Server-Side Rendering
+- **UI Library**: [React](https://react.dev) with TypeScript
+- **Styling**: [Tailwind CSS](https://tailwindcss.com) with custom design system
+- **State Management**: [Nanostores](https://github.com/nanostores/nanostores) with React bindings
+- **Data Fetching**: [TanStack Query](https://tanstack.com/query) (React Query)
+- **Form Handling**: [React Hook Form](https://react-hook-form.com) with Zod validation
+- **Blockchain**: [Algorand SDK](https://algorand.github.io/js-algorand-sdk/) v3
+- **Wallet Connection**: [use-wallet-react](https://github.com/TxnLab/use-wallet) v4
+- **Deployment**: [Cloudflare Pages](https://pages.cloudflare.com)
+- **Testing**: [Storybook](https://storybook.js.org) with Chromatic
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- [Node.js](https://nodejs.org) >= 18.x
+- [npm](https://npmjs.com)
+- [Docker](https://www.docker.com) (for local Algorand network)
+- [AlgoKit](https://github.com/algorandfoundation/algokit-cli) CLI
+
+## Getting Started
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/algorandfoundation/xgov-beta-web.git
+cd xgov-beta-web
+```
+
+### 2. Install Dependencies
 
 ```bash
 npm install
-npm run dev
 ```
 
-Follow the steps below to ensure proper setup.
+### 3. Environment Setup
 
-## .env file
+For local development, the recommended path is to run `npm run mock-init`, which will bootstrap local configuration (including generating a `.env.development` based on the template) and deploy/initialize the xGov Registry on LocalNet.
 
-For the frontend to properly work, you need to have an initialized xGov Registry smart contract deployed on a network. You will also need to specify which algod, indexer and kmd servers it should be pointed towards.
-
-For local development, use the Algokit Localnet. Create a `.env.development` file at the root of the cloned repository and fill it with the following:
+If you prefer to configure manually, copy `.env.template` to `.env.development` and fill in values as needed.
 
 ```bash
+# Algorand Node Configuration
 PUBLIC_ALGOD_SERVER=http://localhost
 PUBLIC_ALGOD_PORT=4001
 PUBLIC_ALGOD_TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -39,58 +80,28 @@ PUBLIC_INDEXER_TOKEN=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 PUBLIC_KMD_SERVER=http://localhost
 PUBLIC_KMD_PORT=4002
 
-PUBLIC_REGISTRY_APP_ID= # Add the application ID here
+# xGov Registry Application ID (set after deployment)
+PUBLIC_REGISTRY_APP_ID=
+
+# Optional: Daemon configuration for voter assignment
+XGOV_DAEMON_MNEMONIC=
+COMMITTEE_API_URL=
+MAX_CONCURRENT_PROPOSALS=5
+MAX_REQUESTS_PER_PROPOSAL=5
 ```
 
-You will need to set the APP ID to correspond to the xGov Registry contract.
-
-## xGov Registry Contract Setup
-
-There are two ways to setup the xGov Registry Contract.
-
-Note that we are assuming that you have Localnet running in Docker, i.e. you have successfully run `algokit localnet start`.
-
-### Manual Method (Lora)
-
-1. Grab the [arc32.json artifact from xgov-beta-sc](https://github.com/algorandfoundation/xgov-beta-sc/blob/main/smart_contracts/artifacts/xgov_registry/XGovRegistry.arc32.json).
-
-2. Navigate to Lora (e.g. by calling `algokit localnet explore`)
-
-3. Connect your wallet, picking Localnet and KMD as the option.
-
-4. Navigate to App Lab --> Create App Interface --> Deploy New App.
-
-5. Upload the arc32.json spec file. Press Next.
-
-6. Press create Call to Build Transaction. Press Add. Press Deploy.
-
-Now, if you were not already redirected, press App Lab and find the xGov Registry interface. Grab the App ID and paste it in the .env file.
-
-Note that just because you have created the xGov Registry does not mean that it is in a good enough state (i.e., that it has been initialized properly) to be read by the frontend.
-
-The frontend makes a `simulate` call on the [get_state method in the xGov Registry](https://github.com/algorandfoundation/xgov-beta-sc/blob/152168696263e474415e9786278331cd35ebd422/smart_contracts/xgov_registry/contract.py#L894). The output corresponds to the TypedGlobalState type.
-
-The xGov Registry smart contract needs to be:
-
-1. Funded.
-
-Go to Lora --> Fund. Type in the xGov Registry's account address and fund it with tokens.
-
-2. Have a declared Committee.
-
-Go to Lora --> App Lab --> {Your xGov Registry contract}.
-
-Call `set_committee_manager` and `set_xgov_daemon`, providing your own account address. Then call `declare_committee`.
-
-Now the xGov Registry should be in a good state.
-
-### The mock-init.ts script
-
-Rather than following the (potentially out-of-date) manual flow above, feel free to call the mock-init.ts script.
-
-The script requires you to provide an Algorand address that will be added to the council for testing purposes:
+### 4. Start Local Algorand Network
 
 ```bash
+algokit localnet start
+```
+
+### 5. Initialize xGov Registry Contract
+
+The fastest way to set up a local development environment:
+
+```bash
+# Replace YOUR_ALGORAND_ADDRESS with your test wallet address
 npm run mock-init -- --council-address YOUR_ALGORAND_ADDRESS
 ```
 
@@ -100,74 +111,76 @@ Or using the short alias:
 npm run mock-init -- -c YOUR_ALGORAND_ADDRESS
 ```
 
-Run `npm run dev` and navigate to the page. The script will now run and set things up in the background.
+This script will:
+- Deploy the xGov Registry smart contract
+- Fund the contract
+- Set up committee management
+- Configure your address as a council member
 
-Afterwards, make sure to re-comment the two lines from `src/layouts/Layout.astro`.
-
-## Voter Assignment Endpoint
-
-The application includes a POST endpoint at `/api/assign` that:
-
-1. Gets all proposals with status SUBMITTED
-2. For each proposal, retrieves the committee ID from its global state
-3. Loads committee members from bundled JSON files or external API
-4. Assigns committee members as voters to each proposal using parallel processing
-5. Returns detailed results of the assignment process
-
-### Environment Variables for Voter Assignment
-
-To use this endpoint, add the following to your environment variables:
+### 6. Start Development Server
 
 ```bash
-# Daemon/Committee publisher mnemonic used to assign voters
-XGOV_DAEMON_MNEMONIC=your_mnemonic_phrase_here
-
-# Committee data API URL (fallback if local files are unavailable)
-COMMITTEE_API_URL=https://your-committee-api-endpoint
-
-# Maximum number of proposals to process concurrently (optional, default: 5, max: 20)
-MAX_CONCURRENT_PROPOSALS=10
-
-# Maximum number of concurrent requests to make per proposal
-MAX_REQUESTS_PER_PROPOSAL=5
+npm dev
 ```
 
-### Committee Data Files
+Open [http://localhost:4321](http://localhost:4321) in your browser.
 
-The voter assignment endpoint loads committee data using the following strategy:
+## Project Structure
 
-1. **Primary Source**: Dynamic import of committee JSON files
-   - Files located at `src/pages/api/committees/[committeeId].json`
-   - Works in both development and production (including Cloudflare)
-   - In development mode, files are located at `src/pages/api/committees-dev/[committeeId].json`
-
-2. **Fallback**: API request to the URL specified in `COMMITTEE_API_URL` environment variable
-   - Used when local files don't exist or can't be read
-   - The committee ID is appended to the URL as a query parameter
-
-For Cloudflare deployment, committee files must be placed in the `src/pages/api/committees` directory with filenames matching the base64url-encoded committee ID. These files are bundled with the application during deployment.
-
-The required JSON format for committee data is:
-
-```json
-{
-  "xGovs": [
-    {
-      "address": "ALGORAND_ADDRESS_1",
-      "votes": 1000
-    },
-    {
-      "address": "ALGORAND_ADDRESS_2",
-      "votes": 2000
-    }
-    // More committee members...
-  ]
-}
+```
+xgov-beta-web/
+├── public/                 # Static assets
+│   └── committees/         # Committee data JSON files
+├── src/
+│   ├── api/               # API utilities and Algorand interactions
+│   │   ├── algorand/      # Algorand client configuration
+│   │   ├── discourse/     # Forum integration
+│   │   ├── nfd/           # NFD (Non-Fungible Domains) integration
+│   │   └── types/         # TypeScript type definitions
+│   ├── components/        # React components
+│   │   ├── ui/           # Base UI components (shadcn/ui)
+│   │   └── ...           # Feature-specific components
+│   ├── functions/         # Utility functions
+│   ├── hooks/             # React hooks
+│   │   ├── sdk/          # SDK-related hooks
+│   │   └── ...           # Feature hooks
+│   ├── layouts/           # Astro layout components
+│   ├── pages/             # Astro pages and API routes
+│   │   └── api/          # API endpoints
+│   ├── recipes/           # Component composition patterns
+│   ├── stores/            # Nanostores state management
+│   ├── styles/            # Global styles and Tailwind config
+│   └── utils/             # General utilities
+├── __fixtures__/          # Test fixtures
+├── scripts/               # Utility scripts
+├── .storybook/            # Storybook configuration
+├── astro.config.mjs       # Astro configuration
+├── tailwind.config.mjs    # Tailwind CSS configuration
+├── wrangler.jsonc         # Cloudflare Workers configuration
+└── package.json
 ```
 
-### Making a Request to the Voter Assignment Endpoint
+## Available Scripts
 
-To trigger voter assignment, make a POST request to the endpoint:
+| Command | Description |
+|---------|-------------|
+| `npm dev` | Start development server |
+| `npm build` | Build for production |
+| `npm preview` | Preview production build locally (via Wrangler) |
+| `npm lint` | Run ESLint |
+| `npm prettier` | Check code formatting |
+| `npm storybook` | Start Storybook development server |
+| `npm build-storybook` | Build Storybook for deployment |
+| `npm test` | Run Storybook tests |
+| `npm coverage` | Run tests with coverage |
+| `npm mock-init` | Initialize local development environment |
+| `npm mock-init-assign` | Initialize with mock voter assignment data |
+
+## API Endpoints
+
+### Voter Assignment API
+
+The application includes a POST endpoint at `/api/assign` for automated voter assignment:
 
 ```bash
 curl -X POST https://your-domain/api/assign \
@@ -175,99 +188,121 @@ curl -X POST https://your-domain/api/assign \
   -d '{"proposalIds": [123, 456]}'
 ```
 
-#### Request Body Options:
+**Request Options:**
+- `proposalIds` (optional): Array of specific proposal IDs to process
 
-* `proposalIds` (optional): Array of specific proposal IDs to process (if omitted, all SUBMITTED proposals will be processed)
-
-#### Response Format:
-
+**Response:**
 ```json
 {
   "message": "Processed 10 proposals in 5.25s using parallel processing",
   "results": {
     "success": 8,
     "failed": 2,
-    "details": [
-      {
-        "id": "123",
-        "title": "Example Proposal",
-        "voters": 100,
-        "skippedVoters": 0,
-        "totalVoters": 100,
-        "status": "success"
-      },
-      // More proposal results...
-    ]
+    "details": [...]
   },
   "processingDetails": {
-    "concurrencyLevel": 10,  // Value from MAX_CONCURRENT_PROPOSALS environment variable
+    "concurrencyLevel": 10,
     "executionTimeSeconds": 5.25
   }
 }
 ```
 
-The endpoint processes proposals in batches with parallel execution for better performance. For each proposal, it:
-1. Extracts the committee ID from the proposal's global state
-2. Loads committee data based on that ID
-3. Checks for already assigned voters to prevent duplicates
-4. Assigns eligible voters in optimized transaction groups (max 16 transactions per group)
-5. Returns detailed statistics about the assignment operation
+### Committee Data Format
 
-### Test the endpoint locally
+Committee JSON files should follow this structure:
 
-To test locally, first we need to populate some mock data:
-
-```bash
-npm run mock-init-assign
+```json
+{
+  "xGovs": [
+    {
+      "address": "ALGORAND_ADDRESS",
+      "votes": 1000
+    }
+  ]
+}
 ```
-
-Than, follow the instructions at the end of the script output.
 
 ## Deployment
 
-This project uses GitHub Actions to automatically deploy to Cloudflare Pages with two environments:
+This project uses GitHub Actions for automated deployments to Cloudflare Pages.
 
 ### Environments
 
-- **Testnet**: Deploys when pushing to `main` branch
-- **Mainnet**: Deploys when pushing to `mainnet` branch
-
-### Environment Files
-
-- `.env.testnet` - Configuration for testnet deployment (loaded with `--mode testnet`)
-- `.env.mainnet` - Configuration for mainnet deployment (loaded with `--mode mainnet`)
+| Branch | Environment | Description |
+|--------|-------------|-------------|
+| `main` | Testnet | Staging environment for testing |
+| `mainnet` | Mainnet | Production environment |
 
 ### Required GitHub Secrets
-
-Set up the following secrets in your GitHub repository:
 
 ```
 CLOUDFLARE_API_TOKEN          # Cloudflare API token
 CF_ACCOUNT_ID                 # Cloudflare account ID
 CF_PROJECT_NAME_TESTNET       # Cloudflare project name for testnet
 CF_PROJECT_NAME_MAINNET       # Cloudflare project name for mainnet
-TEMP_DEPLOY_KEY              # SSH deploy key (if needed)
-TEMP_SC_DEPLOY_KEY           # SSH deploy key for smart contracts (if needed)
 ```
 
-### Deployment Workflow
+### Environment Files
 
-1. **Testnet Deployment**: Push/merge to `main` branch
-   - Builds with `--mode testnet` (automatically loads `.env.testnet`)
-   - Deploys to the testnet Cloudflare project
+- `.env.testnet` - Testnet configuration
+- `.env.mainnet` - Mainnet configuration
 
-2. **Mainnet Deployment**: Push/merge to `mainnet` branch
-   - Builds with `--mode mainnet` (automatically loads `.env.mainnet`)
-   - Deploys to the mainnet Cloudflare project
+## Manual Contract Setup (Alternative)
 
-### Setting Up Environment Files
+If you prefer manual setup via Lora:
 
-1. Copy the template values from `.env.template`
-2. Update `.env.testnet` with testnet-specific values:
-   - Testnet Algorand node endpoints
-   - Testnet registry app ID
-   - Testnet committee publisher mnemonic
-3. Update `.env.mainnet` with mainnet-specific values:
-   - Mainnet Algorand node endpoints
-   - Mainnet registry app ID
-   - Mainnet committee publisher mnemonic
+1. Get the [arc32.json artifact](https://github.com/algorandfoundation/xgov-beta-sc/blob/main/smart_contracts/artifacts/xgov_registry/XGovRegistry.arc32.json)
+2. Navigate to Lora (`algokit localnet explore`)
+3. Connect your wallet (Localnet + KMD)
+4. App Lab → Create App Interface → Deploy New App
+5. Upload arc32.json and deploy
+6. Fund the contract from Lora → Fund
+7. Call `set_committee_manager`, `set_xgov_daemon`, and `declare_committee`
+
+## Contributing
+
+We welcome contributions. Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
+
+- Code of Conduct
+- Development workflow
+- Pull request process
+- Coding standards
+
+## Security
+
+For security vulnerabilities, please see our [Security Policy](SECURITY.md).
+
+**Do not** report security vulnerabilities through public GitHub issues.
+
+## License
+
+This project is licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0).
+
+See the [LICENSE](LICENSE) file for details.
+
+### What this means:
+
+- You can use, modify, and distribute this software
+- You can use it for commercial purposes
+- You must disclose your source code when distributing
+- Network use counts as distribution (AGPL requirement)
+- You must use the same license for derivative works
+- You must state changes made to the code
+
+## Acknowledgments
+
+- [Algorand Foundation](https://algorand.foundation) for supporting the xGov program
+- The Algorand developer community
+- All contributors to this project
+
+## Support
+
+- **Documentation**: [xGov Beta Docs](https://docs.google.com/document/d/16bVBovvmMXvz-iazF7PK_FbsL-hetjomMk0xhPJZ-2g/edit)
+- **Issues**: [GitHub Issues](https://github.com/algorandfoundation/xgov-beta-web/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/algorandfoundation/xgov-beta-web/discussions)
+
+## Additional Documentation
+
+- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
+- Code of Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- Security policy: [SECURITY.md](SECURITY.md)
