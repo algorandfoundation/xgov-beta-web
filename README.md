@@ -263,7 +263,6 @@ If you prefer manual setup via Lora:
 
 We welcome contributions. Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
 
-- Code of Conduct
 - Development workflow
 - Pull request process
 - Coding standards
@@ -304,5 +303,4 @@ See the [LICENSE](LICENSE) file for details.
 ## Additional Documentation
 
 - Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
-- Code of Conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 - Security policy: [SECURITY.md](SECURITY.md)

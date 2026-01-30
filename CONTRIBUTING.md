@@ -19,7 +19,7 @@ First off, thank you for considering contributing to xGov Beta Web! It's people 
 Before you begin, ensure you have:
 
 - [Node.js](https://nodejs.org) >= 18.x installed
-- [pnpm](https://pnpm.io) package manager
+- [npm](https://npmjs.com) package manager
 - [Docker](https://www.docker.com) for running local Algorand network
 - [AlgoKit](https://github.com/algorandfoundation/algokit-cli) CLI installed
 - Familiarity with [Astro](https://astro.build), [React](https://react.dev), and [TypeScript](https://www.typescriptlang.org)
@@ -41,7 +41,7 @@ Before you begin, ensure you have:
 
 4. **Install dependencies**:
    ```bash
-   pnpm install
+   npm install
    ```
 
 5. **Start the local Algorand network**:
@@ -51,14 +51,14 @@ Before you begin, ensure you have:
 
 6. **Initialize the development environment**:
    ```bash
-   pnpm run mock-init -- -c YOUR_TEST_ADDRESS
+   npm run mock-init -- -c YOUR_TEST_ADDRESS
    ```
 
    The `mock-init` script bootstraps local configuration (including generating a `.env.development` based on the template) and initializes the xGov Registry on LocalNet.
 
 7. **Start the development server**:
    ```bash
-   pnpm dev
+   npm dev
    ```
 
 ## How Can I Contribute?
@@ -133,9 +133,9 @@ git checkout -b feature/your-feature-name
 3. **Update documentation** as needed
 4. **Run linting and tests**:
    ```bash
-   pnpm lint
-   pnpm prettier --check .
-   pnpm test
+   npm lint
+   npm prettier --check .
+   npm test
    ```
 
 ### Storybook Development
@@ -144,13 +144,13 @@ We use Storybook for component development and testing:
 
 ```bash
 # Start Storybook
-pnpm storybook
+npm storybook
 
 # Run visual regression tests
-pnpm test
+npm test
 
 # Build Storybook
-pnpm build-storybook
+npm build-storybook
 ```
 
 ### Working with the Smart Contract
@@ -226,16 +226,16 @@ We use Prettier and ESLint:
 
 ```bash
 # Check formatting
-pnpm prettier --check .
+npm prettier --check .
 
 # Fix formatting
-pnpm prettier --write .
+npm prettier --write .
 
 # Run linting
-pnpm lint
+npm lint
 
 # Fix lint issues
-pnpm lint --fix
+npm lint --fix
 ```
 
 ## Commit Messages
@@ -262,13 +262,13 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 2. **Ensure all tests pass**:
    ```bash
-   pnpm lint
-   pnpm test
+   npm lint
+   npm test
    ```
 
 3. **Build the project**:
    ```bash
-   pnpm build
+   npm build
    ```
 
 ### Submitting Your PR
@@ -306,15 +306,15 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```bash
 # Run all tests
-pnpm test
+npm test
 
 # Run tests with coverage
-pnpm coverage
+npm coverage
 
 # Run Storybook tests interactively
-pnpm storybook
+npm storybook
 # Then in another terminal:
-pnpm test
+npm test
 ```
 
 ### Writing Tests
