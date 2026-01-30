@@ -56,9 +56,9 @@ export function proposalApprovalBoxName(): Uint8Array {
   );
 }
 
-export async function getGlobalState(client = registryClient): Promise<RegistryGlobalState | undefined> {
+export async function getGlobalState(): Promise<RegistryGlobalState | undefined> {
   try {
-    const state = await client.state.global.getAll()
+    const state = await registryClient.state.global.getAll()
     return {
       ...state,
       committeeManager: !!state.committeeManager ? state.committeeManager : '',
@@ -191,14 +191,10 @@ export async function getAllSubscribedXGovs(): Promise<string[]> {
 export async function getAllXGovData(): Promise<string[]> {
   const all = await getAllSubscribedXGovs();
 
-  // This is currently used as a debug endpoint in a few places. Keep the return
-  // value stable (`string[]`) but avoid hard failing if the ghost SDK is out of
-  // sync with the installed algokit utils.
   const results: XGovBoxValue[] = [];
   for (let i = 0; i < all.length; i += 63) {
     const chunk = all.slice(i, i + 63);
-    const batch = await getXGovsWithAddress(chunk);
-    results.push(...batch.map(({ xgov: _xgov, ...v }) => v));
+    results.push(...((await ghost.getXGovs(algorand, BigInt(registryAppID), chunk))));
   }
 
   console.log('results', results)
@@ -206,64 +202,20 @@ export async function getAllXGovData(): Promise<string[]> {
   return all
 }
 
-async function getXGovsWithAddress(xgovs: string[]): Promise<(XGovBoxValue & { xgov: string })[]> {
-  const valid = xgovs.filter((a): a is string => typeof a === 'string' && a.length > 0);
-  if (valid.length === 0) return [];
-
-  try {
-    const values = await ghost.getXGovs(algorand, BigInt(registryAppID), valid);
-    return values.map((v, idx) => ({ ...v, xgov: valid[idx] }));
-  } catch (e) {
-    console.warn('ghost.getXGovs failed; falling back to per-box simulation', e);
-
-    const values = await mapWithConcurrency(valid, 10, async (xgov) => {
-      const res = await getIsXGov(xgov);
-      if (!res.isXGov) return undefined;
-      return {
-        xgov,
-        votingAddress: res.votingAddress,
-        votedProposals: res.votedProposals,
-        lastVoteTimestamp: res.lastVoteTimestamp,
-        subscriptionRound: res.subscriptionRound,
-      } satisfies (XGovBoxValue & { xgov: string });
-    });
-
-    return values.filter((v): v is (XGovBoxValue & { xgov: string }) => v !== undefined);
-  }
-}
-
-async function mapWithConcurrency<T, R>(
-  items: T[],
-  concurrency: number,
-  mapper: (item: T, index: number) => Promise<R>,
-): Promise<R[]> {
-  if (items.length === 0) return [];
-
-  const results = new Array<R>(items.length);
-  let nextIndex = 0;
-
-  const workerCount = Math.max(1, Math.min(concurrency, items.length));
-  const workers = Array.from({ length: workerCount }, async () => {
-    while (true) {
-      const current = nextIndex++;
-      if (current >= items.length) return;
-      results[current] = await mapper(items[current], current);
-    }
-  });
-
-  await Promise.all(workers);
-  return results;
-}
-
-export async function getDelegatedXGovData(account: string): Promise<(XGovBoxValue & { xgov: string })[]> {
+async function getDelegatedXGovData(account: string): Promise<(XGovBoxValue & { xgov: string })[]> {
   const all = await getAllSubscribedXGovs();
 
   const results: (XGovBoxValue & { xgov: string })[] = [];
   for (let i = 0; i < all.length; i += 63) {
     const chunk = all.slice(i, i + 63);
 
-    const batch = await getXGovsWithAddress(chunk);
-    results.push(...batch.filter((v) => v.votingAddress === account && v.xgov !== account));
+    results.push(
+      ...(
+        (await ghost.getXGovs(algorand, BigInt(registryAppID), chunk))
+          .map((v, ii) => ({ ...v, xgov: all[i + ii] }))
+          .filter(v => v.votingAddress === account && v.xgov !== account)
+      )
+    );
   }
 
   return results
