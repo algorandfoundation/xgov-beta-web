@@ -22,8 +22,8 @@
   "dependencies": {
     "@agoralabs-sh/avm-web-provider": "^1.7.0",
     "@algorandfoundation/algokit-utils": "9.2.0",
-    "@algorandfoundation/xgov": "github:algorandfoundation/xgov-beta-ts#chore/upgrade-to-algosdk-3",
-    "@algorandfoundation/xgov-beta-ghost": "^2.0.1",
+    "@algorandfoundation/xgov": "^3.1.0-beta.3",
+    "@algorandfoundation/xgov-beta-ghost": "2.0.1",
     "@astrojs/check": "^0.9.4",
     "@astrojs/cloudflare": "^12.4.0",
     "@astrojs/react": "^4.1.5",
