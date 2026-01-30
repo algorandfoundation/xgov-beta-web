@@ -142,7 +142,6 @@ xgov-beta-web/
 │   │   └── ...           # Feature-specific components
 │   ├── functions/         # Utility functions
 │   ├── hooks/             # React hooks
-│   │   ├── sdk/          # SDK-related hooks
 │   │   └── ...           # Feature hooks
 │   ├── layouts/           # Astro layout components
 │   ├── pages/             # Astro pages and API routes
