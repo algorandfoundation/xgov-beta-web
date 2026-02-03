@@ -194,14 +194,7 @@ export async function getAllXGovData(): Promise<string[]> {
   const results: XGovBoxValue[] = [];
   for (let i = 0; i < all.length; i += 63) {
     const chunk = all.slice(i, i + 63);
-    const chunkResults = await ghost.getXGovs(algorand, BigInt(registryAppID), chunk);
-    results.push(
-      ...(chunkResults.map((v) => ({
-        ...(v as unknown as Record<string, unknown>),
-        toleratedAbsences:
-          (v as unknown as { toleratedAbsences?: bigint }).toleratedAbsences ?? 0n,
-      })) as unknown as XGovBoxValue[]),
-    );
+    results.push(...((await ghost.getXGovs(algorand, BigInt(registryAppID), chunk))));
   }
 
   console.log('results', results)
@@ -219,12 +212,7 @@ export async function getDelegatedXGovData(account: string): Promise<(XGovBoxVal
     results.push(
       ...(
         (await ghost.getXGovs(algorand, BigInt(registryAppID), chunk))
-          .map((v, ii) => ({
-            ...(v as unknown as Record<string, unknown>),
-            toleratedAbsences:
-              (v as unknown as { toleratedAbsences?: bigint }).toleratedAbsences ?? 0n,
-            xgov: all[i + ii],
-          }) as unknown as (XGovBoxValue & { xgov: string }))
+          .map((v, ii) => ({ ...v, xgov: all[i + ii] }))
           .filter(v => v.votingAddress === account && v.xgov !== account)
       )
     );
