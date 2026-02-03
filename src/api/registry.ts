@@ -56,9 +56,9 @@ export function proposalApprovalBoxName(): Uint8Array {
   );
 }
 
-export async function getGlobalState(): Promise<RegistryGlobalState | undefined> {
+export async function getGlobalState(client = registryClient): Promise<RegistryGlobalState | undefined> {
   try {
-    const state = await registryClient.state.global.getAll()
+    const state = await client.state.global.getAll()
     return {
       ...state,
       committeeManager: !!state.committeeManager ? state.committeeManager : '',
@@ -215,6 +215,7 @@ export async function getDelegatedXGovData(account: string): Promise<(XGovBoxVal
   const results: (XGovBoxValue & { xgov: string })[] = [];
   for (let i = 0; i < all.length; i += 63) {
     const chunk = all.slice(i, i + 63);
+
     results.push(
       ...(
         (await ghost.getXGovs(algorand, BigInt(registryAppID), chunk))

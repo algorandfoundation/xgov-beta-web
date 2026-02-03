@@ -15,7 +15,7 @@ import { getXGovCommitteeMap, type CommitteeMember } from "@/api/committee";
 export function useGetAllProposals(proposals?: ProposalSummaryCardDetails[]) {
   return useQuery({
     queryKey: ["getAllProposals"],
-    queryFn: getAllProposals,
+    queryFn: () => getAllProposals(),
     // Hydrate data
     initialData: proposals,
     // Allow staleness

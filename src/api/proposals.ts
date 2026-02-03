@@ -56,9 +56,9 @@ function existsAndValue(appState: AppState, key: string): boolean {
  *         summarized details of each proposal, including id, title, requested amount, proposer address,
  *         funding type, status, focus, category, and submission time.
  */
-export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
+export async function getAllProposals(algorandClient = algorand): Promise<ProposalSummaryCardDetails[]> {
   try {
-    const response = await algorand.client.algod
+    const response = await algorandClient.client.algod
       .accountInformation(registryClient.appAddress.toString())
       .do();
     console.log("Account info received, processing apps...");
@@ -168,8 +168,9 @@ export async function getAllProposals(): Promise<ProposalSummaryCardDetails[]> {
  */
 export async function getProposalsByProposer(
   address: string,
+  algorandClient = algorand,
 ): Promise<ProposalSummaryCardDetails[]> {
-  return (await getAllProposals()).filter(
+  return (await getAllProposals(algorandClient)).filter(
     (proposal) => proposal.proposer === address,
   );
 }
@@ -220,13 +221,14 @@ export async function getAllProposalsToDelete(): Promise<
  */
 export async function getProposal(
   id: bigint,
+  algorandClient = algorand
 ): Promise<ProposalMainCardDetails> {
-  const proposalClient = getProposalClientById(id);
+  const proposalClient = getProposalClientById(id, algorandClient)
 
   const results = await Promise.allSettled([
-    algorand.client.algod.getApplicationByID(Number(id)).do(),
+    algorandClient.client.algod.getApplicationByID(Number(id)).do(),
     proposalClient.appClient.getGlobalState(),
-    algorand.app.getBoxValue(id, metadataBoxName),
+    algorandClient.app.getBoxValue(id, metadataBoxName),
   ]);
 
   const data = results[0].status === "fulfilled" ? results[0].value : null;
@@ -337,12 +339,14 @@ export async function getProposalToUnassign(
   const proposalData = await getProposal(id);
   if (
     (
-      proposalData.status !== ProposalStatus.ProposalStatusFunded &&
-      proposalData.status !== ProposalStatus.ProposalStatusBlocked &&
+      proposalData.status !== ProposalStatus.ProposalStatusApproved &&
       proposalData.status !== ProposalStatus.ProposalStatusRejected
-    ) || proposalData.finalized
+    )
   ) {
     throw new Error("Proposal not in unassignable state");
+  }
+  if (proposalData.finalized) {
+    throw new Error("Proposal already finalized");
   }
   return proposalData;
 }
@@ -504,11 +508,11 @@ export function getDiscussionDuration(
 ): number {
   switch (category) {
     case ProposalCategory.ProposalCategorySmall:
-      return Number(durations[0]);
+      return Number(durations[0]) * 1000;
     case ProposalCategory.ProposalCategoryMedium:
-      return Number(durations[1]);
+      return Number(durations[1]) * 1000;
     case ProposalCategory.ProposalCategoryLarge:
-      return Number(durations[2]);
+      return Number(durations[2]) * 1000;
     default:
       return 0;
   }

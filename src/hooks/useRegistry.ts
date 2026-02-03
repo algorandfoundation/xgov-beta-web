@@ -12,7 +12,7 @@ import type { RegistryGlobalState } from "@/api";
 export function useRegistry(state?: RegistryGlobalState) {
   return useQuery({
     queryKey: ["getGlobalState"],
-    queryFn: getGlobalState,
+    queryFn: () => getGlobalState(),
     initialData: state,
     staleTime: 100,
   });

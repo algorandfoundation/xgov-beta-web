@@ -69,15 +69,13 @@ export function ViewProposalController({
   const _proposal = proposalQuery.data || proposal;
   const _registry = registryQuery.data || registry;
 
-  const _discussionDuration = Date.now() - Number(_proposal.openTs) * 1000;
-  const _minimumDiscussionDuration =
-    getDiscussionDuration(proposal.fundingCategory, [
-      _registry.discussionDurationLarge || 0n,
-      _registry.discussionDurationMedium || 0n,
-      _registry.discussionDurationSmall || 0n,
-      _registry.discussionDurationXlarge || 0n,
-    ]) *
-    1000;
+  const _discussionDuration = Date.now() - (Number(_proposal.openTs) * 1000);
+  const _minimumDiscussionDuration = getDiscussionDuration(proposal.fundingCategory, [
+    _registry.discussionDurationSmall || 0n,
+    _registry.discussionDurationMedium || 0n,
+    _registry.discussionDurationLarge || 0n,
+    _registry.discussionDurationXlarge || 0n,
+  ]);
 
   return (
     <StatusCard
