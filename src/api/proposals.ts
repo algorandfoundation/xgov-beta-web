@@ -1073,42 +1073,20 @@ export async function callScrutinize(
   proposer: string,
   transactionSigner: TransactionSigner,
 ) {
+  const proposalClient = proposalFactory.getAppClientById({ appId });
+  const scrutiny = (
+
+    await proposalClient.createTransaction.scrutiny({
+      sender: address,
+      signer: transactionSigner,
+      args: {},
+      appReferences: [registryClient.appId],
+      accountReferences: [proposer],
+      extraFee: (1000).microAlgo(),
+    })
+  ).transactions[0];
+
   try {
-    const registryAny = registryClient as unknown as {
-      send?: Record<string, unknown>;
-    };
-
-    const sendAny = registryAny.send as Record<string, unknown> | undefined;
-    const scrutinizeViaRegistry =
-      (sendAny?.scrutinizeProposal as unknown) ||
-      (sendAny?.scrutinize as unknown) ||
-      (sendAny?.scrutinize_proposal as unknown);
-
-    if (typeof scrutinizeViaRegistry === "function") {
-      await (scrutinizeViaRegistry as (args: unknown) => Promise<unknown>)({
-        sender: address,
-        signer: transactionSigner,
-        args: { proposalId: appId },
-        appReferences: [appId],
-        accountReferences: [proposer],
-        extraFee: (1000).microAlgo(),
-      });
-      return;
-    }
-
-    // Backwards-compatible fallback: verify proposal via registry, then call proposal scrutiny.
-    const proposalClient = proposalFactory.getAppClientById({ appId });
-    const scrutiny = (
-      await proposalClient.createTransaction.scrutiny({
-        sender: address,
-        signer: transactionSigner,
-        args: {},
-        appReferences: [registryClient.appId],
-        accountReferences: [proposer],
-        extraFee: (1000).microAlgo(),
-      })
-    ).transactions[0];
-
     await registryClient
       .newGroup()
       .isProposal({
