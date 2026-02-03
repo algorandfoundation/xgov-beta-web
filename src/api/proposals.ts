@@ -118,6 +118,9 @@ export async function getAllProposals(algorandClient = algorand): Promise<Propos
               nulls: existsAndValue(state, "nulls")
                 ? BigInt(state.nulls.value)
                 : 0n,
+              boycottedMembers: existsAndValue(state, "boycotted_members")
+                ? BigInt(state["boycotted_members"].value)
+                : 0n,
               committeeVotes: existsAndValue(state, "committee_votes")
                 ? BigInt(state["committee_votes"].value)
                 : 0n,
@@ -288,6 +291,9 @@ export async function getProposal(
       ? BigInt(state.rejections.value)
       : 0n,
     nulls: existsAndValue(state, "nulls") ? BigInt(state.nulls.value) : 0n,
+    boycottedMembers: existsAndValue(state, "boycotted_members")
+      ? BigInt(state["boycotted_members"].value)
+      : 0n,
     committeeVotes: existsAndValue(state, "committee_votes")
       ? BigInt(state["committee_votes"].value)
       : 0n,
@@ -1068,8 +1074,8 @@ export async function callScrutinize(
   transactionSigner: TransactionSigner,
 ) {
   const proposalClient = proposalFactory.getAppClientById({ appId });
-
   const scrutiny = (
+
     await proposalClient.createTransaction.scrutiny({
       sender: address,
       signer: transactionSigner,
@@ -1087,10 +1093,10 @@ export async function callScrutinize(
         sender: address,
         signer: transactionSigner,
         args: { proposalId: appId },
-        appReferences: [appId]
+        appReferences: [appId],
       })
       .addTransaction(scrutiny, transactionSigner)
-      .send()
+      .send();
   } catch (e) {
     console.warn(`While calling scrutiny(${appId}):`, (e as Error).message)
   }

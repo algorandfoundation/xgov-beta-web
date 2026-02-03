@@ -381,6 +381,13 @@ function VotingStatusCard({
     isPending: approveIsPending
   } = useTransactionState();
 
+  const {
+    status: boycottStatus,
+    setStatus: setBoycottStatus,
+    errorMessage: boycottErrorMessage,
+    isPending: boycottIsPending,
+  } = useTransactionState();
+
   const voterInfo = voterInfoQuery.data?.[selectedVotingAs!] || undefined;
   const totalVotes = Number(proposal.approvals) + Number(proposal.rejections) + Number(proposal.nulls);
 
@@ -519,6 +526,7 @@ function VotingStatusCard({
             </div>
             <TransactionErrorDialog status={approveStatus} setStatus={setApproveStatus} />
             <TransactionErrorDialog status={rejectStatus} setStatus={setRejectStatus} />
+            <TransactionErrorDialog status={boycottStatus} setStatus={setBoycottStatus} />
           </div>
         )
       }
@@ -559,7 +567,7 @@ function VotingStatusCard({
                   rejections: 0,
                   voterInfo: voterInfo,
                 })}
-                disabled={rejectIsPending || abstainIsPending || approveIsPending}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending || boycottIsPending}
               >
                 <TransactionStateLoader
                   defaultText="Approve"
@@ -579,6 +587,33 @@ function VotingStatusCard({
                   activeAddress,
                   xgovAddress: selectedVotingAs,
                   innerSigner,
+                  setStatus: setBoycottStatus,
+                  refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
+                  appId: proposal.id,
+                  approvals: Number(voterInfo.votes),
+                  rejections: Number(voterInfo.votes),
+                  voterInfo: voterInfo,
+                })}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending || boycottIsPending}
+              >
+                <TransactionStateLoader
+                  defaultText="Boycott"
+                  txnState={{
+                    status: boycottStatus,
+                    errorMessage: boycottErrorMessage,
+                    isPending: boycottIsPending
+                  }}
+                />
+              </Button>
+
+              <Button
+                type='button'
+                variant='outline'
+                className="bg-algo-blue-10 dark:bg-algo-black-90"
+                onClick={() => voteProposal({
+                  activeAddress,
+                  xgovAddress: selectedVotingAs,
+                  innerSigner,
                   setStatus: setAbstainStatus,
                   refetch: [proposalQuery.refetch, voterInfoQuery.refetch],
                   appId: proposal.id,
@@ -586,7 +621,7 @@ function VotingStatusCard({
                   rejections: 0,
                   voterInfo: voterInfo,
                 })}
-                disabled={rejectIsPending || abstainIsPending || approveIsPending}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending || boycottIsPending}
               >
                 <TransactionStateLoader
                   defaultText="Abstain"
@@ -612,7 +647,7 @@ function VotingStatusCard({
                   rejections: Number(voterInfo.votes),
                   voterInfo: voterInfo,
                 })}
-                disabled={rejectIsPending || abstainIsPending || approveIsPending}
+                disabled={rejectIsPending || abstainIsPending || approveIsPending || boycottIsPending}
               >
                 <TransactionStateLoader
                   defaultText="Reject"

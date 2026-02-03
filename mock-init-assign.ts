@@ -199,6 +199,9 @@ await registryClient.send.configXgovRegistry({
         WEIGHTED_QUORUM_MEDIUM,
         WEIGHTED_QUORUM_LARGE,
       ],
+      absenceTolerance: 5n,
+      governancePeriod: 1_000_000n,
+      committeeGracePeriod: 10_000n,
     },
   },
 });

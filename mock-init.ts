@@ -43,6 +43,14 @@ const METHOD_SELECTOR_LENGTH = 4
 const UINT64_LENGTH = 8
 const DYNAMIC_BYTE_ARRAY_LENGTH_OVERHEAD = 4
 
+function committeeIdToSafeFileName(committeeId: Buffer): string {
+  return committeeId
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
 function loadProposalContractDataSizePerTransaction() {
   return (
     MAX_APP_TOTAL_ARG_LEN
@@ -121,6 +129,9 @@ const adminAccount = await algorand.account.fromKmd(
 console.log("admin account", adminAccount.addr);
 const dispenser = await algorand.account.dispenserFromEnvironment();
 const daemonAddress = algorand.account.random()
+
+// Reuse suggested params throughout this script
+const suggestedParams = await algorand.getSuggestedParams();
 
 await algorand.account.ensureFunded(adminAccount.addr, dispenser, fundAmount);
 await algorand.account.ensureFunded(councilTestingAddress, dispenser, (200).algo());
@@ -252,6 +263,9 @@ await registryClient.send.configXgovRegistry({
         WEIGHTED_QUORUM_MEDIUM,
         WEIGHTED_QUORUM_LARGE,
       ],
+      absenceTolerance: 5n,
+      governancePeriod: 1_000_000n,
+      committeeGracePeriod: 10_000n,
     },
   },
 });
@@ -404,6 +418,31 @@ await registryClient.send.declareCommittee({
   },
 })
 
+// Create a deterministic localnet committee file matching the mocked committeeId.
+// The web app uses `committeeIdToSafeFileName(committeeId)` as the lookup key.
+const committeeId = Buffer.from('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+const safeCommitteeId = committeeIdToSafeFileName(committeeId);
+const committeesDir = './public/committees';
+fs.mkdirSync(committeesDir, { recursive: true });
+
+const committeeFile = {
+  networkGenesisHash: suggestedParams.genesisHash,
+  periodStart: 0,
+  periodEnd: 1_000_000,
+  registryId: Number(registryClient.appId),
+  totalMembers: committeeMembers.length,
+  totalVotes: committeeVotesSum,
+  xGovs: [
+    ...committeeMembers.map((m, idx) => ({ address: m.addr.toString(), votes: committeeVotes[idx] })),
+  ].sort((a, b) => a.address.localeCompare(b.address)),
+};
+
+fs.writeFileSync(
+  `${committeesDir}/${safeCommitteeId}.json`,
+  JSON.stringify(committeeFile, null, 2),
+  'utf-8',
+);
+
 // Generate and setup mock proposer accounts
 const proposerAccounts: (TransactionSignerAccount & {
   account: algosdk.Account;
@@ -411,9 +450,6 @@ const proposerAccounts: (TransactionSignerAccount & {
 const proposalIds: bigint[] = [];
 const proposerFee = PROPOSER_FEE.microAlgo();
 const proposalFee = PROPOSAL_FEE.microAlgo();
-
-// get suggestedparams
-const suggestedParams = await algorand.getSuggestedParams();
 
 const oneYearFromNow = (await getLatestTimestamp()) + 365n * 24n * 60n * 60n;
 
