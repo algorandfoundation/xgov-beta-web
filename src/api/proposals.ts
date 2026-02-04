@@ -1146,7 +1146,7 @@ export async function callDeleteProposal(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      proposalIds: proposalId !== null ? [proposalId] : [],
+      proposalIds: proposalId !== null ? [proposalId.toString()] : [],
     }),
   });
   console.log("Finished delete call");
