@@ -96,7 +96,7 @@ export function ProposalCreate() {
     <ProposalForm
       type="create"
       bps={registry.data?.proposalCommitmentBps || 0n}
-      minRequestedAmount={registry.data?.minRequestedAmount || 1000000n}
+      minRequestedAmount={registry.data?.minRequestedAmount || 1_000_000n}
       maxRequestedAmount={maxRequestedAmount}
       txnState={{
         status,

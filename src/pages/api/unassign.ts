@@ -19,7 +19,7 @@ import { createLogger } from "@/utils/logger";
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
 import { chunk, getStringEnvironmentVariable } from "@/functions";
 import pMap from "p-map";
-import type { XGovRegistryClient } from "@algorandfoundation/xgov/registry";
+import type { XGovRegistryArgs, XGovRegistryClient } from "@algorandfoundation/xgov/registry";
 import { createXGovDaemon, parseRequestOptions } from "./common";
 import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 
@@ -114,24 +114,24 @@ async function getAssignedVoters(
  * @returns Transaction parameters
  */
 function createTransactionParams(
-  registryClient: XGovRegistryClient,
-  voters: string[],
+  proposalClient: ProposalClient,
+  absentees: string[],
   boxReferences: Uint8Array[],
   xgovDaemon: TransactionSignerAccount,
   isFirstTransaction: boolean,
-): CallParams<ProposalArgs["obj"]["unassign_voters(address[])void"]> {
+): CallParams<XGovRegistryArgs["obj"]["unassign_absentee_from_proposal(uint64,address[])void"]> {
   const txnParams: CallParams<
-    ProposalArgs["obj"]["unassign_voters(address[])void"]
+    XGovRegistryArgs["obj"]["unassign_absentee_from_proposal(uint64,address[])void"]
   > = {
     sender: xgovDaemon.addr,
     signer: xgovDaemon.signer,
-    args: { voters },
+    args: { proposalId: proposalClient.appId, absentees },
     boxReferences,
   };
 
   // Only add appReferences for the first transaction in the group
   if (isFirstTransaction) {
-    txnParams.appReferences = [registryClient.appId];
+    txnParams.appReferences = [proposalClient.appId];
   }
 
   return txnParams;
@@ -172,7 +172,7 @@ async function processVoterBatch(
   );
 
   // Create a transaction group
-  const txnGroup = proposalClient.newGroup();
+  const txnGroup = registryClient.newGroup();
   let groupVotersCount = 0;
 
   // Calculate distribution for detailed logging
@@ -235,7 +235,7 @@ async function processVoterBatch(
 
     // Create transaction parameters
     const txnParams = createTransactionParams(
-      registryClient,
+      proposalClient,
       batch,
       boxReferences,
       xgovDaemon,
@@ -243,7 +243,7 @@ async function processVoterBatch(
     );
 
     // Add this transaction to the group
-    txnGroup.unassignVoters(txnParams);
+    txnGroup.unassignAbsenteeFromProposal(txnParams);
 
     // Update counters
     groupVotersCount += batch.length;
