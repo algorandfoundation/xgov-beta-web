@@ -41,8 +41,8 @@ export function ProposalForm({
   type,
   proposal,
   bps = 0n,
-  minRequestedAmount = 1n, // Default to 0 Algo
-  maxRequestedAmount = 1_000_000n, // Default to 1M Algo
+  minRequestedAmount = 0n, // Default to 0 Algo
+  maxRequestedAmount = 1_000_000_000_000n, // Default to 1M Algo
   onSubmit,
   txnState,
 }: {
@@ -99,7 +99,7 @@ export function ProposalForm({
 
   const $requestedAmount = form.watch("requestedAmount");
   const costs = Math.trunc(
-    Number((BigInt($requestedAmount * 1_000_000) * bps) / BigInt(10_000)),
+    Number((BigInt(Math.round($requestedAmount * 1_000_000)) * bps) / BigInt(10_000)),
   );
 
   return (

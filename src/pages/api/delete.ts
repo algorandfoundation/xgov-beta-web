@@ -23,7 +23,7 @@ const logger = createLogger("delete-api");
 interface ProposalResult {
   success: boolean;
   details: {
-    id: bigint;
+    id: string;
     status: "success" | "failed";
     error?: string;
   };
@@ -33,7 +33,7 @@ interface ResultsSummary {
   success: number;
   failed: number;
   details: Array<{
-    id: bigint;
+    id: string;
     status: "success" | "failed";
     error?: string;
   }>;
@@ -87,7 +87,7 @@ async function processProposal(
     return {
       success: true,
       details: {
-        id: proposal.id,
+        id: proposal.id.toString(),
         status: "success" as const,
       },
     };
@@ -98,7 +98,7 @@ async function processProposal(
     return {
       success: false,
       details: {
-        id: proposal.id,
+        id: proposal.id.toString(),
         status: "failed" as const,
         error: error instanceof Error ? error.message : String(error),
       },
@@ -143,7 +143,7 @@ async function processBatch(
       return {
         success: false,
         details: {
-          id: batch[index].id,
+          id: batch[index].id.toString(),
           status: "failed" as const,
           error: `Uncaught error: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`,
         },

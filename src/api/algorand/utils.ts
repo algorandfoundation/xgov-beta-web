@@ -36,8 +36,8 @@ export async function fetchBalance(address: string | null): Promise<AccountBalan
     }
     const accountInfo = await fetchAccountInformation(address, 'all')
 
-    const amount = BigInt(accountInfo['amount'])
-    const minimum = BigInt(accountInfo['min-balance'])
+    const amount = BigInt(accountInfo.amount ?? 0)
+    const minimum = BigInt(accountInfo.minBalance ?? 0)
     const available = max(0n, amount - minimum)
 
     return {
