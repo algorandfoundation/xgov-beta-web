@@ -19,7 +19,10 @@ import { createLogger } from "@/utils/logger";
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
 import { chunk, getStringEnvironmentVariable } from "@/functions";
 import pMap from "p-map";
-import type { XGovRegistryArgs, XGovRegistryClient } from "@algorandfoundation/xgov/registry";
+import type {
+  XGovRegistryArgs,
+  XGovRegistryClient,
+} from "@algorandfoundation/xgov/registry";
 import { createXGovDaemon, parseRequestOptions } from "./common";
 import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 
@@ -108,7 +111,9 @@ async function getAssignedVoters(
 /**
  * Creates transaction parameters for a batch of voters
  *
- * @param voters Voter information to include in the transaction
+ * @param proposalClient The proposal client
+ * @param absentees List of absentee voter addresses
+ * @param boxReferences Required Box references
  * @param xgovDaemon The xgov daemon for signing
  * @param isFirstTransaction Whether this is the first transaction in a group
  * @returns Transaction parameters
@@ -119,7 +124,9 @@ function createTransactionParams(
   boxReferences: Uint8Array[],
   xgovDaemon: TransactionSignerAccount,
   isFirstTransaction: boolean,
-): CallParams<XGovRegistryArgs["obj"]["unassign_absentee_from_proposal(uint64,address[])void"]> {
+): CallParams<
+  XGovRegistryArgs["obj"]["unassign_absentee_from_proposal(uint64,address[])void"]
+> {
   const txnParams: CallParams<
     XGovRegistryArgs["obj"]["unassign_absentee_from_proposal(uint64,address[])void"]
   > = {
@@ -354,7 +361,7 @@ async function processProposal(
 
     logger.info(
       `Proposal ${proposal.id} unassignment complete: ` +
-        `${voterCount} voters unassigned, `
+        `${voterCount} voters unassigned, `,
     );
 
     // extra step, finalize the proposal
@@ -379,9 +386,7 @@ async function processProposal(
         boxReferences: [proposerBoxName(proposer)],
         extraFee: (2000).microAlgo(), // Extra fee for inner transaction
       });
-      logger.info(
-        `Successfully finalized proposal ${proposal.id}`,
-      );
+      logger.info(`Successfully finalized proposal ${proposal.id}`);
       finalized = true;
     } catch (finalizationError) {
       logger.error(
@@ -548,8 +553,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!daemonInfo) {
       return new Response(
         JSON.stringify({
-          error:
-            "xGov Daemon mnemonic not found in environment variables",
+          error: "xGov Daemon mnemonic not found in environment variables",
         }),
         {
           status: 400,
