@@ -8,6 +8,7 @@
     "build": "astro check && astro build",
     "preview": "wrangler dev",
     "astro": "astro",
+    "testnet-vote": "tsx scripts/testnet-vote.ts",
     "mock-init": "tsx --env-file=.env.template mock-init.ts",
     "mock-init-assign": "tsx --env-file=.env.template mock-init-assign.ts",
     "one-off-assign-voter": "tsx --env-file=.env.development one-off-assign-voter.ts",

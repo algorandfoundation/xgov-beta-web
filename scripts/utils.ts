@@ -1,23 +1,23 @@
-import { AlgorandClient as algorand } from "../src/algorand/algo-client";
+import { getAlgorandClient } from "../src/api/algorand/algo-client";
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
 
-export async function getLastRound(algorand: AlgorandClient): Promise<number> {
-  return (await algorand.client.algod.status().do())["last-round"];
+export async function getLastRound(algorand: AlgorandClient): Promise<bigint> {
+  return (await algorand.client.algod.status().do()).lastRound
 }
 
 export async function getLatestTimestamp(
   algorand: AlgorandClient,
-): Promise<number> {
+): Promise<bigint> {
   const lastRound = await getLastRound(algorand);
   const block = await algorand.client.algod.block(lastRound).do();
-  return block.block.ts;
+  return block.block.header.timestamp;
 }
 
-export async function roundWarp(algorand: AlgorandClient, to: number = 0) {
+export async function roundWarp(algorand: AlgorandClient, to: bigint = 0n) {
   algorand.setSuggestedParamsCacheTimeout(0);
   const dispenser = await algorand.account.dispenserFromEnvironment();
   let nRounds;
-  if (to !== 0) {
+  if (to !== 0n) {
     const lastRound = await getLastRound(algorand);
 
     if (to < lastRound) {
@@ -39,7 +39,7 @@ export async function roundWarp(algorand: AlgorandClient, to: number = 0) {
   }
 }
 
-export async function timeWarp(algorand: AlgorandClient, to: number) {
+export async function timeWarp(algorand: AlgorandClient, to: bigint) {
   algorand.setSuggestedParamsCacheTimeout(0);
   const current = await getLatestTimestamp(algorand);
   await algorand.client.algod.setBlockOffsetTimestamp(to - current).do();
