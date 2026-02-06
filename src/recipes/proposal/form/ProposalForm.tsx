@@ -591,7 +591,8 @@ export function ProposalForm({
             submitText={type === "edit" ? "Update Proposal" : "Open Proposal"}
             onSubmit={form.handleSubmit(async (data) => {
               await onSubmit(data)
-              setOpenModalOpen(false);
+              // Modal will stay open if there's an error - the error will be displayed
+              // Only close on success (when not in error state)
             })}
             txnState={txnState}
           />
