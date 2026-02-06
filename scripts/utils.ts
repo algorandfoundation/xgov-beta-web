@@ -1,7 +1,7 @@
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
 
 export async function getLastRound(algorand: AlgorandClient): Promise<bigint> {
-  return (await algorand.client.algod.status().do()).lastRound
+  return (await algorand.client.algod.status().do()).lastRound;
 }
 
 export async function getLatestTimestamp(
