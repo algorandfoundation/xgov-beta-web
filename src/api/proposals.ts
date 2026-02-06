@@ -1128,7 +1128,7 @@ export async function callUnassign(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      proposalIds: proposalId !== null ? [proposalId] : [],
+      proposalIds: proposalId !== null ? [proposalId.toString()] : [],
     }),
   });
   console.log("Finished unassign call");
