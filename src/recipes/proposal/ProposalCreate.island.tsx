@@ -124,7 +124,7 @@ export function ProposalCreate() {
           return;
         }
 
-        await openProposal({
+        const success = await openProposal({
           activeAddress,
           innerSigner,
           setStatus,
@@ -134,7 +134,9 @@ export function ProposalCreate() {
           bps: registry.data?.proposalCommitmentBps,
         });
 
-        navigate(`/proposal/${appId}`);
+        if (success) {
+          navigate(`/proposal/${appId}`);
+        }
       }}
     />
   );
