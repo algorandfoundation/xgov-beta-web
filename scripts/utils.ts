@@ -1,4 +1,3 @@
-import { getAlgorandClient } from "../src/api/algorand/algo-client";
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
 
 export async function getLastRound(algorand: AlgorandClient): Promise<bigint> {
