@@ -18,10 +18,10 @@ export const DISCUSSION_DURATION_MEDIUM = BigInt(60);
 export const DISCUSSION_DURATION_LARGE = BigInt(60);
 export const DISCUSSION_DURATION_XLARGE = BigInt(60);
 
-export const VOTING_DURATION_SMALL = BigInt(7200);
-export const VOTING_DURATION_MEDIUM = BigInt(7200);
-export const VOTING_DURATION_LARGE = BigInt(7200);
-export const VOTING_DURATION_XLARGE = BigInt(7200);
+export const VOTING_DURATION_SMALL = BigInt(600);    // 10 minutes
+export const VOTING_DURATION_MEDIUM = BigInt(600);   // 10 minutes
+export const VOTING_DURATION_LARGE = BigInt(600);    // 10 minutes
+export const VOTING_DURATION_XLARGE = BigInt(600);   // 10 minutes
 
 export const QUORUM_SMALL = BigInt(1_000);
 export const QUORUM_MEDIUM = BigInt(1_500);

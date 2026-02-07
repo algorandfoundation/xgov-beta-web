@@ -2,6 +2,10 @@ import fs from "node:fs";
 import crypto from "crypto";
 import path from "path";
 import algosdk from "algosdk";
+
+// Parse command-line arguments
+const args = process.argv.slice(2);
+const shouldAssignVoters = !args.includes("--no-assign");
 import { XGovRegistryFactory } from "@algorandfoundation/xgov/registry";
 import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 import { algorand } from "@/api/algorand";
@@ -32,7 +36,21 @@ import {
   WEIGHTED_QUORUM_SMALL,
   XGOV_FEE,
 } from "@/constants";
-import { proposerBoxName, xGovBoxName } from "@/api";
+import { proposalApprovalBoxName, proposerBoxName, xGovBoxName } from "@/api";
+
+const MAX_APP_TOTAL_ARG_LEN = 2048
+const METHOD_SELECTOR_LENGTH = 4
+const UINT64_LENGTH = 8
+const DYNAMIC_BYTE_ARRAY_LENGTH_OVERHEAD = 4
+
+function loadProposalContractDataSizePerTransaction() {
+  return (
+    MAX_APP_TOTAL_ARG_LEN
+    - METHOD_SELECTOR_LENGTH
+    - UINT64_LENGTH
+    - DYNAMIC_BYTE_ARRAY_LENGTH_OVERHEAD
+  )
+}
 
 function range(start: bigint, stop?: bigint, step?: bigint): bigint[] {
   if (stop === undefined) {
@@ -149,6 +167,36 @@ await registryClient.appClient.fundAppAccount({
   amount: (100).algos(),
 });
 
+// Initialize and load the proposal approval program
+const proposalMinter = new ProposalFactory({
+  algorand,
+  defaultSender: adminAccount.addr,
+  defaultSigner: adminAccount.signer,
+});
+
+const compiledProposal = await proposalMinter.appFactory.compile();
+const size = compiledProposal.approvalProgram.length;
+const dataSizePerTransaction = loadProposalContractDataSizePerTransaction();
+const bulks = 1 + Math.floor(size / dataSizePerTransaction);
+
+await registryClient.send.initProposalContract({args: { size }});
+
+for (let i = 0; i < bulks; i++) {
+  const chunk = compiledProposal.approvalProgram.slice(
+    i * dataSizePerTransaction,
+    (i + 1) * dataSizePerTransaction,
+  );
+
+  await registryClient.send.loadProposalContract({
+    args: {
+      offset: (i * dataSizePerTransaction),
+      data: chunk,
+    }
+  });
+}
+
+console.log("Proposal approval program loaded successfully");
+
 // Generate KYC provider account
 const kycProvider = await algorand.account.fromKmd(
   "unencrypted-default-wallet",
@@ -264,10 +312,7 @@ for (const committeeMember of committeeMembers) {
         receiver: registryClient.appAddress,
         suggestedParams: await algorand.getSuggestedParams(),
       }),
-    },
-    boxReferences: [
-      xGovBoxName(committeeMember.addr.toString()),
-    ],
+    }
   });
 }
 
@@ -275,7 +320,7 @@ for (const committeeMember of committeeMembers) {
 const proposerAccounts: (TransactionSignerAccount & {
   account: algosdk.Account;
 })[] = [];
-const proposalIds: bigint[] = range(BigInt(mockProposals.length));
+const proposalIds: bigint[] = [];
 const proposerFee = PROPOSER_FEE.microAlgo();
 const proposalFee = PROPOSAL_FEE.microAlgo();
 
@@ -292,8 +337,9 @@ const metadataBoxName = new Uint8Array(Buffer.from("M"))
 // Each pair of proposals gets assigned a random committee of 200 members
 console.log("\nCreating random committee pairs for proposals...");
 
-// Shuffle the proposals to create random pairs
-const shuffledProposals = [...proposalIds].sort(() => Math.random() - 0.5);
+// Shuffle the proposals to create random pairs (using indices since proposalIds isn't populated yet)
+const proposalIndices = [...Array(mockProposals.length).keys()].map(i => BigInt(i));
+const shuffledProposals = [...proposalIndices].sort(() => Math.random() - 0.5);
 
 // Create pairs of proposals (handle odd number by having one triple if necessary)
 const proposalPairs: bigint[][] = [];
@@ -333,7 +379,7 @@ for (const pair of proposalPairs) {
   // Create committee data for this pair
   const committeeData = {
     xGovs: shuffledMembers.map(idx => ({
-      address: committeeMembers[idx].addr,
+      address: committeeMembers[idx].addr.toString(),
       votes: committeeVotes[idx]
     }))
   };
@@ -400,8 +446,7 @@ for (let i = 0; i < mockProposals.length; i++) {
         receiver: registryClient.appAddress,
         suggestedParams,
       }),
-    },
-    boxReferences: [proposerBoxName(account.addr.toString())],
+    }
   });
 
   try {
@@ -413,23 +458,22 @@ for (let i = 0; i < mockProposals.length; i++) {
         proposer: account.addr.toString(),
         kycStatus: true,
         kycExpiring: BigInt(oneYearFromNow),
-      },
-      boxReferences: [proposerBoxName(account.addr.toString())],
+      }
     });
   } catch (e) {
     console.error("Failed to approve proposer KYC");
     process.exit(1);
   }
 
-  // Get the committee ID for this proposal
-  const committeeId = proposalToCommitteeMap.get(proposalIds[i]);
+  // Get the committee ID for this proposal (using index since proposalIds isn't populated yet)
+  const committeeId = proposalToCommitteeMap.get(BigInt(i));
 
   if (!committeeId) {
-    console.error(`No committee ID found for proposal ${proposalIds[i]}`);
+    console.error(`No committee ID found for proposal index ${i}`);
     process.exit(1);
   }
 
-  console.log(`Preparing to declareCommittee proposal ${proposalIds[i]} with committee ID ${committeeIdToSafeFileName(committeeId)}`);
+  console.log(`Preparing to declareCommittee proposal index ${i} with committee ID ${committeeIdToSafeFileName(committeeId)}`);
 
   // For this specific proposal, get its committee's vote info
   const committeeFilePath = path.join(committeesDir, `${committeeIdToSafeFileName(committeeId)}.json`);
@@ -438,7 +482,7 @@ for (let i = 0; i < mockProposals.length; i++) {
   const committeeVoteSum = committeeData.xGovs.reduce((sum: number, member: any) => sum + member.votes, 0);
 
   // Declare this committee right before submitting the proposal
-  console.log(`Declaring committee ${committeeIdToSafeFileName(committeeId)} for proposal ${proposalIds[i]}`);
+  console.log(`Declaring committee ${committeeIdToSafeFileName(committeeId)} for proposal index ${i}`);
   await registryClient.send.declareCommittee({
     sender: adminAccount.addr,
     signer: adminAccount.signer,
@@ -461,7 +505,6 @@ for (let i = 0; i < mockProposals.length; i++) {
         suggestedParams,
       }),
     },
-    boxReferences: [proposerBoxName(account.addr.toString())],
     extraFee: (2_000).microAlgos(),
   });
 
@@ -472,6 +515,9 @@ for (let i = 0; i < mockProposals.length; i++) {
   }
 
   console.log(`\nNew Proposal: ${result.return}\n`);
+
+  // Store the actual proposal app ID
+  proposalIds.push(result.return);
 
   // instance a new proposal client
   const proposalClient = proposalFactory.getAppClientById({
@@ -491,7 +537,7 @@ for (let i = 0; i < mockProposals.length; i++) {
 
   const proposalSubmissionFee = Math.trunc(
     Number(
-      (mockProposals[i].requestedAmount.algos().microAlgos * BigInt(1_000)) /
+      (mockProposals[i].requestedAmount.algos().microAlgos * PROPOSAL_COMMITMENT_BPS) /
       BigInt(10_000),
     ),
   );
@@ -522,7 +568,6 @@ for (let i = 0; i < mockProposals.length; i++) {
           requestedAmount: mockProposals[i].requestedAmount.algos().microAlgos,
           focus: mockProposals[i].focus,
         },
-        appReferences: [registryClient.appId],
       })
 
     chunkedMetadata.map((chunk, index) => {
@@ -532,13 +577,11 @@ for (let i = 0; i < mockProposals.length; i++) {
         args: {
           payload: chunk,
           isFirstInGroup: index === 0,
-        },
-        appReferences: [registryClient.appId],
-        boxReferences: [metadataBoxName, metadataBoxName]
+        }
       });
     })
 
-    console.log(`Opening proposal ${proposalIds[i]}...`);
+    console.log(`Opening proposal index ${i}...`);
     await openGroup.send()
   } catch (e) {
     console.log(e);
@@ -549,8 +592,8 @@ for (let i = 0; i < mockProposals.length; i++) {
   }
 }
 
-// Time warp to move proposals to the next phase
-const ts = (await getLatestTimestamp()) + 86400n * 5n;
+// Time warp to move proposals past the discussion phase (discussion duration is 60 seconds)
+const ts = (await getLatestTimestamp()) + 65n; // 65 seconds to ensure discussion period is over
 await timeWarp(ts);
 console.log("finished time warp, new ts: ", await getLatestTimestamp());
 
@@ -568,9 +611,6 @@ for (let i = 1; i < mockProposals.length; i++) {
     sender: proposerAccounts[i].addr,
     signer: proposerAccounts[i].signer,
     args: {},
-    appReferences: [registryClient.appId],
-    accountReferences: [adminAccount.addr],
-    boxReferences: [metadataBoxName],
     extraFee: (1_000).microAlgos(),
   });
 }
@@ -581,6 +621,102 @@ await registryClient.send.setXgovCouncil({
   signer: adminAccount.signer,
   args: { council: adminAccount.addr.toString() },
 });
+
+// Assign voters to each submitted proposal
+if (shouldAssignVoters) {
+console.log("\nAssigning voters to proposals...");
+
+const FIRST_TXN_VOTERS = 7;
+const OTHER_TXN_VOTERS = 8;
+
+for (let i = 1; i < mockProposals.length; i++) {
+  const proposalId = proposalIds[i];
+  const proposalIndex = BigInt(i);
+  const committeeId = proposalToCommitteeMap.get(proposalIndex);
+  
+  if (!committeeId) {
+    console.log(`No committee found for proposal ${proposalId}, skipping...`);
+    continue;
+  }
+
+  const safeFileName = committeeIdToSafeFileName(committeeId);
+  const filePath = path.join(committeesDir, `${safeFileName}.json`);
+  const committeeData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  
+  const proposalClient = proposalFactory.getAppClientById({
+    appId: proposalId,
+  });
+
+  console.log(`Assigning ${committeeData.xGovs.length} voters to proposal ${proposalId}...`);
+
+  // Process voters in batches
+  const voters: { address: string; votes: number }[] = committeeData.xGovs;
+  let processedVoters = 0;
+
+  while (processedVoters < voters.length) {
+    const txnGroup = proposalClient.newGroup();
+    let votersInGroup = 0;
+    let txnsInGroup = 0;
+
+    // Build up to 16 transactions per group
+    while (txnsInGroup < 16 && processedVoters + votersInGroup < voters.length) {
+      const votersPerTxn = txnsInGroup === 0 ? FIRST_TXN_VOTERS : OTHER_TXN_VOTERS;
+      const batchStart = processedVoters + votersInGroup;
+      const batchEnd = Math.min(batchStart + votersPerTxn, voters.length);
+      const batch = voters.slice(batchStart, batchEnd);
+
+      if (batch.length === 0) break;
+
+      const voterTuples: [string, number][] = batch.map(v => [v.address, v.votes]);
+
+      txnGroup.assignVoters({
+        sender: adminAccount.addr,
+        signer: adminAccount.signer,
+        args: { voters: voterTuples },
+        extraFee: txnsInGroup === 0 ? (1_000).microAlgos() : undefined,
+      });
+
+      votersInGroup += batch.length;
+      txnsInGroup++;
+    }
+
+    if (votersInGroup > 0) {
+      await txnGroup.send();
+      processedVoters += votersInGroup;
+      console.log(`  Assigned ${processedVoters}/${voters.length} voters...`);
+    }
+  }
+
+  console.log(`Completed assigning voters to proposal ${proposalId}`);
+}
+
+console.log("\nVoters assigned! Voting period is now active (10 minutes).");
+
+// Time warp to just after voting period ends (voting duration is 600 seconds / 10 minutes)
+const votingEndWarp = (await getLatestTimestamp()) + 605n; // 10 minutes + 5 seconds past voting end
+await timeWarp(votingEndWarp);
+console.log("Time warped to just after voting period ends.");
+
+// Scrutinize all submitted proposals (all except proposal index 0 which is admin's)
+console.log("\nScrutinizing proposals...");
+for (let i = 1; i < mockProposals.length; i++) {
+  const proposalClient = proposalFactory.getAppClientById({
+    appId: proposalIds[i],
+  });
+
+  console.log(`Scrutinizing proposal ${proposalIds[i]}...`);
+  await proposalClient.send.scrutiny({
+    sender: adminAccount.addr,
+    signer: adminAccount.signer,
+    args: {},
+    extraFee: (1000).microAlgo(),
+  });
+}
+console.log("All proposals scrutinized.");
+} else {
+  console.log("\nSkipping voter assignment (--no-assign flag used).");
+  console.log("You can use the assign API to assign voters manually.");
+}
 
 console.log({
   adminAccount,
@@ -595,18 +731,45 @@ console.log(
   `\n\n`,
 );
 
-// get 4 random proposal IDs (excluding the first one)
-const randomProposalIds = proposalIds.slice(1).sort(() => Math.random() - 0.5).slice(0, 4);
+if (shouldAssignVoters) {
+  // Pick a few random proposal IDs for the example curl command (as strings for bigint serialization)
+  const randomProposalIds = proposalIds.slice(1, 4).map(id => `"${id}"`).join(", ");
+  console.log(`Voters have been assigned. Voting period has ended.
 
-console.log(
-  `To test the assignment endpoint, start the server by running:\n\n`,
-  `npm run dev\n\n`,
-  `get the server port from the console output (probably 4321), and then run:\n\n`,
-  `curl -v -X POST http://localhost:4321/api/assign \\ \n -H "Content-Type: application/json" \\ \n -d '{"proposalIds": [${randomProposalIds}]}' \\ \n -s | jq '.'\n\n`,
-  `then run:\n\n`,
-  `curl -v -X POST http://localhost:4321/api/assign \\ \n -H "Content-Type: application/json" \\ \n -s | jq '.'\n\n`,
-  `to assign the remaining proposals\n`,
-)
+Start the server:
+
+  npm run dev
+
+get the server port from the console output (probably 4321), and then run:
+
+  curl -X POST http://localhost:4321/api/unassign -H "Content-Type: application/json" -d '{"proposalIds": [${randomProposalIds}]}' -s | jq '.'
+
+to unassign voters from specific proposals, or:
+
+  curl -X POST http://localhost:4321/api/unassign -H "Content-Type: application/json" -d '{}' -s | jq '.'
+
+to unassign voters from all proposals
+`);
+} else {
+  // Pick a few random proposal IDs for the example curl command (as strings for bigint serialization)
+  const randomProposalIds = proposalIds.slice(1, 4).map(id => `"${id}"`).join(", ");
+  console.log(`Voters NOT assigned. Voting period is active for 10 minutes.
+
+Start the server:
+
+  npm run dev
+
+get the server port from the console output (probably 4321), and then run:
+
+  curl -X POST http://localhost:4321/api/assign -H "Content-Type: application/json" -d '{"proposalIds": [${randomProposalIds}]}' -s | jq '.'
+
+then run:
+
+  curl -X POST http://localhost:4321/api/assign -H "Content-Type: application/json" -d '{}' -s | jq '.'
+
+to assign the remaining proposals
+`);
+}
 const envFile = fs.readFileSync("./.env.template", "utf-8");
 fs.writeFileSync(
   ".env.development",
@@ -640,7 +803,7 @@ fs.writeFileSync(
       proposalIds,
       xGovs: committeeMembers.map((member, index) => {
         return {
-          address: member.addr,
+          address: member.addr.toString(),
           votes: committeeVotes[index],
         };
       })

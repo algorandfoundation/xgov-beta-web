@@ -20,7 +20,8 @@ export function getNumericEnvironmentVariable(key: string, locals: App.Locals, d
   if (locals?.runtime?.env && key in locals?.runtime?.env)
     // @ts-expect-error, runtime can be undefined
     return parseInt(locals.runtime.env[key], 10);
-  return import.meta.env[key] ?? defaultValue;
+  const envValue = import.meta.env[key];
+  return envValue !== undefined ? parseInt(envValue, 10) : defaultValue;
 }
 
 export function getStringEnvironmentVariable(key: string, locals: App.Locals, defaultValue: string): string {

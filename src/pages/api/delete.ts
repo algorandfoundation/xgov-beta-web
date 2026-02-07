@@ -69,8 +69,6 @@ async function processProposal(
         sender: xgovDaemon.addr,
         signer: xgovDaemon.signer,
         args: {},
-        appReferences: [RegistryAppID],
-        boxReferences: [metadataBoxName],
         extraFee: (1000).microAlgo(), // Extra fee for inner transaction
       });
       logger.info(
