@@ -47,7 +47,7 @@ interface CommitteeData {
 interface ProposalResult {
   success: boolean;
   details: {
-    id: bigint;
+    id: string;
     title: string;
     voters: number;
     skippedVoters?: number;
@@ -61,7 +61,7 @@ interface ResultsSummary {
   success: number;
   failed: number;
   details: Array<{
-    id: bigint;
+    id: string;
     title: string;
     voters: number;
     skippedVoters?: number;
@@ -374,11 +374,8 @@ async function getEligibleVoters(
  * @returns Transaction parameters
  */
 function createTransactionParams(
-  registryClient: XGovRegistryClient,
   voters: [string, number][],
-  boxReferences: Uint8Array[],
-  xgovDaemon: TransactionSignerAccount,
-  isFirstTransaction: boolean,
+  xgovDaemon: TransactionSignerAccount
 ): CallParams<ProposalArgs["obj"]["assign_voters((address,uint64)[])void"]> {
   const txnParams: CallParams<
     ProposalArgs["obj"]["assign_voters((address,uint64)[])void"]
@@ -386,13 +383,7 @@ function createTransactionParams(
     sender: xgovDaemon.addr,
     signer: xgovDaemon.signer,
     args: { voters },
-    boxReferences,
   };
-
-  // Only add appReferences for the first transaction in the group
-  if (isFirstTransaction) {
-    txnParams.appReferences = [registryClient.appId];
-  }
 
   return txnParams;
 }
@@ -433,6 +424,7 @@ async function processVoterBatch(
 
   // Create a transaction group
   const txnGroup = proposalClient.newGroup();
+
   let groupVotersCount = 0;
 
   // Calculate distribution for detailed logging
@@ -493,20 +485,8 @@ async function processVoterBatch(
       member.votes,
     ]);
 
-    // Collect all box references for this batch
-    const boxReferences = batch.map((member: CommitteeMember) => {
-      const addr = algosdk.decodeAddress(member.address).publicKey;
-      return new Uint8Array(Buffer.concat([Buffer.from("V"), addr]));
-    });
-
     // Create transaction parameters
-    const txnParams = createTransactionParams(
-      registryClient,
-      voters,
-      boxReferences,
-      xgovDaemon,
-      txnIndex === 0,
-    );
+    const txnParams = createTransactionParams(voters, xgovDaemon);
 
     // Add this transaction to the group
     txnGroup.assignVoters(txnParams);
@@ -609,7 +589,7 @@ async function processProposal(
       return {
         success: true,
         details: {
-          id: proposal.id,
+          id: proposal.id.toString(),
           title: proposal.title,
           voters: 0,
           skippedVoters: totalVotersCount,
@@ -627,7 +607,7 @@ async function processProposal(
       Array.isArray(eligibleVoters) &&
       eligibleVoters.length > 0
     ) {
-      // Calculate max voters per group: First txn (7) + remaining txns (8 each)
+      // Calculate max voters per group: First txn (7) + remaining voter txns (8 each)
       const MAX_VOTERS_PER_GROUP =
         FIRST_TXN_VOTERS + (MAX_GROUP_SIZE - 1) * OTHER_TXN_VOTERS; // = 7 + 15*8 = 127
 
@@ -669,7 +649,7 @@ async function processProposal(
     return {
       success: true,
       details: {
-        id: proposal.id,
+        id: proposal.id.toString(),
         title: proposal.title,
         voters: voterCount,
         skippedVoters: alreadyAssignedCount,
@@ -684,7 +664,7 @@ async function processProposal(
     return {
       success: false,
       details: {
-        id: proposal.id,
+        id: proposal.id.toString(),
         title: proposal.title,
         voters: 0,
         status: "failed" as const,
@@ -737,7 +717,7 @@ async function processBatch(
       return {
         success: false,
         details: {
-          id: batch[index].id,
+          id: batch[index].id.toString(),
           title: batch[index].title,
           voters: 0,
           status: "failed" as const,

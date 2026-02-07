@@ -183,15 +183,7 @@ const size = compiledProposal.approvalProgram.length;
 const dataSizePerTransaction = loadProposalContractDataSizePerTransaction();
 const bulks = 1 + Math.floor(size / dataSizePerTransaction);
 
-await registryClient.send.initProposalContract({
-  args: { size },
-  boxReferences: [
-    proposalApprovalBoxName(),
-    proposalApprovalBoxName(),
-    proposalApprovalBoxName(),
-    proposalApprovalBoxName()
-  ]
-});
+await registryClient.send.initProposalContract({ args: { size }});
 
 for (let i = 0; i < bulks; i++) {
   const chunk = compiledProposal.approvalProgram.slice(
@@ -203,13 +195,7 @@ for (let i = 0; i < bulks; i++) {
     args: {
       offset: (i * dataSizePerTransaction),
       data: chunk,
-    },
-    boxReferences: [
-      proposalApprovalBoxName(),
-      proposalApprovalBoxName(),
-      proposalApprovalBoxName(),
-      proposalApprovalBoxName()
-    ],
+    }
   });
 }
 
@@ -318,11 +304,7 @@ await councilClient.send.addMember({
   signer: adminAccount.signer,
   args: {
     address: councilTestingAddress,
-  },
-  appReferences: [registryClient.appId],
-  boxReferences: [
-    CouncilMemberBoxName(councilTestingAddress)
-  ]
+  }
 });
 
 let councilMembers = []
@@ -343,11 +325,7 @@ for (let i = 0; i < 10; i++) {
     signer: adminAccount.signer,
     args: {
       address: randomAccount.addr.toString(),
-    },
-    appReferences: [registryClient.appId],
-    boxReferences: [
-      CouncilMemberBoxName(randomAccount.addr.toString()),
-    ]
+    }
   });
 
   councilMembers.push(randomAccount);
@@ -376,7 +354,8 @@ for (let i = 0; i < 100; i++) {
   const randomAccount = algorand.account.random();
   console.log('committee member', randomAccount.addr);
   committeeMembers.push(randomAccount);
-  const votingPower = Math.floor(Math.random() * 1_000);
+  // Ensure votingPower is always at least 1
+  const votingPower = Math.floor(Math.random() * 1_000) + 1;
   committeeVotes.push(votingPower);
   committeeVotesSum += votingPower;
 }
@@ -401,10 +380,7 @@ for (const committeeMember of committeeMembers) {
         receiver: registryClient.appAddress,
         suggestedParams: await algorand.getSuggestedParams(),
       }),
-    },
-    boxReferences: [
-      xGovBoxName(committeeMember.addr.toString()),
-    ],
+    }
   });
 }
 
@@ -488,8 +464,7 @@ for (let i = 0; i < mockProposals.length; i++) {
         receiver: registryClient.appAddress,
         suggestedParams,
       }),
-    },
-    boxReferences: [proposerBoxName(account.addr.toString())],
+    }
   });
 
   try {
@@ -502,7 +477,6 @@ for (let i = 0; i < mockProposals.length; i++) {
         kycStatus: true,
         kycExpiring: BigInt(oneYearFromNow),
       },
-      boxReferences: [proposerBoxName(account.addr.toString())],
     });
   } catch (e) {
     console.error("Failed to approve proposer KYC");
@@ -521,13 +495,6 @@ for (let i = 0; i < mockProposals.length; i++) {
         suggestedParams,
       }),
     },
-    boxReferences: [
-      proposerBoxName(account.addr.toString()),
-      proposalApprovalBoxName(),
-      proposalApprovalBoxName(),
-      proposalApprovalBoxName(),
-      proposalApprovalBoxName(),
-    ],
     extraFee: (2000).microAlgos(),
   });
 
@@ -586,8 +553,7 @@ for (let i = 0; i < mockProposals.length; i++) {
           fundingType: mockProposals[i].fundingType,
           requestedAmount: mockProposals[i].requestedAmount.algos().microAlgos,
           focus: mockProposals[i].focus,
-        },
-        appReferences: [registryClient.appId],
+        }
       })
 
     chunkedMetadata.map((chunk, index) => {
@@ -597,9 +563,7 @@ for (let i = 0; i < mockProposals.length; i++) {
         args: {
           payload: chunk,
           isFirstInGroup: index === 0,
-        },
-        appReferences: [registryClient.appId],
-        boxReferences: [metadataBoxName, metadataBoxName]
+        }
       });
     })
 
@@ -627,9 +591,6 @@ for (let i = 1; i < mockProposals.length; i++) {
     sender: proposerAccounts[i].addr,
     signer: proposerAccounts[i].signer,
     args: {},
-    appReferences: [registryClient.appId],
-    accountReferences: [adminAccount.addr],
-    boxReferences: [metadataBoxName],
     extraFee: (1000).microAlgos(),
   });
 }
@@ -659,14 +620,7 @@ for (let i = 1; i < mockProposals.length; i++) {
           signer: adminAccount.signer,
           args: {
             voters: [[committeeMember.addr.toString(), votes]],
-          },
-          appReferences: [registryClient.appId],
-          boxReferences: [
-            new Uint8Array(Buffer.concat([
-              Buffer.from('V'),
-              addr,
-            ])),
-          ]
+          }
         })
         console.log('assigned voter');
       } catch (e) {
@@ -710,14 +664,6 @@ for (let i = 1; i < 10; i++) {
         approvalVotes: approve ? actualVotingPower : 0n,
         rejectionVotes: approve ? 0n : actualVotingPower,
       },
-      accountReferences: [committeeMembers[j].addr],
-      appReferences: [proposalIds[i]],
-      boxReferences: [
-        new Uint8Array(Buffer.concat([Buffer.from('x'), committeeMembers[j].addr.publicKey])),
-        {
-          appId: proposalIds[i], name: new Uint8Array(Buffer.concat([Buffer.from('V'),
-          committeeMembers[j].addr.publicKey]))
-        }],
       extraFee: (100_000).microAlgos(),
     })
   }
@@ -736,20 +682,6 @@ try {
       approvalVotes: 10n,
       rejectionVotes: 0n,
     },
-    accountReferences: [adminAccount.addr],
-    appReferences: [proposalIds[1]],
-    boxReferences: [
-      xGovBoxName(adminAccount.addr.toString()),
-      {
-        appId: proposalIds[1],
-        name: new Uint8Array(
-          Buffer.concat([
-            Buffer.from("V"),
-            adminAccount.addr.publicKey,
-          ]),
-        ),
-      },
-    ],
     extraFee: (100_000).microAlgos(),
   });
 } catch (e) {
@@ -764,8 +696,6 @@ await proposalFactory
     sender: adminAccount.addr,
     signer: adminAccount.signer,
     args: {},
-    appReferences: [registryClient.appId],
-    accountReferences: [proposerAccounts[1].addr],
     extraFee: (1000).microAlgo()
   })
 
@@ -777,11 +707,6 @@ for (let i = 0; i < councilMembers.length; i++) {
       proposalId: proposalIds[1],
       block: i < 5 ? true : false,
     },
-    appReferences: [proposalIds[1], registryClient.appId],
-    boxReferences: [
-      CouncilVoteBoxName(Number(proposalIds[1])),
-      CouncilMemberBoxName(councilMembers[i].addr.toString())
-    ],
     extraFee: (1_000).microAlgo()
   })
 }

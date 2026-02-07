@@ -5,7 +5,8 @@ import {
   getRegistryClient,
   getProposalToUnassign,
   getAllProposalsToUnassign,
-  proposerBoxName,
+  xGovBoxName,
+  voterBoxName,
 } from "@/api";
 import {
   ProposalClient,
@@ -16,7 +17,7 @@ import {
 import algosdk from "algosdk";
 import type { APIRoute } from "astro";
 import { createLogger } from "@/utils/logger";
-import { AlgorandClient } from "@algorandfoundation/algokit-utils";
+import { AlgorandClient, microAlgo } from "@algorandfoundation/algokit-utils";
 import { chunk, getStringEnvironmentVariable } from "@/functions";
 import pMap from "p-map";
 import type {
@@ -31,17 +32,18 @@ const logger = createLogger("unassign-api");
 
 // Constants for transaction processing
 const MAX_GROUP_SIZE = 16; // Maximum transactions in a group
-const FIRST_TXN_VOTERS = 7; // First transaction can have up to 7 voters
-const OTHER_TXN_VOTERS = 8; // Other transactions can have up to 8 voters
-
 const CONFIRMATION_ROUNDS = 4; // Number of rounds to wait for transaction confirmation
 const VOTER_BOX_PREFIX_BYTE = 86; // ASCII for 'V'
+
+// Max absentees per transaction group
+// Capped below the ABI arg length limit (2048 bytes) to leave headroom
+const MAX_ABSENTEES_PER_GROUP = 56;
 
 // Types
 interface ProposalResult {
   success: boolean;
   details: {
-    id: bigint;
+    id: string;
     title: string;
     voters: number;
     status: "success" | "failed";
@@ -54,7 +56,7 @@ interface ResultsSummary {
   success: number;
   failed: number;
   details: Array<{
-    id: bigint;
+    id: string;
     title: string;
     voters: number;
     status: "success" | "failed";
@@ -63,12 +65,12 @@ interface ResultsSummary {
 }
 
 /**
- * Retrieves the list of assigned voter addresses for a proposal
+ * Retrieves the list of absentee voter addresses for a proposal
  *
  * @param proposalClient The proposal client instance
- * @returns An array of voter Algorand addresses
+ * @returns An array of absentee Algorand addresses
  */
-async function getAssignedVoters(
+async function getAbsenteeVoters(
   proposalClient: ProposalClient,
 ): Promise<Array<string>> {
   const existingVoters = new Array<string>();
@@ -109,176 +111,74 @@ async function getAssignedVoters(
 }
 
 /**
- * Creates transaction parameters for a batch of voters
+ * Processes a batch of voters for a proposal with manually provided references
  *
- * @param proposalClient The proposal client
- * @param absentees List of absentee voter addresses
- * @param boxReferences Required Box references
- * @param xgovDaemon The xgov daemon for signing
- * @param isFirstTransaction Whether this is the first transaction in a group
- * @returns Transaction parameters
- */
-function createTransactionParams(
-  proposalClient: ProposalClient,
-  absentees: string[],
-  boxReferences: Uint8Array[],
-  xgovDaemon: TransactionSignerAccount,
-  isFirstTransaction: boolean,
-): CallParams<
-  XGovRegistryArgs["obj"]["unassign_absentee_from_proposal(uint64,address[])void"]
-> {
-  const txnParams: CallParams<
-    XGovRegistryArgs["obj"]["unassign_absentee_from_proposal(uint64,address[])void"]
-  > = {
-    sender: xgovDaemon.addr,
-    signer: xgovDaemon.signer,
-    args: { proposalId: proposalClient.appId, absentees },
-    boxReferences,
-  };
-
-  // Only add appReferences for the first transaction in the group
-  if (isFirstTransaction) {
-    txnParams.appReferences = [proposalClient.appId];
-  }
-
-  return txnParams;
-}
-
-/**
- * Processes a batch of voters for a proposal
+ * Each transaction needs the proposal app reference for cross-app box ref encoding.
+ * Box references are distributed evenly: 7 per txn (8 slots - 1 app ref).
  *
+ * @param registryClient The registry client
  * @param proposalClient The proposal client
- * @param eligibleVoters The eligible voters to unassign
+ * @param absentees The absentees to unassign
  * @param xgovDaemon The xgov daemon for signing
- * @param proposalId The proposal ID for logging
- * @param groupStart The starting index for this group
  * @returns Number of voters successfully unassigned
  */
-async function processVoterBatch(
+async function processUnassignBatch(
   registryClient: XGovRegistryClient,
   proposalClient: ProposalClient,
-  eligibleVoters: string[],
+  absentees: string[],
   xgovDaemon: TransactionSignerAccount,
 ): Promise<number> {
-  const totalVoters = eligibleVoters.length;
+  const absenteesInThisBatch = absentees.length;
 
-  // Calculate how many voters to process in this batch (capped by MAX_VOTERS_PER_GROUP)
-  const votersInThisBatch = eligibleVoters.length;
+  if (absenteesInThisBatch <= 0) return 0;
 
-  if (votersInThisBatch <= 0) return 0;
-
-  // Calculate how many transactions we need for this batch
-  const txnsForThisBatch =
-    votersInThisBatch <= FIRST_TXN_VOTERS
-      ? 1 // If 7 or fewer voters, only need one transaction
-      : Math.ceil((votersInThisBatch - FIRST_TXN_VOTERS) / OTHER_TXN_VOTERS) +
-        1;
+  // Each absentee needs 2 box refs + 1 app ref for proposal, 8 ref slots per txn
+  const totalRefSlots = absentees.length * 2 + 1;
+  const txnsNeeded = Math.ceil(totalRefSlots / 8);
+  const txnsForThisBatch = Math.min(Math.max(txnsNeeded, 1), MAX_GROUP_SIZE);
 
   logger.info(
-    `Batch needs ${txnsForThisBatch}/${MAX_GROUP_SIZE} transactions for ${votersInThisBatch} voters`,
+    `Batch needs ${txnsForThisBatch} transactions for ${absenteesInThisBatch} absentees (${totalRefSlots} ref slots)`,
   );
 
   // Create a transaction group
   const txnGroup = registryClient.newGroup();
-  let groupVotersCount = 0;
 
-  // Calculate distribution for detailed logging
-  const firstTxnVoters = Math.min(FIRST_TXN_VOTERS, votersInThisBatch);
-  const remainingVoters = votersInThisBatch - firstTxnVoters;
-  const fullMiddleTxns = Math.floor(remainingVoters / OTHER_TXN_VOTERS);
-  const lastTxnVoters = remainingVoters % OTHER_TXN_VOTERS;
-
+  txnGroup.unassignAbsenteeFromProposal({
+    sender: xgovDaemon.addr,
+    signer: xgovDaemon.signer,
+    args: { proposalId: proposalClient.appId, absentees },
+    extraFee: microAlgo(1000)
+  });
   logger.debug(
-    `Voter distribution: ${votersInThisBatch} total voters - ` +
-      `1st txn: ${firstTxnVoters} voters, ` +
-      `${fullMiddleTxns} middle txns with ${OTHER_TXN_VOTERS} voters each` +
-      `${lastTxnVoters > 0 ? `, last txn: ${lastTxnVoters} voters` : ""}`,
+    `Txn 1/${txnsForThisBatch}: unassign_absentee_from_proposal with ${absentees.length} absentees`,
   );
 
-  // Track processed count
-  let processedInGroup = 0;
-
-  // Add each transaction to the group - only create as many as we need
-  for (
-    let txnIndex = 0;
-    txnIndex < txnsForThisBatch && processedInGroup < votersInThisBatch;
-    txnIndex++
-  ) {
-    // Determine how many voters to process in this transaction
-    let votersInThisTxn;
-
-    if (txnIndex === 0) {
-      // First transaction takes exactly 7 voters (or all remaining if less than 7)
-      votersInThisTxn = Math.min(FIRST_TXN_VOTERS, votersInThisBatch);
-    } else if (txnIndex === txnsForThisBatch - 1) {
-      // Last transaction takes whatever is left
-      votersInThisTxn = votersInThisBatch - processedInGroup;
-    } else {
-      // Middle transactions take full capacity of 8 voters
-      votersInThisTxn = OTHER_TXN_VOTERS;
-    }
-
-    // Calculate start index for this batch
-    const batchStartIndex = processedInGroup;
-
-    // Check if we've processed all voters
-    if (batchStartIndex >= totalVoters) break;
-
-    // Get the current batch of voters for this transaction
-    const batchEndIndex = Math.min(
-      batchStartIndex + votersInThisTxn,
-      totalVoters,
-    );
-    const batch = eligibleVoters.slice(
-      batchStartIndex,
-      batchEndIndex,
-    ) as string[];
-
-    // Collect all box references for this batch
-    const boxReferences = batch.map((voter: string) => {
-      const addr = algosdk.decodeAddress(voter).publicKey;
-      return new Uint8Array(Buffer.concat([Buffer.from("V"), addr]));
+  // Add opUp calls for additional reference slots and opcode budget
+  for (let i = 1; i < txnsForThisBatch; i++) {
+    txnGroup.opUp({
+      sender: xgovDaemon.addr,
+      signer: xgovDaemon.signer,
+      args: {},
+      note: `${i}`
     });
-
-    // Create transaction parameters
-    const txnParams = createTransactionParams(
-      proposalClient,
-      batch,
-      boxReferences,
-      xgovDaemon,
-      txnIndex === 0,
-    );
-
-    // Add this transaction to the group
-    txnGroup.unassignAbsenteeFromProposal(txnParams);
-
-    // Update counters
-    groupVotersCount += batch.length;
-    processedInGroup += batch.length;
-
-    // More condensed log for individual transactions
-    logger.debug(
-      `Txn ${txnIndex + 1}/${txnsForThisBatch}: ${batch.length} voters ` +
-        `[${txnIndex === 0 ? "First" : txnIndex === txnsForThisBatch - 1 ? "Last" : "Middle"}]`,
-    );
+    logger.debug(`Txn ${i + 1}/${txnsForThisBatch}: op_up`);
   }
 
   // Send the entire transaction group atomically
   logger.info(
-    `Sending group with ${txnsForThisBatch} transactions (${groupVotersCount} voters) to proposal ${proposalClient.appId}`,
+    `Sending group with ${txnsForThisBatch} transactions (${absenteesInThisBatch} absentees) to proposal ${proposalClient.appId}`,
   );
 
   try {
-    // Send the transaction group - this will handle the atomic commits
     const txResponse = await txnGroup.send({
-      maxRoundsToWaitForConfirmation: CONFIRMATION_ROUNDS,
+      maxRoundsToWaitForConfirmation: CONFIRMATION_ROUNDS
     });
 
-    // If we get here, the transaction was successful
     logger.info(
-      `Successfully unassigned ${groupVotersCount} voters from proposal ${proposalClient.appId} tx group ${txResponse.groupId}`,
+      `Successfully unassigned ${absenteesInThisBatch} voters from proposal ${proposalClient.appId} tx group ${txResponse.groupId}`,
     );
-    return groupVotersCount;
+    return absenteesInThisBatch;
   } catch (error) {
     logger.error(
       `Error sending transaction group for proposal ${proposalClient.appId}`,
@@ -314,37 +214,34 @@ async function processProposal(
       appId: proposal.id,
     });
 
-    // Get the list of assigned voters
-    const existingVoters = await getAssignedVoters(proposalClient);
+    // Get the list of absentee voters
+    const absentees = await getAbsenteeVoters(proposalClient);
     logger.info(
-      `Found ${existingVoters.length} assigned voters for proposal ${proposalClient.appId}`,
+      `Found ${absentees.length} absentee voters for proposal ${proposalClient.appId}`,
     );
 
     let voterCount = 0;
 
-    // Unsssign voters in batches for better efficiency
+    // Unassign voters in batches for better efficiency
     if (
-      existingVoters &&
-      Array.isArray(existingVoters) &&
-      existingVoters.length > 0
+      absentees &&
+      Array.isArray(absentees) &&
+      absentees.length > 0
     ) {
-      // Calculate max voters per group: First txn (7) + remaining txns (8 each)
-      const MAX_VOTERS_PER_GROUP =
-        FIRST_TXN_VOTERS + (MAX_GROUP_SIZE - 1) * OTHER_TXN_VOTERS; // = 7 + 15*8 = 127
-
-      const votersInChunks = chunk(existingVoters, MAX_VOTERS_PER_GROUP);
+      // With opUp approach, we can handle up to MAX_ABSENTEES_PER_GROUP absentees per group
+      const absenteesInChunks = chunk(absentees, MAX_ABSENTEES_PER_GROUP);
       await pMap(
-        votersInChunks,
-        async (eligibleVotersChunk, i) => {
+        absenteesInChunks,
+        async (absenteesChunk, i) => {
           logger.debug(`Processing voter group starting at index ${i}`);
           try {
-            await processVoterBatch(
+            await processUnassignBatch(
               registryClient,
               proposalClient,
-              eligibleVotersChunk,
+              absenteesChunk,
               xgovDaemon,
             );
-            voterCount += eligibleVotersChunk.length;
+            voterCount += absenteesChunk.length;
           } catch (error) {
             logger.error(
               `Failed to process transaction group for proposal ${proposal.id}`,
@@ -361,7 +258,7 @@ async function processProposal(
 
     logger.info(
       `Proposal ${proposal.id} unassignment complete: ` +
-        `${voterCount} voters unassigned, `,
+      `${voterCount} voters unassigned, `,
     );
 
     // extra step, finalize the proposal
@@ -382,8 +279,6 @@ async function processProposal(
         args: {
           proposalId: proposal.id,
         },
-        appReferences: [proposal.id],
-        boxReferences: [proposerBoxName(proposer)],
         extraFee: (2000).microAlgo(), // Extra fee for inner transaction
       });
       logger.info(`Successfully finalized proposal ${proposal.id}`);
@@ -399,7 +294,7 @@ async function processProposal(
     return {
       success: true,
       details: {
-        id: proposal.id,
+        id: proposal.id.toString(),
         title: proposal.title,
         voters: voterCount,
         status: "success" as const,
@@ -413,7 +308,7 @@ async function processProposal(
     return {
       success: false,
       details: {
-        id: proposal.id,
+        id: proposal.id.toString(),
         title: proposal.title,
         voters: 0,
         status: "failed" as const,
@@ -464,7 +359,7 @@ async function processBatch(
       return {
         success: false,
         details: {
-          id: batch[index].id,
+          id: batch[index].id.toString(),
           title: batch[index].title,
           voters: 0,
           status: "failed" as const,
