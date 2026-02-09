@@ -36,12 +36,11 @@ import {
   WEIGHTED_QUORUM_SMALL,
   XGOV_FEE,
 } from "@/constants";
-import { proposalApprovalBoxName, proposerBoxName, xGovBoxName } from "@/api";
 
-const MAX_APP_TOTAL_ARG_LEN = 2048
-const METHOD_SELECTOR_LENGTH = 4
-const UINT64_LENGTH = 8
-const DYNAMIC_BYTE_ARRAY_LENGTH_OVERHEAD = 4
+const MAX_APP_TOTAL_ARG_LEN = 2048;
+const METHOD_SELECTOR_LENGTH = 4;
+const UINT64_LENGTH = 8;
+const DYNAMIC_BYTE_ARRAY_LENGTH_OVERHEAD = 4;
 
 function loadProposalContractDataSizePerTransaction() {
   return (

@@ -248,7 +248,7 @@ async function processProposal(
               error,
             );
             throw new Error(
-              `Failed to assign voters to proposal ${proposal.id}: ${error instanceof Error ? error.message : String(error)}`,
+              `Failed to unassign voters to proposal ${proposal.id}: ${error instanceof Error ? error.message : String(error)}`,
             );
           }
         },

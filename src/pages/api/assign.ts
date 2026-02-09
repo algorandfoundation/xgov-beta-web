@@ -370,7 +370,6 @@ async function getEligibleVoters(
  *
  * @param voters Voter information to include in the transaction
  * @param xgovDaemon The xgov daemon for signing
- * @param isFirstTransaction Whether this is the first transaction in a group
  * @returns Transaction parameters
  */
 function createTransactionParams(
