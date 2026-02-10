@@ -1,11 +1,9 @@
 import pMap from "p-map";
 import { useInterval } from "./useInterval";
-import { useRegistry } from "./";
 import { useEffect } from "react";
 import {
   callScrutinize,
   callUnassign,
-  getVotingDuration,
   network,
   ProposalStatus,
   type ProposalSummaryCardDetails,
@@ -104,15 +102,15 @@ export function useScrutinizerUnassigner(
           proposal.status === ProposalStatus.ProposalStatusApproved;
         if (!actionableState) return false;
 
-        const allVoted = proposal.votedMembers === proposal.committeeMembers;
-        if (allVoted) return true;
+        const allVotedRunCondition = proposal.status === ProposalStatus.ProposalStatusVoting && proposal.votedMembers === proposal.committeeMembers;
+        if (allVotedRunCondition) return true;
 
         const voteEnds = calculateVoteEnds(proposal);
         const assignedMembers = proposal.assignedMembers || 0n;
         console.log(
           `Proposal ${proposal.id} vote ends at ${new Date(voteEnds).toISOString()}, assigned members: ${assignedMembers}, committee members: ${proposal.committeeMembers}`,
         );
-        return voteEnds < now;
+        return assignedMembers > 0n && voteEnds < now;
       });
 
       // Process immediate scrutinizations
