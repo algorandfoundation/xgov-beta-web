@@ -157,7 +157,7 @@ export function useScrutinizerUnassigner(
   // Run immediately on mount
   useEffect(() => {
     processProposals();
-  }, []);
+  }, [proposals]);
 
   // Then run on interval
   useInterval(processProposals, SCRUTINIZE_RUN_INTERVAL);
