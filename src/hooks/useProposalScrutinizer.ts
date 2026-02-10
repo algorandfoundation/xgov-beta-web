@@ -24,12 +24,10 @@ function calculateVoteEnds(proposal: ProposalSummaryCardDetails) {
   return voteStarted + votingDuration;
 }
 
-export function useProposalScrutinizer(
+export function useScrutinizerUnassigner(
   proposals: ProposalSummaryCardDetails[],
 ) {
-  const registry = useRegistry();
-
-  const scrutinizeProposal = async (proposal: ProposalSummaryCardDetails) => {
+  const scrutinizeUnassignProposal = async (proposal: ProposalSummaryCardDetails) => {
     let actions = 0;
     if (proposal.status === ProposalStatus.ProposalStatusVoting) {
       console.log("Scrutinizing proposal", proposal.id);
@@ -66,7 +64,7 @@ export function useProposalScrutinizer(
     }
   };
 
-  const scheduleScrutinize = (
+  const scheduleScrutinizeUnassign = (
     proposal: ProposalSummaryCardDetails,
     delay: number,
   ) => {
@@ -80,7 +78,7 @@ export function useProposalScrutinizer(
 
     setTimeout(async () => {
       try {
-        await scrutinizeProposal(proposal);
+        await scrutinizeUnassignProposal(proposal);
       } catch (error) {
         console.error(`Failed to scrutinize proposal ${proposal.id}:`, error);
       }
@@ -95,7 +93,6 @@ export function useProposalScrutinizer(
         "proposals",
       );
       if (network !== "testnet" && network !== "mainnet") return;
-      if (!registry?.data?.votingDurationLarge) return;
       console.log("valid to run scrutinize interval");
 
       const now = Date.now();
@@ -128,7 +125,7 @@ export function useProposalScrutinizer(
         await pMap(
           toScrutinizeNow,
           (proposal) =>
-            scrutinizeProposal(proposal).catch((error) => {
+            scrutinizeUnassignProposal(proposal).catch((error) => {
               console.error("Error during immediate proposal scrutiny:", error);
             }),
           { concurrency: SCRUTINIZE_CONCURRENCY },
@@ -151,7 +148,7 @@ export function useProposalScrutinizer(
         // Schedule if voting ends before the next interval run
         if (voteEnds > now && voteEnds - now < SCRUTINIZE_RUN_INTERVAL) {
           const delay = voteEnds - now + 6_000; // 6 second buffer
-          scheduleScrutinize(proposal, delay);
+          scheduleScrutinizeUnassign(proposal, delay);
         }
       }
     } catch (error) {

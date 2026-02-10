@@ -1,5 +1,5 @@
 import { type ProposalMainCardDetails, type ProposalSummaryCardDetails, type RegistryGlobalState, getDiscussionDuration } from "@/api";
-import { useNFD, useProposal, useProposalsByProposer, useProposalScrutinizer, UseQuery, useRegistry, UseWallet } from "@/hooks";
+import { useNFD, useProposal, useProposalsByProposer, useScrutinizerUnassigner, UseQuery, useRegistry, UseWallet } from "@/hooks";
 import { ProposalInfo, StatusCard } from "@/recipes";
 import { useWallet } from "@txnlab/use-wallet-react";
 
@@ -77,7 +77,7 @@ export function ViewProposalController({
     _registry.discussionDurationXlarge || 0n,
   ]);
 
-  useProposalScrutinizer([_proposal]);
+  useScrutinizerUnassigner([_proposal]);
 
   return (
     <StatusCard

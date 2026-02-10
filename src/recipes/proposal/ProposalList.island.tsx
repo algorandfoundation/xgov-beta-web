@@ -7,7 +7,7 @@ import { type ProposalSummaryCardDetails } from "@/api";
 import {
   useGetAllProposals,
   useNFDs,
-  useProposalScrutinizer,
+  useScrutinizerUnassigner,
   useSearchParams,
   useSearchParamsObserver,
   UseWallet,
@@ -64,7 +64,7 @@ export function StackedListQuery({
   const { activeAddress, isReady } = useWallet();
 
   // Use the custom hook for proposal scrutinization
-  useProposalScrutinizer(proposals);
+  useScrutinizerUnassigner(proposals);
 
   if (!isReady) {
     return (
