@@ -146,6 +146,10 @@ export async function getAllProposals(algorandClient = algorand): Promise<Propos
               finalized: existsAndValue(state, "finalized")
                 ? Boolean(state.finalized.value)
                 : false,
+              assignedMembers: existsAndValue(state, "assigned_members") ?
+                BigInt(state["assigned_members"].value) : 0n,
+              votingDuration: existsAndValue(state, "voting_duration") ?
+                BigInt(state["voting_duration"].value) : 0n,
             };
           } catch (error) {
             console.error("Error processing app data:", error);
@@ -319,6 +323,10 @@ export async function getProposal(
     finalized: existsAndValue(state, "finalized")
       ? Boolean(state.finalized.value)
       : false,
+    assignedMembers: existsAndValue(state, "assigned_members") ?
+      BigInt(state["assigned_members"].value) : 0n,
+    votingDuration: existsAndValue(state, "voting_duration") ?
+      BigInt(state["voting_duration"].value) : 0n,
     ...proposalMetadata,
   };
 }
