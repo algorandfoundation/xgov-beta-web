@@ -64,7 +64,7 @@ export function StackedListQuery({
   const { activeAddress, isReady } = useWallet();
 
   // Use the custom hook for proposal scrutinization
-  useScrutinizerUnassigner(proposals);
+  useScrutinizerUnassigner(proposalsQuery.data || []);
 
   if (!isReady) {
     return (

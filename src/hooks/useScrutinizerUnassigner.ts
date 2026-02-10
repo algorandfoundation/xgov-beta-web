@@ -1,6 +1,6 @@
 import pMap from "p-map";
 import { useInterval } from "./useInterval";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   callScrutinize,
   callUnassign,
@@ -22,10 +22,7 @@ function calculateVoteEnds(proposal: ProposalSummaryCardDetails) {
   return voteStarted + votingDuration;
 }
 
-export function useScrutinizerUnassigner(
-  proposals: ProposalSummaryCardDetails[],
-) {
-  const scrutinizeUnassignProposal = async (proposal: ProposalSummaryCardDetails) => {
+const scrutinizeUnassignProposal = async (proposal: ProposalSummaryCardDetails) => {
     let actions = 0;
     if (proposal.status === ProposalStatus.ProposalStatusVoting) {
       console.log("Scrutinizing proposal", proposal.id);
@@ -62,10 +59,21 @@ export function useScrutinizerUnassigner(
     }
   };
 
+export function useScrutinizerUnassigner(
+  proposals: ProposalSummaryCardDetails[],
+) {
+  const scheduledTimeouts = useRef<Map<bigint, ReturnType<typeof setTimeout>>>(new Map());
+
   const scheduleScrutinizeUnassign = (
     proposal: ProposalSummaryCardDetails,
     delay: number,
   ) => {
+    // Skip if already scheduled
+    if (scheduledTimeouts.current.has(proposal.id)) {
+      console.log("Timeout already scheduled for proposal", proposal.id);
+      return;
+    }
+
     console.log(
       "Scheduling scrutinize",
       proposal.id,
@@ -74,13 +82,16 @@ export function useScrutinizerUnassigner(
       "ms from now",
     );
 
-    setTimeout(async () => {
+    const timeoutId = setTimeout(async () => {
+      scheduledTimeouts.current.delete(proposal.id);
       try {
         await scrutinizeUnassignProposal(proposal);
       } catch (error) {
         console.error(`Failed to scrutinize proposal ${proposal.id}:`, error);
       }
     }, delay);
+
+    scheduledTimeouts.current.set(proposal.id, timeoutId);
   };
 
   const processProposals = async () => {
@@ -158,6 +169,16 @@ export function useScrutinizerUnassigner(
   useEffect(() => {
     processProposals();
   }, [proposals]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      for (const timeoutId of scheduledTimeouts.current.values()) {
+        clearTimeout(timeoutId);
+      }
+      scheduledTimeouts.current.clear();
+    };
+  }, []);
 
   // Then run on interval
   useInterval(processProposals, SCRUTINIZE_RUN_INTERVAL);
