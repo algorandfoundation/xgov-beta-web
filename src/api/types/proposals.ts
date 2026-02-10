@@ -1,4 +1,4 @@
-import type { GlobalKeysState } from "@algorandfoundation/xgov";
+import type { ProposalTypedGlobalState } from "@algorandfoundation/xgov";
 import type { User } from "@/api/discourse/user.ts";
 import type { NFD } from "../nfd";
 
@@ -199,7 +199,7 @@ export function isProposalInfoCardDetails(
   return (details as ProposalMainCardDetails).id === undefined;
 }
 
-export type ProposalSummaryCardDetails = Omit<GlobalKeysState, 'fundingType' | 'status' | 'focus' | 'fundingCategory'> & {
+export type ProposalSummaryCardDetails = Omit<ProposalTypedGlobalState, 'fundingType' | 'status' | 'focus' | 'fundingCategory'> & {
   id: bigint;
   fundingType: ProposalFundingType;
   status: ProposalStatus;
