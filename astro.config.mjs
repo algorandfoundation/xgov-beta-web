@@ -6,6 +6,9 @@ import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfil
 import { VitePWA } from "vite-plugin-pwa";
 import { manifest } from "./src/utils/manifest"
 
+// Get mode from --mode argument (e.g., --mode testnet)
+const mode = process.argv.find((arg, i) => process.argv[i - 1] === "--mode") ?? "local";
+
 // https://astro.build/config
 export default defineConfig({
   output: "server",
@@ -37,7 +40,12 @@ export default defineConfig({
       })
     ]
   },
-  adapter: cloudflare(),
+  adapter: cloudflare({
+    platformProxy: {
+      enabled: true,
+      envFiles: [`.env.${mode}`],
+    },
+  }),
   integrations: [
     tailwind({
       applyBaseStyles: false,
