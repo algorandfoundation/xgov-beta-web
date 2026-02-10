@@ -237,6 +237,12 @@ This project uses GitHub Actions for automated deployments to Cloudflare Pages.
 ```
 CLOUDFLARE_API_TOKEN          # Cloudflare API token
 CF_ACCOUNT_ID                 # Cloudflare account ID
+```
+
+### Required Github Variables
+
+```
+CF_PROJECT_NAME               # Cloudflare project name
 CF_PROJECT_NAME_TESTNET       # Cloudflare project name for testnet
 CF_PROJECT_NAME_MAINNET       # Cloudflare project name for mainnet
 ```
