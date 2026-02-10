@@ -16,18 +16,16 @@ export function chunk<T>(arr: T[], chunkSize: number): T[][] {
 }
 
 export function getNumericEnvironmentVariable(key: string, locals: App.Locals, defaultValue: number): number {
-  // @ts-expect-error, runtime can be undefined
-  if (locals?.runtime?.env && key in locals?.runtime?.env)
-    // @ts-expect-error, runtime can be undefined
-    return parseInt(locals.runtime.env[key], 10);
+  const runtimeEnv = "runtime" in locals ? (locals.runtime as any).env as Record<string, string>: undefined;
+  if (runtimeEnv)
+    return parseInt(runtimeEnv[key], 10);
   const envValue = import.meta.env[key];
   return envValue !== undefined ? parseInt(envValue, 10) : defaultValue;
 }
 
 export function getStringEnvironmentVariable(key: string, locals: App.Locals, defaultValue: string): string {
-  // @ts-expect-error, this can be undefined
-  if (locals?.runtime?.env && key in locals?.runtime?.env)
-    // @ts-expect-error, this can be undefined
-    return locals?.runtime?.env[key];
+  const runtimeEnv = "runtime" in locals ? (locals.runtime as any).env as Record<string, string>: undefined;
+  if (runtimeEnv)
+    return runtimeEnv[key];
   return import.meta.env[key] ?? defaultValue;
 }
