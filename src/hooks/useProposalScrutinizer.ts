@@ -18,11 +18,9 @@ import {
 const SCRUTINIZE_RUN_INTERVAL = 5 * 60 * 1000; // 5 mins
 const SCRUTINIZE_CONCURRENCY = 2;
 
-function calculateVoteEnds(
-  proposal: ProposalSummaryCardDetails,
-) {
+function calculateVoteEnds(proposal: ProposalSummaryCardDetails) {
   const voteStarted = Number(proposal.voteOpenTs) * 1000;
-  const votingDuration = Number(proposal.votingDuration) * 1000
+  const votingDuration = Number(proposal.votingDuration) * 1000;
   return voteStarted + votingDuration;
 }
 
@@ -45,10 +43,17 @@ export function useProposalScrutinizer(
           scrutinyFundingLogicSigSigner,
         );
       } catch (e) {
-        console.warn(`Failed to scrutinize proposal ${proposal.id} in voting phase:`, e);
+        console.warn(
+          `Failed to scrutinize proposal ${proposal.id} in voting phase:`,
+          e,
+        );
         // proceed anyway since multiple scrutinize calls can be made and the proposal might have been scrutinized by another client
       }
       actions++;
+    } else {
+      console.log(
+        `Proposal ${proposal.id} is not in voting phase, skipping scrutinize call. Status: ${proposal.status}`,
+      );
     }
     if (proposal.assignedMembers > 0n) {
       await callUnassign(proposal.id);
