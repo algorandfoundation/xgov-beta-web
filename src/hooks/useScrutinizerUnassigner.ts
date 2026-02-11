@@ -110,7 +110,8 @@ export function useScrutinizerUnassigner(
       const toScrutinizeNow = proposals.filter((proposal) => {
         const actionableState =
           proposal.status === ProposalStatus.ProposalStatusVoting ||
-          proposal.status === ProposalStatus.ProposalStatusApproved;
+          proposal.status === ProposalStatus.ProposalStatusApproved ||
+          proposal.status === ProposalStatus.ProposalStatusRejected;
         if (!actionableState) return false;
 
         const allVotedRunCondition = proposal.status === ProposalStatus.ProposalStatusVoting && proposal.votedMembers === proposal.committeeMembers;
