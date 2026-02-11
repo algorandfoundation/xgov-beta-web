@@ -55,9 +55,9 @@ export function StackedListQuery({
 
   const _proposals = useMemo(
     () =>
-      proposalsWithNFDs.filter((proposal) =>
-        proposalFilter(proposal, _searchParams),
-      ),
+      proposalsWithNFDs
+        .filter((proposal) => proposalFilter(proposal, _searchParams))
+        .sort((a, b) => (Number(b.openTs - a.openTs))),
     [proposalsWithNFDs, _searchParams],
   );
 
