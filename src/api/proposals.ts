@@ -613,8 +613,8 @@ export async function openProposal({
   data,
   appId,
   bps
-}: OpenProposalProps) {
-  if (!innerSigner) return;
+}: OpenProposalProps): Promise<boolean> {
+  if (!innerSigner) return false;
 
   const transactionSigner = wrapTransactionSigner(
     innerSigner,
@@ -625,7 +625,7 @@ export async function openProposal({
 
   if (!activeAddress || !transactionSigner) {
     setStatus(new Error("No active address or transaction signer"));
-    return;
+    return false;
   }
 
   try {
@@ -700,13 +700,14 @@ export async function openProposal({
     await sleep(800);
     setStatus("idle");
     await Promise.all(refetch.map(r => r()));
+    return true;
   } catch (e: any) {
     if (e.message.includes("tried to spend")) {
       setStatus(new Error("Insufficient funds to open proposal."));
     } else {
       setStatus(new Error("Failed to open proposal: " + (e as Error).message));
     }
-    return;
+    return false;
   }
 }
 
