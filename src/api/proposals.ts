@@ -201,6 +201,7 @@ export async function getAllProposalsToUnassign(): Promise<
   return (await getAllProposals()).filter(
     (proposal) =>
       (
+        proposal.status === ProposalStatus.ProposalStatusApproved ||
         proposal.status === ProposalStatus.ProposalStatusFunded ||
         proposal.status === ProposalStatus.ProposalStatusBlocked ||
         proposal.status === ProposalStatus.ProposalStatusRejected
@@ -345,14 +346,6 @@ export async function getProposalToUnassign(
   id: bigint,
 ): Promise<ProposalMainCardDetails> {
   const proposalData = await getProposal(id);
-  if (
-    (
-      proposalData.status !== ProposalStatus.ProposalStatusApproved &&
-      proposalData.status !== ProposalStatus.ProposalStatusRejected
-    )
-  ) {
-    throw new Error("Proposal not in unassignable state");
-  }
   if (proposalData.finalized) {
     throw new Error("Proposal already finalized");
   }

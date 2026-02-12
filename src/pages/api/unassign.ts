@@ -1,5 +1,6 @@
 import {
   type ProposalSummaryCardDetails,
+  ProposalStatus,
   getAlgodClient,
   getIndexerClient,
   getRegistryClient,
@@ -61,6 +62,7 @@ interface ResultsSummary {
     voters: number;
     status: "success" | "failed";
     error?: string;
+    finalized?: boolean;
   }>;
 }
 
@@ -222,13 +224,13 @@ async function processProposal(
 
     let voterCount = 0;
 
-    // Unassign voters in batches for better efficiency
-    if (
-      absentees &&
-      Array.isArray(absentees) &&
-      absentees.length > 0
-    ) {
-      // With opUp approach, we can handle up to MAX_ABSENTEES_PER_GROUP absentees per group
+    // Only call unassign for APPROVED or REJECTED proposals (smart contract requirement)
+    const canUnassign =
+      proposal.status === ProposalStatus.ProposalStatusApproved ||
+      proposal.status === ProposalStatus.ProposalStatusRejected;
+
+    if (canUnassign && absentees.length > 0) {
+      // Unassign voters in batches for better efficiency
       const absenteesInChunks = chunk(absentees, MAX_ABSENTEES_PER_GROUP);
       await pMap(
         absenteesInChunks,
@@ -247,47 +249,69 @@ async function processProposal(
               `Failed to process transaction group for proposal ${proposal.id}`,
               error,
             );
-            throw new Error(
-              `Failed to unassign voters to proposal ${proposal.id}: ${error instanceof Error ? error.message : String(error)}`,
-            );
           }
         },
         { concurrency: maxRequestsPerProposal },
+      );
+    } else if (!canUnassign && absentees.length > 0) {
+      logger.warn(
+        `Proposal ${proposal.id} has ${absentees.length} absentees but status ${proposal.status} does not allow unassign (only APPROVED/REJECTED). ` +
+        `Absentees should have been unassigned during the APPROVED phase.`,
       );
     }
 
     logger.info(
       `Proposal ${proposal.id} unassignment complete: ` +
-      `${voterCount} voters unassigned, `,
+      `${voterCount} voters unassigned`,
     );
 
-    // extra step, finalize the proposal
+    // Finalize the proposal if in a finalizable status
+    const canFinalize =
+      proposal.status === ProposalStatus.ProposalStatusFunded ||
+      proposal.status === ProposalStatus.ProposalStatusBlocked ||
+      proposal.status === ProposalStatus.ProposalStatusRejected;
+
     let finalized = false;
-    try {
-      logger.info(
-        `Finalizing proposal ${proposal.id} after unassigning voters`,
-      );
-      const proposer = await proposalClient.state.global.proposer();
+    if (canFinalize) {
+      // Re-fetch absentee voters to confirm assigned_members == 0
+      const remainingAbsentees = await getAbsenteeVoters(proposalClient);
+      if (remainingAbsentees.length > 0) {
+        logger.warn(
+          `Proposal ${proposal.id} still has ${remainingAbsentees.length} assigned members, skipping finalize`,
+        );
+      } else {
+        try {
+          logger.info(
+            `Finalizing proposal ${proposal.id} after unassigning voters`,
+          );
 
-      if (!proposer) {
-        throw new Error(`No proposer found for proposal ${proposal.id}`);
+          const group = registryClient.newGroup();
+
+          group.finalizeProposal({
+            sender: xgovDaemon.addr,
+            signer: xgovDaemon.signer,
+            args: {
+              proposalId: proposal.id,
+            },
+            extraFee: (2000).microAlgo(), // Extra fee for inner transaction
+          });
+          
+          group.opUp({
+            sender: xgovDaemon.addr,
+            signer: xgovDaemon.signer,
+            args: {},
+          });
+          
+          await group.send({ maxRoundsToWaitForConfirmation: CONFIRMATION_ROUNDS });
+          logger.info(`Successfully finalized proposal ${proposal.id}`);
+          finalized = true;
+        } catch (finalizationError) {
+          logger.error(
+            `Failed to finalize proposal ${proposal.id}`,
+            finalizationError,
+          );
+        }
       }
-
-      await registryClient.send.finalizeProposal({
-        sender: xgovDaemon.addr,
-        signer: xgovDaemon.signer,
-        args: {
-          proposalId: proposal.id,
-        },
-        extraFee: (2000).microAlgo(), // Extra fee for inner transaction
-      });
-      logger.info(`Successfully finalized proposal ${proposal.id}`);
-      finalized = true;
-    } catch (finalizationError) {
-      logger.error(
-        `Failed to finalize proposal ${proposal.id} after unassigning voters`,
-        finalizationError,
-      );
     }
 
     // Return successful result
