@@ -8,12 +8,13 @@ import {
   RegistryAppID,
 } from "@/api";
 import { ProposalFactory } from "@algorandfoundation/xgov";
-import { type TransactionSigner } from "algosdk";
+import algosdk, { type TransactionSigner } from "algosdk";
 import type { APIRoute } from "astro";
 import { createLogger } from "@/utils/logger";
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
 import { getStringEnvironmentVariable } from "@/functions";
 import { createXGovDaemon, parseRequestOptions } from "./common";
+import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
 
 // Create logger for this file
 const logger = createLogger("delete-api");
@@ -22,7 +23,7 @@ const logger = createLogger("delete-api");
 interface ProposalResult {
   success: boolean;
   details: {
-    id: bigint;
+    id: string;
     status: "success" | "failed";
     error?: string;
   };
@@ -32,7 +33,7 @@ interface ResultsSummary {
   success: number;
   failed: number;
   details: Array<{
-    id: bigint;
+    id: string;
     status: "success" | "failed";
     error?: string;
   }>;
@@ -49,7 +50,7 @@ interface ResultsSummary {
 async function processProposal(
   proposal: ProposalSummaryCardDetails,
   proposalFactory: ProposalFactory,
-  xgovDaemon: { addr: string; signer: TransactionSigner },
+  xgovDaemon: TransactionSignerAccount,
 ): Promise<ProposalResult> {
   try {
     logger.info(`Processing proposal ${proposal.id}: ${proposal.title}`);
@@ -68,8 +69,6 @@ async function processProposal(
         sender: xgovDaemon.addr,
         signer: xgovDaemon.signer,
         args: {},
-        appReferences: [RegistryAppID],
-        boxReferences: [metadataBoxName],
         extraFee: (1000).microAlgo(), // Extra fee for inner transaction
       });
       logger.info(
@@ -86,7 +85,7 @@ async function processProposal(
     return {
       success: true,
       details: {
-        id: proposal.id,
+        id: proposal.id.toString(),
         status: "success" as const,
       },
     };
@@ -97,7 +96,7 @@ async function processProposal(
     return {
       success: false,
       details: {
-        id: proposal.id,
+        id: proposal.id.toString(),
         status: "failed" as const,
         error: error instanceof Error ? error.message : String(error),
       },
@@ -116,7 +115,7 @@ async function processProposal(
 async function processBatch(
   batch: ProposalSummaryCardDetails[],
   proposalFactory: ProposalFactory,
-  xgovDaemon: { addr: string; signer: TransactionSigner },
+  xgovDaemon: TransactionSignerAccount,
 ): Promise<ProposalResult[]> {
   logger.info(`Processing batch of ${batch.length} proposals`);
 
@@ -142,7 +141,7 @@ async function processBatch(
       return {
         success: false,
         details: {
-          id: batch[index].id,
+          id: batch[index].id.toString(),
           status: "failed" as const,
           error: `Uncaught error: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`,
         },

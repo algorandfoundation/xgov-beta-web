@@ -6,27 +6,36 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function chunk<T>(arr: T[], chunkSize: number): T[][] {
-    if (chunkSize <= 0) throw new Error("chunkSize must be greater than 0");
+  if (chunkSize <= 0) throw new Error("chunkSize must be greater than 0");
 
-    const result: T[][] = [];
-    for (let i = 0; i < arr.length; i += chunkSize) {
-        result.push(arr.slice(i, i + chunkSize));
+  const result: T[][] = [];
+  for (let i = 0; i < arr.length; i += chunkSize) {
+    result.push(arr.slice(i, i + chunkSize));
+  }
+  return result;
+}
+
+export function getNumericEnvironmentVariable(
+  key: string,
+  locals: App.Locals,
+  defaultValue: number,
+): number {
+  return parseInt(
+    getStringEnvironmentVariable(key, locals, defaultValue.toString()),
+    10,
+  );
+}
+
+export function getStringEnvironmentVariable(
+  key: string,
+  locals: App.Locals,
+  defaultValue: string,
+): string {
+  if ("runtime" in locals && locals.runtime) {
+    const env = (locals.runtime as any)?.env;
+    if (env && typeof env === "object" && key in env) {
+      return (env as Record<string, string>)[key];
     }
-    return result;
-}
-
-export function getNumericEnvironmentVariable(key: string, locals: App.Locals, defaultValue: number): number {
-  // @ts-expect-error, runtime can be undefined
-  if (locals?.runtime?.env && key in locals?.runtime?.env)
-    // @ts-expect-error, runtime can be undefined
-    return parseInt(locals.runtime.env[key], 10);
-  return import.meta.env[key] ?? defaultValue;
-}
-
-export function getStringEnvironmentVariable(key: string, locals: App.Locals, defaultValue: string): string {
-  // @ts-expect-error, this can be undefined
-  if (locals?.runtime?.env && key in locals?.runtime?.env)
-    // @ts-expect-error, this can be undefined
-    return locals?.runtime?.env[key];
+  }
   return import.meta.env[key] ?? defaultValue;
 }

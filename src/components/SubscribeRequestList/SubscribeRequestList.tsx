@@ -16,18 +16,12 @@ export function SubscribeRequestList({ requests }: SubscribeRequestListProps) {
     status: approveStatus,
     setStatus: setApproveStatus,
     errorMessage: approveErrorMessage,
-    setErrorMessage: setApproveErrorMessage,
-    reset: resetApprove,
-    isPending: isApprovePending
   } = useTransactionState();
 
   const {
     status: rejectStatus,
     setStatus: setRejectStatus,
     errorMessage: rejectErrorMessage,
-    setErrorMessage: setRejectErrorMessage,
-    reset: resetReject,
-    isPending: isRejectPending
   } = useTransactionState();
 
 

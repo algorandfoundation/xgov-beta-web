@@ -206,6 +206,8 @@ export type ProposalSummaryCardDetails = Omit<ProposalTypedGlobalState, 'funding
   focus: ProposalFocus;
   fundingCategory: ProposalCategory;
   forumUsers?: User[];
+  assignedMembers: bigint;
+  votingDuration: bigint;
 }
 
 export type ProposalSummaryCardDetailsWithNFDs = ProposalSummaryCardDetails & { nfd: NFD | undefined };

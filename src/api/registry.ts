@@ -1,7 +1,6 @@
 import { env, FEE_SINK } from '@/constants'
 import algosdk, {
   ABIType,
-  ALGORAND_MIN_TX_FEE,
   makePaymentTxnWithSuggestedParamsFromObject,
   encodeAddress,
   encodeUint64,
@@ -209,6 +208,7 @@ export async function getDelegatedXGovData(account: string): Promise<(XGovBoxVal
   const results: (XGovBoxValue & { xgov: string })[] = [];
   for (let i = 0; i < all.length; i += 63) {
     const chunk = all.slice(i, i + 63);
+
     results.push(
       ...(
         (await ghost.getXGovs(algorand, BigInt(registryAppID), chunk))
@@ -388,8 +388,8 @@ export async function subscribeXgov({
   const suggestedParams = await algorand.getSuggestedParams();
 
   const payment = makePaymentTxnWithSuggestedParamsFromObject({
-    from: activeAddress,
-    to: algosdk.getApplicationAddress(RegistryAppID),
+    sender: activeAddress,
+    receiver: algosdk.getApplicationAddress(RegistryAppID),
     amount: xgovFee,
     suggestedParams,
   });
@@ -457,7 +457,7 @@ export async function unsubscribeXgov({
       sender: activeAddress,
       signer: transactionSigner,
       args: {},
-      extraFee: ALGORAND_MIN_TX_FEE.microAlgos(),
+      extraFee: (1_000).microAlgos(),
       boxReferences: [
         xGovBoxName(activeAddress),
       ],
@@ -502,8 +502,8 @@ export async function subscribeProposer({
   const suggestedParams = await algorand.getSuggestedParams();
 
   const payment = makePaymentTxnWithSuggestedParamsFromObject({
-    from: activeAddress,
-    to: algosdk.getApplicationAddress(RegistryAppID),
+    sender: activeAddress,
+    receiver: algosdk.getApplicationAddress(RegistryAppID),
     amount,
     suggestedParams,
   });

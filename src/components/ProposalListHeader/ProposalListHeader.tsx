@@ -29,10 +29,7 @@ export interface ProposalListHeaderProps {
   children: ReactNode;
 }
 
-export function ProposalListHeader({
-  title,
-  children,
-}: ProposalListHeaderProps) {
+export function ProposalListHeader({ children }: ProposalListHeaderProps) {
   const { activeAddress, transactionSigner } = useWallet();
   const registry = useRegistry();
   const proposer = useProposer(activeAddress);

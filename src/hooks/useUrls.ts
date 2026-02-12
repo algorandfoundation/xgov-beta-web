@@ -4,7 +4,7 @@ import { useQueries } from "@tanstack/react-query";
 
 const isLocalnet = env.PUBLIC_NETWORK === "localnet"
 
-export function useUrls(nfdProperties: { [address: string]: NFD } | undefined, enabled: boolean = true, limit?: number){
+export function useUrls(nfdProperties: { [address: string]: NFD } | undefined, enabled: boolean = true){
     if (!nfdProperties || Object.keys(nfdProperties).length === 0) {
       return useQueries({
         queries: [],

@@ -96,7 +96,7 @@ export function ProposalCreate() {
     <ProposalForm
       type="create"
       bps={registry.data?.proposalCommitmentBps || 0n}
-      minRequestedAmount={registry.data?.minRequestedAmount || 1000000n}
+      minRequestedAmount={registry.data?.minRequestedAmount || 1_000_000n}
       maxRequestedAmount={maxRequestedAmount}
       txnState={{
         status,
@@ -124,7 +124,7 @@ export function ProposalCreate() {
           return;
         }
 
-        await openProposal({
+        const success = await openProposal({
           activeAddress,
           innerSigner,
           setStatus,
@@ -134,7 +134,9 @@ export function ProposalCreate() {
           bps: registry.data?.proposalCommitmentBps,
         });
 
-        navigate(`/proposal/${appId}`);
+        if (success) {
+          navigate(`/proposal/${appId}`);
+        }
       }}
     />
   );

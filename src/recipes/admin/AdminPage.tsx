@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { useWallet } from "@txnlab/use-wallet-react";
+import { useNetwork, useWallet } from "@txnlab/use-wallet-react";
 
 import { KYCBox } from "./KYCBox";
 import { RoleList, RoleModal } from "./RolesSection";
@@ -25,7 +25,8 @@ export function AdminPageIsland() {
   );
 }
 export function AdminPage() {
-  const { activeAddress, transactionSigner, activeNetwork } = useWallet();
+  const { activeAddress, transactionSigner } = useWallet();
+  const { activeNetwork } = useNetwork();
   const registryGlobalState = useRegistry();
   const requests = useAllRequestBoxes();
   const councilMembersQuery = useCouncilMembers();

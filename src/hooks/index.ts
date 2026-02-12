@@ -4,7 +4,7 @@ export * from "./useCouncilVotes.ts";
 export * from "./useDiscourseTopic.ts";
 export * from "./useNFD.ts";
 export * from "./useProposals.ts";
-export * from "./useProposalScrutinizer.ts";
+export * from "./useScrutinizerUnassigner.ts";
 export * from "./useProposalVoters.ts";
 export * from "./useQuery.tsx";
 export * from "./useRegistry.ts";

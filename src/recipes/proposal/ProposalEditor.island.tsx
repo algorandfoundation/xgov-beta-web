@@ -67,7 +67,7 @@ export function EditProposalForm({ proposal }: { proposal?: ProposalMainCardDeta
           console.error("Proposal metadata can only be edited, not funding or focus");
         }
 
-        await updateMetadata({
+        const success = await updateMetadata({
           activeAddress,
           innerSigner,
           setStatus,
@@ -76,7 +76,9 @@ export function EditProposalForm({ proposal }: { proposal?: ProposalMainCardDeta
           proposal
         })
 
-        navigate(`/proposal/${proposal.id}`);
+        if (success) {
+          navigate(`/proposal/${proposal.id}`);
+        }
       }}
     />
   );

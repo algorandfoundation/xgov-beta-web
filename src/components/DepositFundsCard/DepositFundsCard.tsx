@@ -33,8 +33,8 @@ export const DepositFundsCard = ({}: {}) => {
         args: {
           payment: makePaymentTxnWithSuggestedParamsFromObject({
             amount: amount,
-            from: activeAddress,
-            to: registryClient.appAddress.toString(),
+            sender: activeAddress,
+            receiver: registryClient.appAddress,
             suggestedParams,
           }),
         },
