@@ -59,7 +59,7 @@ export function ProposalCreate() {
     emptyProposals && emptyProposals.length > 0 ? emptyProposals[0] : null;
 
   const appId =
-    emptyProposal?.id || BigInt(Number(_searchParams.get("appId"))) || null;
+    BigInt(Number(_searchParams.get("appId"))) || emptyProposal?.id || null;
 
   useEffect(() => {
     reset(); // reset transaction status and errors
@@ -87,10 +87,10 @@ export function ProposalCreate() {
       : 0n;
 
   useEffect(() => {
-    if (currentProposal) {
+    if (currentProposal && !appId) {
       navigate(`/proposal/${currentProposal.id}`);
     }
-  }, [currentProposal]);
+  }, [currentProposal, appId]);
 
   return (
     <ProposalForm
