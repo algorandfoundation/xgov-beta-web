@@ -31,7 +31,7 @@ export function getStringEnvironmentVariable(
   locals: App.Locals,
   defaultValue: string,
 ): string {
-  if (key in import.meta.env) {
+  if (key in import.meta.env && !!import.meta.env[key]) {
     return import.meta.env[key] as string;
   }
   if ("runtime" in locals && locals.runtime) {
