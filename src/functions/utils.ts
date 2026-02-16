@@ -31,11 +31,14 @@ export function getStringEnvironmentVariable(
   locals: App.Locals,
   defaultValue: string,
 ): string {
+  if (key in import.meta.env && !!import.meta.env[key]) {
+    return import.meta.env[key] as string;
+  }
   if ("runtime" in locals && locals.runtime) {
     const env = (locals.runtime as any)?.env;
     if (env && typeof env === "object" && key in env) {
       return (env as Record<string, string>)[key];
     }
   }
-  return import.meta.env[key] ?? defaultValue;
+  return defaultValue;
 }
