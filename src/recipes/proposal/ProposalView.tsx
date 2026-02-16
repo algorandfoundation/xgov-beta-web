@@ -21,6 +21,8 @@ import {
   dropProposal,
   voteProposal,
   callDeleteProposal,
+  getProposalStatusPhase,
+  type ProposalSummaryCardDetails,
 } from "@/api";
 import { cn } from "@/functions/utils";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
@@ -938,7 +940,7 @@ export interface ProposalInfoProps {
   xGovCouncil?: string;
   xGovPayor?: string;
   proposal: ProposalMainCardDetailsWithNFDs;
-  pastProposals?: ProposalBrief[];
+  pastProposals?: ProposalSummaryCardDetails[];
   children?: ReactNode;
 }
 
@@ -951,7 +953,7 @@ export function ProposalInfo({
 }: ProposalInfoProps) {
   const nfd = useNFD(proposal.proposer);
 
-  const phase = ProposalStatusMap[proposal.status];
+  const phase = getProposalStatusPhase(proposal);
 
   const _pastProposals = (pastProposals || []).filter((p) =>
     ![
@@ -1096,7 +1098,7 @@ export function ProposalInfo({
                   </h5>
                   <ul className="text-xl text-algo-black dark:text-white flex flex-col gap-2">
                     {_pastProposals.map((pastProposal) => {
-                      const phase = ProposalStatusMap[pastProposal.status];
+                      const phase = getProposalStatusPhase(pastProposal);
                       return (
                         <li
                           key={pastProposal.id}

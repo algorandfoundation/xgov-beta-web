@@ -1,8 +1,8 @@
 import {
   FocusReverseMap,
+  getProposalStatusPhase,
   ProposalFundingTypeReverseMap,
   ProposalStatus,
-  ProposalStatusMap,
   ProposalStatusReverseMap,
   type ProposalSummaryCardDetails,
   type ProposalSummaryCardDetailsWithNFDs,
@@ -120,7 +120,7 @@ function StackedListItem({ proposal, activeAddress }: {
     openTs
   } = proposal;
 
-  const phase = ProposalStatusMap[status];
+  const phase = getProposalStatusPhase(proposal);
 
   const metadata = useMetadata(id, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusSubmitted))
   const discourse = useDiscourseTopic(metadata.data?.forumLink, (status === ProposalStatus.ProposalStatusDraft || status === ProposalStatus.ProposalStatusSubmitted));
@@ -135,6 +135,7 @@ function StackedListItem({ proposal, activeAddress }: {
   // They will still be visible in the Admin page
   if (
     phase == "Blocked" ||
+    phase == "Deleted" ||
     phase === "Empty" && proposer !== activeAddress
   ) {
     return;

@@ -1,6 +1,6 @@
 import { Link } from "@/components/Link";
 import {
-  ProposalStatusMap,
+  getProposalStatusPhase,
   type ProposalSummaryCardDetails,
 } from "@/api";
 import { useGetAllProposals, useAllXGovs } from "@/hooks";
@@ -45,7 +45,7 @@ export const PanelStatistics = ({ network = NetworkId.LOCALNET }: { network?: st
                 className="flex flex-col gap-1 bg-algo-black-10 hover:bg-algo-black-40 dark:bg-algo-black-90 dark:hover:bg-algo-black-70 rounded-md p-3 transition"
                 key={proposal.id.toString()}
               >
-                <BracketedPhaseDetail phase={ProposalStatusMap[proposal.status]} />
+                <BracketedPhaseDetail phase={getProposalStatusPhase(proposal)} />
                 <h3 className="text-xl font-semibold">{proposal.title}</h3>
               </Link>
             ))}
