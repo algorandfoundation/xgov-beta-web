@@ -4,6 +4,8 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
+    "dev:testnet": "astro dev --mode testnet",
+    "dev:mainnet": "astro dev --mode mainnet",
     "start": "astro dev",
     "build": "astro check && astro build",
     "preview": "wrangler dev",
