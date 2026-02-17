@@ -39,9 +39,26 @@ export const ProposalStatusMap = {
   [ProposalStatus.ProposalStatusDelete]: "Deleted",
 };
 
+export const getProposalStatusPhase = (
+  proposal: ProposalSummaryCardDetails | ProposalMainCardDetails,
+): string => {
+  const { status, finalized } = proposal;
+  if (
+    finalized &&
+    (status === ProposalStatus.ProposalStatusEmpty ||
+      status === ProposalStatus.ProposalStatusDraft)
+  ) {
+    return "Deleted";
+  }
+  return ProposalStatusMap[status] || "Unknown";
+};
+
 export const ProposalStatusReverseMap: { [key: string]: ProposalStatus[] } = {
   Empty: [ProposalStatus.ProposalStatusEmpty],
-  Discussion: [ProposalStatus.ProposalStatusDraft, ProposalStatus.ProposalStatusSubmitted],
+  Discussion: [
+    ProposalStatus.ProposalStatusDraft,
+    ProposalStatus.ProposalStatusSubmitted,
+  ],
   Voting: [ProposalStatus.ProposalStatusVoting],
   Approved: [ProposalStatus.ProposalStatusApproved],
   Rejected: [ProposalStatus.ProposalStatusRejected],
@@ -50,7 +67,14 @@ export const ProposalStatusReverseMap: { [key: string]: ProposalStatus[] } = {
   Delete: [ProposalStatus.ProposalStatusDelete],
 };
 
-export const ProposalStatusFilterKeys = ["Discussion", "Voting", "Approved", "Rejected", "Funded", "Blocked"];
+export const ProposalStatusFilterKeys = [
+  "Discussion",
+  "Voting",
+  "Approved",
+  "Rejected",
+  "Funded",
+  "Blocked",
+];
 
 export enum ProposalCategory {
   ProposalCategoryNull = 0,
@@ -156,26 +180,6 @@ export interface ProposalJSON {
   forumLink: string;
 }
 
-export const statusToPhase = {
-  [ProposalStatus.ProposalStatusEmpty]: "null",
-  [ProposalStatus.ProposalStatusDraft]: "draft",
-  [ProposalStatus.ProposalStatusSubmitted]: "discussion",
-  [ProposalStatus.ProposalStatusVoting]: "voting",
-  [ProposalStatus.ProposalStatusApproved]: "closure",
-  [ProposalStatus.ProposalStatusRejected]: "closure",
-  [ProposalStatus.ProposalStatusReviewed]: "closure",
-  [ProposalStatus.ProposalStatusFunded]: "closure",
-  [ProposalStatus.ProposalStatusBlocked]: "closure",
-  [ProposalStatus.ProposalStatusDelete]: "closure",
-};
-
-export const phaseToText = {
-  submission: "Submission",
-  discussion: "Discussion",
-  voting: "Voting",
-  closure: "Closure",
-};
-
 export type ProposalCardDetails =
   | ProposalMainCardDetails
   | ProposalSummaryCardDetails
@@ -199,7 +203,10 @@ export function isProposalInfoCardDetails(
   return (details as ProposalMainCardDetails).id === undefined;
 }
 
-export type ProposalSummaryCardDetails = Omit<ProposalTypedGlobalState, 'fundingType' | 'status' | 'focus' | 'fundingCategory'> & {
+export type ProposalSummaryCardDetails = Omit<
+  ProposalTypedGlobalState,
+  "fundingType" | "status" | "focus" | "fundingCategory"
+> & {
   id: bigint;
   fundingType: ProposalFundingType;
   status: ProposalStatus;
@@ -208,13 +215,17 @@ export type ProposalSummaryCardDetails = Omit<ProposalTypedGlobalState, 'funding
   forumUsers?: User[];
   assignedMembers: bigint;
   votingDuration: bigint;
-}
+};
 
-export type ProposalSummaryCardDetailsWithNFDs = ProposalSummaryCardDetails & { nfd: NFD | undefined };
+export type ProposalSummaryCardDetailsWithNFDs = ProposalSummaryCardDetails & {
+  nfd: NFD | undefined;
+};
 
 export type ProposalMainCardDetails = ProposalSummaryCardDetails & ProposalJSON;
 
-export type ProposalMainCardDetailsWithNFDs = ProposalMainCardDetails & { nfd: NFD | undefined };
+export type ProposalMainCardDetailsWithNFDs = ProposalMainCardDetails & {
+  nfd: NFD | undefined;
+};
 
 export type ProposalInfoCardDetails = Pick<
   ProposalMainCardDetails,

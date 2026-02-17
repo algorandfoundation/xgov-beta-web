@@ -163,17 +163,19 @@ xgov-beta-web/
 
 | Command | Description |
 |---------|-------------|
-| `npm dev` | Start development server |
-| `npm build` | Build for production |
-| `npm preview` | Preview production build locally (via Wrangler) |
-| `npm lint` | Run ESLint |
-| `npm prettier` | Check code formatting |
-| `npm storybook` | Start Storybook development server |
-| `npm build-storybook` | Build Storybook for deployment |
-| `npm test` | Run Storybook tests |
-| `npm coverage` | Run tests with coverage |
-| `npm mock-init` | Initialize local development environment |
-| `npm mock-init-assign` | Initialize with mock voter assignment data |
+| `npm run dev` | Start development server |
+| `npm run dev:testnet` | Start development server with testnet env |
+| `npm run dev:mainnet` | Start development server with mainnet env |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build locally (via Wrangler) |
+| `npm run lint` | Run ESLint |
+| `npm run prettier` | Check code formatting |
+| `npm run storybook` | Start Storybook development server |
+| `npm run build-storybook` | Build Storybook for deployment |
+| `npm run test` | Run Storybook tests |
+| `npm run coverage` | Run tests with coverage |
+| `npm run mock-init` | Initialize local development environment |
+| `npm run mock-init-assign` | Initialize with mock voter assignment data |
 
 ## API Endpoints
 
