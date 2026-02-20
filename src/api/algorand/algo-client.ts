@@ -1,4 +1,4 @@
-import { AlgorandClient as AC, AlgorandClient } from "@algorandfoundation/algokit-utils";
+import { AlgorandClient } from "@algorandfoundation/algokit-utils";
 import { ClientManager } from "@algorandfoundation/algokit-utils/types/client-manager";
 import algosdk from "algosdk";
 import { env } from "@/constants";
@@ -31,29 +31,35 @@ export const algod = ClientManager.getAlgodClient({
 export const kmd: algosdk.Kmd | undefined =
   env.PUBLIC_NETWORK === "localnet"
     ? ClientManager.getKmdClient({
-      server: env.PUBLIC_KMD_SERVER || "http://localhost",
-      port: env.PUBLIC_KMD_PORT || "4002",
-      token:
-        env.PUBLIC_ALGOD_TOKEN ||
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    })
+        server: env.PUBLIC_KMD_SERVER || "http://localhost",
+        port: env.PUBLIC_KMD_PORT || "4002",
+        token:
+          env.PUBLIC_ALGOD_TOKEN ||
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      })
     : undefined;
 
-export const algorand = AC.fromClients({ algod, indexer, kmd });
+export const algorand = AlgorandClient.fromClients({ algod, indexer, kmd });
 
-export function getAlgodClient(locals: App.Locals, prefix: "PUBLIC" | "BACKEND"): algosdk.Algodv2 {
+type ClientConfigType = "PUBLIC" | "BACKEND";
+
+export function getAlgodClient(
+  locals: App.Locals,
+  prefix: ClientConfigType | ClientConfigType[],
+): algosdk.Algodv2 {
+  const prefixes = Array.isArray(prefix) ? prefix : [prefix];
   const server = getStringEnvironmentVariable(
-    `${prefix}_ALGOD_SERVER`,
+    prefixes.map((prefix) => `${prefix}_ALGOD_SERVER`),
     locals,
     DEFAULT_ALGOD_SERVER,
   );
   const port = getNumericEnvironmentVariable(
-    `${prefix}_ALGOD_PORT`,
+    prefixes.map((prefix) => `${prefix}_ALGOD_PORT`),
     locals,
     DEFAULT_ALGOD_PORT,
   );
   const token = getStringEnvironmentVariable(
-    `${prefix}_ALGOD_TOKEN`,
+    prefixes.map((prefix) => `${prefix}_ALGOD_TOKEN`),
     locals,
     DEFAULT_ALGOD_TOKEN,
   );
@@ -63,19 +69,23 @@ export function getAlgodClient(locals: App.Locals, prefix: "PUBLIC" | "BACKEND")
     token,
   });
 }
-export function getIndexerClient(locals: App.Locals, prefix: "PUBLIC" | "BACKEND"): algosdk.Indexer {
+export function getIndexerClient(
+  locals: App.Locals,
+  prefix: ClientConfigType | ClientConfigType[],
+): algosdk.Indexer {
+  const prefixes = Array.isArray(prefix) ? prefix : [prefix];
   const server = getStringEnvironmentVariable(
-    `${prefix}_INDEXER_SERVER`,
+    prefixes.map((prefix) => `${prefix}_INDEXER_SERVER`),
     locals,
     DEFAULT_INDEXER_SERVER,
   );
   const port = getNumericEnvironmentVariable(
-    `${prefix}_INDEXER_PORT`,
+    prefixes.map((prefix) => `${prefix}_INDEXER_PORT`),
     locals,
     DEFAULT_INDEXER_PORT,
   );
   const token = getStringEnvironmentVariable(
-    `${prefix}_INDEXER_TOKEN`,
+    prefixes.map((prefix) => `${prefix}_INDEXER_TOKEN`),
     locals,
     DEFAULT_INDEXER_TOKEN,
   );
@@ -86,10 +96,13 @@ export function getIndexerClient(locals: App.Locals, prefix: "PUBLIC" | "BACKEND
   });
 }
 
-export function getAlgorandClient(locals: App.Locals, prefix: "PUBLIC" | "BACKEND"): AlgorandClient {
+export function getAlgorandClient(
+  locals: App.Locals,
+  prefix: ClientConfigType | ClientConfigType[],
+): AlgorandClient {
   const algod = getAlgodClient(locals, prefix);
   const indexer = getIndexerClient(locals, prefix);
-  return AC.fromClients({ algod, indexer });
+  return AlgorandClient.fromClients({ algod, indexer });
 }
 
 // default txn lifetime/validity is too small. 120 rounds = ~5mins+
