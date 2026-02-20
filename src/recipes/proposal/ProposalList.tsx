@@ -148,7 +148,7 @@ function StackedListItem({ proposal, activeAddress }: {
     >
       <a
         className="absolute left-0 top-0 w-full h-full hover:bg-algo-blue/30 dark:hover:bg-algo-teal/30"
-        href={phase === "Empty" ? '/new' : `/proposal/${Number(id)}`}
+        href={phase === "Empty" ? `/new?appId=${Number(id)}` : `/proposal/${Number(id)}`}
       ></a>
       <div>
         <div className="flex justify-between items-center">
