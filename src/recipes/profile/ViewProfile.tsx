@@ -1,4 +1,5 @@
 import { ProfileCard } from "@/components/ProfileCard/ProfileCard";
+import { VotingPower } from "@/components/VotingPower/VotingPower";
 
 import { useMemo, useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
@@ -24,7 +25,8 @@ import {
   useXGov,
   useRegistry,
   useProposalsByProposer,
-  useNFD
+  useNFD,
+  useVotingPower,
 } from "@/hooks";
 import { StackedList } from "@/recipes";
 import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationModal";
@@ -96,6 +98,7 @@ export function ProfilePage({
   const proposer = useProposer(address);
   const proposalsQuery = useProposalsByProposer(address);
   const nfd = useNFD(address);
+  const votingPower = useVotingPower(address);
   const [showOpenProposalModal, setShowOpenProposalModal] = useState(false);
 
   const isLoading =
@@ -218,6 +221,11 @@ export function ProfilePage({
         }}
         activeAddress={activeAddress}
         className="mt-6"
+      />
+      <VotingPower
+        committees={votingPower.data ?? []}
+        isLoading={votingPower.isLoading}
+        isError={votingPower.isError}
       />
       {validProposer && (
         <>
