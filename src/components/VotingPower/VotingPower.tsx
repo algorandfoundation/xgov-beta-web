@@ -16,32 +16,32 @@ function CommitteeCard({ committee }: { committee: CommitteeVotingPower }) {
       : "0.0";
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
-      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 truncate" title={committee.committeeId}>
+    <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-algo-black p-4">
+      <p className="text-sm font-medium text-algo-blue dark:text-algo-teal mb-2 truncate" title={committee.committeeId}>
         Committee {committee.committeeId.slice(0, 8)}...
       </p>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <p className="text-xs text-gray-500 dark:text-gray-400">Your Votes</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <p className="text-lg font-semibold text-algo-black dark:text-white">
             {committee.userVotes.toLocaleString()}
           </p>
         </div>
         <div>
           <p className="text-xs text-gray-500 dark:text-gray-400">Total Votes</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <p className="text-lg font-semibold text-algo-black dark:text-white">
             {committee.totalVotes.toLocaleString()}
           </p>
         </div>
         <div>
           <p className="text-xs text-gray-500 dark:text-gray-400">Share</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <p className="text-lg font-semibold text-algo-black dark:text-white">
             {percentage}%
           </p>
         </div>
         <div>
           <p className="text-xs text-gray-500 dark:text-gray-400">Members</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <p className="text-lg font-semibold text-algo-black dark:text-white">
             {committee.memberCount}
           </p>
         </div>
