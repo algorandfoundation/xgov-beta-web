@@ -58,10 +58,10 @@ const [registry, proposals] = await Promise.all([
           id="list-header-title"
           class="text-lg sm:text-2xl md:text-4xl font-semibold text-algo-blue dark:text-algo-teal"
         >
-          Active Proposals
+          Proposals
         </h1>
       </div>
-      <ProposalListHeaderIsland client:only="react" title="Active Proposals" />
+      <ProposalListHeaderIsland client:only="react" title="Proposals" />
     </div>
     <div class="min-h-80 flex flex-col gap-y-4">
       <StackedListIsland client:only="react" proposals={proposals} />
