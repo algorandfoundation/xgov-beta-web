@@ -174,7 +174,7 @@ export function ProfilePage({
 
   return (
     <>
-      <div className="mt-6 mb-6 inline-flex rounded-full bg-gray-100 dark:bg-gray-800 p-1 gap-1" role="tablist">
+      <div className="mt-6 mb-6 inline-flex rounded-full bg-gray-100 dark:bg-white/5 p-1 gap-1" role="tablist">
         <button
           type="button"
           role="tab"
@@ -183,7 +183,7 @@ export function ProfilePage({
           className={`inline-flex items-center gap-2 py-1 pl-1 pr-3 text-sm font-semibold rounded-full transition-colors ${
             activeTab === 'xgov'
               ? 'bg-algo-blue text-white shadow-sm dark:bg-algo-teal dark:text-algo-black'
-              : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+              : 'text-gray-600 hover:text-algo-black dark:text-gray-300 dark:hover:text-white'
           }`}
         >
           {isXGov
@@ -200,7 +200,7 @@ export function ProfilePage({
           className={`inline-flex items-center gap-2 py-1 pl-1 pr-3 text-sm font-semibold rounded-full transition-colors ${
             activeTab === 'proposer'
               ? 'bg-algo-blue text-white shadow-sm dark:bg-algo-teal dark:text-algo-black'
-              : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+              : 'text-gray-600 hover:text-algo-black dark:text-gray-300 dark:hover:text-white'
           }`}
         >
           {!proposer.data?.isProposer
