@@ -70,29 +70,41 @@ export async function getNFD(
   })
 }
 
+const NFD_BATCH_SIZE = 20;
+
 export async function getNFDs(
   addresses: string[],
   init: RequestInit = {},
 ): Promise<{ [address: string]: NFD }> {
-  return mutex.runExclusive(async () => {
-    let r = await fetchNfdReverseLookups(addresses, init);
-    if (r.status === 404) {
-      throw new Error("Not found")
-    }
-    if (r.status === 429) {
-      const errRes = await r.json() as { secsRemaining?: number };
-      console.log(
-        `Rate limited, sleeping for ${errRes?.secsRemaining} seconds`,
-      );
-      await sleep((errRes?.secsRemaining || 1) * 1000 + 1000);
-      console.log("Mutex Still Locked, trying again");
-      r = await fetchNfdReverseLookups(addresses, init);
-    }
+  if (addresses.length === 0) return {};
 
-    if (r.status !== 200) {
-      throw new Error("Something went wrong")
-    }
+  const results: { [address: string]: NFD } = {};
 
-    return await r.json()
-  })
+  for (let i = 0; i < addresses.length; i += NFD_BATCH_SIZE) {
+    const chunk = addresses.slice(i, i + NFD_BATCH_SIZE);
+    const chunkResult = await mutex.runExclusive(async () => {
+      let r = await fetchNfdReverseLookups(chunk, init);
+      if (r.status === 404) {
+        return {};
+      }
+      if (r.status === 429) {
+        const errRes = await r.json() as { secsRemaining?: number };
+        console.log(
+          `Rate limited, sleeping for ${errRes?.secsRemaining} seconds`,
+        );
+        await sleep((errRes?.secsRemaining || 1) * 1000 + 1000);
+        console.log("Mutex Still Locked, trying again");
+        r = await fetchNfdReverseLookups(chunk, init);
+      }
+
+      if (r.status !== 200) {
+        throw new Error("Something went wrong")
+      }
+
+      return await r.json()
+    });
+    Object.assign(results, chunkResult);
+  }
+
+  return results;
 }
