@@ -39,7 +39,7 @@ if (!appId) {
 
 const network = env.PUBLIC_NETWORK
 
-const privateAlgorand = await getAlgorandClient(Astro.locals, "BACKEND");
+const privateAlgorand = await getAlgorandClient(Astro.locals, ["BACKEND", "PUBLIC"]);
 const registryClient = await getRegistryClient(privateAlgorand);
 
 const [registryGlobalState, proposal] = await Promise.all([

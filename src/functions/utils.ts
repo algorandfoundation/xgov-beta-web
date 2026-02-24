@@ -16,7 +16,7 @@ export function chunk<T>(arr: T[], chunkSize: number): T[][] {
 }
 
 export function getNumericEnvironmentVariable(
-  key: string,
+  key: string | string[],
   locals: App.Locals,
   defaultValue: number,
 ): number {
@@ -27,17 +27,20 @@ export function getNumericEnvironmentVariable(
 }
 
 export function getStringEnvironmentVariable(
-  key: string,
+  key: string | string[],
   locals: App.Locals,
   defaultValue: string,
 ): string {
-  if (key in import.meta.env && !!import.meta.env[key]) {
-    return import.meta.env[key] as string;
-  }
-  if ("runtime" in locals && locals.runtime) {
-    const env = (locals.runtime as any)?.env;
-    if (env && typeof env === "object" && key in env) {
-      return (env as Record<string, string>)[key];
+  const keys = Array.isArray(key) ? key : [key];
+  for (const key of keys) {
+    if (key in import.meta.env && !!import.meta.env[key]) {
+      return import.meta.env[key] as string;
+    }
+    if ("runtime" in locals && locals.runtime) {
+      const env = (locals.runtime as any)?.env;
+      if (env && typeof env === "object" && key in env) {
+        return (env as Record<string, string>)[key];
+      }
     }
   }
   return defaultValue;
