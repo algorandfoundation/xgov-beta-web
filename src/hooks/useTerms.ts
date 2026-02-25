@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 
 interface TermsData {
   content: string;
-  source: "kv" | "static";
+  source: "r2" | "static";
+  version: number;
 }
 
 async function fetchTerms(): Promise<TermsData> {

@@ -1,13 +1,13 @@
 /// <reference path="../.astro/types.d.ts" />
 /// <reference types="astro/client" />
 
-type KVNamespace = import("@cloudflare/workers-types").KVNamespace;
+type R2Bucket = import("@cloudflare/workers-types").R2Bucket;
 
 declare namespace App {
   interface Locals {
     runtime?: {
       env: {
-        KV?: KVNamespace;
+        BUCKET?: R2Bucket;
         [key: string]: unknown;
       };
     };

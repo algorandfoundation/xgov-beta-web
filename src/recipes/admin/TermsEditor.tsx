@@ -30,19 +30,24 @@ export function TermsEditor() {
 
     setSaveStatus("saving");
     try {
-      // Build ARC-60 challenge
+      // Build SIWA-formatted challenge (required by Lute wallet)
       const contentHash = await sha256Hex(content);
-      const challenge = buildTermsUpdateChallenge(activeAddress, contentHash);
+      const challenge = buildTermsUpdateChallenge(
+        activeAddress,
+        contentHash,
+        window.location.origin,
+      );
 
-      // Sign challenge with wallet
-      const signResult = await signData(challenge, {
+      // ARC-60: base64-encode the canonical JSON, set encoding: "base64"
+      const challengeB64 = btoa(challenge);
+      const signResult = await signData(challengeB64, {
         scope: ScopeType.AUTH,
-        encoding: "utf-8",
+        encoding: "base64",
       });
 
       // Serialize Uint8Array fields to base64 for JSON transport
       const arc60 = {
-        challenge,
+        challenge: challengeB64,
         signature: bytesToBase64(signResult.signature),
         signer: bytesToBase64(signResult.signer),
         domain: signResult.domain,
@@ -99,9 +104,9 @@ export function TermsEditor() {
         </div>
 
         <div className="flex items-center gap-2">
-          {terms.data?.source && (
+          {terms.data && (
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              Source: {terms.data.source}
+              v{terms.data.version} ({terms.data.source})
             </span>
           )}
           <Button variant="outline" size="sm" onClick={handleReload}>

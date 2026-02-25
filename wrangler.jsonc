@@ -12,10 +12,10 @@
   "observability": {
     "enabled": true,
   },
-  "kv_namespaces": [
+  "r2_buckets": [
     {
-      "binding": "KV",
-      "id": "75455ea96091475b97447d61e03016d5",
+      "binding": "BUCKET",
+      "bucket_name": "xgov",
     },
   ],
 }

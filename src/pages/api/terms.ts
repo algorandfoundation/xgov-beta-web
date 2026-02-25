@@ -5,24 +5,31 @@ import {
   type Arc60SignaturePayload,
 } from "@/lib/arc60";
 
-const TERMS_KV_KEY = "terms_content";
+const LATEST_KEY = "terms/latest";
+const versionKey = (v: number) => `terms/v/${v}`;
 
-async function getKV(locals: App.Locals): Promise<KVNamespace | undefined> {
+function getR2(locals: App.Locals): R2Bucket | undefined {
   if ("runtime" in locals && locals.runtime) {
-    return (locals.runtime as any)?.env?.KV as KVNamespace | undefined;
+    return (locals.runtime as any)?.env?.BUCKET as R2Bucket | undefined;
   }
   return undefined;
 }
 
-export const GET: APIRoute = async ({ locals }) => {
+export const GET: APIRoute = async ({ locals, url }) => {
   try {
-    const kv = await getKV(locals);
+    const bucket = getR2(locals);
+    const requestedVersion = url.searchParams.get("version");
 
-    if (kv) {
-      const stored = await kv.get(TERMS_KV_KEY);
-      if (stored) {
+    if (bucket) {
+      const key = requestedVersion
+        ? versionKey(Number(requestedVersion))
+        : LATEST_KEY;
+      const obj = await bucket.get(key);
+      if (obj) {
+        const stored = await obj.text();
+        const version = Number(obj.customMetadata?.version ?? 1);
         return new Response(
-          JSON.stringify({ content: stored, source: "kv" }),
+          JSON.stringify({ content: stored, source: "r2", version }),
           {
             status: 200,
             headers: {
@@ -32,14 +39,26 @@ export const GET: APIRoute = async ({ locals }) => {
           },
         );
       }
+
+      // Specific version requested but not found
+      if (requestedVersion) {
+        return new Response(
+          JSON.stringify({ error: `Version ${requestedVersion} not found` }),
+          { status: 404, headers: { "Content-Type": "application/json" } },
+        );
+      }
     }
 
-    // Fallback to static file
+    // Fallback to static file (version 0 — the bundled baseline)
     const staticTerms = await import(
       "@/components/ProfileCard/TermsAndConditionsText.md?raw"
     );
     return new Response(
-      JSON.stringify({ content: staticTerms.default, source: "static" }),
+      JSON.stringify({
+        content: staticTerms.default,
+        source: "static",
+        version: 0,
+      }),
       {
         status: 200,
         headers: {
@@ -119,23 +138,37 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const kv = await getKV(locals);
-    if (!kv) {
+    const bucket = getR2(locals);
+    if (!bucket) {
       return new Response(
-        JSON.stringify({ error: "KV storage not available" }),
+        JSON.stringify({ error: "R2 storage not available" }),
         { status: 503, headers: { "Content-Type": "application/json" } },
       );
     }
 
-    await kv.put(TERMS_KV_KEY, content, {
-      metadata: {
+    // Determine next version by reading current latest
+    let nextVersion = 1;
+    const current = await bucket.head(LATEST_KEY);
+    if (current?.customMetadata?.version) {
+      nextVersion = Number(current.customMetadata.version) + 1;
+    }
+
+    const metadata = {
+      customMetadata: {
+        version: String(nextVersion),
         updatedAt: new Date().toISOString(),
         updatedBy: address,
       },
-    });
+    };
+
+    // Write versioned copy and update latest
+    await Promise.all([
+      bucket.put(versionKey(nextVersion), content, metadata),
+      bucket.put(LATEST_KEY, content, metadata),
+    ]);
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, version: nextVersion }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
   } catch (error) {
