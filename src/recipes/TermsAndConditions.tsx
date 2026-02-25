@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Printer, ClipboardCheck, Clipboard, ExternalLink } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
+import { renderTermsMarkdown } from "@/lib/markdown";
 
 function printString(content: string) {
   const printWindow = window.open("", "", "height=600,width=800");
@@ -29,22 +30,6 @@ function printString(content: string) {
     printWindow.print();
     printWindow.close();
   };
-}
-
-export function formatMarkdownToHtml(text: string): string {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    .replace(/(?<!href=")(?<!href=')(https?:\/\/[^\s<>]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    .split(/\n\s*\n/)
-    .map(paragraph => {
-      const formattedParagraph = paragraph.trim().replace(/\n/g, '<br>');
-      return formattedParagraph ? `<p class="mb-4">${formattedParagraph}</p>` : '';
-    })
-    .filter(p => p)
-    .join('');
 }
 
 interface TermsAndConditionsModalProps {
@@ -117,7 +102,7 @@ export function TermsAndConditionsModal({
               ref={scrollRef}
               id="tc-box"
               className="h-full overflow-y-auto overflow-x-hidden text-sm leading-relaxed [&>p]:mb-4 [&>p]:text-sm [&>p]:leading-relaxed [&_strong]:font-bold [&_a]:text-algo-blue dark:[&_a]:text-algo-teal [&_a]:no-underline hover:[&_a]:underline"
-              dangerouslySetInnerHTML={{ __html: formatMarkdownToHtml(terms) }}
+              dangerouslySetInnerHTML={{ __html: renderTermsMarkdown(terms) }}
             ></div>
           </div>
         </DialogHeader>

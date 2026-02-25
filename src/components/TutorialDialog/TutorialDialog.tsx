@@ -12,11 +12,11 @@ import { Button } from "@/components/ui/button";
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { cn } from "@/functions";
 import { TermsAndConditionsModal } from "@/recipes";
-import termsAndConditionsString from "../ProfileCard/TermsAndConditionsText.md?raw";
 import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
 import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
 import type { TransactionStateInfo } from "@/api/types/transaction_state";
 import { CheckCircleIcon } from "../icons/CheckCircleIcon";
+import { useTerms } from "@/hooks";
 
 export interface TutorialDialogProps {
   isOpen: boolean;
@@ -110,6 +110,7 @@ export function TutorialDialog({
   isXGov = false,
   isProposer = false
 }: TutorialDialogProps) {
+  const terms = useTerms();
   const [currentStep, setCurrentStep] = useState(0);
   const [showBecomeXGovModal, setShowBecomeXGovModal] = useState(false);
   const [showBecomeProposerModal, setShowBecomeProposerModal] = useState(false);
@@ -448,7 +449,7 @@ export function TutorialDialog({
             </div>
           </>
         }
-        terms={termsAndConditionsString}
+        terms={terms.data?.content ?? ""}
         isOpen={showBecomeProposerTermsModal}
         onClose={() => setShowBecomeProposerTermsModal(false)}
         onAccept={() => {

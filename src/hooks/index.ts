@@ -10,4 +10,5 @@ export * from "./useQuery.tsx";
 export * from "./useRegistry.ts";
 export * from "./useSearchParams.ts";
 export * from "./useTimeLeft.ts";
+export * from "./useTerms.ts";
 export * from "./useWallet.tsx";

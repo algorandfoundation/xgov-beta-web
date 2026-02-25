@@ -12,4 +12,10 @@
   "observability": {
     "enabled": true,
   },
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "75455ea96091475b97447d61e03016d5",
+    },
+  ],
 }
