@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
-import { useWallet } from "@txnlab/use-wallet-react";
+import { useWallet, ScopeType } from "@txnlab/use-wallet-react";
+import { bytesToBase64 } from "algosdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useTerms } from "@/hooks";
 import { renderTermsMarkdown } from "@/lib/markdown";
+import { buildTermsUpdateChallenge, sha256Hex } from "@/lib/arc60";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 export function TermsEditor() {
-  const { activeAddress } = useWallet();
+  const { activeAddress, activeWallet, signData } = useWallet();
   const terms = useTerms();
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
@@ -21,15 +23,36 @@ export function TermsEditor() {
     }
   }, [terms.data?.content]);
 
+  const canSign = activeWallet?.canSignData ?? false;
+
   const handleSave = async () => {
-    if (!activeAddress) return;
+    if (!activeAddress || !canSign) return;
 
     setSaveStatus("saving");
     try {
+      // Build ARC-60 challenge
+      const contentHash = await sha256Hex(content);
+      const challenge = buildTermsUpdateChallenge(activeAddress, contentHash);
+
+      // Sign challenge with wallet
+      const signResult = await signData(challenge, {
+        scope: ScopeType.AUTH,
+        encoding: "utf-8",
+      });
+
+      // Serialize Uint8Array fields to base64 for JSON transport
+      const arc60 = {
+        challenge,
+        signature: bytesToBase64(signResult.signature),
+        signer: bytesToBase64(signResult.signer),
+        domain: signResult.domain,
+        authenticatorData: bytesToBase64(signResult.authenticatorData),
+      };
+
       const res = await fetch("/api/terms", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, address: activeAddress }),
+        body: JSON.stringify({ content, address: activeAddress, arc60 }),
       });
 
       if (!res.ok) {
@@ -87,7 +110,8 @@ export function TermsEditor() {
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={saveStatus === "saving"}
+            disabled={saveStatus === "saving" || !canSign}
+            title={!canSign ? "Wallet does not support signing data (ARC-60)" : undefined}
           >
             {saveStatus === "saving"
               ? "Saving..."
@@ -99,6 +123,12 @@ export function TermsEditor() {
           </Button>
         </div>
       </div>
+
+      {activeWallet && !canSign && (
+        <div className="text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md px-3 py-2">
+          Your wallet does not support signing data (ARC-60). Use Lute or Kibisis to save changes.
+        </div>
+      )}
 
       {mode === "edit" ? (
         <textarea

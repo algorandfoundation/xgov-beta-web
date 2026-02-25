@@ -1,5 +1,9 @@
 import type { APIRoute } from "astro";
 import { getGlobalState } from "@/api";
+import {
+  verifyTermsUpdateSignature,
+  type Arc60SignaturePayload,
+} from "@/lib/arc60";
 
 const TERMS_KV_KEY = "terms_content";
 
@@ -75,12 +79,43 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    const arc60 = body.arc60 as Arc60SignaturePayload | undefined;
+    if (
+      !arc60 ||
+      !arc60.challenge ||
+      !arc60.signature ||
+      !arc60.signer ||
+      !arc60.domain ||
+      !arc60.authenticatorData
+    ) {
+      return new Response(
+        JSON.stringify({ error: "Missing ARC-60 signature payload" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
     // Verify the caller is the xgovManager
     const globalState = await getGlobalState();
     if (!globalState?.xgovManager || address !== globalState.xgovManager) {
       return new Response(
         JSON.stringify({ error: "Unauthorized: not xgovManager" }),
         { status: 403, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    // Verify ARC-60 signature proves caller controls the manager key
+    const verification = await verifyTermsUpdateSignature(
+      arc60,
+      globalState.xgovManager,
+      content,
+    );
+    if (!verification.valid) {
+      return new Response(
+        JSON.stringify({
+          error: "Signature verification failed",
+          reason: verification.reason,
+        }),
+        { status: 401, headers: { "Content-Type": "application/json" } },
       );
     }
 
