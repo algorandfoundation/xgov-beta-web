@@ -76,12 +76,13 @@ export async function getNFDs(
   addresses: string[],
   init: RequestInit = {},
 ): Promise<{ [address: string]: NFD }> {
-  if (addresses.length === 0) return {};
+  const unique = [...new Set(addresses)];
+  if (unique.length === 0) return {};
 
   const results: { [address: string]: NFD } = {};
 
-  for (let i = 0; i < addresses.length; i += NFD_BATCH_SIZE) {
-    const chunk = addresses.slice(i, i + NFD_BATCH_SIZE);
+  for (let i = 0; i < unique.length; i += NFD_BATCH_SIZE) {
+    const chunk = unique.slice(i, i + NFD_BATCH_SIZE);
     const chunkResult = await mutex.runExclusive(async () => {
       let r = await fetchNfdReverseLookups(chunk, init);
       if (r.status === 404) {
