@@ -1,5 +1,6 @@
 import { renderTermsMarkdown } from "@/lib/markdown";
 import { useTerms } from "@/hooks";
+import { UseQuery } from "@/hooks/useQuery";
 
 interface TermsAndConditionsViewProps {
   title?: string;
@@ -7,7 +8,7 @@ interface TermsAndConditionsViewProps {
   className?: string;
 }
 
-export function TermsAndConditionsView({
+function TermsAndConditionsContent({
   title = "xGov Proposer Terms & Conditions",
   description,
   className = "",
@@ -58,5 +59,13 @@ export function TermsAndConditionsView({
         />
       </div>
     </div>
+  );
+}
+
+export function TermsAndConditionsView(props: TermsAndConditionsViewProps) {
+  return (
+    <UseQuery>
+      <TermsAndConditionsContent {...props} />
+    </UseQuery>
   );
 }
