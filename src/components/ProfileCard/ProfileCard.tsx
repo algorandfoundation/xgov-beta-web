@@ -2,8 +2,7 @@ import { type ProposerBoxState } from "@/api";
 import { EditableAddress } from "../EditableAddress/EditableAddress";
 import { ActionButton } from "../button/ActionButton/ActionButton";
 import { cn } from "@/functions";
-import { XGovProposerStatusPill } from "../XGovProposerStatusPill/XGovProposerStatusPill";
-import { XGovStatusPill } from "../XGovStatusPill/XGovStatusPill";
+
 import { useState } from "react";
 import termsAndConditionsString from "./TermsAndConditionsText.md?raw";
 import { TermsAndConditionsModal } from "@/recipes";
@@ -17,6 +16,8 @@ import { ExternalLink } from "lucide-react";
 
 export interface ProfileCardProps {
   address: string;
+
+  activeTab: 'xgov' | 'proposer';
 
   votingAddress: string;
   setVotingAddress: (votingAddress: string) => Promise<void>;
@@ -40,6 +41,8 @@ export interface ProfileCardProps {
 
 export function ProfileCard({
   address,
+
+  activeTab,
 
   votingAddress,
   setVotingAddress,
@@ -74,50 +77,47 @@ export function ProfileCard({
         <div className="w-full flex flex-col gap-4">
           <TestnetDispenserBanner />
 
-          <div>
-            <div className="flex items-center gap-6">
-              <XGovStatusPill
-                isXGov={isXGov}
-                unsubscribeXgov={unsubscribeXgov}
-                unsubscribeXGovLoading={subscribeXGovState.isPending}
-                disabled={address !== activeAddress}
-              />
+          {activeTab === 'xgov' && (
+            <>
               {address === activeAddress && !isXGov && (
-                <ActionButton
-                  type="button"
-                  onClick={() => setShowBecomeXGovModal(true)}
-                  disabled={subscribeXGovState.isPending}
-                >
-                  {
-                    subscribeXGovState.isPending
-                      ? "Loading..."
-                      : "Become an xGov"
-                  }
-                </ActionButton>
+                <div className="w-fit">
+                  <ActionButton
+                    type="button"
+                    onClick={() => setShowBecomeXGovModal(true)}
+                    disabled={subscribeXGovState.isPending}
+                  >
+                    {
+                      subscribeXGovState.isPending
+                        ? "Loading..."
+                        : "Become an xGov"
+                    }
+                  </ActionButton>
+                </div>
               )}
-            </div>
-          </div>
 
-          {
-            isXGov && (
-              <EditableAddress
-                title="Voting Address"
-                defaultValue={votingAddress}
-                loading={setVotingAddressState.isPending}
-                onSave={(v) => {
-                  setVotingAddress(v);
-                }}
-                disabled={address !== activeAddress}
+              {
+                isXGov && (
+                  <EditableAddress
+                    title="Voting Address"
+                    defaultValue={votingAddress}
+                    loading={setVotingAddressState.isPending}
+                    onSave={(v) => {
+                      setVotingAddress(v);
+                    }}
+                    disabled={address !== activeAddress}
+                  />
+                )
+              }
+
+              <VotingFor
+                delegates={delegates.data || []}
+                isLoading={delegates.isLoading}
+                isError={delegates.isError}
               />
-            )
-          }
+            </>
+          )}
 
-          <VotingFor
-            delegates={delegates.data || []}
-            isLoading={delegates.isLoading}
-            isError={delegates.isError}
-          />
-
+          {activeTab === 'proposer' && (
           <div>
             <div className="flex items-center gap-6">
               {
@@ -134,24 +134,17 @@ export function ProfileCard({
                         <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
-                    {!proposer?.isProposer
-                      ? (
-                        <div className="flex items-center gap-6">
-                          <XGovProposerStatusPill proposer={proposer} />
-                          <ActionButton
-                            type="button"
-                            onClick={() => setShowBecomeProposerTermsModal(true)}
-                            disabled={subscribeProposerState.isPending}
-                          >
-                            {subscribeProposerState.isPending
-                              ? "Loading..."
-                              : "Become a Proposer"}
-                          </ActionButton>
-                        </div>
-                      ) : (
-                        <XGovProposerStatusPill proposer={proposer} />
-                      )
-                    }
+                    {!proposer?.isProposer && (
+                      <ActionButton
+                        type="button"
+                        onClick={() => setShowBecomeProposerTermsModal(true)}
+                        disabled={subscribeProposerState.isPending}
+                      >
+                        {subscribeProposerState.isPending
+                          ? "Loading..."
+                          : "Become a Proposer"}
+                      </ActionButton>
+                    )}
 
                     {
                       proposer?.isProposer && !proposer?.kycStatus && (
@@ -195,6 +188,7 @@ export function ProfileCard({
               )}
             </div>
           </div>
+          )}
         </div>
       </div>
 
