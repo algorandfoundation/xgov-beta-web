@@ -34,9 +34,13 @@ export function StackedListQuery({
   proposals: ProposalSummaryCardDetails[];
 }) {
   const proposalsQuery = useGetAllProposals(proposals);
-  const nfds = useNFDs(
-    proposalsQuery.data?.map((proposal) => proposal.proposer) || []
-  )
+  const nfdAddresses = useMemo(
+    () => proposalsQuery.data
+      ? [...new Set(proposalsQuery.data.map((proposal) => proposal.proposer))]
+      : undefined,
+    [proposalsQuery.data],
+  );
+  const nfds = useNFDs(nfdAddresses)
 
   const [searchParams] = useSearchParams();
   const [_searchParams, setSearchParams] = useState(searchParams);
