@@ -344,14 +344,16 @@ function VotingStatusCard({
 
   const voterInfoQuery = useVotersInfo(proposal.id, committeeSubset, committeeSubset.length > 0);
   const voterList = [...Object.keys(voterInfoQuery?.data || {})]
+  const unvotedList = voterList.filter(address => !voterInfoQuery?.data?.[address]?.voted);
 
   const [selectedVotingAs, setSelectedVotingAs] = useState<string | null>(voterList[0] ?? null);
 
   useEffect(() => {
     if (voterList.length > 0 && !selectedVotingAs) {
-      setSelectedVotingAs(voterList[0]);
+      // Prefer selecting an address that hasn't voted yet
+      setSelectedVotingAs(unvotedList[0] ?? voterList[0]);
     }
-  }, [voterList, selectedVotingAs]);
+  }, [voterList, selectedVotingAs, unvotedList]);
 
   const [mode, setMode] = useState<'simple' | 'advanced'>('simple');
   const [votesExceeded, setVotesExceeded] = useState(false);
@@ -517,11 +519,17 @@ function VotingStatusCard({
                 </SelectTrigger>
                 <SelectContent>
                   {
-                    voterList.map(address => (
-                      <SelectItem key={address} value={address} disabled={!((voterInfoQuery?.data?.[address]?.votes ?? 0) > 0)}>
-                        {shortenAddress(address)}
-                      </SelectItem>
-                    ))
+                    voterList.map(address => {
+                      const hasVoted = voterInfoQuery?.data?.[address]?.voted;
+                      return (
+                        <SelectItem key={address} value={address} disabled={!((voterInfoQuery?.data?.[address]?.votes ?? 0) > 0)}>
+                          <span className="flex items-center gap-1.5">
+                            {shortenAddress(address)}
+                            {hasVoted && <span className="text-muted-foreground text-xxs">(voted)</span>}
+                          </span>
+                        </SelectItem>
+                      );
+                    })
                   }
                 </SelectContent>
               </Select>
@@ -547,7 +555,14 @@ function VotingStatusCard({
       action = (
         <>
           {baseAction}
-          <p className="h-9 px-4 py-2">Already Voted!</p>
+          <div className="flex flex-col items-center gap-1">
+            <p className="h-9 px-4 py-2">Already voted as {shortenAddress(selectedVotingAs!)}</p>
+            {unvotedList.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                You have {unvotedList.length} other {unvotedList.length === 1 ? 'address' : 'addresses'} that can still vote
+              </p>
+            )}
+          </div>
         </>
       )
     } else {
