@@ -28,6 +28,15 @@ export async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function errorMessageFromResponse(r: Response): Promise<string> {
+  let errorText = r.statusText
+  try {
+    errorText = (await r.text()) + ` (status ${r.status})`;
+  } catch (e) {
+  }
+  return "Something went wrong: " + errorText
+}
+
 export type NFD = {
   appID: number;
   asaID: number;
@@ -47,31 +56,33 @@ export async function getNFD(
     const isString = typeof nameIDOrAddress === "string";
     const isNFD = !isString || nameIDOrAddress.includes(".algo");
 
-    let r = isNFD
-      ? await fetchNfd(nameIDOrAddress, init)
-      : await fetchNfdReverseLookup(nameIDOrAddress as string, init);
-
-    if (r.status === 404) {
-      throw new Error("Not found");
-    }
-
-    if (r.status === 429) {
-      const errRes = (await r.json()) as { secsRemaining?: number };
-      console.log(
-        `Rate limited, sleeping for ${errRes?.secsRemaining} seconds`,
-      );
-      await sleep((errRes?.secsRemaining || 1) * 1000 + 1000);
-      console.log("Mutex Still Locked, trying again");
-      r = isNFD
+    async function fetchOne() {
+      let r = isNFD
         ? await fetchNfd(nameIDOrAddress, init)
         : await fetchNfdReverseLookup(nameIDOrAddress as string, init);
+
+      if (r.status === 404) {
+        throw new Error("Not found");
+      }
+
+      if (r.status === 429) {
+        const errRes = (await r.json()) as { secsRemaining?: number };
+        console.log(
+          `Rate limited, sleeping for ${errRes?.secsRemaining} seconds`,
+        );
+        await sleep((errRes?.secsRemaining || 1) * 1000 + 1000);
+        console.log("Mutex Still Locked, trying again");
+        return await fetchOne();
+      }
+
+      if (r.status !== 200) {
+        throw new Error(await errorMessageFromResponse(r));
+      }
+
+      return await r.json();
     }
 
-    if (r.status !== 200) {
-      throw new Error("Something went wrong");
-    }
-
-    const data = await r.json();
+    const data = await fetchOne();
     return isNFD ? data : data[nameIDOrAddress as string];
   });
 }
@@ -106,11 +117,7 @@ export async function getNFDs(
         }
 
         if (r.status !== 200) {
-          let errorText = String(r.status);
-          try {
-            errorText += " " + (await r.text());
-          } catch (e) {}
-          throw new Error("Something went wrong: " + errorText);
+          throw new Error(await errorMessageFromResponse(r));
         }
 
         return await r.json();
@@ -122,3 +129,4 @@ export async function getNFDs(
 
   return results;
 }
+
