@@ -1,5 +1,6 @@
-import { formatMarkdownToHtml } from "@/recipes";
-import termsAndConditionsString from "../ProfileCard/TermsAndConditionsText.md?raw";
+import { renderTermsMarkdown } from "@/lib/markdown";
+import { useTerms } from "@/hooks";
+import { UseQuery } from "@/hooks/useQuery";
 
 interface TermsAndConditionsViewProps {
   title?: string;
@@ -7,12 +8,34 @@ interface TermsAndConditionsViewProps {
   className?: string;
 }
 
-export function TermsAndConditionsView({
+function TermsAndConditionsContent({
   title = "xGov Proposer Terms & Conditions",
   description,
   className = "",
 }: TermsAndConditionsViewProps) {
-  const formattedContent = formatMarkdownToHtml(termsAndConditionsString);
+  const terms = useTerms();
+
+  if (terms.isLoading) {
+    return (
+      <div className={`w-full max-w-6xl mx-auto p-4 ${className}`}>
+        <div className="text-center text-gray-500 dark:text-gray-400 py-12">
+          Loading terms...
+        </div>
+      </div>
+    );
+  }
+
+  if (terms.isError) {
+    return (
+      <div className={`w-full max-w-6xl mx-auto p-4 ${className}`}>
+        <div className="text-center text-red-500 py-12">
+          Failed to load terms and conditions.
+        </div>
+      </div>
+    );
+  }
+
+  const formattedContent = renderTermsMarkdown(terms.data?.content ?? "");
 
   return (
     <div className={`w-full max-w-6xl mx-auto p-4 ${className}`}>
@@ -36,5 +59,13 @@ export function TermsAndConditionsView({
         />
       </div>
     </div>
+  );
+}
+
+export function TermsAndConditionsView(props: TermsAndConditionsViewProps) {
+  return (
+    <UseQuery>
+      <TermsAndConditionsContent {...props} />
+    </UseQuery>
   );
 }

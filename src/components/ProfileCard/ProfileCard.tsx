@@ -5,8 +5,8 @@ import { cn } from "@/functions";
 import { XGovProposerStatusPill } from "../XGovProposerStatusPill/XGovProposerStatusPill";
 import { XGovStatusPill } from "../XGovStatusPill/XGovStatusPill";
 import { useState } from "react";
-import termsAndConditionsString from "./TermsAndConditionsText.md?raw";
 import { TermsAndConditionsModal } from "@/recipes";
+import { useTerms } from "@/hooks";
 import { TestnetDispenserBanner } from "../TestnetDispenserBanner/TestnetDispenserBanner";
 import { BecomeProposerModal } from "../BecomeProposerModal/BecomeProposerModal";
 import { BecomeXGovModal } from "../BecomeXGovModal/BecomeXGovModal";
@@ -59,6 +59,7 @@ export function ProfileCard({
   className = "",
 }: ProfileCardProps) {
   const delegates = useXGovDelegates(address);
+  const terms = useTerms();
   const [showBecomeXGovModal, setShowBecomeXGovModal] = useState(false);
   const [showBecomeProposerModal, setShowBecomeProposerModal] = useState(false);
   const [showBecomeProposerTermsModal, setShowBecomeProposerTermsModal] = useState(false);
@@ -219,7 +220,7 @@ export function ProfileCard({
             </span>
           </>
         }
-        terms={termsAndConditionsString}
+        terms={terms.data?.content ?? ""}
         isOpen={showBecomeProposerTermsModal}
         onClose={() => setShowBecomeProposerTermsModal(false)}
         onAccept={() => {

@@ -5,6 +5,7 @@ import { useNetwork, useWallet } from "@txnlab/use-wallet-react";
 import { KYCBox } from "./KYCBox";
 import { RoleList, RoleModal } from "./RolesSection";
 import { PanelStatistics } from "./PanelStatistics";
+import { TermsEditor } from "./TermsEditor";
 
 import { addCouncilMember, registryClient } from "@/api";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
@@ -163,6 +164,11 @@ export function AdminPage() {
                   xGovManager={registryGlobalState.data?.xgovManager}
                   handleSetRole={handleSetRole}
                 />
+
+                <h2 className="text-xl font-semibold text-wrap text-algo-black dark:text-white mb-2 mt-8">
+                  Terms & Conditions
+                </h2>
+                <TermsEditor />
               </div>
             )
           }
