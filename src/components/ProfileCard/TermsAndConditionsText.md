@@ -172,7 +172,7 @@ We may, from time to time, in our sole and absolute discretion, vary or amend th
 
 - ( i ) You shall retain all rights, title and interest in and to all Offeree IP. All rights, title and interest in and to Foreground IP created or developed by you shall be owned by you.
 
-  10.2. Open-Source.
+10.2. Open-Source.
 
 ( a ) You acknowledge and agree that Algorand Network IP is provided to you on an open-source basis in the following manner:
 
