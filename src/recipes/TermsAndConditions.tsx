@@ -8,7 +8,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Printer, ClipboardCheck, Clipboard, ExternalLink } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { marked } from "marked";
 
 function printString(content: string) {
@@ -19,7 +19,7 @@ function printString(content: string) {
       <head>
         <title>Print</title>
       </head>
-      <body style="white-space:pre">
+      <body>
         ${content}
       </body>
     </html>
@@ -92,7 +92,7 @@ interface TermsAndConditionsModalProps {
 export function TermsAndConditionsModal({
   title,
   description,
-  terms,
+  terms: termsMarkdown,
   isOpen,
   onClose,
   onAccept,
@@ -114,9 +114,11 @@ export function TermsAndConditionsModal({
     if (isAtBottom === true) setScrolledToBottom(true);
   };
 
-  const handlePrint = () => printString(terms);
+  const termsHtml = useMemo(() => formatMarkdownToHtml(termsMarkdown), [termsMarkdown]);
+
+  const handlePrint = () => printString(termsHtml);
   const handleCopy = () => {
-    navigator.clipboard.writeText(terms);
+    navigator.clipboard.writeText(termsMarkdown);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -150,7 +152,7 @@ export function TermsAndConditionsModal({
               ref={scrollRef}
               id="tc-box"
               className="h-full overflow-y-auto overflow-x-hidden text-sm leading-relaxed [&>p]:mb-4 [&>p]:text-sm [&>p]:leading-relaxed [&_strong]:font-bold [&_a]:text-algo-blue dark:[&_a]:text-algo-teal [&_a]:no-underline hover:[&_a]:underline"
-              dangerouslySetInnerHTML={{ __html: formatMarkdownToHtml(terms) }}
+              dangerouslySetInnerHTML={{ __html: termsHtml }}
             ></div>
           </div>
         </DialogHeader>
