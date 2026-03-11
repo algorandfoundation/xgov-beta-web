@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Printer, ClipboardCheck, Clipboard, ExternalLink } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
+import { marked } from "marked";
 
 function printString(content: string) {
   const printWindow = window.open("", "", "height=600,width=800");
@@ -32,19 +33,43 @@ function printString(content: string) {
 }
 
 export function formatMarkdownToHtml(text: string): string {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    .replace(/(?<!href=")(?<!href=')(https?:\/\/[^\s<>]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    .split(/\n\s*\n/)
-    .map(paragraph => {
-      const formattedParagraph = paragraph.trim().replace(/\n/g, '<br>');
-      return formattedParagraph ? `<p class="mb-4">${formattedParagraph}</p>` : '';
-    })
-    .filter(p => p)
-    .join('');
+  // Configure marked with custom renderer
+  const renderer = new marked.Renderer();
+
+  // Custom link renderer with styling
+  renderer.link = function(token) {
+    const href = token.href;
+    const text = this.parser.parseInline(token.tokens);
+    const isEmail = href.startsWith('mailto:');
+    return `<a href="${href}"${!isEmail ? ' target="_blank" rel="noopener noreferrer"' : ''} class="text-algo-blue dark:text-algo-teal hover:underline">${text}</a>`;
+  };
+
+  // Custom heading renderer with styling
+  renderer.heading = function(token) {
+    const depth = token.depth;
+    const text = this.parser.parseInline(token.tokens);
+    return `<h${depth} class="font-bold text-lg mt-6 mb-2">${text}</h${depth}>`;
+  };
+
+  // Custom paragraph renderer with styling
+  renderer.paragraph = function(token) {
+    const text = this.parser.parseInline(token.tokens);
+    return `<p class="mb-4">${text}</p>`;
+  };
+
+  // Custom strong renderer to ensure bold styling
+  renderer.strong = function(token) {
+    const text = this.parser.parseInline(token.tokens);
+    return `<strong class="font-bold">${text}</strong>`;
+  };
+
+  marked.setOptions({
+    renderer: renderer,
+    breaks: true, // Convert \n to <br>
+    gfm: true, // GitHub Flavored Markdown
+  });
+
+  return marked.parse(text) as string;
 }
 
 interface TermsAndConditionsModalProps {
