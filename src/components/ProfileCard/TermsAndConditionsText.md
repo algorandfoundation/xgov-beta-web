@@ -314,9 +314,9 @@ We may, from time to time, in our sole and absolute discretion, vary or amend th
 
 - ( ii ) without prejudice to the generality of sub-paragraph (d)(i) above, remove any and all reference to us and/or ALGO Tokens from any Content (including without limitation in any promotional material or literature, communication or website), in the form and manner as we may direct.
 
-  17.6. For the avoidance of doubt, any lawful exercise by the Foundation of its right to terminate this Agreement as provided under this Agreement shall not entitle you to any damages, claims for expenses or lost profits, or any other recourse at law or in equity in respect of such termination.
+17.6. For the avoidance of doubt, any lawful exercise by the Foundation of its right to terminate this Agreement as provided under this Agreement shall not entitle you to any damages, claims for expenses or lost profits, or any other recourse at law or in equity in respect of such termination.
 
-  17.7. This Section 17 (Termination) shall survive the expiration or termination of these Terms.
+17.7. This Section 17 (Termination) shall survive the expiration or termination of these Terms.
 
 ## 18. Communications and Legal Notice
 
