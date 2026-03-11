@@ -69,7 +69,15 @@ export function formatMarkdownToHtml(text: string): string {
     gfm: true, // GitHub Flavored Markdown
   });
 
-  return marked.parse(text) as string;
+  // Post-process the HTML to add list styles inline to override global CSS reset
+  let html = marked.parse(text) as string;
+
+  // Add inline styles to lists and list items
+  html = html.replace(/<ul>/g, '<ul style="list-style-type: disc !important; margin-left: 1.5rem !important; margin-bottom: 1rem !important; padding-left: 1rem !important;">');
+  html = html.replace(/<ol>/g, '<ol style="list-style-type: decimal !important; margin-left: 1.5rem !important; margin-bottom: 1rem !important; padding-left: 1rem !important;">');
+  html = html.replace(/<li>/g, '<li style="display: list-item !important; margin-left: 0.5rem !important; margin-bottom: 0.5rem !important;">');
+
+  return html;
 }
 
 interface TermsAndConditionsModalProps {
