@@ -98,7 +98,7 @@ We may, from time to time, in our sole and absolute discretion, vary or amend th
 
   - ( i ) all Deliverables shall be made available to the public and published on GitHub issue/ post, short medium article, youtube video and/or such other public repository that the Foundation may specify, and made available subject to either the MIT or AGPLv3 license;
 
-  - ( ii ) all Deliverables to public repositories must be open source and should follow the    contributions rules of the relevant repository;
+  - ( ii ) all Deliverables to public repositories must be open source and should follow the contributions rules of the relevant repository;
 
   - ( iii ) all Deliverables that are non-codes documents should be using markdown format, if applicable; and
 
