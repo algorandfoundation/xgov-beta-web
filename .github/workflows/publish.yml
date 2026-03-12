@@ -4,15 +4,7 @@ name: Deploy to Cloudflare Pages
 on:
   push:
     branches:
-      - main      # Deploy to testnet
       - mainnet   # Deploy to mainnet
-  pull_request:
-    branches:
-      - main
-
-concurrency:
-  group: publish-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -42,13 +34,8 @@ jobs:
       # Step 5: Determine environment and build
       - name: Set environment variables
         run: |
-          if [ "${{ github.ref }}" = "refs/heads/mainnet" ]; then
-            echo "ENVIRONMENT=mainnet" >> $GITHUB_ENV
-            echo "CF_PROJECT_NAME=${{ secrets.CF_PROJECT_NAME_MAINNET }}" >> $GITHUB_ENV
-          else
-            echo "ENVIRONMENT=testnet" >> $GITHUB_ENV
-            echo "CF_PROJECT_NAME=${{ secrets.CF_PROJECT_NAME_TESTNET }}" >> $GITHUB_ENV
-          fi
+          echo "ENVIRONMENT=mainnet" >> $GITHUB_ENV
+          echo "CF_PROJECT_NAME=${{ secrets.CF_PROJECT_NAME_MAINNET }}" >> $GITHUB_ENV
 
       # Step 6: Build the Astro project with mode
       - name: Build the project
