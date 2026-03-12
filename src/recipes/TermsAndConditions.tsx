@@ -8,7 +8,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Printer, ClipboardCheck, Clipboard, ExternalLink } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
+import { marked } from "marked";
 
 function printString(content: string) {
   const printWindow = window.open("", "", "height=600,width=800");
@@ -18,7 +19,7 @@ function printString(content: string) {
       <head>
         <title>Print</title>
       </head>
-      <body style="white-space:pre">
+      <body>
         ${content}
       </body>
     </html>
@@ -32,19 +33,50 @@ function printString(content: string) {
 }
 
 export function formatMarkdownToHtml(text: string): string {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    .replace(/(?<!href=")(?<!href=')(https?:\/\/[^\s<>]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-algo-blue dark:text-algo-teal hover:underline">$1</a>')
-    .split(/\n\s*\n/)
-    .map(paragraph => {
-      const formattedParagraph = paragraph.trim().replace(/\n/g, '<br>');
-      return formattedParagraph ? `<p class="mb-4">${formattedParagraph}</p>` : '';
-    })
-    .filter(p => p)
-    .join('');
+  // Configure marked with custom renderer
+  const renderer = new marked.Renderer();
+
+  // Custom link renderer with styling
+  renderer.link = function(token) {
+    const href = token.href;
+    const text = this.parser.parseInline(token.tokens);
+    const isEmail = href.startsWith('mailto:');
+    return `<a href="${href}"${!isEmail ? ' target="_blank" rel="noopener noreferrer"' : ''} class="text-algo-blue dark:text-algo-teal hover:underline">${text}</a>`;
+  };
+
+  // Custom heading renderer with styling
+  renderer.heading = function(token) {
+    const depth = token.depth;
+    const text = this.parser.parseInline(token.tokens);
+    return `<h${depth} class="font-bold text-lg mt-6 mb-2">${text}</h${depth}>`;
+  };
+
+  // Custom paragraph renderer with styling
+  renderer.paragraph = function(token) {
+    const text = this.parser.parseInline(token.tokens);
+    return `<p class="mb-4">${text}</p>`;
+  };
+
+  // Custom strong renderer to ensure bold styling
+  renderer.strong = function(token) {
+    const text = this.parser.parseInline(token.tokens);
+    return `<strong class="font-bold">${text}</strong>`;
+  };
+
+  // Parse the markdown with per-call options instead of mutating global configuration
+  let html = marked.parse(text, {
+    renderer: renderer,
+    breaks: true, // Convert \n to <br>
+    gfm: true, // GitHub Flavored Markdown
+  }) as string;
+
+  // Post-process the HTML to add list styles inline to override global CSS reset
+  // Add inline styles to lists and list items
+  html = html.replace(/<ul>/g, '<ul style="list-style-type: none !important; margin-left: 1.5rem !important; margin-bottom: 1rem !important; padding-left: 1rem !important;">');
+  html = html.replace(/<ol>/g, '<ol style="list-style-type: decimal !important; margin-left: 1.5rem !important; margin-bottom: 1rem !important; padding-left: 1rem !important;">');
+  html = html.replace(/<li>/g, '<li style="display: list-item !important; margin-left: 0.5rem !important; margin-bottom: 0.5rem !important;">');
+
+  return html;
 }
 
 interface TermsAndConditionsModalProps {
@@ -59,7 +91,7 @@ interface TermsAndConditionsModalProps {
 export function TermsAndConditionsModal({
   title,
   description,
-  terms,
+  terms: termsMarkdown,
   isOpen,
   onClose,
   onAccept,
@@ -81,9 +113,11 @@ export function TermsAndConditionsModal({
     if (isAtBottom === true) setScrolledToBottom(true);
   };
 
-  const handlePrint = () => printString(terms);
+  const termsHtml = useMemo(() => formatMarkdownToHtml(termsMarkdown), [termsMarkdown]);
+
+  const handlePrint = () => printString(termsHtml);
   const handleCopy = () => {
-    navigator.clipboard.writeText(terms);
+    navigator.clipboard.writeText(termsMarkdown);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -117,7 +151,7 @@ export function TermsAndConditionsModal({
               ref={scrollRef}
               id="tc-box"
               className="h-full overflow-y-auto overflow-x-hidden text-sm leading-relaxed [&>p]:mb-4 [&>p]:text-sm [&>p]:leading-relaxed [&_strong]:font-bold [&_a]:text-algo-blue dark:[&_a]:text-algo-teal [&_a]:no-underline hover:[&_a]:underline"
-              dangerouslySetInnerHTML={{ __html: formatMarkdownToHtml(terms) }}
+              dangerouslySetInnerHTML={{ __html: termsHtml }}
             ></div>
           </div>
         </DialogHeader>

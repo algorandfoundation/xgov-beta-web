@@ -1,98 +1,132 @@
 import { Mutex } from "async-mutex";
 import type { NFDProperties } from "@/api/nfd/avatar.ts";
-import { network } from '../algorand';
+import { network } from "../algorand";
 
-export const BASE_NFD_API_URL = network === "testnet" ? "https://api.testnet.nf.domains" : "https://api.nf.domains";
+export const BASE_NFD_API_URL =
+  network === "testnet"
+    ? "https://api.testnet.nf.domains"
+    : "https://api.nf.domains";
 
 const mutex = new Mutex();
 
 function fetchNfd(nameOrID: string | bigint | number, init: RequestInit = {}) {
-  return fetch(`${BASE_NFD_API_URL}/nfd/${nameOrID}`, init)
+  return fetch(`${BASE_NFD_API_URL}/nfd/${nameOrID}`, init);
 }
 
 function fetchNfdReverseLookup(address: string, init: RequestInit = {}) {
-  return fetch(`${BASE_NFD_API_URL}/nfd/lookup?address=${address}`, init)
+  return fetch(`${BASE_NFD_API_URL}/nfd/lookup?address=${address}`, init);
 }
 
 function fetchNfdReverseLookups(addresses: string[], init: RequestInit = {}) {
-  return fetch(`${BASE_NFD_API_URL}/nfd/lookup?address=${addresses.join("&address=")}`, init)
+  return fetch(
+    `${BASE_NFD_API_URL}/nfd/lookup?address=${addresses.join("&address=")}`,
+    init,
+  );
 }
 
 export async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export type NFD = {
-  appID: number,
-  asaID: number,
-  expired: false,
-  nfdAccount: string,
-  name: string,
-  owner: string,
-  depositAccount: string,
-  properties: NFDProperties,
+async function errorMessageFromResponse(r: Response): Promise<string> {
+  let errorText = r.statusText
+  try {
+    errorText = (await r.text()) + ` (status ${r.status})`;
+  } catch (e) {
+  }
+  return "Something went wrong: " + errorText
 }
+
+export type NFD = {
+  appID: number;
+  asaID: number;
+  expired: false;
+  nfdAccount: string;
+  name: string;
+  owner: string;
+  depositAccount: string;
+  properties: NFDProperties;
+};
 
 export async function getNFD(
   nameIDOrAddress: string | bigint | number,
   init: RequestInit = {},
 ): Promise<NFD> {
   return mutex.runExclusive(async () => {
-    const isString = typeof nameIDOrAddress === 'string';
-    const isNFD = !isString || nameIDOrAddress.includes('.algo');
+    const isString = typeof nameIDOrAddress === "string";
+    const isNFD = !isString || nameIDOrAddress.includes(".algo");
 
-    let r = isNFD
-      ? await fetchNfd(nameIDOrAddress, init)
-      : await fetchNfdReverseLookup(nameIDOrAddress as string, init);
-
-    if (r.status === 404) {
-      throw new Error("Not found")
-    }
-
-    if (r.status === 429) {
-      const errRes = await r.json() as { secsRemaining?: number };
-      console.log(
-        `Rate limited, sleeping for ${errRes?.secsRemaining} seconds`,
-      );
-      await sleep((errRes?.secsRemaining || 1) * 1000 + 1000);
-      console.log("Mutex Still Locked, trying again");
-      r = isNFD
+    async function fetchOne() {
+      let r = isNFD
         ? await fetchNfd(nameIDOrAddress, init)
         : await fetchNfdReverseLookup(nameIDOrAddress as string, init);
+
+      if (r.status === 404) {
+        throw new Error("Not found");
+      }
+
+      if (r.status === 429) {
+        const errRes = (await r.json()) as { secsRemaining?: number };
+        console.log(
+          `Rate limited, sleeping for ${errRes?.secsRemaining} seconds`,
+        );
+        await sleep((errRes?.secsRemaining || 1) * 1000 + 1000);
+        console.log("Mutex Still Locked, trying again");
+        return await fetchOne();
+      }
+
+      if (r.status !== 200) {
+        throw new Error(await errorMessageFromResponse(r));
+      }
+
+      return await r.json();
     }
 
-    if (r.status !== 200) {
-      throw new Error("Something went wrong")
-    }
-
-    const data = await r.json()
-    return isNFD ? data : data[nameIDOrAddress as string]
-  })
+    const data = await fetchOne();
+    return isNFD ? data : data[nameIDOrAddress as string];
+  });
 }
+
+const NFD_BATCH_SIZE = 20;
 
 export async function getNFDs(
   addresses: string[],
   init: RequestInit = {},
 ): Promise<{ [address: string]: NFD }> {
-  return mutex.runExclusive(async () => {
-    let r = await fetchNfdReverseLookups(addresses, init);
-    if (r.status === 404) {
-      throw new Error("Not found")
-    }
-    if (r.status === 429) {
-      const errRes = await r.json() as { secsRemaining?: number };
-      console.log(
-        `Rate limited, sleeping for ${errRes?.secsRemaining} seconds`,
-      );
-      await sleep((errRes?.secsRemaining || 1) * 1000 + 1000);
-      console.log("Mutex Still Locked, trying again");
-      r = await fetchNfdReverseLookups(addresses, init);
-    }
+  const unique = [...new Set(addresses)];
+  if (unique.length === 0) return {};
 
-    if (r.status !== 200) {
-      throw new Error("Something went wrong")
-    }
+  const results: { [address: string]: NFD } = {};
 
-    return await r.json()
-  })
+  for (let i = 0; i < unique.length; i += NFD_BATCH_SIZE) {
+    const chunk = unique.slice(i, i + NFD_BATCH_SIZE);
+    const chunkResult = await mutex.runExclusive(async () => {
+      async function fetchChunk() {
+        let r = await fetchNfdReverseLookups(chunk, init);
+        if (r.status === 404) {
+          return {};
+        }
+
+        if (r.status === 429) {
+          const errRes = (await r.json()) as { secsRemaining?: number };
+          console.log(
+            `Rate limited, sleeping for ${errRes?.secsRemaining} seconds`,
+          );
+          await sleep((errRes?.secsRemaining || 1) * 1000 + 1000);
+          return await fetchChunk();
+        }
+
+        if (r.status !== 200) {
+          throw new Error(await errorMessageFromResponse(r));
+        }
+
+        return await r.json();
+      }
+      return await fetchChunk();
+    });
+    Object.assign(results, chunkResult);
+  }
+
+  return results;
 }
+
