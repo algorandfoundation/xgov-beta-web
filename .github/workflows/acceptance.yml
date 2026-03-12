@@ -37,6 +37,8 @@ jobs:
           npx concurrently -k -s first -n "SB,TEST" -c "magenta,blue" \
             "npx http-server storybook-static --port 6006" \
             "npx wait-on http://127.0.0.1:6006 && npm run coverage"
+
+        #TODO: move this to a dedicated job that receives the artifacts from the build job
         # Setup deployment environment variables
       - name: Set environment variables
         run: |
@@ -49,7 +51,7 @@ jobs:
         # Deploy to Cloudflare Pages using wrangler
       - name: Publish to Cloudflare Pages (${{ env.ENVIRONMENT }})
         id: deploy
-        if: ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ github.ref == 'refs/heads/main' &&  matrix.node-version == '21.x' }}
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
