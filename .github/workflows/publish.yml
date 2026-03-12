@@ -6,10 +6,6 @@ on:
     branches:
       - main      # Deploy to testnet
       - mainnet   # Deploy to mainnet
-  pull_request:
-    branches:
-      - main
-      - mainnet
 
 jobs:
   deploy:
