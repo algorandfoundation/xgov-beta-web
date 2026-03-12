@@ -6,6 +6,13 @@ on:
     branches:
       - main      # Deploy to testnet
       - mainnet   # Deploy to mainnet
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: publish-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
