@@ -44,9 +44,6 @@ jobs:
         run: |
           echo "ENVIRONMENT=testnet" >> $GITHUB_ENV
           echo "CF_PROJECT_NAME=${{ secrets.CF_PROJECT_NAME_TESTNET }}" >> $GITHUB_ENV
-        # Build the Astro project with mode
-      - name: Build the project
-        run: npm run build -- --mode ${{ env.ENVIRONMENT }}
 
         # Deploy to Cloudflare Pages using wrangler
       - name: Publish to Cloudflare Pages (${{ env.ENVIRONMENT }})
