@@ -204,7 +204,7 @@ We may, from time to time, in our sole and absolute discretion, vary or amend th
 
 ( b ) if in connection with these Terms, you provide the personal data of any third parties, you further warrant and represent that these third parties have also consented to the terms of the Privacy Policy, and to the collection, use and disclosure of their personal data in accordance with the aforesaid.
 
-## 13.1. Confidential Information
+## 13. Confidential Information
 
 13.1. You acknowledge that you may acquire information from us of a competitively sensitive or proprietary nature in connection with the subject matter of these Terms (“Confidential Information”). You agree to hold such Confidential Information in strict confidence, and that you will not use or disclose to any third party any such Confidential Information other than for the purposes of these Terms without our prior written consent. The restrictions in this Section 9 shall not apply to any information generally available to the public prior to the effective date of these Terms or that becomes generally known to the public without breach of any confidential obligations.
 
