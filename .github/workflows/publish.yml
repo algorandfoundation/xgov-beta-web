@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - mainnet   # Deploy to mainnet
+      - main      # Deploy to testnet
 
 jobs:
   deploy:
@@ -34,8 +35,13 @@ jobs:
       # Step 5: Determine environment and build
       - name: Set environment variables
         run: |
-          echo "ENVIRONMENT=mainnet" >> $GITHUB_ENV
-          echo "CF_PROJECT_NAME=${{ secrets.CF_PROJECT_NAME_MAINNET }}" >> $GITHUB_ENV
+          if [ "${{ github.ref }}" = "refs/heads/mainnet" ]; then
+            echo "ENVIRONMENT=mainnet" >> $GITHUB_ENV
+            echo "CF_PROJECT_NAME=${{ secrets.CF_PROJECT_NAME_MAINNET }}" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=testnet" >> $GITHUB_ENV
+            echo "CF_PROJECT_NAME=${{ secrets.CF_PROJECT_NAME_TESTNET }}" >> $GITHUB_ENV
+          fi
 
       # Step 6: Build the Astro project with mode
       - name: Build the project
