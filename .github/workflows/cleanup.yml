@@ -1,0 +1,63 @@
+name: Delete Cloudflare Pages Preview Deployment
+# Avoids deployments racking up and never getting deleted
+
+on:
+  pull_request:
+    types: [closed]
+  push:
+    branches:
+      - ci/remove-cloudflare-deployments
+
+jobs:
+  delete-preview-deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get branch name
+        id: get-branch
+        run: echo "branch=$(gh pr view $PR_NO --repo $REPO --json headRefName --jq '.headRefName')" >> $GITHUB_OUTPUT
+        env:
+          REPO: ${{ github.repository }}
+          PR_NO: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete Cloudflare Pages preview deployments
+        run: |
+          deployment_ids=$(
+          ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }} \
+          AUTH_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }} \
+          PROJECT=${{ github.event.repository.name }} \
+          DEPLOY_BRANCH="${{ steps.get-branch.outputs.branch }}" \
+            bash -c '
+              PAGE=1
+              DEPLOYMENT_IDS=""
+              
+              while true; do
+                response=$(curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/pages/projects/$PROJECT/deployments?page=$PAGE" \
+                  -H "Authorization: Bearer $AUTH_TOKEN" \
+                  -H "Content-Type: application/json")
+
+                echo "Response from Cloudflare API (Page $PAGE):"
+                echo "$response"
+                
+                page_ids=$(echo "$response" | jq -r --arg DEPLOY_BRANCH "$DEPLOY_BRANCH" '"'"'.result[]? | select(.deployment_trigger.metadata.branch == $DEPLOY_BRANCH) | .id'"'"')
+                DEPLOYMENT_IDS+=" $page_ids"
+                
+                count=$(echo "$response" | jq -r .result_info.count)
+                
+                if [ -z "$count" ] || [ "$count" -eq "0" ]; then
+                  break
+                fi
+                
+                PAGE=$((PAGE + 1))
+              done
+              
+              echo "$DEPLOYMENT_IDS" | xargs
+            '
+          )
+
+          for deployment_id in $deployment_ids; do
+            echo "Deleting deployment $deployment_id"
+            curl -s -X DELETE "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CF_ACCOUNT_ID }}/pages/projects/${{ github.event.repository.name }}/deployments/$deployment_id" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json"
+          done
