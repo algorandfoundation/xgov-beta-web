@@ -970,6 +970,26 @@ export function ProposalInfo({
 
   const phase = getProposalStatusPhase(proposal);
 
+  function colorizeVotes(html: string): string {
+    return html
+      .replace(/\b([0-9]|1[01])\s+yes\b/g, '<br/><span style="color:#22c55e">$1 yes</span>')
+      .replace(/\b([0-9]|1[01])\s+no\b/g, '<span style="color:#ef4444"> / $1 no</span>')
+      .replace(/\b([0-9]|1[01])\s+abstain\b/g, '<span style="color:#eab308"> / $1 abstain</span>');
+  }
+
+  const [forumNotice, setForumNotice] = useState<string | null>(null);
+  useEffect(() => {
+    if (!proposal.forumLink) return;
+    const topicId = proposal.forumLink.split("/").filter(Boolean).pop();
+    fetch(`/api/discourse/${topicId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const notice = data.post_stream?.posts?.[0]?.notice;
+        if (notice?.cooked) setForumNotice(notice.cooked);
+      })
+      .catch(() => {});
+  }, [proposal.forumLink]);
+
   const _pastProposals = (pastProposals || []).filter((p) =>
     ![
       ProposalStatus.ProposalStatusEmpty,
@@ -1043,6 +1063,11 @@ export function ProposalInfo({
         <div className="lg:col-span-2 lg:grid lg:w-full lg:max-w-7xl lg:grid-cols-2 lg:gap-x-8 pt-6">
           <div className="lg:pr-4">
             <div className="sm:max-w-lg md:max-w-[unset]">
+              {forumNotice && (
+                <p className="text-sm text-algo-black-70 dark:text-algo-black-30 mb-2">
+                  <span dangerouslySetInnerHTML={{ __html: colorizeVotes(forumNotice) }} />
+                </p>
+              )}
               <p className="text-base/7 text-algo-blue">
                 <BracketedPhaseDetail phase={phase} />
               </p>
