@@ -24,9 +24,11 @@ import {
   useXGov,
   useRegistry,
   useProposalsByProposer,
-  useNFD
+  useNFD,
+  useVotingHistory,
 } from "@/hooks";
 import { StackedList } from "@/recipes";
+import { VotingHistory } from "@/components/VotingHistory/VotingHistory";
 import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationModal";
 import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
@@ -96,6 +98,10 @@ export function ProfilePage({
   const proposer = useProposer(address);
   const proposalsQuery = useProposalsByProposer(address);
   const nfd = useNFD(address);
+  const votingHistory = useVotingHistory(
+    address,
+    xgov.data?.votingAddress,
+  );
   const [showOpenProposalModal, setShowOpenProposalModal] = useState(false);
 
   const isLoading =
@@ -290,6 +296,12 @@ export function ProfilePage({
       {!!proposalsWithNFDs && (
         <StackedList proposals={proposalsWithNFDs} activeAddress={activeAddress} />
       )}
+
+      <VotingHistory
+        votes={votingHistory.data}
+        isLoading={votingHistory.isLoading}
+        isError={votingHistory.isError}
+      />
     </>
   );
 }
