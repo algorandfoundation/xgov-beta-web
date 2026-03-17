@@ -1,4 +1,5 @@
 import { ProfileCard } from "@/components/ProfileCard/ProfileCard";
+import { VotingPower } from "@/components/VotingPower/VotingPower";
 
 import { useMemo, useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
@@ -13,9 +14,9 @@ import {
   type TransactionSigner,
 } from "algosdk";
 
-import { XGovProposerStatusPill } from "@/components/XGovProposerStatusPill/XGovProposerStatusPill";
 import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
+import { CheckIcon, XIcon, CircleDashedIcon, ClockAlertIcon } from "lucide-react";
 
 import {
   UseQuery,
@@ -24,7 +25,8 @@ import {
   useXGov,
   useRegistry,
   useProposalsByProposer,
-  useNFD
+  useNFD,
+  useVotingPower,
 } from "@/hooks";
 import { StackedList } from "@/recipes";
 import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationModal";
@@ -96,6 +98,9 @@ export function ProfilePage({
   const proposer = useProposer(address);
   const proposalsQuery = useProposalsByProposer(address);
   const nfd = useNFD(address);
+  const votingPower = useVotingPower(address);
+  const [activeTab, setActiveTab] = useState<'xgov' | 'proposer'>('xgov');
+  const [showUnsubscribeXGovModal, setShowUnsubscribeXGovModal] = useState(false);
   const [showOpenProposalModal, setShowOpenProposalModal] = useState(false);
 
   const isLoading =
@@ -139,7 +144,9 @@ export function ProfilePage({
     isPending: openIsPending,
   } = useTransactionState();
 
+  const isXGov = (address && xgov.data?.isXGov) || false;
   const validProposer = (proposer?.data && proposer.data.kycStatus) || false;
+  const validKYC = (proposer?.data && proposer.data.kycStatus && proposer.data.kycExpiring > Date.now() / 1000) || false;
   const proposerKycExpired = (proposer?.data && proposer.data.kycExpiring <= Date.now() / 1000) || false;
   const createProposalDisabled = proposerKycExpired || proposer.data?.activeProposal;
   const createProposalDisabledMessage = proposerKycExpired
@@ -167,8 +174,52 @@ export function ProfilePage({
 
   return (
     <>
+      <div className="mt-6 mb-6 inline-flex rounded-full bg-gray-100 dark:bg-white/5 p-1 gap-1" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'xgov'}
+          onClick={() => setActiveTab('xgov')}
+          className={`inline-flex items-center gap-2 py-1 pl-1 pr-3 text-sm font-semibold rounded-full transition-colors ${
+            activeTab === 'xgov'
+              ? 'bg-algo-blue text-white shadow-sm dark:bg-algo-teal dark:text-algo-black'
+              : 'text-gray-600 hover:text-algo-black dark:text-gray-300 dark:hover:text-white'
+          }`}
+        >
+          {isXGov
+            ? <div className={`p-0.5 rounded-full ${activeTab === 'xgov' ? 'bg-white/20 dark:bg-algo-black/40' : 'bg-algo-teal/10'}`}><CheckIcon className="p-1 text-algo-teal" /></div>
+            : <div className={`p-0.5 rounded-full ${activeTab === 'xgov' ? 'bg-white/20 dark:bg-algo-black/40' : 'bg-algo-red/10'}`}><XIcon className="p-1 text-algo-red" /></div>
+          }
+          xGov
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'proposer'}
+          onClick={() => setActiveTab('proposer')}
+          className={`inline-flex items-center gap-2 py-1 pl-1 pr-3 text-sm font-semibold rounded-full transition-colors ${
+            activeTab === 'proposer'
+              ? 'bg-algo-blue text-white shadow-sm dark:bg-algo-teal dark:text-algo-black'
+              : 'text-gray-600 hover:text-algo-black dark:text-gray-300 dark:hover:text-white'
+          }`}
+        >
+          {!proposer.data?.isProposer
+            ? <div className={`p-0.5 rounded-full ${activeTab === 'proposer' ? 'bg-white/20 dark:bg-algo-black/40' : 'bg-algo-red/10'}`}><XIcon className="p-1 text-algo-red" /></div>
+            : proposer.data?.isProposer && !proposer.data.kycStatus
+              ? <div className={`p-0.5 rounded-full ${activeTab === 'proposer' ? 'bg-white/20 dark:bg-algo-black/40' : 'bg-algo-blue/10 dark:bg-algo-blue/20'}`}><CircleDashedIcon className="p-1 text-algo-blue animate-spin-slow" /></div>
+              : proposerKycExpired
+                ? <div className={`p-0.5 rounded-full ${activeTab === 'proposer' ? 'bg-white/20 dark:bg-algo-black/40' : 'bg-algo-red/10'}`}><ClockAlertIcon className="p-1 text-algo-red" /></div>
+                : validKYC
+                  ? <div className={`p-0.5 rounded-full ${activeTab === 'proposer' ? 'bg-white/20 dark:bg-algo-black/40' : 'bg-algo-teal/10'}`}><CheckIcon className="p-1 text-algo-teal" /></div>
+                  : null
+          }
+          Proposer
+        </button>
+      </div>
+
       <ProfileCard
         address={address}
+        activeTab={activeTab}
         votingAddress={xgov.data?.votingAddress || ""}
         setVotingAddress={(address) => setVotingAddress({
           activeAddress,
@@ -217,78 +268,122 @@ export function ProfilePage({
           isPending: subProposerIsPending
         }}
         activeAddress={activeAddress}
-        className="mt-6"
       />
-      {validProposer && (
-        <>
-          <div className="flex items-center gap-6 mb-4">
-            <XGovProposerStatusPill proposer={proposer.data} />
-            {activeAddress === address && (
-              <>
-                <InfinityMirrorButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setShowOpenProposalModal(true)}
-                  disabled={createProposalDisabled}
-                  disabledMessage={createProposalDisabledMessage}
-                >
-                  Create Proposal
-                </InfinityMirrorButton>
-                <ConfirmationModal
-                  isOpen={showOpenProposalModal}
-                  onClose={() => {
-                    setShowOpenProposalModal(false);
-                    openReset();
-                  }}
-                  title="Create Proposal"
-                  description="Are you sure you want to create a new proposal? You can only have one active proposal at a time."
-                  warning={
-                    <WarningNotice
-                      title="Proposal Fee"
-                      description={
-                        <>
-                          It will cost
-                          <span className="inline-flex items-center mx-1 gap-1">
-                            <AlgorandIcon className="size-2.5" />
-                            {Number(registry.data?.openProposalFee || 0n) /
-                              1_000_000}
-                          </span>
-                          to create a proposal.
-                        </>
-                      }
-                    />
-                  }
-                  submitText="Confirm"
-                  onSubmit={async () => {
-                    const appId = await createEmptyProposal({
-                      activeAddress,
-                      innerSigner,
-                      setStatus: setOpenStatus,
-                      refetch: []
-                    });
 
-                    if (appId) {
-                      setShowOpenProposalModal(false);
-                      queryClient.invalidateQueries({
-                        queryKey: ["getProposalsByProposer", activeAddress],
-                      });
-                      navigate(`/new?appId=${appId}`);
-                    }
-                  }}
-                  txnState={{
-                    status: openStatus,
-                    errorMessage: openErrorMessage,
-                    isPending: openIsPending
-                  }}
-                />
-              </>
-            )}
-          </div>
+      {activeTab === 'xgov' && (
+        <>
+          <VotingPower
+            committees={votingPower.data ?? []}
+            isLoading={votingPower.isLoading}
+            isError={votingPower.isError}
+          />
+          {activeAddress === address && isXGov && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowUnsubscribeXGovModal(true)}
+                className="w-fit rounded-lg px-3 py-2 text-sm font-medium text-white bg-algo-red hover:bg-algo-red/80 transition-colors"
+              >
+                Unsubscribe from xGov
+              </button>
+              <ConfirmationModal
+                isOpen={showUnsubscribeXGovModal}
+                onClose={() => setShowUnsubscribeXGovModal(false)}
+                title="Unsubscribe from xGov"
+                description="Are you sure you want to unsubscribe from xGov? You will lose your xGov status and voting power."
+                submitVariant="destructive"
+                submitText="Unsubscribe"
+                onSubmit={async () => {
+                  await unsubscribeXgov({
+                    activeAddress,
+                    innerSigner,
+                    setStatus: setSubXGovStatus,
+                    refetch: [xgov.refetch, proposer.refetch],
+                  });
+                  setShowUnsubscribeXGovModal(false);
+                }}
+                txnState={{
+                  status: subXgovStatus,
+                  errorMessage: subXGovErrorMessage,
+                  isPending: subXGovIsPending
+                }}
+              />
+            </>
+          )}
         </>
       )}
 
-      {!!proposalsWithNFDs && (
-        <StackedList proposals={proposalsWithNFDs} activeAddress={activeAddress} />
+      {activeTab === 'proposer' && (
+        <>
+          {validProposer && (
+            <div className="flex items-center gap-6 mb-4">
+              {activeAddress === address && (
+                <>
+                  <InfinityMirrorButton
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowOpenProposalModal(true)}
+                    disabled={createProposalDisabled}
+                    disabledMessage={createProposalDisabledMessage}
+                  >
+                    Create Proposal
+                  </InfinityMirrorButton>
+                  <ConfirmationModal
+                    isOpen={showOpenProposalModal}
+                    onClose={() => {
+                      setShowOpenProposalModal(false);
+                      openReset();
+                    }}
+                    title="Create Proposal"
+                    description="Are you sure you want to create a new proposal? You can only have one active proposal at a time."
+                    warning={
+                      <WarningNotice
+                        title="Proposal Fee"
+                        description={
+                          <>
+                            It will cost
+                            <span className="inline-flex items-center mx-1 gap-1">
+                              <AlgorandIcon className="size-2.5" />
+                              {Number(registry.data?.openProposalFee || 0n) /
+                                1_000_000}
+                            </span>
+                            to create a proposal.
+                          </>
+                        }
+                      />
+                    }
+                    submitText="Confirm"
+                    onSubmit={async () => {
+                      const appId = await createEmptyProposal({
+                        activeAddress,
+                        innerSigner,
+                        setStatus: setOpenStatus,
+                        refetch: []
+                      });
+
+                      if (appId) {
+                        setShowOpenProposalModal(false);
+                        queryClient.invalidateQueries({
+                          queryKey: ["getProposalsByProposer", activeAddress],
+                        });
+                        navigate(`/new?appId=${appId}`);
+                      }
+                    }}
+                    txnState={{
+                      status: openStatus,
+                      errorMessage: openErrorMessage,
+                      isPending: openIsPending
+                    }}
+                  />
+                </>
+              )}
+            </div>
+          )}
+
+          {!!proposalsWithNFDs && (
+            <StackedList proposals={proposalsWithNFDs} activeAddress={activeAddress} />
+          )}
+        </>
       )}
     </>
   );
