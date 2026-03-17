@@ -44,7 +44,7 @@ import XGovQuorumMetPill from "@/components/XGovQuorumMetPill/XGovQuorumMetPill"
 import VoteQuorumMetPill from "@/components/VoteQuorumMetPill/VoteQuorumMetPill";
 import MajorityApprovedPill from "@/components/MajorityApprovedPill/MajorityApprovedPill";
 import VoteBar from "@/components/VoteBar/VoteBar";
-import { useCommittee, useNFD, useProposal, useVotersInfo, useVotingState, useXGov, useXGovDelegates } from "@/hooks";
+import { useCommittee, useDiscourseTopic, useNFD, useProposal, useVotersInfo, useVotingState, useXGov, useXGovDelegates } from "@/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -977,18 +977,8 @@ export function ProposalInfo({
       .replace(/\b([0-9]|1[01])\s+abstain\b/g, '<span style="color:#eab308"> / $1 abstain</span>');
   }
 
-  const [forumNotice, setForumNotice] = useState<string | null>(null);
-  useEffect(() => {
-    if (!proposal.forumLink) return;
-    const topicId = proposal.forumLink.split("/").filter(Boolean).pop();
-    fetch(`/api/discourse/${topicId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        const notice = data.post_stream?.posts?.[0]?.notice;
-        if (notice?.cooked) setForumNotice(notice.cooked);
-      })
-      .catch(() => {});
-  }, [proposal.forumLink]);
+  const discourseTopic = useDiscourseTopic(proposal.forumLink);
+  const forumNotice = discourseTopic.data?.notice ?? null;
 
   const _pastProposals = (pastProposals || []).filter((p) =>
     ![
