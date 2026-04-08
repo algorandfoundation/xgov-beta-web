@@ -98,6 +98,69 @@ export async function getCommitteeData(committeeId: Buffer): Promise<CommitteeDa
 }
 
 
+export interface CommitteeVotingPower {
+  committeeId: string;
+  userVotes: number;
+  totalVotes: number;
+  memberCount: number;
+}
+
+/**
+ * Fetches voting power information for a given address across multiple committees
+ *
+ * @param address The wallet address to check
+ * @param committeeIds Array of committee IDs as Uint8Arrays
+ * @returns Array of CommitteeVotingPower for committees where the address is a member
+ */
+export async function getVotingPowerForAddress(
+  address: string,
+  committeeIds: Uint8Array[],
+): Promise<CommitteeVotingPower[]> {
+  // Deduplicate by base64 string and filter out empty IDs
+  const seen = new Set<string>();
+  const uniqueIds: { id: Uint8Array; key: string }[] = [];
+
+  for (const id of committeeIds) {
+    if (id.length === 0) continue;
+    const key = Buffer.from(id).toString("base64");
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueIds.push({ id, key });
+    }
+  }
+
+  const results = await Promise.allSettled(
+    uniqueIds.map(({ id, key }) =>
+      getCommitteeData(Buffer.from(id)).then((data) => ({
+        data,
+        key,
+        safeId: committeeIdToSafeFileName(Buffer.from(id)),
+      })),
+    ),
+  );
+
+  const votingPower: CommitteeVotingPower[] = [];
+
+  for (const result of results) {
+    if (result.status !== "fulfilled" || !result.value.data) continue;
+
+    const { data, safeId } = result.value;
+    const member = data.xGovs.find((m) => m.address === address);
+    if (!member) continue;
+
+    const totalVotes = data.xGovs.reduce((sum, m) => sum + m.votes, 0);
+
+    votingPower.push({
+      committeeId: safeId,
+      userVotes: member.votes,
+      totalVotes,
+      memberCount: data.xGovs.length,
+    });
+  }
+
+  return votingPower;
+}
+
 export async function getXGovCommitteeMap(committeeId: Buffer): Promise<Map<string, number>> {
   const committee = await getCommitteeData(committeeId)
   if (!committee) {
