@@ -1,4 +1,3 @@
-
 // Types
 export interface CommitteeMember {
   address: string;
@@ -37,7 +36,7 @@ export async function loadCommitteeFromAPI(
   safeCommitteeId: string,
   committeeIdStr: string,
 ): Promise<CommitteeData | null> {
-  const url = `/committees/${safeCommitteeId}.json`;
+  const url = `/api/committees/${safeCommitteeId}.json`;
 
   try {
     const response = await fetch(url);
@@ -63,8 +62,10 @@ export async function loadCommitteeFromAPI(
 
     return committeeData as CommitteeData;
   } catch (error) {
-    console.error('Error fetching committee', error)
-    throw new Error(`Error loading committee data from API: ${error instanceof Error ? error.message : String(error)}`);
+    console.error("Error fetching committee", error);
+    throw new Error(
+      `Error loading committee data from API: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -76,7 +77,9 @@ export async function loadCommitteeFromAPI(
  * @param committeeId The committee ID as a Buffer
  * @returns Committee data if found, null otherwise
  */
-export async function getCommitteeData(committeeId: Buffer): Promise<CommitteeData | null> {
+export async function getCommitteeData(
+  committeeId: Buffer,
+): Promise<CommitteeData | null> {
   // For logging purposes - define outside try/catch to ensure it's available in the catch block
   const committeeIdStr = committeeId.toString("base64");
 
@@ -97,14 +100,15 @@ export async function getCommitteeData(committeeId: Buffer): Promise<CommitteeDa
   }
 }
 
-
-export async function getXGovCommitteeMap(committeeId: Buffer): Promise<Map<string, number>> {
-  const committee = await getCommitteeData(committeeId)
+export async function getXGovCommitteeMap(
+  committeeId: Buffer,
+): Promise<Map<string, number>> {
+  const committee = await getCommitteeData(committeeId);
   if (!committee) {
-    throw new Error('Committee data not found')
+    throw new Error("Committee data not found");
   }
 
-  const m = new Map<string, number>()
-  committee.xGovs.forEach(xgov => m.set(xgov.address, xgov.votes))
-  return m
+  const m = new Map<string, number>();
+  committee.xGovs.forEach((xgov) => m.set(xgov.address, xgov.votes));
+  return m;
 }
