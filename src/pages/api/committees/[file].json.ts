@@ -3,11 +3,11 @@ import { getCommitteeFileResponse } from "@/server/committee-files";
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ locals, params }) => {
+export const GET: APIRoute = async ({ locals, params, request }) => {
   const file = params.file;
   if (!file) {
     return new Response("Committee file is required", { status: 400 });
   }
 
-  return getCommitteeFileResponse(`${file}.json`, locals);
+  return getCommitteeFileResponse(`${file}.json`, locals, request);
 };

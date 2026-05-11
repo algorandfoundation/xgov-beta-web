@@ -51,6 +51,29 @@ export interface CommitteeFileSummary {
 const COMMITTEE_FILE_NAME_PATTERN = /^[A-Za-z0-9_-]+\.json$/;
 const DEFAULT_COMMITTEE_R2_PREFIX = "";
 
+function isCommitteeMember(member: unknown): member is CommitteeMember {
+  return (
+    !!member &&
+    typeof member === "object" &&
+    "address" in member &&
+    typeof member.address === "string" &&
+    "votes" in member &&
+    typeof member.votes === "number" &&
+    Number.isFinite(member.votes)
+  );
+}
+
+function hasMatchingEtag(ifNoneMatch: string | null, etag?: string): boolean {
+  if (!ifNoneMatch || !etag) {
+    return false;
+  }
+
+  return ifNoneMatch
+    .split(",")
+    .map((value) => value.trim())
+    .some((value) => value === "*" || value === etag);
+}
+
 function getRuntimeEnv(locals: App.Locals): Record<string, unknown> {
   if ("runtime" in locals && locals.runtime) {
     const env = (locals.runtime as { env?: Record<string, unknown> }).env;
@@ -110,7 +133,8 @@ export function validateCommitteeData(
     !!committeeData &&
     typeof committeeData === "object" &&
     "xGovs" in committeeData &&
-    Array.isArray((committeeData as CommitteeData).xGovs)
+    Array.isArray((committeeData as CommitteeData).xGovs) &&
+    (committeeData as CommitteeData).xGovs.every(isCommitteeMember)
   );
 }
 
@@ -143,6 +167,7 @@ export async function getCommitteeDataFromR2(
 export async function getCommitteeFileResponse(
   fileName: string,
   locals: App.Locals,
+  request: Request,
 ): Promise<Response> {
   if (!isValidCommitteeFileName(fileName)) {
     return new Response("Invalid committee file name", { status: 400 });
@@ -166,6 +191,10 @@ export async function getCommitteeFileResponse(
   });
   if (object.httpEtag) {
     headers.set("etag", object.httpEtag);
+  }
+
+  if (hasMatchingEtag(request.headers.get("if-none-match"), object.httpEtag)) {
+    return new Response(null, { headers, status: 304 });
   }
 
   return new Response(object.body, { headers });
