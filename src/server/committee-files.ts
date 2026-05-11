@@ -49,8 +49,7 @@ export interface CommitteeFileSummary {
 }
 
 const COMMITTEE_FILE_NAME_PATTERN = /^[A-Za-z0-9_-]+\.json$/;
-const DEFAULT_COMMITTEE_R2_PREFIX =
-  "mainnet-v1.0-wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8_/committee/";
+const DEFAULT_COMMITTEE_R2_PREFIX = "";
 
 function getRuntimeEnv(locals: App.Locals): Record<string, unknown> {
   if ("runtime" in locals && locals.runtime) {

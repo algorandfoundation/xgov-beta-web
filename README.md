@@ -85,13 +85,16 @@ PUBLIC_REGISTRY_APP_ID=
 
 # Optional: Daemon configuration for voter assignment
 XGOV_DAEMON_MNEMONIC=
-COMMITTEE_R2_PREFIX=mainnet-v1.0-wGHE2Pwdvd7S12BL5FaOP20EGYesN73ktiC1qzkkit8_/committee/
+COMMITTEE_R2_PREFIX=
 MAX_CONCURRENT_PROPOSALS=5
 MAX_REQUESTS_PER_PROPOSAL=5
 ```
 
 Committee JSON files are read from the Cloudflare R2 bucket bound as
-`COMMITTEE_BUCKET`. The app exposes `GET /api/committees` to list files and
+`COMMITTEE_BUCKET`. Set `COMMITTEE_R2_PREFIX` when committee files are stored
+under an environment-specific directory, for example `mainnet-.../committee/`
+or `testnet-.../committee/`; leave it empty when files are stored at the bucket
+root. The app exposes `GET /api/committees` to list files and
 `GET /api/committees/{committeeId}.json` to view a file.
 
 ### 4. Start Local Algorand Network
