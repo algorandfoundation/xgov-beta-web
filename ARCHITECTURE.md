@@ -23,25 +23,30 @@ Core responsibilities:
 ## Key Directories
 
 - `src/pages/`
+
   - Page routes (Astro).
   - API routes live under `src/pages/api/`.
 
 - `src/api/`
+
   - Higher-level integration modules for Algorand and other services.
   - Includes Registry/proposal/council logic and related types.
 
 - `src/hooks/`
+
   - React hooks for accessing SDK, wallet state, queries, and app state.
 
 - `src/stores/`
+
   - Nanostores for app-level state (theme, wallet, first-time user, etc.).
 
 - `src/components/`
+
   - React components.
   - `src/components/ui/` contains shared UI primitives.
 
-- `public/` and `src/pages/api/committees/`
-  - Committee JSON artifacts used by operational endpoints in some deployments.
+- `src/pages/api/committees/`
+  - Committee listing and file-view endpoints backed by the Cloudflare R2 `COMMITTEE_BUCKET` binding.
 
 ## Data Flows
 

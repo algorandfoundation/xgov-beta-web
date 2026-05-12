@@ -9,6 +9,13 @@
     "binding": "ASSETS",
     "directory": "./dist",
   },
+  "r2_buckets": [
+    {
+      "binding": "COMMITTEE_BUCKET",
+      "bucket_name": "xgov",
+      "remote": true,
+    },
+  ],
   "observability": {
     "enabled": true,
   },
