@@ -172,6 +172,7 @@ export interface Post {
     topic_accepted_answer: null;
     can_vote?: boolean;
     reply_to_user?: CreatedBy;
+    notice?: { type: string; cooked: string };
 }
 
 export interface PostActionsSummary {
