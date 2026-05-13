@@ -19,9 +19,9 @@ The official web interface for Algorand's xGov program, a decentralized public g
 
 ## Related Repositories
 
-| Repository | Description |
-|------------|-------------|
-| [xgov-beta-sc](https://github.com/algorandfoundation/xgov-beta-sc) | Smart contracts written in Algorand Python |
+| Repository                                                         | Description                                                     |
+| ------------------------------------------------------------------ | --------------------------------------------------------------- |
+| [xgov-beta-sc](https://github.com/algorandfoundation/xgov-beta-sc) | Smart contracts written in Algorand Python                      |
 | [xgov-beta-ts](https://github.com/algorandfoundation/xgov-beta-ts) | TypeScript SDK with typed clients & SDK for the smart contracts |
 
 ## Tech Stack
@@ -85,10 +85,17 @@ PUBLIC_REGISTRY_APP_ID=
 
 # Optional: Daemon configuration for voter assignment
 XGOV_DAEMON_MNEMONIC=
-COMMITTEE_API_URL=
+COMMITTEE_R2_PREFIX=
 MAX_CONCURRENT_PROPOSALS=5
 MAX_REQUESTS_PER_PROPOSAL=5
 ```
+
+Committee JSON files are read from the Cloudflare R2 bucket bound as
+`COMMITTEE_BUCKET`. Set `COMMITTEE_R2_PREFIX` when committee files are stored
+under an environment-specific directory, for example `mainnet-.../committee/`
+or `testnet-.../committee/`; leave it empty when files are stored at the bucket
+root. The app exposes `GET /api/committees` to list files and
+`GET /api/committees/{committeeId}.json` to view a file.
 
 ### 4. Start Local Algorand Network
 
@@ -112,6 +119,7 @@ npm run mock-init -- -c YOUR_ALGORAND_ADDRESS
 ```
 
 This script will:
+
 - Deploy the xGov Registry smart contract
 - Fund the contract
 - Set up committee management
@@ -130,7 +138,6 @@ Open [http://localhost:4321](http://localhost:4321) in your browser.
 ```
 xgov-beta-web/
 ├── public/                 # Static assets
-│   └── committees/         # Committee data JSON files
 ├── src/
 │   ├── api/               # API utilities and Algorand interactions
 │   │   ├── algorand/      # Algorand client configuration
@@ -161,21 +168,21 @@ xgov-beta-web/
 
 ## Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run dev:testnet` | Start development server with testnet env |
-| `npm run dev:mainnet` | Start development server with mainnet env |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build locally (via Wrangler) |
-| `npm run lint` | Run ESLint |
-| `npm run prettier` | Check code formatting |
-| `npm run storybook` | Start Storybook development server |
-| `npm run build-storybook` | Build Storybook for deployment |
-| `npm run test` | Run Storybook tests |
-| `npm run coverage` | Run tests with coverage |
-| `npm run mock-init` | Initialize local development environment |
-| `npm run mock-init-assign` | Initialize with mock voter assignment data |
+| Command                    | Description                                     |
+| -------------------------- | ----------------------------------------------- |
+| `npm run dev`              | Start development server                        |
+| `npm run dev:testnet`      | Start development server with testnet env       |
+| `npm run dev:mainnet`      | Start development server with mainnet env       |
+| `npm run build`            | Build for production                            |
+| `npm run preview`          | Preview production build locally (via Wrangler) |
+| `npm run lint`             | Run ESLint                                      |
+| `npm run prettier`         | Check code formatting                           |
+| `npm run storybook`        | Start Storybook development server              |
+| `npm run build-storybook`  | Build Storybook for deployment                  |
+| `npm run test`             | Run Storybook tests                             |
+| `npm run coverage`         | Run tests with coverage                         |
+| `npm run mock-init`        | Initialize local development environment        |
+| `npm run mock-init-assign` | Initialize with mock voter assignment data      |
 
 ## API Endpoints
 
@@ -190,9 +197,11 @@ curl -X POST https://your-domain/api/assign \
 ```
 
 **Request Options:**
+
 - `proposalIds` (optional): Array of specific proposal IDs to process
 
 **Response:**
+
 ```json
 {
   "message": "Processed 10 proposals in 5.25s using parallel processing",
@@ -229,10 +238,10 @@ This project uses GitHub Actions for automated deployments to Cloudflare Pages.
 
 ### Environments
 
-| Branch | Environment | Description |
-|--------|-------------|-------------|
-| `main` | Testnet | Staging environment for testing |
-| `mainnet` | Mainnet | Production environment |
+| Branch    | Environment | Description                     |
+| --------- | ----------- | ------------------------------- |
+| `main`    | Testnet     | Staging environment for testing |
+| `mainnet` | Mainnet     | Production environment          |
 
 ### Required GitHub Secrets
 
