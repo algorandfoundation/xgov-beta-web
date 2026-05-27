@@ -1,7 +1,7 @@
 import { ProfileCard } from "@/components/ProfileCard/ProfileCard";
 import { VotingPower } from "@/components/VotingPower/VotingPower";
 
-import { useMemo, useState } from "react";
+import { type KeyboardEvent, useMemo, useRef, useState } from "react";
 import { useWallet } from "@txnlab/use-wallet-react";
 import {
   createEmptyProposal,
@@ -100,6 +100,8 @@ export function ProfilePage({
   const nfd = useNFD(address);
   const votingPower = useVotingPower(address);
   const [activeTab, setActiveTab] = useState<'xgov' | 'proposer'>('xgov');
+  const xgovTabRef = useRef<HTMLButtonElement>(null);
+  const proposerTabRef = useRef<HTMLButtonElement>(null);
   const [showUnsubscribeXGovModal, setShowUnsubscribeXGovModal] = useState(false);
   const [showOpenProposalModal, setShowOpenProposalModal] = useState(false);
 
@@ -172,14 +174,50 @@ export function ProfilePage({
     return <div>Error...</div>;
   }
 
+  const tabs: Array<'xgov' | 'proposer'> = ['xgov', 'proposer'];
+  const focusTab = (tab: 'xgov' | 'proposer') => {
+    if (tab === 'xgov') {
+      xgovTabRef.current?.focus();
+      return;
+    }
+
+    proposerTabRef.current?.focus();
+  };
+
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentTab: 'xgov' | 'proposer') => {
+    const currentIndex = tabs.indexOf(currentTab);
+    let nextTab: 'xgov' | 'proposer' | null = null;
+
+    if (event.key === 'ArrowRight') {
+      nextTab = tabs[(currentIndex + 1) % tabs.length];
+    } else if (event.key === 'ArrowLeft') {
+      nextTab = tabs[(currentIndex - 1 + tabs.length) % tabs.length];
+    } else if (event.key === 'Home') {
+      nextTab = tabs[0];
+    } else if (event.key === 'End') {
+      nextTab = tabs[tabs.length - 1];
+    }
+
+    if (nextTab) {
+      event.preventDefault();
+      setActiveTab(nextTab);
+      focusTab(nextTab);
+    }
+  };
+
   return (
     <>
-      <div className="mt-6 mb-6 inline-flex rounded-full bg-gray-100 dark:bg-white/5 p-1 gap-1" role="tablist">
+      <div className="mt-6 mb-6 inline-flex rounded-full bg-gray-100 dark:bg-white/5 p-1 gap-1" role="tablist" aria-label="Profile sections">
         <button
+          id="profile-tab-xgov"
+          ref={xgovTabRef}
           type="button"
           role="tab"
+          aria-controls="profile-panel-xgov"
           aria-selected={activeTab === 'xgov'}
+          tabIndex={activeTab === 'xgov' ? 0 : -1}
           onClick={() => setActiveTab('xgov')}
+          onKeyDown={(event) => handleTabKeyDown(event, 'xgov')}
           className={`inline-flex items-center gap-2 py-1 pl-1 pr-3 text-sm font-semibold rounded-full transition-colors ${
             activeTab === 'xgov'
               ? 'bg-algo-blue text-white shadow-sm dark:bg-algo-teal dark:text-algo-black'
@@ -193,10 +231,15 @@ export function ProfilePage({
           xGov
         </button>
         <button
+          id="profile-tab-proposer"
+          ref={proposerTabRef}
           type="button"
           role="tab"
+          aria-controls="profile-panel-proposer"
           aria-selected={activeTab === 'proposer'}
+          tabIndex={activeTab === 'proposer' ? 0 : -1}
           onClick={() => setActiveTab('proposer')}
+          onKeyDown={(event) => handleTabKeyDown(event, 'proposer')}
           className={`inline-flex items-center gap-2 py-1 pl-1 pr-3 text-sm font-semibold rounded-full transition-colors ${
             activeTab === 'proposer'
               ? 'bg-algo-blue text-white shadow-sm dark:bg-algo-teal dark:text-algo-black'
@@ -270,13 +313,22 @@ export function ProfilePage({
         activeAddress={activeAddress}
       />
 
-      {activeTab === 'xgov' && (
-        <>
+      <div
+        id="profile-panel-xgov"
+        role="tabpanel"
+        aria-labelledby="profile-tab-xgov"
+        hidden={activeTab !== 'xgov'}
+        tabIndex={0}
+      >
+        {activeTab === 'xgov' && (
           <VotingPower
             committees={votingPower.data ?? []}
             isLoading={votingPower.isLoading}
             isError={votingPower.isError}
           />
+        )}
+        {activeTab === 'xgov' && (
+          <>
           {activeAddress === address && isXGov && (
             <>
               <button
@@ -310,11 +362,19 @@ export function ProfilePage({
               />
             </>
           )}
-        </>
-      )}
+          </>
+        )}
+      </div>
 
-      {activeTab === 'proposer' && (
-        <>
+      <div
+        id="profile-panel-proposer"
+        role="tabpanel"
+        aria-labelledby="profile-tab-proposer"
+        hidden={activeTab !== 'proposer'}
+        tabIndex={0}
+      >
+        {activeTab === 'proposer' && (
+          <>
           {validProposer && (
             <div className="flex items-center gap-6 mb-4">
               {activeAddress === address && (
@@ -383,8 +443,9 @@ export function ProfilePage({
           {!!proposalsWithNFDs && (
             <StackedList proposals={proposalsWithNFDs} activeAddress={activeAddress} />
           )}
-        </>
-      )}
+          </>
+        )}
+      </div>
     </>
   );
 }
