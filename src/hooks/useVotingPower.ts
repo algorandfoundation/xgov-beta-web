@@ -25,7 +25,11 @@ export function useVotingPower(address: string | null | undefined) {
   }, [proposalsQuery.data]);
 
   return useQuery({
-    queryKey: ["votingPower", address],
+    queryKey: [
+      "votingPower",
+      address,
+      committeeIds.map((id) => Buffer.from(id).toString("base64")),
+    ],
     queryFn: () => getVotingPowerForAddress(address!, committeeIds),
     enabled: !!address && committeeIds.length > 0,
     staleTime: 30_000,
