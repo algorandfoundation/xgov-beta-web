@@ -1,6 +1,8 @@
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 import { cn } from "@/functions";
 import type { CommitteeVotingPower } from "@/api/committee";
+import { CopyButton } from "@/components/CopyButton/CopyButton";
+import { CheckIcon, CopyIcon } from "lucide-react";
 
 export interface VotingPowerProps {
   committees: CommitteeVotingPower[];
@@ -17,9 +19,27 @@ function CommitteeCard({ committee }: { committee: CommitteeVotingPower }) {
 
   return (
     <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-algo-black p-4">
-      <p className="text-sm font-medium text-algo-blue dark:text-algo-teal mb-2 truncate" title={committee.committeeId}>
-        Committee {committee.committeeId.slice(0, 8)}...
-      </p>
+      <div className="mb-2 flex items-center gap-2">
+        <p
+          className="min-w-0 flex-1 truncate text-sm font-medium text-algo-blue dark:text-algo-teal"
+          title={committee.committeeId}
+        >
+          Committee {committee.committeeId.slice(0, 8)}...
+        </p>
+        <CopyButton
+          value={committee.committeeId}
+          variant="outline"
+          size="xs"
+          className="h-6 shrink-0 p-1 dark:bg-algo-black-80"
+          aria-label="Copy committee ID"
+          title="Copy committee ID"
+          copiedLabel={<CheckIcon className="size-3" />}
+          failedLabel={<CopyIcon className="size-3" />}
+          resetDelay={800}
+        >
+          <CopyIcon className="size-3" />
+        </CopyButton>
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <p className="text-xs text-gray-500 dark:text-gray-400">Your Votes</p>

@@ -1,26 +1,33 @@
 import { useState, type ReactNode } from "react";
-import { Button } from "../ui/button";
+import { Button, type ButtonProps } from "../ui/button";
 
 export function CopyButton({
   value,
   children,
+  copiedLabel = "Copied!",
+  failedLabel = "Failed to copy",
+  resetDelay = 2000,
+  ...buttonProps
 }: {
   value: string;
   children: ReactNode;
-}) {
-  const handleCopy = () => {
+  copiedLabel?: ReactNode;
+  failedLabel?: ReactNode;
+  resetDelay?: number;
+} & Omit<ButtonProps, "onClick">) {
+  const handleCopy = async () => {
     try {
-      navigator.clipboard.writeText(value);
-      setLabel("Copied!");
+      await navigator.clipboard.writeText(value);
+      setLabel(copiedLabel);
     } catch (e) {
-      setLabel("Failed to copy");
+      setLabel(failedLabel);
     } finally {
-      setTimeout(() => setLabel(children), 2000);
+      setTimeout(() => setLabel(children), resetDelay);
     }
   };
-  const [label, setLabel] = useState<ReactNode | string>(children);
+  const [label, setLabel] = useState<ReactNode>(children);
   return (
-    <Button variant="link" onClick={handleCopy}>
+    <Button variant="link" onClick={handleCopy} {...buttonProps}>
       {label}
     </Button>
   );
