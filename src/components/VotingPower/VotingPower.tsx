@@ -62,7 +62,7 @@ function CommitteeCard({ committee }: { committee: CommitteeVotingPower }) {
           Committee {committee.committeeId.slice(0, 8)}...
         </a>
         <TooltipProvider delayDuration={200}>
-          <Tooltip open={copyTooltipOpen} onOpenChange={setCopyTooltipOpen}>
+          <Tooltip open={copyTooltipOpen}>
             <TooltipTrigger asChild>
               <CopyButton
                 value={committee.committeeId}
