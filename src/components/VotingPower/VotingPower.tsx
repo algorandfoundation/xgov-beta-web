@@ -4,12 +4,6 @@ import type { CommitteeVotingPower } from "@/api/committee";
 import { CopyButton } from "@/components/CopyButton/CopyButton";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 export interface VotingPowerProps {
   committees: CommitteeVotingPower[];
@@ -61,29 +55,31 @@ function CommitteeCard({ committee }: { committee: CommitteeVotingPower }) {
         >
           Committee {committee.committeeId.slice(0, 8)}...
         </a>
-        <TooltipProvider delayDuration={200}>
-          <Tooltip open={copyTooltipOpen}>
-            <TooltipTrigger asChild>
-              <CopyButton
-                value={committee.committeeId}
-                variant="outline"
-                size="xs"
-                className="h-6 shrink-0 p-1 dark:bg-algo-black-80"
-                aria-label="Copy committee ID"
-                copiedLabel={<CheckIcon className="size-3" />}
-                failedLabel={<CopyIcon className="size-3" />}
-                onCopied={() => showCopyTooltip("Copied!")}
-                onCopyFailed={() => showCopyTooltip("Failed to copy")}
-                resetDelay={800}
-              >
-                <CopyIcon className="size-3" />
-              </CopyButton>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{copyTooltipText}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="relative shrink-0">
+          <CopyButton
+            value={committee.committeeId}
+            variant="outline"
+            size="xs"
+            className="h-6 p-1 dark:bg-algo-black-80"
+            aria-label="Copy committee ID"
+            title="Copy committee ID"
+            copiedLabel={<CheckIcon className="size-3" />}
+            failedLabel={<CopyIcon className="size-3" />}
+            onCopied={() => showCopyTooltip("Copied!")}
+            onCopyFailed={() => showCopyTooltip("Failed to copy")}
+            resetDelay={800}
+          >
+            <CopyIcon className="size-3" />
+          </CopyButton>
+          {copyTooltipOpen && (
+            <span
+              className="absolute bottom-full right-0 z-50 mb-2 whitespace-nowrap rounded-md bg-slate-900 px-3 py-1.5 text-xs text-slate-50 shadow-md dark:bg-slate-50 dark:text-slate-900"
+              role="status"
+            >
+              {copyTooltipText}
+            </span>
+          )}
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
