@@ -3,6 +3,13 @@ import { cn } from "@/functions";
 import type { CommitteeVotingPower } from "@/api/committee";
 import { CopyButton } from "@/components/CopyButton/CopyButton";
 import { CheckIcon, CopyIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface VotingPowerProps {
   committees: CommitteeVotingPower[];
@@ -12,33 +19,71 @@ export interface VotingPowerProps {
 }
 
 function CommitteeCard({ committee }: { committee: CommitteeVotingPower }) {
+  const [copyTooltipOpen, setCopyTooltipOpen] = useState(false);
+  const [copyTooltipText, setCopyTooltipText] = useState("Copy committee ID");
+  const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const percentage =
     committee.totalVotes > 0
       ? ((committee.userVotes / committee.totalVotes) * 100).toFixed(1)
       : "0.0";
+  const committeeUrl = `/api/committees/${committee.committeeId}.json`;
+
+  const showCopyTooltip = (message: string) => {
+    if (tooltipTimeoutRef.current) {
+      clearTimeout(tooltipTimeoutRef.current);
+    }
+
+    setCopyTooltipText(message);
+    setCopyTooltipOpen(true);
+    tooltipTimeoutRef.current = setTimeout(() => {
+      setCopyTooltipOpen(false);
+      setCopyTooltipText("Copy committee ID");
+    }, 1200);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-algo-black p-4">
       <div className="mb-2 flex items-center gap-2">
-        <p
-          className="min-w-0 flex-1 truncate text-sm font-medium text-algo-blue dark:text-algo-teal"
+        <a
+          className="min-w-0 flex-1 truncate text-sm font-medium text-algo-blue hover:underline dark:text-algo-teal"
+          href={committeeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           title={committee.committeeId}
         >
           Committee {committee.committeeId.slice(0, 8)}...
-        </p>
-        <CopyButton
-          value={committee.committeeId}
-          variant="outline"
-          size="xs"
-          className="h-6 shrink-0 p-1 dark:bg-algo-black-80"
-          aria-label="Copy committee ID"
-          title="Copy committee ID"
-          copiedLabel={<CheckIcon className="size-3" />}
-          failedLabel={<CopyIcon className="size-3" />}
-          resetDelay={800}
-        >
-          <CopyIcon className="size-3" />
-        </CopyButton>
+        </a>
+        <TooltipProvider delayDuration={200}>
+          <Tooltip open={copyTooltipOpen} onOpenChange={setCopyTooltipOpen}>
+            <TooltipTrigger asChild>
+              <CopyButton
+                value={committee.committeeId}
+                variant="outline"
+                size="xs"
+                className="h-6 shrink-0 p-1 dark:bg-algo-black-80"
+                aria-label="Copy committee ID"
+                copiedLabel={<CheckIcon className="size-3" />}
+                failedLabel={<CopyIcon className="size-3" />}
+                onCopied={() => showCopyTooltip("Copied!")}
+                onCopyFailed={() => showCopyTooltip("Failed to copy")}
+                resetDelay={800}
+              >
+                <CopyIcon className="size-3" />
+              </CopyButton>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{copyTooltipText}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>

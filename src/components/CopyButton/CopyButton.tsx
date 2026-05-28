@@ -6,6 +6,8 @@ export function CopyButton({
   children,
   copiedLabel = "Copied!",
   failedLabel = "Failed to copy",
+  onCopied,
+  onCopyFailed,
   resetDelay = 2000,
   ...buttonProps
 }: {
@@ -13,14 +15,18 @@ export function CopyButton({
   children: ReactNode;
   copiedLabel?: ReactNode;
   failedLabel?: ReactNode;
+  onCopied?: () => void;
+  onCopyFailed?: () => void;
   resetDelay?: number;
 } & Omit<ButtonProps, "onClick">) {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(value);
       setLabel(copiedLabel);
+      onCopied?.();
     } catch (e) {
       setLabel(failedLabel);
+      onCopyFailed?.();
     } finally {
       setTimeout(() => setLabel(children), resetDelay);
     }
