@@ -343,7 +343,7 @@ export function ProfilePage({
         {activeTab === 'xgov' && (
           <>
           {activeAddress === address && isXGov && (
-            <>
+            <div className="mt-8 mb-12">
               <button
                 type="button"
                 onClick={() => setShowUnsubscribeXGovModal(true)}
@@ -373,7 +373,7 @@ export function ProfilePage({
                   isPending: subXGovIsPending
                 }}
               />
-            </>
+            </div>
           )}
           </>
         )}

@@ -23,12 +23,12 @@ export interface VoteHistoryEntry {
 }
 
 const VOTE_PROPOSAL_METHOD = new algosdk.ABIMethod({
-  name: "voteProposal",
+  name: "vote_proposal",
   args: [
-    { type: "uint64", name: "proposalId" },
-    { type: "address", name: "xgovAddress" },
-    { type: "uint64", name: "approvalVotes" },
-    { type: "uint64", name: "rejectionVotes" },
+    { type: "uint64", name: "proposal_id" },
+    { type: "address", name: "xgov_address" },
+    { type: "uint64", name: "approval_votes" },
+    { type: "uint64", name: "rejection_votes" },
   ],
   returns: { type: "void" },
 });
@@ -41,6 +41,23 @@ function selectorMatches(arg: Uint8Array): boolean {
     if (arg[i] !== VOTE_PROPOSAL_SELECTOR[i]) return false;
   }
   return true;
+}
+
+function getIndexerField<T>(
+  value: Record<string, unknown>,
+  camelKey: string,
+  kebabKey: string,
+): T | undefined {
+  return (value[camelKey] ?? value[kebabKey]) as T | undefined;
+}
+
+function bytesFromIndexerArg(arg: Uint8Array | string): Uint8Array {
+  if (typeof arg !== "string") return arg;
+  return new Uint8Array(Buffer.from(arg, "base64"));
+}
+
+function appIdMatches(applicationId: bigint | number | undefined): boolean {
+  return applicationId !== undefined && BigInt(applicationId) === RegistryAppID;
 }
 
 async function fetchAllAppCallTransactions(address: string) {
@@ -59,7 +76,9 @@ async function fetchAllAppCallTransactions(address: string) {
 
     const response = await query.do();
     allTransactions.push(...response.transactions);
-    nextToken = response.nextToken;
+    nextToken =
+      response.nextToken ??
+      (response as unknown as Record<string, string | undefined>)["next-token"];
   } while (nextToken);
 
   return allTransactions;
@@ -91,28 +110,42 @@ export async function getVotingHistory(
   }[] = [];
 
   for (const txn of allTransactions) {
-    const appTxn = txn.applicationTransaction;
+    const appTxn = getIndexerField<Record<string, unknown>>(
+      txn,
+      "applicationTransaction",
+      "application-transaction",
+    );
     if (!appTxn) continue;
 
     // Must be a call to the registry app
-    if (appTxn.applicationId !== RegistryAppID) continue;
+    const applicationId = getIndexerField<bigint | number>(
+      appTxn,
+      "applicationId",
+      "application-id",
+    );
+    if (!appIdMatches(applicationId)) continue;
 
-    const args = appTxn.applicationArgs;
+    const args = getIndexerField<Array<Uint8Array | string>>(
+      appTxn,
+      "applicationArgs",
+      "application-args",
+    );
     if (!args || args.length < 5) continue;
 
     // Check method selector
-    if (!selectorMatches(args[0])) continue;
+    const encodedArgs = args.map(bytesFromIndexerArg);
+    if (!selectorMatches(encodedArgs[0])) continue;
 
     // Decode ABI args
     const proposalId = algosdk.ABIType.from("uint64").decode(
-      args[1],
+      encodedArgs[1],
     ) as bigint;
-    const decodedAddress = algosdk.encodeAddress(args[2]);
+    const decodedAddress = algosdk.encodeAddress(encodedArgs[2]);
     const approvalVotes = Number(
-      algosdk.ABIType.from("uint64").decode(args[3]) as bigint,
+      algosdk.ABIType.from("uint64").decode(encodedArgs[3]) as bigint,
     );
     const rejectionVotes = Number(
-      algosdk.ABIType.from("uint64").decode(args[4]) as bigint,
+      algosdk.ABIType.from("uint64").decode(encodedArgs[4]) as bigint,
     );
 
     // Only include votes for this xGov's address
@@ -123,7 +156,7 @@ export async function getVotingHistory(
       xgovAddr: decodedAddress,
       approvalVotes,
       rejectionVotes,
-      timestamp: txn.roundTime ?? 0,
+      timestamp: getIndexerField<number>(txn, "roundTime", "round-time") ?? 0,
       txnId: txn.id ?? "",
     });
   }

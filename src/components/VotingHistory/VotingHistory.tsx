@@ -1,6 +1,5 @@
 import { BracketedPhaseDetail } from "@/components/BracketedPhaseDetail/BracketedPhaseDetail";
 import { VoteCounter } from "@/components/VoteCounter/VoteCounter";
-import VoteBar from "@/components/VoteBar/VoteBar";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 import { type VoteHistoryEntry, getExplorerTxnUrl } from "@/api/voting-history";
 import { formatDistanceToNow } from "date-fns";
@@ -88,12 +87,6 @@ function VotingHistoryItem({ vote }: { vote: VoteHistoryEntry }) {
             approvals={vote.approvalVotes}
             rejections={vote.rejectionVotes}
             nulls={vote.nullVotes}
-          />
-          <VoteBar
-            approvals={vote.approvalVotes}
-            rejections={vote.rejectionVotes}
-            nulls={vote.nullVotes}
-            total={vote.totalVotes}
           />
         </div>
       )}
