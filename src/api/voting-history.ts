@@ -2,7 +2,7 @@ import algosdk from "algosdk";
 import { indexer, network } from "@/api/algorand/algo-client";
 import { RegistryAppID } from "@/api/algorand/contract-clients";
 import { getAllProposals } from "@/api/proposals";
-import { getCommitteeData } from "@/api/committee";
+import { getXGovCommitteeMap } from "@/api/committee";
 import {
   type ProposalSummaryCardDetails,
   ProposalStatus,
@@ -147,16 +147,8 @@ export async function getVotingHistory(
     const committeeKey = Buffer.from(committeeId).toString("base64");
     if (!committeeCache.has(committeeKey)) {
       try {
-        const committeeData = await getCommitteeData(
-          Buffer.from(committeeId),
-        );
-        if (committeeData) {
-          const memberMap = new Map<string, number>();
-          for (const member of committeeData.xGovs) {
-            memberMap.set(member.address, member.votes);
-          }
-          committeeCache.set(committeeKey, memberMap);
-        }
+        const memberMap = await getXGovCommitteeMap(Buffer.from(committeeId));
+        committeeCache.set(committeeKey, memberMap);
       } catch {
         // Committee data not available
       }

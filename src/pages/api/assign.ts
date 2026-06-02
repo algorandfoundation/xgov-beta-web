@@ -21,6 +21,11 @@ import pMap from "p-map";
 import type { XGovRegistryClient } from "@algorandfoundation/xgov/registry";
 import { createXGovDaemon, parseRequestOptions } from "./common";
 import type { TransactionSignerAccount } from "@algorandfoundation/algokit-utils/types/account";
+import {
+  getCommitteeDataFromR2,
+  type CommitteeData,
+  type CommitteeMember,
+} from "@/server/committee-files";
 
 // Create logger for this file
 const logger = createLogger("assign-api");
@@ -32,17 +37,6 @@ const OTHER_TXN_VOTERS = 8; // Other transactions can have up to 8 voters
 
 const CONFIRMATION_ROUNDS = 4; // Number of rounds to wait for transaction confirmation
 const VOTER_BOX_PREFIX_BYTE = 86; // ASCII for 'V'
-
-// Types
-interface CommitteeMember {
-  address: string;
-  votes: number;
-}
-
-interface CommitteeData {
-  xGovs: CommitteeMember[];
-  [key: string]: any;
-}
 
 interface ProposalResult {
   success: boolean;
@@ -87,119 +81,17 @@ function committeeIdToSafeFileName(committeeId: Buffer): string {
 }
 
 /**
- * Attempts to load committee data from a dynamic import
- *
- * @param committeeId The committee ID
- * @param safeCommitteeId The safe filename version of the committee ID
- * @param committeeIdStr String representation for logging
- * @returns Committee data if found, null otherwise
- */
-async function loadCommitteeFromImport(
-  safeCommitteeId: string,
-  committeeIdStr: string,
-): Promise<CommitteeData | null> {
-  try {
-    const moduleSpecifier = `./committees${import.meta.env.DEV ? "-dev" : ""}/${safeCommitteeId}.json`;
-    logger.debug(
-      `Attempting to import committee file for ID ${committeeIdStr}: ${moduleSpecifier}`,
-    );
-
-    const committeeModule = await import(moduleSpecifier);
-
-    // Validate the imported data
-    if (
-      committeeModule.default &&
-      committeeModule.default.xGovs &&
-      Array.isArray(committeeModule.default.xGovs)
-    ) {
-      logger.info(
-        `Loaded ${committeeModule.default.xGovs.length} committee members from imported module`,
-      );
-      return committeeModule.default as CommitteeData;
-    } else {
-      logger.warn(
-        `Imported committee file for ID ${committeeIdStr} has invalid format`,
-      );
-      return null;
-    }
-  } catch (importError) {
-    logger.debug(
-      `Could not import committee data for ID: ${committeeIdStr}`,
-      importError,
-    );
-    return null;
-  }
-}
-
-/**
- * Attempts to load committee data from the external API
- *
- * @param safeCommitteeId The safe filename version of the committee ID
- * @param committeeIdStr String representation for logging
- * @param apiUrl Optional URL from the env
- * @returns Committee data if found, null otherwise
- */
-async function loadCommitteeFromAPI(
-  safeCommitteeId: string,
-  committeeIdStr: string,
-  apiUrl?: string,
-): Promise<CommitteeData | null> {
-  if (!apiUrl) {
-    logger.error("COMMITTEE_API_URL environment variable not set");
-    return null;
-  }
-
-  const url = `${apiUrl}/committees/${safeCommitteeId}.json`;
-
-  try {
-    logger.info(
-      `Fetching committee data from API for committee ID: ${committeeIdStr}`,
-    );
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(
-        `API returned status ${response.status} for committee ID: ${committeeIdStr}`,
-      );
-    }
-
-    const committeeData = await response.json();
-
-    // Validate the API response has the expected structure
-    if (
-      !committeeData ||
-      !committeeData.xGovs ||
-      !Array.isArray(committeeData.xGovs)
-    ) {
-      throw new Error(
-        `API returned invalid committee data format for committee ID: ${committeeIdStr}`,
-      );
-    }
-
-    logger.info(
-      `Loaded ${committeeData.xGovs.length} committee members from API`,
-    );
-    return committeeData as CommitteeData;
-  } catch (error) {
-    logger.error(`Error loading committee data from API`, error);
-    return null;
-  }
-}
-
-/**
  * Retrieves committee data for a given committee ID
  *
- * This function attempts to load committee data from multiple sources:
- * 1. Dynamic import
- * 2. External API
+ * This function loads committee files from the Cloudflare R2 bucket.
  *
  * @param committeeId The committee ID as a Buffer
- * @param apiUrl The api url provided by the context
+ * @param locals Astro locals with Cloudflare runtime bindings
  * @returns Committee data if found, null otherwise
  */
 async function getCommitteeData(
   committeeId: Buffer,
-  apiUrl?: string,
+  locals: App.Locals,
 ): Promise<CommitteeData | null> {
   // For logging purposes - define outside try/catch to ensure it's available in the catch block
   const committeeIdStr = committeeId.toString("base64");
@@ -208,28 +100,15 @@ async function getCommitteeData(
     // Convert committeeId to a base64url encoded filename
     const safeCommitteeId = committeeIdToSafeFileName(committeeId);
 
-    // Try loading from import first
-    try {
-      const importData = await loadCommitteeFromImport(
-        safeCommitteeId,
-        committeeIdStr,
-      );
-      if (importData) return importData;
-    } catch (importSetupError) {
-      logger.warn(
-        `Error setting up import for committee ID ${committeeIdStr}`,
-        importSetupError,
-      );
-    }
-
-    // Try loading from API as a last resort
-    const apiData = await loadCommitteeFromAPI(
-      safeCommitteeId,
-      committeeIdStr,
-      apiUrl,
+    const committeeData = await getCommitteeDataFromR2(
+      `${safeCommitteeId}.json`,
+      locals,
     );
-    if (apiData) {
-      return apiData;
+    if (committeeData) {
+      logger.info(
+        `Loaded ${committeeData.xGovs.length} committee members from R2`,
+      );
+      return committeeData;
     }
 
     return null;
@@ -374,7 +253,7 @@ async function getEligibleVoters(
  */
 function createTransactionParams(
   voters: [string, number][],
-  xgovDaemon: TransactionSignerAccount
+  xgovDaemon: TransactionSignerAccount,
 ): CallParams<ProposalArgs["obj"]["assign_voters((address,uint64)[])void"]> {
   const txnParams: CallParams<
     ProposalArgs["obj"]["assign_voters((address,uint64)[])void"]
@@ -415,7 +294,7 @@ async function processVoterBatch(
     votersInThisBatch <= FIRST_TXN_VOTERS
       ? 1 // If 7 or fewer voters, only need one transaction
       : Math.ceil((votersInThisBatch - FIRST_TXN_VOTERS) / OTHER_TXN_VOTERS) +
-      1;
+        1;
 
   logger.info(
     `Batch needs ${txnsForThisBatch}/${MAX_GROUP_SIZE} transactions for ${votersInThisBatch} voters`,
@@ -434,9 +313,9 @@ async function processVoterBatch(
 
   logger.debug(
     `Voter distribution: ${votersInThisBatch} total voters - ` +
-    `1st txn: ${firstTxnVoters} voters, ` +
-    `${fullMiddleTxns} middle txns with ${OTHER_TXN_VOTERS} voters each` +
-    `${lastTxnVoters > 0 ? `, last txn: ${lastTxnVoters} voters` : ""}`,
+      `1st txn: ${firstTxnVoters} voters, ` +
+      `${fullMiddleTxns} middle txns with ${OTHER_TXN_VOTERS} voters each` +
+      `${lastTxnVoters > 0 ? `, last txn: ${lastTxnVoters} voters` : ""}`,
   );
 
   // Track processed count
@@ -497,7 +376,7 @@ async function processVoterBatch(
     // More condensed log for individual transactions
     logger.debug(
       `Txn ${txnIndex + 1}/${txnsForThisBatch}: ${batch.length} voters ` +
-      `[${txnIndex === 0 ? "First" : txnIndex === txnsForThisBatch - 1 ? "Last" : "Middle"}]`,
+        `[${txnIndex === 0 ? "First" : txnIndex === txnsForThisBatch - 1 ? "Last" : "Middle"}]`,
     );
   }
 
@@ -543,7 +422,7 @@ async function processProposal(
   proposalFactory: ProposalFactory,
   xgovDaemon: TransactionSignerAccount,
   maxRequestsPerProposal: number,
-  apiUrl?: string,
+  locals: App.Locals,
 ): Promise<ProposalResult> {
   try {
     logger.info(`Processing proposal ${proposal.id}: ${proposal.title}`);
@@ -567,7 +446,7 @@ async function processProposal(
     );
 
     // Get committee data using the committee ID
-    const committeeData = await getCommitteeData(committeeId, apiUrl);
+    const committeeData = await getCommitteeData(committeeId, locals);
 
     // Skip this proposal if no committee data is found
     if (!committeeData) {
@@ -639,9 +518,9 @@ async function processProposal(
 
     logger.info(
       `Proposal ${proposal.id} assignment complete: ` +
-      `${voterCount} voters assigned, ` +
-      `${alreadyAssignedCount} duplicate voters skipped, ` +
-      `${totalVotersCount} total committee members`,
+        `${voterCount} voters assigned, ` +
+        `${alreadyAssignedCount} duplicate voters skipped, ` +
+        `${totalVotersCount} total committee members`,
     );
 
     // Return successful result
@@ -687,7 +566,7 @@ async function processBatch(
   proposalFactory: ProposalFactory,
   xgovDaemon: TransactionSignerAccount,
   maxRequestsPerProposal: number,
-  apiUrl?: string,
+  locals: App.Locals,
 ): Promise<ProposalResult[]> {
   logger.info(`Processing batch of ${batch.length} proposals`);
 
@@ -699,7 +578,7 @@ async function processBatch(
       proposalFactory,
       xgovDaemon,
       maxRequestsPerProposal,
-      apiUrl,
+      locals,
     ),
   );
 
@@ -805,8 +684,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!daemonInfo) {
       return new Response(
         JSON.stringify({
-          error:
-            "xGov Daemon mnemonic not found in environment variables",
+          error: "xGov Daemon mnemonic not found in environment variables",
         }),
         {
           status: 400,
@@ -855,7 +733,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         proposalFactory,
         daemonInfo,
         maxRequestsPerProposal,
-        getStringEnvironmentVariable("COMMITTEE_API_URL", locals, ""),
+        locals,
       );
       proposalResults.push(...batchResults);
     }

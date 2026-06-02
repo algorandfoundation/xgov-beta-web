@@ -4,12 +4,8 @@ name: Deploy to Cloudflare Pages
 on:
   push:
     branches:
-      - main      # Deploy to testnet
       - mainnet   # Deploy to mainnet
-  pull_request:
-    branches:
-      - main
-      - mainnet
+      - main      # Deploy to testnet
 
 jobs:
   deploy:

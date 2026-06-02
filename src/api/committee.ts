@@ -1,4 +1,3 @@
-
 // Types
 export interface CommitteeMember {
   address: string;
@@ -37,7 +36,7 @@ export async function loadCommitteeFromAPI(
   safeCommitteeId: string,
   committeeIdStr: string,
 ): Promise<CommitteeData | null> {
-  const url = `/committees/${safeCommitteeId}.json`;
+  const url = `/api/committees/${safeCommitteeId}.json`;
 
   try {
     const response = await fetch(url);
@@ -63,8 +62,10 @@ export async function loadCommitteeFromAPI(
 
     return committeeData as CommitteeData;
   } catch (error) {
-    console.error('Error fetching committee', error)
-    throw new Error(`Error loading committee data from API: ${error instanceof Error ? error.message : String(error)}`);
+    console.error("Error fetching committee", error);
+    throw new Error(
+      `Error loading committee data from API: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -76,7 +77,9 @@ export async function loadCommitteeFromAPI(
  * @param committeeId The committee ID as a Buffer
  * @returns Committee data if found, null otherwise
  */
-export async function getCommitteeData(committeeId: Buffer): Promise<CommitteeData | null> {
+export async function getCommitteeData(
+  committeeId: Buffer,
+): Promise<CommitteeData | null> {
   // For logging purposes - define outside try/catch to ensure it's available in the catch block
   const committeeIdStr = committeeId.toString("base64");
 
@@ -97,14 +100,78 @@ export async function getCommitteeData(committeeId: Buffer): Promise<CommitteeDa
   }
 }
 
+export interface CommitteeVotingPower {
+  committeeId: string;
+  userVotes: number;
+  totalVotes: number;
+  memberCount: number;
+}
 
-export async function getXGovCommitteeMap(committeeId: Buffer): Promise<Map<string, number>> {
-  const committee = await getCommitteeData(committeeId)
-  if (!committee) {
-    throw new Error('Committee data not found')
+/**
+ * Fetches voting power information for a given address across multiple committees
+ *
+ * @param address The wallet address to check
+ * @param committeeIds Array of committee IDs as Uint8Arrays
+ * @returns Array of CommitteeVotingPower for committees where the address is a member
+ */
+export async function getVotingPowerForAddress(
+  address: string,
+  committeeIds: Uint8Array[],
+): Promise<CommitteeVotingPower[]> {
+  // Deduplicate by base64 string and filter out empty IDs
+  const seen = new Set<string>();
+  const uniqueIds: { id: Uint8Array; key: string }[] = [];
+
+  for (const id of committeeIds) {
+    if (id.length === 0) continue;
+    const key = Buffer.from(id).toString("base64");
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueIds.push({ id, key });
+    }
   }
 
-  const m = new Map<string, number>()
-  committee.xGovs.forEach(xgov => m.set(xgov.address, xgov.votes))
-  return m
+  const results = await Promise.allSettled(
+    uniqueIds.map(({ id, key }) =>
+      getCommitteeData(Buffer.from(id)).then((data) => ({
+        data,
+        key,
+        safeId: committeeIdToSafeFileName(Buffer.from(id)),
+      })),
+    ),
+  );
+
+  const votingPower: CommitteeVotingPower[] = [];
+
+  for (const result of results) {
+    if (result.status !== "fulfilled" || !result.value.data) continue;
+
+    const { data, safeId } = result.value;
+    const member = data.xGovs.find((m) => m.address === address);
+    if (!member) continue;
+
+    const totalVotes = data.xGovs.reduce((sum, m) => sum + m.votes, 0);
+
+    votingPower.push({
+      committeeId: safeId,
+      userVotes: member.votes,
+      totalVotes,
+      memberCount: data.xGovs.length,
+    });
+  }
+
+  return votingPower;
+}
+
+export async function getXGovCommitteeMap(
+  committeeId: Buffer,
+): Promise<Map<string, number>> {
+  const committee = await getCommitteeData(committeeId);
+  if (!committee) {
+    throw new Error("Committee data not found");
+  }
+
+  const m = new Map<string, number>();
+  committee.xGovs.forEach((xgov) => m.set(xgov.address, xgov.votes));
+  return m;
 }

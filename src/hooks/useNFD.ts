@@ -8,7 +8,8 @@ function toNFDsOptions(addresses: string[] | undefined, enabled: boolean = true)
   return {
     queryKey: ["getNFDs", addresses],
     queryFn: () => getNFDs(addresses!),
-    enabled: enabled && addresses !== undefined && !isLocalnet,
+    enabled: enabled && !!addresses?.length && !isLocalnet,
+    retry: false,
   };
 }
 

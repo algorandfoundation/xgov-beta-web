@@ -134,13 +134,16 @@ async function processUnassignBatch(
 
   if (absenteesInThisBatch <= 0) return 0;
 
-  // Each absentee needs 2 box refs + 1 app ref for proposal, 8 ref slots per txn
-  const totalRefSlots = absentees.length * 2 + 1;
-  const txnsNeeded = Math.ceil(totalRefSlots / 8);
+  // Each absentee needs 2 box refs (registry + proposal). Cross-app proposal box
+  // refs require the proposal app in foreign apps on each txn, consuming 1 of the
+  // 8 combined ref slots per txn, leaving 7 usable slots.
+  const totalBoxRefs = absentees.length * 2;
+  const refsPerTxn = 7; // 8 combined ref slots - 1 for proposal app ref per txn
+  const txnsNeeded = Math.ceil(totalBoxRefs / refsPerTxn);
   const txnsForThisBatch = Math.min(Math.max(txnsNeeded, 1), MAX_GROUP_SIZE);
 
   logger.info(
-    `Batch needs ${txnsForThisBatch} transactions for ${absenteesInThisBatch} absentees (${totalRefSlots} ref slots)`,
+    `Batch needs ${txnsForThisBatch} transactions for ${absenteesInThisBatch} absentees (${totalBoxRefs} box refs)`,
   );
 
   // Create a transaction group
