@@ -7,10 +7,11 @@ export function useVotingPower(address: string | null | undefined) {
   const proposalsQuery = useGetAllProposals();
 
   const committeeIds = useMemo(() => {
-    if (!proposalsQuery.data) return [];
+    if (!proposalsQuery.data) return { ids: [], keys: [] as string[] };
 
     const seen = new Set<string>();
     const ids: Uint8Array[] = [];
+    const keys: string[] = [];
 
     for (const proposal of proposalsQuery.data) {
       if (!proposal.committeeId || proposal.committeeId.length === 0) continue;
@@ -18,20 +19,17 @@ export function useVotingPower(address: string | null | undefined) {
       if (!seen.has(key)) {
         seen.add(key);
         ids.push(proposal.committeeId);
+        keys.push(key);
       }
     }
 
-    return ids;
+    return { ids, keys };
   }, [proposalsQuery.data]);
 
   return useQuery({
-    queryKey: [
-      "votingPower",
-      address,
-      committeeIds.map((id) => Buffer.from(id).toString("base64")),
-    ],
-    queryFn: () => getVotingPowerForAddress(address!, committeeIds),
-    enabled: !!address && committeeIds.length > 0,
+    queryKey: ["votingPower", address, committeeIds.keys],
+    queryFn: () => getVotingPowerForAddress(address!, committeeIds.ids),
+    enabled: !!address && committeeIds.ids.length > 0,
     staleTime: 30_000,
   });
 }

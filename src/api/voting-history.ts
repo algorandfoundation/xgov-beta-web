@@ -94,10 +94,19 @@ export async function getVotingHistory(
     addresses.add(votingAddress);
   }
 
-  const transactionSets = await Promise.all(
-    [...addresses].map((addr) => fetchAllAppCallTransactions(addr)),
-  );
-  const allTransactions = transactionSets.flat();
+  const [transactionSets, proposals] = await Promise.all([
+    Promise.all([...addresses].map((addr) => fetchAllAppCallTransactions(addr))),
+    getAllProposals(),
+  ]);
+  // Deduplicate transactions that may appear in multiple address lookups
+  // (e.g. a vote sent by votingAddress will reference xgovAddress and show up in both)
+  const seenTxnIds = new Set<string>();
+  const allTransactions = transactionSets.flat().filter((txn) => {
+    const id = txn.id ?? "";
+    if (seenTxnIds.has(id)) return false;
+    seenTxnIds.add(id);
+    return true;
+  });
 
   // Filter for voteProposal calls to the registry app
   const voteTxns: {
@@ -108,6 +117,8 @@ export async function getVotingHistory(
     timestamp: number;
     txnId: string;
   }[] = [];
+
+  const ABI_UINT64 = algosdk.ABIType.from("uint64");
 
   for (const txn of allTransactions) {
     const appTxn = getIndexerField<Record<string, unknown>>(
@@ -137,15 +148,15 @@ export async function getVotingHistory(
     if (!selectorMatches(encodedArgs[0])) continue;
 
     // Decode ABI args
-    const proposalId = algosdk.ABIType.from("uint64").decode(
+    const proposalId = ABI_UINT64.decode(
       encodedArgs[1],
     ) as bigint;
     const decodedAddress = algosdk.encodeAddress(encodedArgs[2]);
     const approvalVotes = Number(
-      algosdk.ABIType.from("uint64").decode(encodedArgs[3]) as bigint,
+      ABI_UINT64.decode(encodedArgs[3]) as bigint,
     );
     const rejectionVotes = Number(
-      algosdk.ABIType.from("uint64").decode(encodedArgs[4]) as bigint,
+      ABI_UINT64.decode(encodedArgs[4]) as bigint,
     );
 
     // Only include votes for this xGov's address
@@ -162,7 +173,6 @@ export async function getVotingHistory(
   }
 
   // Cross-reference with proposals for titles and status
-  const proposals = await getAllProposals();
   const proposalMap = new Map<bigint, ProposalSummaryCardDetails>();
   for (const p of proposals) {
     proposalMap.set(p.id, p);
@@ -171,22 +181,37 @@ export async function getVotingHistory(
   // Track which proposals the xGov actually voted on
   const votedProposalIds = new Set(voteTxns.map((v) => v.proposalId));
 
-  // Load committee data for each unique committeeId to get totalVotes per member
+  // Pre-fetch all unique committee IDs in parallel before the entry-building loops
   const committeeCache = new Map<string, Map<string, number>>();
 
-  async function loadCommittee(
-    committeeId: Uint8Array,
-  ): Promise<Map<string, number> | undefined> {
-    const committeeKey = Buffer.from(committeeId).toString("base64");
-    if (!committeeCache.has(committeeKey)) {
+  const uniqueCommitteeIds = new Map<string, Uint8Array>();
+  for (const vote of voteTxns) {
+    const proposal = proposalMap.get(vote.proposalId);
+    if (proposal?.committeeId && proposal.committeeId.length > 0) {
+      const key = Buffer.from(proposal.committeeId).toString("base64");
+      if (!uniqueCommitteeIds.has(key)) uniqueCommitteeIds.set(key, proposal.committeeId);
+    }
+  }
+  for (const proposal of proposals) {
+    if (proposal.committeeId && proposal.committeeId.length > 0) {
+      const key = Buffer.from(proposal.committeeId).toString("base64");
+      if (!uniqueCommitteeIds.has(key)) uniqueCommitteeIds.set(key, proposal.committeeId);
+    }
+  }
+
+  await Promise.allSettled(
+    [...uniqueCommitteeIds.entries()].map(async ([key, id]) => {
       try {
-        const memberMap = await getXGovCommitteeMap(Buffer.from(committeeId));
-        committeeCache.set(committeeKey, memberMap);
+        const memberMap = await getXGovCommitteeMap(Buffer.from(id));
+        committeeCache.set(key, memberMap);
       } catch {
         // Committee data not available
       }
-    }
-    return committeeCache.get(committeeKey);
+    }),
+  );
+
+  function loadCommittee(committeeId: Uint8Array): Map<string, number> | undefined {
+    return committeeCache.get(Buffer.from(committeeId).toString("base64"));
   }
 
   const entries: VoteHistoryEntry[] = [];
@@ -202,7 +227,7 @@ export async function getVotingHistory(
     let totalVotes = vote.approvalVotes + vote.rejectionVotes;
 
     if (proposal?.committeeId && proposal.committeeId.length > 0) {
-      const memberMap = await loadCommittee(proposal.committeeId);
+      const memberMap = loadCommittee(proposal.committeeId);
       if (memberMap) {
         const memberVotes = memberMap.get(xgovAddress);
         if (memberVotes !== undefined) {
@@ -250,7 +275,7 @@ export async function getVotingHistory(
     // Must have a committee to check membership
     if (!proposal.committeeId || proposal.committeeId.length === 0) continue;
 
-    const memberMap = await loadCommittee(proposal.committeeId);
+    const memberMap = loadCommittee(proposal.committeeId);
     if (!memberMap) continue;
 
     const memberVotes = memberMap.get(xgovAddress);
