@@ -26,9 +26,11 @@ import {
   useRegistry,
   useProposalsByProposer,
   useNFD,
+  useVotingHistory,
   useVotingPower,
 } from "@/hooks";
 import { StackedList } from "@/recipes";
+import { VotingHistory } from "@/components/VotingHistory/VotingHistory";
 import { ConfirmationModal } from "@/components/ConfirmationModal/ConfirmationModal";
 import { navigate } from "astro/virtual-modules/transitions-router.js";
 import { WarningNotice } from "@/components/WarningNotice/WarningNotice";
@@ -98,6 +100,10 @@ export function ProfilePage({
   const proposer = useProposer(address);
   const proposalsQuery = useProposalsByProposer(address);
   const nfd = useNFD(address);
+  const votingHistory = useVotingHistory(
+    address,
+    xgov.data?.votingAddress,
+  );
   const votingPower = useVotingPower(address);
   const [activeTab, setActiveTab] = useState<'xgov' | 'proposer'>('xgov');
   const xgovTabRef = useRef<HTMLButtonElement>(null);
@@ -328,9 +334,16 @@ export function ProfilePage({
           />
         )}
         {activeTab === 'xgov' && (
+          <VotingHistory
+            votes={votingHistory.data}
+            isLoading={votingHistory.isLoading}
+            isError={votingHistory.isError}
+          />
+        )}
+        {activeTab === 'xgov' && (
           <>
           {activeAddress === address && isXGov && (
-            <>
+            <div className="mt-8 mb-12">
               <button
                 type="button"
                 onClick={() => setShowUnsubscribeXGovModal(true)}
@@ -360,7 +373,7 @@ export function ProfilePage({
                   isPending: subXGovIsPending
                 }}
               />
-            </>
+            </div>
           )}
           </>
         )}
