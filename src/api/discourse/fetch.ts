@@ -1,11 +1,14 @@
 import type { User } from "@/api/discourse/user.ts";
 import type { Topic } from "@/api/discourse/topic.ts";
+import { getSafeForumTopicApiId } from "@/functions";
 import { Mutex } from "async-mutex";
 const mutex = new Mutex();
 
 export async function fetchDiscourseUsers(url: string, init: RequestInit = {}){
-  const parts = url.split('/')
-  return mutex.runExclusive(async ()=>fetch(`/api/discourse/${parts[parts.length -1]}`, init).then(async r=> {
+  const topicId = getSafeForumTopicApiId(url);
+  if (!topicId) return [];
+
+  return mutex.runExclusive(async ()=>fetch(`/api/discourse/${topicId}`, init).then(async r=> {
     if(r.status === 404) {
       return []
     }
@@ -20,9 +23,11 @@ export interface TopicSummary {
 }
 
 export async function fetchDiscourseTopic(url: string, init: RequestInit = {}, size: number = 48): Promise<TopicSummary | null> {
-  const parts = url.split('/')
+  const topicId = getSafeForumTopicApiId(url);
+  if (!topicId) return null;
+
   return mutex.runExclusive(async () => {
-    const response = await fetch(`/api/discourse/${parts[parts.length - 1]}`, init)
+    const response = await fetch(`/api/discourse/${topicId}`, init)
     
     if (response.status === 404) {
       return null

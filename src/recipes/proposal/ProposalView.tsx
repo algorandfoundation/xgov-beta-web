@@ -25,6 +25,7 @@ import {
   type ProposalSummaryCardDetails,
 } from "@/api";
 import { cn } from "@/functions/utils";
+import { getSafeForumTopicUrl } from "@/functions";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
 import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton";
 import { Button } from "@/components/ui/button";
@@ -149,6 +150,30 @@ interface StatusCardTemplateProps {
   action?: ReactNode;
 }
 
+function ForumDiscussionLink({
+  forumLink,
+  className,
+  children,
+}: {
+  forumLink: string | undefined;
+  className?: string;
+  children: ReactNode;
+}) {
+  const safeForumLink = getSafeForumTopicUrl(forumLink);
+  if (!safeForumLink) return null;
+
+  return (
+    <Link
+      target="_blank"
+      rel="noopener noreferrer"
+      to={safeForumLink}
+      className={className}
+    >
+      {children}
+    </Link>
+  );
+}
+
 function StatusCardTemplate({
   className = '',
   header,
@@ -223,14 +248,13 @@ function DiscussionStatusCard({
   }
 
   let action = (
-    <Link
-      target="_blank"
-      to={proposal.forumLink}
+    <ForumDiscussionLink
+      forumLink={proposal.forumLink}
       className="flex gap-2 mt-2 px-4 py-2 bg-algo-blue dark:bg-algo-teal text-white dark:text-algo-black rounded-md hover:bg-algo-blue-50 dark:hover:bg-algo-teal-50"
     >
       View the discussion
       <ExternalLinkIcon />
-    </Link>
+    </ForumDiscussionLink>
   )
 
   if (proposal.proposer === activeAddress) {
@@ -296,14 +320,13 @@ function DiscussionStatusCard({
         proposal.proposer === activeAddress
           ? (
             <div className="h-9 flex items-start">
-              <Link
-                target="_blank"
-                to={proposal.forumLink}
+              <ForumDiscussionLink
+                forumLink={proposal.forumLink}
                 className="flex items-center gap-1 text-algo-black/80 dark:text-white/80 hover:underline"
               >
                 View the discussion
                 <ExternalLinkIcon size={16} />
-              </Link>
+              </ForumDiscussionLink>
             </div>
           )
           : "Discussion is ongoing, take part and help shape public sentiment on this proposal."}
@@ -453,14 +476,13 @@ function VotingStatusCard({
 
   const subheader = (
     <div className="h-9 flex items-start">
-      <Link
-        target="_blank"
-        to={proposal.forumLink}
+      <ForumDiscussionLink
+        forumLink={proposal.forumLink}
         className="flex items-center gap-1 text-algo-black/80 dark:text-white/80 hover:underline"
       >
         View the discussion
         <ExternalLinkIcon size={16} />
-      </Link>
+      </ForumDiscussionLink>
     </div>
   )
 
@@ -841,14 +863,13 @@ function PostVotingStatusCard({
 
   const subheader = (
     <div className="h-9 flex items-start">
-      <Link
-        target="_blank"
-        to={proposal.forumLink}
+      <ForumDiscussionLink
+        forumLink={proposal.forumLink}
         className="flex items-center gap-1 text-algo-black/80 dark:text-white/80 hover:underline"
       >
         View the discussion
         <ExternalLinkIcon size={16} />
-      </Link>
+      </ForumDiscussionLink>
     </div>
   )
 
