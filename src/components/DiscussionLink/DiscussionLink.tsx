@@ -1,10 +1,16 @@
+import { getSafeForumTopicUrl } from "@/functions";
 import { ChatBubbleLeftIcon } from "../icons/ChatBubbleLeftIcon";
 import { Link } from "../Link";
 
 export function DiscussionLink({ to = 'https://forum.algorand.co', postCount = 0 }: { to: string | undefined, postCount: number }) {
+  const safeUrl = getSafeForumTopicUrl(to);
+  if (!safeUrl) return null;
+
   return (
     <Link
-      to={to}
+      to={safeUrl}
+      target="_blank"
+      rel="noopener noreferrer"
       className="group flex items-center gap-2 px-2 py-1 bg-white dark:bg-algo-black hover:bg-algo-blue dark:hover:bg-algo-teal rounded-full z-10"
     >
       <dt>
