@@ -2,7 +2,7 @@ import { getSafeForumTopicUrl } from "@/functions";
 import { ChatBubbleLeftIcon } from "../icons/ChatBubbleLeftIcon";
 import { Link } from "../Link";
 
-export function DiscussionLink({ to = 'https://forum.algorand.co', postCount = 0 }: { to: string | undefined, postCount: number }) {
+export function DiscussionLink({ to, postCount = 0 }: { to: string | undefined, postCount: number }) {
   const safeUrl = getSafeForumTopicUrl(to);
   if (!safeUrl) return null;
 

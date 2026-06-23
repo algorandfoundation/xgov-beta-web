@@ -7,6 +7,7 @@ export function getSafeForumTopicUrl(url: string | undefined): string | undefine
   try {
     const parsed = new URL(url);
     if (parsed.origin !== ALGORAND_FORUM_ORIGIN) return undefined;
+    if (parsed.username || parsed.password) return undefined;
     if (!FORUM_TOPIC_PATH_PATTERN.test(parsed.pathname)) return undefined;
 
     return parsed.toString();
