@@ -306,7 +306,7 @@ See the [LICENSE](LICENSE) file for details.
 
 ## Support
 
-- **Documentation**: [xGov Beta Docs](https://docs.google.com/document/d/16bVBovvmMXvz-iazF7PK_FbsL-hetjomMk0xhPJZ-2g/edit)
+- **Documentation**: [xGov Beta Docs](https://docs.xgov.algorand.co/)
 - **Issues**: [GitHub Issues](https://github.com/algorandfoundation/xgov-beta-web/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/algorandfoundation/xgov-beta-web/discussions)
 
