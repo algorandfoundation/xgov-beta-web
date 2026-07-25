@@ -86,6 +86,7 @@ PUBLIC_REGISTRY_APP_ID=
 # Optional: Daemon configuration for voter assignment
 XGOV_DAEMON_MNEMONIC=
 COMMITTEE_R2_PREFIX=
+DEV_COMMITTEE_API_BASE_URL=
 MAX_CONCURRENT_PROPOSALS=5
 MAX_REQUESTS_PER_PROPOSAL=5
 ```
@@ -96,6 +97,10 @@ under an environment-specific directory, for example `mainnet-.../committee/`
 or `testnet-.../committee/`; leave it empty when files are stored at the bucket
 root. The app exposes `GET /api/committees` to list files and
 `GET /api/committees/{committeeId}.json` to view a file.
+For local development against a deployed network, set
+`DEV_COMMITTEE_API_BASE_URL` to that deployment's origin. Local committee file
+requests will be proxied through the Astro API route, avoiding browser CORS and
+the need for remote R2 preview access. This setting is ignored in production.
 
 ### 4. Start Local Algorand Network
 

@@ -100,10 +100,7 @@ export function ProfilePage({
   const proposer = useProposer(address);
   const proposalsQuery = useProposalsByProposer(address);
   const nfd = useNFD(address);
-  const votingHistory = useVotingHistory(
-    address,
-    xgov.data?.votingAddress,
-  );
+  const votingHistory = useVotingHistory(address);
   const votingPower = useVotingPower(address);
   const [activeTab, setActiveTab] = useState<'xgov' | 'proposer'>('xgov');
   const xgovTabRef = useRef<HTMLButtonElement>(null);
