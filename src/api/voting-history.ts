@@ -34,6 +34,10 @@ const VOTE_PROPOSAL_METHOD = new algosdk.ABIMethod({
 });
 
 const VOTE_PROPOSAL_SELECTOR = VOTE_PROPOSAL_METHOD.getSelector();
+const VOTE_EVENT_SELECTORS = [
+  new Uint8Array([0x5e, 0xf0, 0xd3, 0xf1]),
+  new Uint8Array([0x15, 0x77, 0xf6, 0xe7]), // Legacy first proposal
+];
 
 function selectorMatches(arg: Uint8Array): boolean {
   if (arg.length < 4) return false;
@@ -41,6 +45,16 @@ function selectorMatches(arg: Uint8Array): boolean {
     if (arg[i] !== VOTE_PROPOSAL_SELECTOR[i]) return false;
   }
   return true;
+}
+
+function voteEventMatches(log: Uint8Array, xgovAddress: string): boolean {
+  if (log.length < 36) return false;
+  const selectorMatches = VOTE_EVENT_SELECTORS.some((selector) =>
+    selector.every((byte, index) => log[index] === byte),
+  );
+  return (
+    selectorMatches && algosdk.encodeAddress(log.slice(4, 36)) === xgovAddress
+  );
 }
 
 function getIndexerField<T>(
@@ -60,44 +74,78 @@ function appIdMatches(applicationId: bigint | number | undefined): boolean {
   return applicationId !== undefined && BigInt(applicationId) === RegistryAppID;
 }
 
-async function fetchAllAppCallTransactions(address: string) {
-  const allTransactions: any[] = [];
+async function fetchProposalVoteTransaction(
+  proposalId: bigint,
+  xgovAddress: string,
+): Promise<any | undefined> {
   let nextToken: string | undefined;
+  const seenTokens = new Set<string>();
 
   do {
-    let query = indexer
-      .lookupAccountTransactions(address)
-      .txType("appl")
-      .limit(1000);
-
-    if (nextToken) {
-      query = query.nextToken(nextToken);
-    }
+    let query = indexer.lookupApplicationLogs(proposalId).limit(1000);
+    if (nextToken) query = query.nextToken(nextToken);
 
     const response = await query.do();
-    allTransactions.push(...response.transactions);
-    nextToken =
-      response.nextToken ??
-      (response as unknown as Record<string, string | undefined>)["next-token"];
+    for (const logData of response.logData ?? []) {
+      if (logData.logs.some((log) => voteEventMatches(log, xgovAddress))) {
+        return (await indexer.lookupTransactionByID(logData.txid).do())
+          .transaction;
+      }
+    }
+
+    if (!response.nextToken || seenTokens.has(response.nextToken)) break;
+    seenTokens.add(response.nextToken);
+    nextToken = response.nextToken;
   } while (nextToken);
 
-  return allTransactions;
+  return undefined;
 }
 
 export async function getVotingHistory(
   xgovAddress: string,
   votingAddress?: string,
 ): Promise<VoteHistoryEntry[]> {
-  // Fetch transactions for both the xGov address and their voting address (if delegated)
-  const addresses = new Set([xgovAddress]);
-  if (votingAddress && votingAddress !== xgovAddress) {
-    addresses.add(votingAddress);
+  // Kept for API compatibility; proposal events identify delegated votes by xGov.
+  void votingAddress;
+
+  const proposals = await getAllProposals();
+  const committeeCache = new Map<
+    string,
+    Promise<Map<string, number> | undefined>
+  >();
+
+  function loadCommittee(
+    committeeId: Uint8Array,
+  ): Promise<Map<string, number> | undefined> {
+    const committeeKey = Buffer.from(committeeId).toString("base64");
+    let committee = committeeCache.get(committeeKey);
+    if (!committee) {
+      committee = getXGovCommitteeMap(Buffer.from(committeeId)).catch(
+        () => undefined,
+      );
+      committeeCache.set(committeeKey, committee);
+    }
+    return committee;
   }
 
-  const transactionSets = await Promise.all(
-    [...addresses].map((addr) => fetchAllAppCallTransactions(addr)),
+  // Committee membership limits the search to proposals relevant to this xGov.
+  const relevantProposals = (
+    await Promise.all(
+      proposals.map(async (proposal) => {
+        if (!proposal.committeeId || proposal.committeeId.length === 0) {
+          return undefined;
+        }
+        const committee = await loadCommittee(proposal.committeeId);
+        return committee?.has(xgovAddress) ? proposal : undefined;
+      }),
+    )
+  ).filter((proposal): proposal is ProposalSummaryCardDetails => !!proposal);
+
+  const allTransactions = await Promise.all(
+    relevantProposals.map((proposal) =>
+      fetchProposalVoteTransaction(proposal.id, xgovAddress),
+    ),
   );
-  const allTransactions = transactionSets.flat();
 
   // Filter for voteProposal calls to the registry app
   const voteTxns: {
@@ -110,6 +158,7 @@ export async function getVotingHistory(
   }[] = [];
 
   for (const txn of allTransactions) {
+    if (!txn) continue;
     const appTxn = getIndexerField<Record<string, unknown>>(
       txn,
       "applicationTransaction",
@@ -162,7 +211,6 @@ export async function getVotingHistory(
   }
 
   // Cross-reference with proposals for titles and status
-  const proposals = await getAllProposals();
   const proposalMap = new Map<bigint, ProposalSummaryCardDetails>();
   for (const p of proposals) {
     proposalMap.set(p.id, p);
@@ -170,25 +218,6 @@ export async function getVotingHistory(
 
   // Track which proposals the xGov actually voted on
   const votedProposalIds = new Set(voteTxns.map((v) => v.proposalId));
-
-  // Load committee data for each unique committeeId to get totalVotes per member
-  const committeeCache = new Map<string, Map<string, number>>();
-
-  async function loadCommittee(
-    committeeId: Uint8Array,
-  ): Promise<Map<string, number> | undefined> {
-    const committeeKey = Buffer.from(committeeId).toString("base64");
-    if (!committeeCache.has(committeeKey)) {
-      try {
-        const memberMap = await getXGovCommitteeMap(Buffer.from(committeeId));
-        committeeCache.set(committeeKey, memberMap);
-      } catch {
-        // Committee data not available
-      }
-    }
-    return committeeCache.get(committeeKey);
-  }
-
   const entries: VoteHistoryEntry[] = [];
 
   // Build entries for actual votes
