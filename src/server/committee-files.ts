@@ -51,57 +51,6 @@ export interface CommitteeFileSummary {
 const COMMITTEE_FILE_NAME_PATTERN = /^[A-Za-z0-9_-]+\.json$/;
 const DEFAULT_COMMITTEE_R2_PREFIX = "";
 
-function getDevCommitteeApiBaseUrl(locals: App.Locals): string | null {
-  if (!import.meta.env.DEV) {
-    return null;
-  }
-
-  const value = getStringEnvironmentVariable(
-    "DEV_COMMITTEE_API_BASE_URL",
-    locals,
-    "",
-  ).trim();
-  if (!value) {
-    return null;
-  }
-
-  const url = new URL(value);
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error("DEV_COMMITTEE_API_BASE_URL must use HTTP or HTTPS");
-  }
-
-  return url.toString();
-}
-
-async function getCommitteeFileFromDevApi(
-  fileName: string,
-  baseUrl: string,
-  request: Request,
-): Promise<Response> {
-  const url = new URL(`/api/committees/${fileName}`, baseUrl);
-  const headers = new Headers();
-  const ifNoneMatch = request.headers.get("if-none-match");
-  if (ifNoneMatch) {
-    headers.set("if-none-match", ifNoneMatch);
-  }
-
-  const response = await fetch(url, { headers });
-  const responseHeaders = new Headers({
-    "cache-control": response.headers.get("cache-control") ?? "no-cache",
-    "content-type": response.headers.get("content-type") ?? "application/json",
-  });
-  const etag = response.headers.get("etag");
-  if (etag) {
-    responseHeaders.set("etag", etag);
-  }
-
-  return new Response(response.body, {
-    headers: responseHeaders,
-    status: response.status,
-    statusText: response.statusText,
-  });
-}
-
 function isCommitteeMember(member: unknown): member is CommitteeMember {
   return (
     !!member &&
@@ -222,11 +171,6 @@ export async function getCommitteeFileResponse(
 ): Promise<Response> {
   if (!isValidCommitteeFileName(fileName)) {
     return new Response("Invalid committee file name", { status: 400 });
-  }
-
-  const devApiBaseUrl = getDevCommitteeApiBaseUrl(locals);
-  if (devApiBaseUrl) {
-    return getCommitteeFileFromDevApi(fileName, devApiBaseUrl, request);
   }
 
   const bucket = getCommitteeBucket(locals);
