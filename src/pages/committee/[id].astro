@@ -94,17 +94,12 @@ const privateAlgorand = getAlgorandClient(Astro.locals, ["BACKEND", "PUBLIC"]);
 const registryClient = getRegistryClient(privateAlgorand);
 const hasPeriod = periodStart !== undefined && periodEnd !== undefined;
 
-const [registry, allProposals, period, artifactCounts] = await Promise.all([
+const [registry, allProposals, artifactCounts] = await Promise.all([
   getGlobalState(registryClient),
   getAllProposals(privateAlgorand).catch((error) => {
     console.error("Failed to load proposals for committee page", error);
     return [];
   }),
-  hasPeriod
-    ? resolveCommitteePeriod(periodStart!, periodEnd!, (round) =>
-        getBlockTimestamp(round, privateAlgorand.client.algod),
-      )
-    : Promise.resolve(null),
   hasPeriod
     ? fetchCommitteeArtifactCounts(networkGenesisHash, periodStart!, periodEnd!)
     : Promise.resolve({ proposerCount: null, subscribedCount: null }),
@@ -116,6 +111,17 @@ const activeCommitteeId =
     ? committeeIdToSafeFileName(Buffer.from(registry.committeeId))
     : undefined;
 const isActive = !!activeCommitteeId && activeCommitteeId === id;
+
+// Resolved after the Registry read so an ended committee whose activeEnd block
+// lookup fails transiently is left blank rather than projected into the future.
+const period = hasPeriod
+  ? await resolveCommitteePeriod(
+      periodStart!,
+      periodEnd!,
+      (round) => getBlockTimestamp(round, privateAlgorand.client.algod),
+      isActive,
+    )
+  : null;
 
 const toDate = (ts: number | null | undefined) =>
   ts !== null && ts !== undefined ? new Date(ts * 1000) : null;

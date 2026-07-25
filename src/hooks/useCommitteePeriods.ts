@@ -57,10 +57,18 @@ export function useCommitteePeriods(committees: CommitteeVotingPower[]) {
               return [committeeId, EMPTY_PERIOD];
             }
 
+            // Only the currently-running (newest) committee should have a missing
+            // activeEnd block; avoid projecting ended committees when a lookup
+            // fails transiently.
+            const newestPeriodStart = Math.max(
+              ...committees.map((c) => c.periodStart ?? -1),
+            );
+
             const period = await resolveCommitteePeriod(
               periodStart,
               periodEnd,
               getBlockTimestamp,
+              periodStart === newestPeriodStart,
             );
 
             return [

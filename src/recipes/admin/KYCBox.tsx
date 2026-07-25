@@ -106,7 +106,7 @@ export const KYCBox = ({
       {errorMessage && <div className="text-algo-red mb-4">{errorMessage}</div>}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredProposerBoxes.length === 0 ? (
-          <div>No Proposers found.</div>
+          <div className="text-gray-500 dark:text-gray-400">No Proposers found.</div>
         ) : (
           filteredProposerBoxes.map((proposerBox) => (
             <KYCCard

@@ -124,11 +124,17 @@ export interface CommitteePeriodTimestamps {
  *
  * `getTimestamp` is injected so callers can supply the algod client appropriate to
  * their context (the browser's public client, or a server-side backend client).
+ *
+ * Only the currently-running committee should be missing its activeEnd block, so
+ * callers that can tell an ended committee apart should pass
+ * `projectActiveEnd: false` for those — otherwise a transient lookup failure is
+ * indistinguishable from a block that doesn't exist yet, and gets projected.
  */
 export async function resolveCommitteePeriod(
   periodStart: number,
   periodEnd: number,
   getTimestamp: (round: number) => Promise<number | null>,
+  projectActiveEnd = true,
 ): Promise<CommitteePeriodTimestamps> {
   const [prodStart, prodEnd, activeEndTs] = await Promise.all([
     getTimestamp(periodStart),
@@ -141,6 +147,7 @@ export async function resolveCommitteePeriod(
   let activeEnd = activeEndTs;
   if (
     activeEndTs === null &&
+    projectActiveEnd &&
     prodStart !== null &&
     prodEnd !== null &&
     periodEnd > periodStart
