@@ -1,14 +1,18 @@
-import { cn } from "@/functions";
+import {
+  cn,
+  formatDateRange,
+  formatRoundsRange,
+  sharePercent,
+  truncateCommitteeId,
+} from "@/functions";
 import type { CommitteeVotingPower } from "@/api/committee";
+import { COMMITTEE_SPEC_URL as SPEC_URL } from "@/api/committee-artifacts";
 import {
   useCommitteePeriods,
   ACTIVE_PERIOD_BLOCKS,
   type CommitteePeriod,
 } from "@/hooks";
 import { InfoIcon } from "lucide-react";
-import { format } from "date-fns";
-
-const SPEC_URL = "https://docs.xgov.algorand.co/specs/xgov-committee";
 
 export interface VotingPowerProps {
   committees: CommitteeVotingPower[];
@@ -21,36 +25,6 @@ export interface VotingPowerProps {
   isLoading?: boolean;
   isError?: boolean;
   className?: string;
-}
-
-// Governance-period bounds are multiples of 1,000,000 rounds, e.g. 52M.
-function abbreviateRound(round: number): string {
-  const millions = round / 1_000_000;
-  return `${Number.isInteger(millions) ? millions : millions.toFixed(1)}M`;
-}
-
-function formatRoundsRange(start?: number, end?: number): string | null {
-  if (start === undefined || end === undefined) return null;
-  return `${abbreviateRound(start)} – ${abbreviateRound(end)}`;
-}
-
-// "Jan 19 – Apr 20, 2025" within a year; "Oct 17, 2025 – Jan 15, 2026" across one.
-function formatDateRange(start: Date | null, end: Date | null): string | null {
-  if (!start && !end) return null;
-  if (start && end) {
-    return start.getFullYear() === end.getFullYear()
-      ? `${format(start, "MMM d")} – ${format(end, "MMM d, yyyy")}`
-      : `${format(start, "MMM d, yyyy")} – ${format(end, "MMM d, yyyy")}`;
-  }
-  return format((start ?? end) as Date, "MMM d, yyyy");
-}
-
-function truncateCommitteeId(id: string): string {
-  return id.length > 14 ? `${id.slice(0, 8)}…${id.slice(-4)}` : id;
-}
-
-function sharePercent(userVotes: number, totalVotes: number): string {
-  return totalVotes > 0 ? ((userVotes / totalVotes) * 100).toFixed(1) : "0.0";
 }
 
 // Active period is [periodEnd, periodEnd + 1M) — the primary date/round range.
@@ -113,20 +87,20 @@ function AccentBar({
   );
 }
 
-// The committee id, kept as a discreet link to the raw committee JSON.
-function CommitteeIdLink({ committeeId }: { committeeId: string }) {
+// The committee id, kept as a discreet identifier. The whole row links to the
+// committee page, so this is deliberately not a link of its own.
+function CommitteeIdLabel({ committeeId }: { committeeId: string }) {
   return (
-    <a
-      href={`/api/committees/${committeeId}.json`}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={`View raw committee data (${committeeId})`}
-      className="truncate font-mono text-algo-black-50 hover:text-algo-black-70 hover:underline dark:text-gray-500 dark:hover:text-gray-300"
+    <span
+      title={committeeId}
+      className="truncate font-mono text-algo-black-50 dark:text-gray-500"
     >
       {truncateCommitteeId(committeeId)}
-    </a>
+    </span>
   );
 }
+
+const committeeHref = (committeeId: string) => `/committee/${committeeId}`;
 
 interface RowProps {
   committee: CommitteeVotingPower;
@@ -141,12 +115,16 @@ function DesktopRow({ committee, period, active }: RowProps) {
   );
 
   return (
-    <div className="grid grid-cols-[2.1fr_0.9fr_0.9fr_1fr_0.8fr] items-center gap-5 border-b border-black/[0.08] py-[18px] dark:border-white/10">
+    <a
+      href={committeeHref(committee.committeeId)}
+      // Full-bleed hover band, so the columns stay aligned with the header row.
+      className="group grid grid-cols-[2.1fr_0.9fr_0.9fr_1fr_0.8fr] items-center gap-5 border-b border-black/[0.08] py-[18px] transition-colors hover:bg-algo-blue-10/40 dark:border-white/10 dark:hover:bg-white/5"
+    >
       <div className="flex min-w-0 items-center gap-4">
         <AccentBar active={active} className="h-10 w-1" />
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-center gap-2.5">
-            <span className="text-lg font-bold tracking-[-0.01em] text-algo-black dark:text-white">
+            <span className="text-lg font-bold tracking-[-0.01em] text-algo-black transition-colors group-hover:text-algo-blue dark:text-white dark:group-hover:text-algo-teal">
               {headline ?? activeRounds ?? "Unknown period"}
             </span>
             <StatusBadge active={active} />
@@ -164,7 +142,7 @@ function DesktopRow({ committee, period, active }: RowProps) {
           <div className="flex min-w-0 items-center gap-2 text-[12.5px] tabular-nums text-algo-black-70 dark:text-gray-400">
             <div className="flex min-w-0 items-center gap-1.5">
               <span>ID</span>
-              <CommitteeIdLink committeeId={committee.committeeId} />
+              <CommitteeIdLabel committeeId={committee.committeeId} />
             </div>
             {prodDates && (
               <span className="ml-auto whitespace-nowrap pl-2">
@@ -186,7 +164,7 @@ function DesktopRow({ committee, period, active }: RowProps) {
       <span className="text-right text-[15px] tabular-nums text-algo-black-70 dark:text-gray-400">
         {committee.memberCount.toLocaleString()}
       </span>
-    </div>
+    </a>
   );
 }
 
@@ -234,12 +212,15 @@ function MobileRow({
   );
 
   return (
-    <div className="flex gap-3.5 border-t border-black/[0.08] py-4 dark:border-white/10">
+    <a
+      href={committeeHref(committee.committeeId)}
+      className="group flex gap-3.5 border-t border-black/[0.08] py-4 transition-colors hover:bg-algo-blue-10/40 dark:border-white/10 dark:hover:bg-white/5"
+    >
       <AccentBar active={active} className="w-1 self-stretch" />
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div className="flex flex-col gap-1.5">
           <div className="flex items-start justify-between gap-2.5">
-            <span className="text-[17px] font-bold leading-tight tracking-[-0.01em] text-algo-black dark:text-white">
+            <span className="text-[17px] font-bold leading-tight tracking-[-0.01em] text-algo-black transition-colors group-hover:text-algo-blue dark:text-white dark:group-hover:text-algo-teal">
               {headline ?? activeRounds ?? "Unknown period"}
             </span>
             <StatusBadge active={active} />
@@ -251,7 +232,7 @@ function MobileRow({
             <span>{activeRounds && `Voting rounds ${activeRounds}`}</span>
             <span className="flex min-w-0 items-center gap-1.5">
               <span>ID</span>
-              <CommitteeIdLink committeeId={committee.committeeId} />
+              <CommitteeIdLabel committeeId={committee.committeeId} />
             </span>
             <span>{prodRounds && `Committee rounds ${prodRounds}`}</span>
             <span>{prodDates}</span>
@@ -272,7 +253,7 @@ function MobileRow({
           </MobileMetric>
         </div>
       </div>
-    </div>
+    </a>
   );
 }
 

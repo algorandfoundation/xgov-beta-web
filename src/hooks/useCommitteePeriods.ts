@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { getBlockTimestamp } from "@/api/blocks";
-import type { CommitteeVotingPower } from "@/api/committee";
+import {
+  ACTIVE_PERIOD_BLOCKS,
+  resolveCommitteePeriod,
+  type CommitteeVotingPower,
+} from "@/api/committee";
 
-// A committee is active for the 1M-block period that follows its block-production
-// period, i.e. [periodEnd, periodEnd + ACTIVE_PERIOD_BLOCKS). Per the xGov spec.
-export const ACTIVE_PERIOD_BLOCKS = 1_000_000;
+export { ACTIVE_PERIOD_BLOCKS };
 
 export interface CommitteePeriod {
   // Active period [periodEnd, periodEnd + 1M) — the primary (headline) range.
@@ -20,14 +22,16 @@ export type CommitteePeriodMap = Record<string, CommitteePeriod>;
 const toDate = (ts: number | null): Date | null =>
   ts !== null ? new Date(ts * 1000) : null;
 
+const EMPTY_PERIOD: CommitteePeriod = {
+  activeStart: null,
+  activeEnd: null,
+  prodStart: null,
+  prodEnd: null,
+};
+
 /**
- * Resolves the two date ranges each committee spans, from real block timestamps:
- *  - the block-production period [periodStart, periodEnd) where votes are counted;
- *  - the active period [periodEnd, periodEnd + 1M) when the committee votes.
- *
- * Production bounds are always in the past (block production is retroactive). The
- * active period's end is in the future for the currently-running committee, so it
- * is projected from the observed production block rate.
+ * Resolves the active and block-production date ranges of each committee from
+ * real block timestamps. See `resolveCommitteePeriod` for the projection rules.
  */
 export function useCommitteePeriods(committees: CommitteeVotingPower[]) {
   // Stable key from every round we need to resolve.
@@ -50,44 +54,22 @@ export function useCommitteePeriods(committees: CommitteeVotingPower[]) {
           async (committee): Promise<[string, CommitteePeriod]> => {
             const { committeeId, periodStart, periodEnd } = committee;
             if (periodStart === undefined || periodEnd === undefined) {
-              return [
-                committeeId,
-                {
-                  activeStart: null,
-                  activeEnd: null,
-                  prodStart: null,
-                  prodEnd: null,
-                },
-              ];
+              return [committeeId, EMPTY_PERIOD];
             }
 
-            const activeEndRound = periodEnd + ACTIVE_PERIOD_BLOCKS;
-            const [startTs, prodEndTs, activeEndTs] = await Promise.all([
-              getBlockTimestamp(periodStart),
-              getBlockTimestamp(periodEnd),
-              getBlockTimestamp(activeEndRound),
-            ]);
-
-            // The active period is still running when its end block doesn't exist
-            // yet — project it forward from the observed production block rate.
-            let activeEnd = activeEndTs;
-            if (
-              activeEndTs === null &&
-              startTs !== null &&
-              prodEndTs !== null &&
-              periodEnd > periodStart
-            ) {
-              const rate = (prodEndTs - startTs) / (periodEnd - periodStart);
-              activeEnd = prodEndTs + ACTIVE_PERIOD_BLOCKS * rate;
-            }
+            const period = await resolveCommitteePeriod(
+              periodStart,
+              periodEnd,
+              getBlockTimestamp,
+            );
 
             return [
               committeeId,
               {
-                activeStart: toDate(prodEndTs),
-                activeEnd: toDate(activeEnd),
-                prodStart: toDate(startTs),
-                prodEnd: toDate(prodEndTs),
+                activeStart: toDate(period.activeStart),
+                activeEnd: toDate(period.activeEnd),
+                prodStart: toDate(period.prodStart),
+                prodEnd: toDate(period.prodEnd),
               },
             ];
           },
