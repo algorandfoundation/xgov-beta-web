@@ -10,6 +10,7 @@ import {
   subscribeXgov,
   unsubscribeXgov,
 } from "@/api";
+import { committeeIdToSafeFileName } from "@/api/committee";
 import {
   type TransactionSigner,
 } from "algosdk";
@@ -172,6 +173,14 @@ export function ProfilePage({
     }));
   }, [proposalsQuery.data, nfd.data]);
 
+  // The committee currently registered on the xGov Registry is the only "Active"
+  // one; match it against each committee by its safe-filename id.
+  const activeCommitteeId = useMemo(() => {
+    const committeeId = registry.data?.committeeId;
+    if (!committeeId || committeeId.length === 0) return undefined;
+    return committeeIdToSafeFileName(Buffer.from(committeeId));
+  }, [registry.data?.committeeId]);
+
   if (!address || isLoading) {
     return <LoadingSpinner />;
   }
@@ -329,6 +338,8 @@ export function ProfilePage({
         {activeTab === 'xgov' && (
           <VotingPower
             committees={votingPower.data ?? []}
+            activeCommitteeId={activeCommitteeId}
+            isOwnAccount={activeAddress === address}
             isLoading={votingPower.isLoading}
             isError={votingPower.isError}
           />
