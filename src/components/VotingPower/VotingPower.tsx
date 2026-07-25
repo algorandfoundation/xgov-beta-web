@@ -1,5 +1,6 @@
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 import { cn } from "@/functions";
+import { network } from "@/api/algorand/algo-client";
 import type { CommitteeVotingPower } from "@/api/committee";
 import { CopyButton } from "@/components/CopyButton/CopyButton";
 import { CheckIcon, CopyIcon } from "lucide-react";
@@ -123,6 +124,11 @@ export function VotingPower({
         Voting Power{" "}
         {committees.length > 0 ? `(${committees.length})` : null}
       </h2>
+      {network !== "mainnet" && (
+        <p className="mb-2 text-gray-500 dark:text-gray-400">
+          Voting power is only displayed properly on mainnet.
+        </p>
+      )}
       {isLoading ? (
         <LoadingSpinner />
       ) : isError ? (
