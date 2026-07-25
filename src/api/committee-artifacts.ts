@@ -70,9 +70,8 @@ export interface CommitteePipelineStep {
 }
 
 export interface CommitteeArtifacts {
-  baseUrl: string | null;
-  // The canonical ARC-86 committee file, by round range and by committee id.
-  committeeFileUrl: string | null;
+  // The publisher's own copy of this committee file, addressed by committee id.
+  // The by-round-range copy is the same file, already linked by the last step.
   committeeByIdUrl: string | null;
   steps: CommitteePipelineStep[];
 }
@@ -159,8 +158,6 @@ export function buildCommitteeArtifacts({
   ];
 
   return {
-    baseUrl,
-    committeeFileUrl: link(`committee/${range}.json`),
     committeeByIdUrl: link(`committee/${safeCommitteeId}.json`),
     steps,
   };

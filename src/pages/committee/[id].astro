@@ -150,7 +150,7 @@ const proposals = allProposals.filter((proposal) => {
   return committeeIdToSafeFileName(Buffer.from(proposal.committeeId)) === id;
 });
 
-const { steps, committeeFileUrl } = buildCommitteeArtifacts({
+const { steps, committeeByIdUrl } = buildCommitteeArtifacts({
   periodStart: periodStart ?? 0,
   periodEnd: periodEnd ?? 0,
   totalMembers,
@@ -274,6 +274,19 @@ const description = `The xGov committee active for rounds ${activeRounds ?? "—
           >
             Raw committee file ↗
           </a>
+          {
+            committeeByIdUrl && (
+              <a
+                href={committeeByIdUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="The publisher's own copy — diff it against the file served above"
+                class="text-white/80 hover:text-white hover:underline"
+              >
+                Published copy ↗
+              </a>
+            )
+          }
         </div>
       </section>
 

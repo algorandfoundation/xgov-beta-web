@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckIcon, CopyIcon } from "lucide-react";
 import { cn } from "@/functions";
 
@@ -18,12 +18,18 @@ export function CommitteeIdChip({
   className,
 }: CommitteeIdChipProps) {
   const [copied, setCopied] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  // Clicking again restarts the two seconds rather than stacking timers, and an
+  // unmount mid-countdown leaves nothing pending.
+  useEffect(() => () => clearTimeout(resetTimer.current), []);
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(committeeId);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      clearTimeout(resetTimer.current);
+      resetTimer.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       // Clipboard unavailable (insecure context, denied permission) — the id is
       // fully visible in the chip, so there is nothing to recover from.
