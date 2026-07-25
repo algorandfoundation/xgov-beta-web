@@ -68,11 +68,19 @@ export function useCommitteePeriods(committees: CommitteeVotingPower[]) {
               getBlockTimestamp(activeEndRound),
             ]);
 
+            // Only the currently-running (newest) committee should have a missing
+            // activeEnd block; avoid projecting ended committees when a lookup
+            // fails transiently.
+            const newestPeriodStart = Math.max(
+              ...committees.map((c) => c.periodStart ?? -1),
+            );
+
             // The active period is still running when its end block doesn't exist
             // yet — project it forward from the observed production block rate.
             let activeEnd = activeEndTs;
             if (
               activeEndTs === null &&
+              periodStart === newestPeriodStart &&
               startTs !== null &&
               prodEndTs !== null &&
               periodEnd > periodStart
