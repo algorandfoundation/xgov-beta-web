@@ -1,4 +1,5 @@
 import { cn } from "@/functions";
+import { network } from "@/api/algorand/algo-client";
 import type { CommitteeVotingPower } from "@/api/committee";
 import {
   useCommitteePeriods,
@@ -351,6 +352,12 @@ export function VotingPower({
           How committees work
         </a>
       </div>
+
+      {network !== "mainnet" && (
+        <p className="mb-4 text-[15px] text-algo-black-50 dark:text-gray-400">
+          Voting power is only displayed properly on mainnet.
+        </p>
+      )}
 
       {isLoading ? (
         <SkeletonRows />
