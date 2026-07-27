@@ -25,6 +25,10 @@ export const REGISTRY_SPEC_URL =
 export const ARC86_URL = "https://arc.algorand.foundation/ARCs/arc-0086";
 export const GENERATOR_SOURCE_URL =
   "https://github.com/algorandfoundation/xgov-committees";
+// Block headers are read per round, so there is no single artifact file to point
+// at — the generator's own docs are what explain the step.
+export const GENERATOR_BLOCKS_DOC_URL =
+  "https://github.com/algorandfoundation/xgov-committees/blob/main/packages/committee-generator/README.md#blocks";
 
 // The artifact host namespaces each network by "{genesisId}-{genesisHash}". Only
 // the genesis hash is recorded in the committee file, so the ids are mapped here.
@@ -113,8 +117,10 @@ export function buildCommitteeArtifacts({
       title: "Block headers",
       body: `Every block header in rounds ${periodStart.toLocaleString()}–${periodEnd.toLocaleString()} is read from an archival node. One block is one potential vote.`,
       count: `${formatCount(blockCount)} headers`,
-      artifact: `blocks/${periodStart}.json`,
-      href: link(`blocks/${periodStart}.json`),
+      // One file per round, so no single path is worth linking — the label names
+      // the shape of the output and the link explains how the step reads it.
+      artifact: "blocks/{round}.json",
+      href: GENERATOR_BLOCKS_DOC_URL,
     },
     {
       n: 2,

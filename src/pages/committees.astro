@@ -1,0 +1,116 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Page from "@/layouts/Page.astro";
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+import {
+  getAlgorandClient,
+  getAllProposals,
+  getGlobalState,
+  getProposalStatusPhase,
+  getRegistryClient,
+} from "@/api";
+import { getBlockTimestamp, getCurrentRound } from "@/api/blocks";
+import { committeeIdToSafeFileName } from "@/api/committee";
+import {
+  loadCommitteeSummaries,
+  type CommitteeSummary,
+} from "@/server/committee-index";
+
+import { CommitteesIndexIsland } from "@/components/CommitteesIndex/CommitteesIndex";
+
+const privateAlgorand = getAlgorandClient(Astro.locals, ["BACKEND", "PUBLIC"]);
+const registryClient = getRegistryClient(privateAlgorand);
+
+const [registry, allProposals, currentRound] = await Promise.all([
+  getGlobalState(registryClient),
+  getAllProposals(privateAlgorand).catch((error) => {
+    console.error("Failed to load proposals for the committees index", error);
+    return [];
+  }),
+  getCurrentRound(privateAlgorand.client.algod),
+]);
+
+// Only the committee currently declared on the Registry is the active one.
+const activeCommitteeId =
+  registry?.committeeId && registry.committeeId.length > 0
+    ? committeeIdToSafeFileName(Buffer.from(registry.committeeId))
+    : undefined;
+
+// Withdrawn, deleted and blocked proposals are hidden across the app; the counts
+// here should read the same way as the ones on each committee page.
+const HIDDEN_PHASES = ["Empty", "Deleted", "Blocked"];
+
+const proposalCounts: Record<string, number> = {};
+for (const proposal of allProposals) {
+  if (!proposal.committeeId || proposal.committeeId.length === 0) continue;
+  if (HIDDEN_PHASES.includes(getProposalStatusPhase(proposal))) continue;
+  const id = committeeIdToSafeFileName(Buffer.from(proposal.committeeId));
+  proposalCounts[id] = (proposalCounts[id] ?? 0) + 1;
+}
+
+let committees: CommitteeSummary[] = [];
+let loadFailed = false;
+
+try {
+  committees = await loadCommitteeSummaries(Astro.locals, {
+    activeCommitteeId,
+    proposalCounts,
+    getTimestamp: (round) =>
+      getBlockTimestamp(round, privateAlgorand.client.algod),
+  });
+} catch (error) {
+  // The bucket being unreachable is a transient problem, not an empty registry
+  // of committees — say so rather than claiming none have been published.
+  console.error("Failed to list committees", error);
+  loadFailed = true;
+}
+
+const active = committees.find((committee) => committee.active);
+
+const title = "xGov committees";
+const description = active
+  ? `Every xGov committee, newest first. The committee currently voting holds ${active.votes.toLocaleString()} votes across ${active.members.toLocaleString()} members, derived from the blocks each address proposed in the preceding 3M rounds.`
+  : "Every xGov committee, newest first: the rounds each one votes in, the blocks its members and votes were counted from, and how many proposals it was assigned.";
+---
+
+<Layout title={title} description={description}>
+  <Page>
+    <Breadcrumb slot="breadcrumb">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>Committees</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+
+    <div class="mx-auto mb-16 mt-6 flex max-w-[1280px] flex-col gap-4 md:gap-6">
+      {
+        loadFailed ? (
+          <p class="text-[15px] text-algo-black-50 dark:text-gray-400">
+            The published committee files could not be read just now. Please try
+            again shortly.
+          </p>
+        ) : (
+          <CommitteesIndexIsland
+            client:only="react"
+            committees={committees}
+            currentRound={currentRound}
+          />
+        )
+      }
+    </div>
+  </Page>
+</Layout>

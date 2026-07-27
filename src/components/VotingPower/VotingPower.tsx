@@ -3,9 +3,14 @@ import {
   formatDateRange,
   formatRoundsRange,
   sharePercent,
-  truncateCommitteeId,
 } from "@/functions";
 import { network } from "@/api/algorand/algo-client";
+import {
+  CommitteeAccentBar,
+  CommitteeIdLabel,
+  CommitteeMetric,
+  CommitteeStatusBadge,
+} from "@/components/CommitteeRow/CommitteeRow";
 import type { CommitteeVotingPower } from "@/api/committee";
 import { COMMITTEE_SPEC_URL as SPEC_URL } from "@/api/committee-artifacts";
 import {
@@ -58,49 +63,6 @@ function rowValues(committee: CommitteeVotingPower, period?: CommitteePeriod) {
   };
 }
 
-function StatusBadge({ active }: { active: boolean }) {
-  return active ? (
-    <span className="inline-flex shrink-0 items-center rounded-full bg-algo-green px-2 py-0.5 text-xs font-semibold text-white">
-      Active
-    </span>
-  ) : (
-    <span className="inline-flex shrink-0 items-center rounded-full border border-black/[0.08] bg-algo-black-50/10 px-2 py-0.5 text-xs font-semibold text-algo-black-70 dark:border-white/10 dark:bg-white/5 dark:text-gray-300">
-      Ended
-    </span>
-  );
-}
-
-function AccentBar({
-  active,
-  className,
-}: {
-  active: boolean;
-  className?: string;
-}) {
-  return (
-    <span
-      className={cn(
-        "shrink-0 rounded-sm",
-        active ? "bg-algo-green" : "bg-algo-black-30 dark:bg-white/20",
-        className,
-      )}
-    />
-  );
-}
-
-// The committee id, kept as a discreet identifier. The whole row links to the
-// committee page, so this is deliberately not a link of its own.
-function CommitteeIdLabel({ committeeId }: { committeeId: string }) {
-  return (
-    <span
-      title={committeeId}
-      className="truncate font-mono text-algo-black-50 dark:text-gray-500"
-    >
-      {truncateCommitteeId(committeeId)}
-    </span>
-  );
-}
-
 const committeeHref = (committeeId: string) => `/committee/${committeeId}`;
 
 interface RowProps {
@@ -122,13 +84,13 @@ function DesktopRow({ committee, period, active }: RowProps) {
       className="group grid grid-cols-[2.1fr_0.9fr_0.9fr_1fr_0.8fr] items-center gap-5 border-b border-black/[0.08] py-[18px] transition-colors hover:bg-algo-blue-10/40 dark:border-white/10 dark:hover:bg-white/5"
     >
       <div className="flex min-w-0 items-center gap-4">
-        <AccentBar active={active} className="h-10 w-1" />
+        <CommitteeAccentBar active={active} className="h-10 w-1" />
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-center gap-2.5">
             <span className="text-lg font-bold tracking-[-0.01em] text-algo-black transition-colors group-hover:text-algo-blue dark:text-white dark:group-hover:text-algo-teal">
               {headline ?? activeRounds ?? "Unknown period"}
             </span>
-            <StatusBadge active={active} />
+            <CommitteeStatusBadge active={active} />
           </div>
           {activeRounds && (
             <div className="text-[12.5px] tabular-nums text-algo-black-70 dark:text-gray-400">
@@ -169,38 +131,6 @@ function DesktopRow({ committee, period, active }: RowProps) {
   );
 }
 
-function MobileMetric({
-  label,
-  children,
-  emphasized,
-  accent,
-}: {
-  label: string;
-  children: React.ReactNode;
-  emphasized?: boolean;
-  accent?: boolean;
-}) {
-  return (
-    <div>
-      <div className="mb-0.5 text-[11px] uppercase tracking-[0.06em] text-algo-black-50 dark:text-gray-500">
-        {label}
-      </div>
-      <div
-        className={cn(
-          "tabular-nums",
-          accent
-            ? "text-xl font-bold text-algo-blue dark:text-algo-teal"
-            : emphasized
-              ? "text-xl font-bold text-algo-black dark:text-white"
-              : "text-[15px] text-algo-black-70 dark:text-gray-400",
-        )}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
 function MobileRow({
   committee,
   period,
@@ -217,14 +147,14 @@ function MobileRow({
       href={committeeHref(committee.committeeId)}
       className="group flex gap-3.5 border-t border-black/[0.08] py-4 transition-colors hover:bg-algo-blue-10/40 dark:border-white/10 dark:hover:bg-white/5"
     >
-      <AccentBar active={active} className="w-1 self-stretch" />
+      <CommitteeAccentBar active={active} className="w-1 self-stretch" />
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div className="flex flex-col gap-1.5">
           <div className="flex items-start justify-between gap-2.5">
             <span className="text-[17px] font-bold leading-tight tracking-[-0.01em] text-algo-black transition-colors group-hover:text-algo-blue dark:text-white dark:group-hover:text-algo-teal">
               {headline ?? activeRounds ?? "Unknown period"}
             </span>
-            <StatusBadge active={active} />
+            <CommitteeStatusBadge active={active} />
           </div>
           {/* 2×2 grid for the whole mobile range (< md) — voting rounds ·
               committee id / committee rounds · committee dates; columns aligned
@@ -240,18 +170,18 @@ function MobileRow({
           </div>
         </div>
         <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-          <MobileMetric label={labels.votes} emphasized>
+          <CommitteeMetric label={labels.votes} emphasized>
             {committee.userVotes.toLocaleString()}
-          </MobileMetric>
-          <MobileMetric label={labels.share} accent>
+          </CommitteeMetric>
+          <CommitteeMetric label={labels.share} accent>
             {sharePercent(committee.userVotes, committee.totalVotes)}%
-          </MobileMetric>
-          <MobileMetric label="Total votes">
+          </CommitteeMetric>
+          <CommitteeMetric label="Total votes">
             {committee.totalVotes.toLocaleString()}
-          </MobileMetric>
-          <MobileMetric label="Members">
+          </CommitteeMetric>
+          <CommitteeMetric label="Members">
             {committee.memberCount.toLocaleString()}
-          </MobileMetric>
+          </CommitteeMetric>
         </div>
       </div>
     </a>

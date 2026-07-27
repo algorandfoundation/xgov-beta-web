@@ -23,6 +23,7 @@ import {
   ACTIVE_PERIOD_BLOCKS,
   committeeIdToSafeFileName,
   resolveCommitteePeriod,
+  safeFileNameToCommitteeId,
 } from "@/api/committee";
 import {
   buildCommitteeArtifacts,
@@ -33,7 +34,11 @@ import {
   isValidCommitteeFileName,
   type CommitteeData,
 } from "@/server/committee-files";
-import { formatDateRange, formatRoundsRange } from "@/functions";
+import {
+  formatDateRange,
+  formatRoundsRange,
+  truncateCommitteeId,
+} from "@/functions";
 
 import { CommitteeIdChip } from "@/components/CommitteeIdChip/CommitteeIdChip";
 import { CommitteeMembers } from "@/components/CommitteeMembers/CommitteeMembers";
@@ -84,11 +89,7 @@ const totalVotes =
 
 // The committee id as declared on the Registry — the safe filename is that
 // base64 value with its padding stripped.
-const base64Id = id.replace(/-/g, "+").replace(/_/g, "/");
-const committeeIdBase64 = base64Id.padEnd(
-  base64Id.length + ((4 - (base64Id.length % 4)) % 4),
-  "=",
-);
+const committeeIdBase64 = safeFileNameToCommitteeId(id);
 
 const privateAlgorand = getAlgorandClient(Astro.locals, ["BACKEND", "PUBLIC"]);
 const registryClient = getRegistryClient(privateAlgorand);
@@ -185,7 +186,16 @@ const description = `The xGov committee active for rounds ${activeRounds ?? "—
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbPage>Committee</BreadcrumbPage>
+          <BreadcrumbLink href="/committees">Committees</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage
+            title={committeeIdBase64}
+            className="font-mono text-[13px] md:text-sm"
+          >
+            {truncateCommitteeId(id)}
+          </BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -193,7 +203,7 @@ const description = `The xGov committee active for rounds ${activeRounds ?? "—
     <div class="mx-auto mb-16 mt-6 flex max-w-[1280px] flex-col gap-4 md:gap-6">
       <!-- Hero — what this committee is, and the id everything else hangs off -->
       <section
-        class="rounded-2xl bg-algo-blue p-5 text-white md:p-9 dark:bg-algo-blue-90"
+        class="rounded-2xl bg-algo-blue p-5 text-white md:p-9 dark:bg-algo-teal dark:text-algo-black"
       >
         <div
           class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-10"
@@ -201,17 +211,17 @@ const description = `The xGov committee active for rounds ${activeRounds ?? "—
           <div class="flex min-w-0 flex-col gap-2.5">
             <div class="flex items-center gap-3">
               <span
-                class="text-[11px] uppercase tracking-[0.08em] text-white/60 md:text-xs"
+                class="text-[11px] uppercase tracking-[0.08em] text-white/60 md:text-xs dark:text-algo-black/60"
               >
                 Committee voting period
               </span>
               {
                 isActive ? (
-                  <span class="inline-flex items-center rounded-full bg-algo-green px-2.5 py-0.5 text-xs font-bold text-algo-black">
+                  <span class="inline-flex items-center rounded-full bg-algo-green px-2.5 py-0.5 text-xs font-bold text-algo-black dark:bg-algo-black dark:text-algo-green">
                     Active
                   </span>
                 ) : (
-                  <span class="inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-bold text-white">
+                  <span class="inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-algo-black/15 dark:text-algo-black">
                     Ended
                   </span>
                 )
@@ -225,7 +235,7 @@ const description = `The xGov committee active for rounds ${activeRounds ?? "—
             </h1>
 
             <div
-              class="font-mono text-[12.5px] leading-relaxed tabular-nums text-white/70 md:text-sm"
+              class="font-mono text-[12.5px] leading-relaxed tabular-nums text-white/70 md:text-sm dark:text-algo-black/70"
             >
               {activeRounds && <>Voting rounds {activeRounds}</>}
               {
@@ -246,12 +256,12 @@ const description = `The xGov committee active for rounds ${activeRounds ?? "—
           </div>
 
           <dl
-            class="grid shrink-0 grid-cols-2 gap-x-8 gap-y-4 border-t border-white/20 pt-5 md:gap-x-10 lg:gap-x-10 lg:gap-y-[22px] lg:border-0 lg:pt-0"
+            class="grid shrink-0 grid-cols-2 gap-x-8 gap-y-4 border-t border-white/20 pt-5 md:gap-x-10 lg:gap-x-10 lg:gap-y-[22px] lg:border-0 lg:pt-0 dark:border-algo-black/20"
           >
             {
               stats.map((stat) => (
                 <div>
-                  <dt class="mb-1 text-[11px] uppercase tracking-[0.06em] text-white/55 md:text-[11.5px]">
+                  <dt class="mb-1 text-[11px] uppercase tracking-[0.06em] text-white/55 md:text-[11.5px] dark:text-algo-black/60">
                     {stat.label}
                   </dt>
                   <dd class="text-[21px] font-bold leading-none tabular-nums md:text-[26px]">
@@ -264,13 +274,13 @@ const description = `The xGov committee active for rounds ${activeRounds ?? "—
         </div>
 
         <div
-          class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/20 pt-4 text-[13.5px] font-semibold"
+          class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/20 pt-4 text-[13.5px] font-semibold dark:border-algo-black/20"
         >
           <a
             href={`/api/committees/${id}.json`}
             target="_blank"
             rel="noopener noreferrer"
-            class="text-white/80 hover:text-white hover:underline"
+            class="text-white/80 hover:text-white hover:underline dark:text-algo-black/80 dark:hover:text-algo-black"
           >
             Raw committee file ↗
           </a>
@@ -281,7 +291,7 @@ const description = `The xGov committee active for rounds ${activeRounds ?? "—
                 target="_blank"
                 rel="noopener noreferrer"
                 title="The publisher's own copy — diff it against the file served above"
-                class="text-white/80 hover:text-white hover:underline"
+                class="text-white/80 hover:text-white hover:underline dark:text-algo-black/80 dark:hover:text-algo-black"
               >
                 Published copy ↗
               </a>
@@ -299,13 +309,21 @@ const description = `The xGov committee active for rounds ${activeRounds ?? "—
         class="rounded-2xl border border-black/[0.08] bg-white p-5 md:p-8 dark:border-white/10 dark:bg-transparent"
       >
         <h2
-          class="mb-4 text-xl font-bold text-algo-black md:text-[22px] dark:text-white"
+          class="mb-2 text-xl font-bold text-algo-black md:text-[22px] dark:text-white"
         >
           Proposals assigned to this committee <span
             class="font-normal text-algo-black-50 dark:text-gray-500"
             >({proposals.length})</span
           >
         </h2>
+        <p
+          class="mb-4 max-w-[760px] text-sm leading-relaxed text-algo-black-70 md:text-[15px] dark:text-gray-400"
+        >
+          A proposal is assigned to whichever committee is active at the moment
+          it is created, before it is drafted or submitted. The assignment is
+          fixed from then on, so a proposal is always voted on by the committee
+          it was created under, even if a later one has since taken over.
+        </p>
         {
           proposals.length === 0 ? (
             <p class="text-[15px] text-algo-black-50 dark:text-gray-400">
