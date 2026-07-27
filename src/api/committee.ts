@@ -105,6 +105,11 @@ export interface CommitteeVotingPower {
   userVotes: number;
   totalVotes: number;
   memberCount: number;
+  // First block of the committee's governance period (inclusive). Undefined for
+  // legacy committee files that predate the period fields.
+  periodStart?: number;
+  // Last block of the committee's governance period (exclusive).
+  periodEnd?: number;
 }
 
 /**
@@ -152,13 +157,23 @@ export async function getVotingPowerForAddress(
 
     const totalVotes = data.xGovs.reduce((sum, m) => sum + m.votes, 0);
 
+    const periodStart =
+      typeof data.periodStart === "number" ? data.periodStart : undefined;
+    const periodEnd =
+      typeof data.periodEnd === "number" ? data.periodEnd : undefined;
+
     votingPower.push({
       committeeId: safeId,
       userVotes: member.votes,
       totalVotes,
       memberCount: data.xGovs.length,
+      periodStart,
+      periodEnd,
     });
   }
+
+  // Newest committee first — governance periods are ordered by their start block.
+  votingPower.sort((a, b) => (b.periodStart ?? 0) - (a.periodStart ?? 0));
 
   return votingPower;
 }
