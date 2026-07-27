@@ -27,6 +27,16 @@ const path = Astro.url.pathname;
       <nav class="hidden md:flex gap-6 font-bold text-lg">
         <GetStartedNavIsland client:only="react" path={path} />
         <Link
+          data-testid="header-committees-link"
+          className={cn(
+            path === "/committees" ? "bg-algo-black/10" : "",
+            "px-2 py-1 hover:bg-white/10 dark:hover:bg-algo-black/10 rounded-md",
+          )}
+          to="/committees"
+        >
+          Committees
+        </Link>
+        <Link
           data-testid="header-docs-link"
           className={cn(
             path === "/docs" ? "bg-algo-black/10" : "",

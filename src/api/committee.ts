@@ -25,6 +25,19 @@ export function committeeIdToSafeFileName(committeeId: Buffer): string {
 }
 
 /**
+ * Reverses `committeeIdToSafeFileName` — the committee ID as declared on the
+ * Registry, i.e. the safe filename with its URL-safe characters and stripped
+ * base64 padding put back.
+ *
+ * @param safeFileName The safe filename form of the committee ID
+ * @returns The committee ID in its full, padded base64 form
+ */
+export function safeFileNameToCommitteeId(safeFileName: string): string {
+  const base64 = safeFileName.replace(/-/g, "+").replace(/_/g, "/");
+  return base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+}
+
+/**
  * Attempts to load committee data from the external API
  *
  * @param safeCommitteeId The safe filename version of the committee ID
@@ -157,6 +170,37 @@ export async function resolveCommitteePeriod(
   }
 
   return { activeStart: prodEnd, activeEnd, prodStart, prodEnd };
+}
+
+/**
+ * One committee as the index lists it: the figures printed on its row, plus the
+ * two round ranges it spans already resolved to dates.
+ *
+ * Timestamps are unix seconds rather than `Date`s so the whole set survives the
+ * trip from the server-rendered page into the client island unchanged.
+ */
+export interface CommitteeSummary {
+  // Safe-filename form of the committee id — the `/committee/{id}` route param.
+  id: string;
+  // The same id in its full, padded base64 form, as declared on the Registry.
+  // Null when the committee was only published under a round-keyed file name,
+  // which does not carry an id.
+  idBase64: string | null;
+  // True only for the committee currently declared on the Registry.
+  active: boolean;
+  // Bounds of the block-production period, or null for legacy committee files
+  // that predate the period fields.
+  periodStart: number | null;
+  periodEnd: number | null;
+  members: number;
+  votes: number;
+  proposals: number;
+  // Active period [periodEnd, periodEnd + 1M) — the headline range.
+  activeStart: number | null;
+  activeEnd: number | null;
+  // Block-production period [periodStart, periodEnd) — "blocks counted".
+  prodStart: number | null;
+  prodEnd: number | null;
 }
 
 export interface CommitteeVotingPower {
