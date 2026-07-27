@@ -46,7 +46,16 @@ Core responsibilities:
   - `src/components/ui/` contains shared UI primitives.
 
 - `src/pages/api/committees/`
+
   - Committee listing and file-view endpoints backed by the Cloudflare R2 `COMMITTEE_BUCKET` binding.
+
+- `src/pages/committee/[id].astro`
+  - Committee detail page, keyed by the safe-filename form of the committee ID
+    (the same key the R2 committee file is stored under). Server-rendered from
+    the ARC-86 committee file, the Registry global state, block timestamps, and
+    the proposals carrying that committee ID. `src/api/committee-artifacts.ts`
+    derives the links to the transparency artifacts published at
+    `xgov-committees.algorand.tech` for the file's network.
 
 ## Data Flows
 

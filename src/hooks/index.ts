@@ -1,6 +1,7 @@
 export * from "./useAdmin.ts";
 export * from "./useBalance.ts"
 export * from "./useCommitteePeriods.ts";
+export * from "./useCommitteeVotes.ts";
 export * from "./useCouncilVotes.ts";
 export * from "./useDiscourseTopic.ts";
 export * from "./useNFD.ts";
