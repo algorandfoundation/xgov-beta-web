@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getSafeForumTopicUrl } from "@/functions";
 
 export const validatorSchemas = {
   title: () => { return z.string().refine((val) => val !== "", { message: "Required field" }) },
@@ -44,7 +45,7 @@ export const validatorSchemas = {
     return z
       .string()
       .refine((val) => val !== "", { message: "Required field" })
-      .refine((val) => val.includes("https://forum.algorand.co/t/"), {
+      .refine((val) => !!getSafeForumTopicUrl(val), {
         message:
           "Must be a valid forum link beginning with 'https://forum.algorand.co/t/'",
       })

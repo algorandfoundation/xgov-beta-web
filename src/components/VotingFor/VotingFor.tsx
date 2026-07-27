@@ -38,7 +38,7 @@ export function VotingFor({
         ) : isError ? (
           <p className="text-red-600">Error loading delegate information</p>
         ) : delegates.length === 0 ? (
-          <p>No delegates found</p>
+          <p className="text-gray-500 dark:text-gray-400">No delegates found</p>
         ) : <div className="inline-flex flex-wrap gap-2">
           {delegates.map((delegate) => (
             <DelegateItem key={delegate.xgov} xgov={delegate.xgov} />
