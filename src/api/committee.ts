@@ -100,6 +100,65 @@ export async function getCommitteeData(
   }
 }
 
+// A committee is active for the 1M-block period that follows its block-production
+// period, i.e. [periodEnd, periodEnd + ACTIVE_PERIOD_BLOCKS). Per the xGov spec.
+export const ACTIVE_PERIOD_BLOCKS = 1_000_000;
+
+// Unix seconds for the bounds of the two ranges a committee spans, or null where
+// the round has no block yet and could not be projected.
+export interface CommitteePeriodTimestamps {
+  activeStart: number | null;
+  activeEnd: number | null;
+  prodStart: number | null;
+  prodEnd: number | null;
+}
+
+/**
+ * Resolves the two date ranges a committee spans, from real block timestamps:
+ *  - the block-production period [periodStart, periodEnd) where votes are counted;
+ *  - the active period [periodEnd, periodEnd + 1M) when the committee votes.
+ *
+ * Production bounds are always in the past (block production is retroactive). The
+ * active period's end is in the future for the currently-running committee, so it
+ * is projected from the observed production block rate.
+ *
+ * `getTimestamp` is injected so callers can supply the algod client appropriate to
+ * their context (the browser's public client, or a server-side backend client).
+ *
+ * Only the currently-running committee should be missing its activeEnd block, so
+ * callers that can tell an ended committee apart should pass
+ * `projectActiveEnd: false` for those — otherwise a transient lookup failure is
+ * indistinguishable from a block that doesn't exist yet, and gets projected.
+ */
+export async function resolveCommitteePeriod(
+  periodStart: number,
+  periodEnd: number,
+  getTimestamp: (round: number) => Promise<number | null>,
+  projectActiveEnd = true,
+): Promise<CommitteePeriodTimestamps> {
+  const [prodStart, prodEnd, activeEndTs] = await Promise.all([
+    getTimestamp(periodStart),
+    getTimestamp(periodEnd),
+    getTimestamp(periodEnd + ACTIVE_PERIOD_BLOCKS),
+  ]);
+
+  // The active period is still running when its end block doesn't exist yet —
+  // project it forward from the observed production block rate.
+  let activeEnd = activeEndTs;
+  if (
+    activeEndTs === null &&
+    projectActiveEnd &&
+    prodStart !== null &&
+    prodEnd !== null &&
+    periodEnd > periodStart
+  ) {
+    const rate = (prodEnd - prodStart) / (periodEnd - periodStart);
+    activeEnd = prodEnd + ACTIVE_PERIOD_BLOCKS * rate;
+  }
+
+  return { activeStart: prodEnd, activeEnd, prodStart, prodEnd };
+}
+
 export interface CommitteeVotingPower {
   committeeId: string;
   userVotes: number;

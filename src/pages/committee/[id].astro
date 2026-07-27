@@ -1,0 +1,323 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Page from "@/layouts/Page.astro";
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+import {
+  getAlgorandClient,
+  getAllProposals,
+  getGlobalState,
+  getProposalStatusPhase,
+  getRegistryClient,
+} from "@/api";
+import { getBlockTimestamp } from "@/api/blocks";
+import {
+  ACTIVE_PERIOD_BLOCKS,
+  committeeIdToSafeFileName,
+  resolveCommitteePeriod,
+} from "@/api/committee";
+import {
+  buildCommitteeArtifacts,
+  fetchCommitteeArtifactCounts,
+} from "@/api/committee-artifacts";
+import {
+  getCommitteeDataFromR2,
+  isValidCommitteeFileName,
+  type CommitteeData,
+} from "@/server/committee-files";
+import { formatDateRange, formatRoundsRange } from "@/functions";
+
+import { CommitteeIdChip } from "@/components/CommitteeIdChip/CommitteeIdChip";
+import { CommitteeMembers } from "@/components/CommitteeMembers/CommitteeMembers";
+import { CommitteePipeline } from "@/components/CommitteePipeline/CommitteePipeline";
+import { CommitteeProposals } from "@/components/CommitteeProposals/CommitteeProposals";
+
+const { id } = Astro.params;
+
+// Committee ids reach us in their safe-filename form — the same string the
+// committee file is stored under.
+if (!id || !isValidCommitteeFileName(`${id}.json`)) {
+  return Astro.redirect("/404");
+}
+
+let committee: CommitteeData | null = null;
+try {
+  committee = await getCommitteeDataFromR2(`${id}.json`, Astro.locals);
+} catch (error) {
+  // The bucket being unreachable, or holding a malformed file, is not the same
+  // as a committee that does not exist — don't report it as "not found".
+  console.error(`Failed to load committee file ${id}.json`, error);
+  return Astro.redirect("/500");
+}
+
+if (!committee) {
+  return Astro.redirect("/404");
+}
+
+const asNumber = (value: unknown): number | undefined =>
+  typeof value === "number" && Number.isFinite(value) ? value : undefined;
+
+const periodStart = asNumber(committee.periodStart);
+const periodEnd = asNumber(committee.periodEnd);
+const registryId = asNumber(committee.registryId);
+const networkGenesisHash =
+  typeof committee.networkGenesisHash === "string"
+    ? committee.networkGenesisHash
+    : undefined;
+
+const members = committee.xGovs.map((member) => ({
+  address: member.address,
+  votes: member.votes,
+}));
+const totalMembers = asNumber(committee.totalMembers) ?? members.length;
+const totalVotes =
+  asNumber(committee.totalVotes) ??
+  members.reduce((sum, member) => sum + member.votes, 0);
+
+// The committee id as declared on the Registry — the safe filename is that
+// base64 value with its padding stripped.
+const base64Id = id.replace(/-/g, "+").replace(/_/g, "/");
+const committeeIdBase64 = base64Id.padEnd(
+  base64Id.length + ((4 - (base64Id.length % 4)) % 4),
+  "=",
+);
+
+const privateAlgorand = getAlgorandClient(Astro.locals, ["BACKEND", "PUBLIC"]);
+const registryClient = getRegistryClient(privateAlgorand);
+const hasPeriod = periodStart !== undefined && periodEnd !== undefined;
+
+const [registry, allProposals, artifactCounts] = await Promise.all([
+  getGlobalState(registryClient),
+  getAllProposals(privateAlgorand).catch((error) => {
+    console.error("Failed to load proposals for committee page", error);
+    return [];
+  }),
+  hasPeriod
+    ? fetchCommitteeArtifactCounts(networkGenesisHash, periodStart!, periodEnd!)
+    : Promise.resolve({ proposerCount: null, subscribedCount: null }),
+]);
+
+// Only the committee currently declared on the Registry is the active one.
+const activeCommitteeId =
+  registry?.committeeId && registry.committeeId.length > 0
+    ? committeeIdToSafeFileName(Buffer.from(registry.committeeId))
+    : undefined;
+const isActive = !!activeCommitteeId && activeCommitteeId === id;
+
+// Resolved after the Registry read so an ended committee whose activeEnd block
+// lookup fails transiently is left blank rather than projected into the future.
+const period = hasPeriod
+  ? await resolveCommitteePeriod(
+      periodStart!,
+      periodEnd!,
+      (round) => getBlockTimestamp(round, privateAlgorand.client.algod),
+      isActive,
+    )
+  : null;
+
+const toDate = (ts: number | null | undefined) =>
+  ts !== null && ts !== undefined ? new Date(ts * 1000) : null;
+
+const activeDates = formatDateRange(
+  toDate(period?.activeStart),
+  toDate(period?.activeEnd),
+);
+const prodDates = formatDateRange(
+  toDate(period?.prodStart),
+  toDate(period?.prodEnd),
+);
+const activeRounds = hasPeriod
+  ? formatRoundsRange(periodEnd, periodEnd! + ACTIVE_PERIOD_BLOCKS)
+  : null;
+const prodRounds = formatRoundsRange(periodStart, periodEnd);
+
+// Withdrawn, deleted and blocked proposals are hidden across the app; a
+// committee's record should read the same way. Ordering is left to the shared
+// list component, so these rows match the proposal index exactly.
+const HIDDEN_PHASES = ["Empty", "Deleted", "Blocked"];
+
+const proposals = allProposals.filter((proposal) => {
+  if (!proposal.committeeId || proposal.committeeId.length === 0) return false;
+  if (HIDDEN_PHASES.includes(getProposalStatusPhase(proposal))) return false;
+  return committeeIdToSafeFileName(Buffer.from(proposal.committeeId)) === id;
+});
+
+const { steps, committeeByIdUrl } = buildCommitteeArtifacts({
+  periodStart: periodStart ?? 0,
+  periodEnd: periodEnd ?? 0,
+  totalMembers,
+  totalVotes,
+  networkGenesisHash,
+  safeCommitteeId: id,
+  proposerCount: artifactCounts.proposerCount,
+  subscribedCount: artifactCounts.subscribedCount,
+});
+
+const stats = [
+  { label: "Members", value: totalMembers.toLocaleString() },
+  { label: "Total votes", value: totalVotes.toLocaleString() },
+  { label: "Proposals assigned", value: proposals.length.toLocaleString() },
+  {
+    label: "Registry app",
+    value: registryId !== undefined ? registryId.toLocaleString() : "—",
+  },
+];
+
+const headline = activeDates ?? activeRounds ?? "Committee";
+const title = `Committee ${headline}`;
+const description = `The xGov committee active for rounds ${activeRounds ?? "—"}: ${totalMembers.toLocaleString()} members holding ${totalVotes.toLocaleString()} votes, derived from the blocks each address proposed in rounds ${prodRounds ?? "—"}.`;
+---
+
+<Layout title={title} description={description}>
+  <Page>
+    <Breadcrumb slot="breadcrumb">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>Committee</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+
+    <div class="mx-auto mb-16 mt-6 flex max-w-[1280px] flex-col gap-4 md:gap-6">
+      <!-- Hero — what this committee is, and the id everything else hangs off -->
+      <section
+        class="rounded-2xl bg-algo-blue p-5 text-white md:p-9 dark:bg-algo-blue-90"
+      >
+        <div
+          class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-10"
+        >
+          <div class="flex min-w-0 flex-col gap-2.5">
+            <div class="flex items-center gap-3">
+              <span
+                class="text-[11px] uppercase tracking-[0.08em] text-white/60 md:text-xs"
+              >
+                Committee voting period
+              </span>
+              {
+                isActive ? (
+                  <span class="inline-flex items-center rounded-full bg-algo-green px-2.5 py-0.5 text-xs font-bold text-algo-black">
+                    Active
+                  </span>
+                ) : (
+                  <span class="inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-bold text-white">
+                    Ended
+                  </span>
+                )
+              }
+            </div>
+
+            <h1
+              class="text-[26px] font-bold leading-[1.08] tracking-[-0.02em] md:text-[38px]"
+            >
+              {headline}
+            </h1>
+
+            <div
+              class="font-mono text-[12.5px] leading-relaxed tabular-nums text-white/70 md:text-sm"
+            >
+              {activeRounds && <>Voting rounds {activeRounds}</>}
+              {
+                activeRounds && prodRounds && (
+                  <span class="hidden md:inline"> · </span>
+                )
+              }
+              {activeRounds && prodRounds && <br class="md:hidden" />}
+              {prodRounds && <>Blocks counted {prodRounds}</>}
+              {prodDates && <> ({prodDates})</>}
+            </div>
+
+            <CommitteeIdChip
+              client:load
+              committeeId={committeeIdBase64}
+              className="mt-1.5 w-full max-w-[420px] self-start"
+            />
+          </div>
+
+          <dl
+            class="grid shrink-0 grid-cols-2 gap-x-8 gap-y-4 border-t border-white/20 pt-5 md:gap-x-10 lg:gap-x-10 lg:gap-y-[22px] lg:border-0 lg:pt-0"
+          >
+            {
+              stats.map((stat) => (
+                <div>
+                  <dt class="mb-1 text-[11px] uppercase tracking-[0.06em] text-white/55 md:text-[11.5px]">
+                    {stat.label}
+                  </dt>
+                  <dd class="text-[21px] font-bold leading-none tabular-nums md:text-[26px]">
+                    {stat.value}
+                  </dd>
+                </div>
+              ))
+            }
+          </dl>
+        </div>
+
+        <div
+          class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/20 pt-4 text-[13.5px] font-semibold"
+        >
+          <a
+            href={`/api/committees/${id}.json`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-white/80 hover:text-white hover:underline"
+          >
+            Raw committee file ↗
+          </a>
+          {
+            committeeByIdUrl && (
+              <a
+                href={committeeByIdUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="The publisher's own copy — diff it against the file served above"
+                class="text-white/80 hover:text-white hover:underline"
+              >
+                Published copy ↗
+              </a>
+            )
+          }
+        </div>
+      </section>
+
+      <CommitteePipeline steps={steps} />
+
+      <!-- The shared proposal rows use `algo-black-90` as their own dark
+           surface, so this card stays transparent in dark mode to keep them
+           legible. -->
+      <section
+        class="rounded-2xl border border-black/[0.08] bg-white p-5 md:p-8 dark:border-white/10 dark:bg-transparent"
+      >
+        <h2
+          class="mb-4 text-xl font-bold text-algo-black md:text-[22px] dark:text-white"
+        >
+          Proposals assigned to this committee <span
+            class="font-normal text-algo-black-50 dark:text-gray-500"
+            >({proposals.length})</span
+          >
+        </h2>
+        {
+          proposals.length === 0 ? (
+            <p class="text-[15px] text-algo-black-50 dark:text-gray-400">
+              No proposal has been assigned to this committee.
+            </p>
+          ) : (
+            <CommitteeProposals client:only="react" proposals={proposals} />
+          )
+        }
+      </section>
+
+      <CommitteeMembers client:load members={members} totalVotes={totalVotes} />
+    </div>
+  </Page>
+</Layout>

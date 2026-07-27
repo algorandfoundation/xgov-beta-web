@@ -25,7 +25,8 @@ import {
   type ProposalSummaryCardDetails,
 } from "@/api";
 import { cn } from "@/functions/utils";
-import { getSafeForumTopicUrl } from "@/functions";
+import { getSafeForumTopicUrl, truncateCommitteeId } from "@/functions";
+import { committeeIdToSafeFileName } from "@/api/committee";
 import { ChatBubbleLeftIcon } from "@/components/icons/ChatBubbleLeftIcon";
 import { InfinityMirrorButton } from "@/components/button/InfinityMirrorButton/InfinityMirrorButton";
 import { Button } from "@/components/ui/button";
@@ -998,6 +999,12 @@ export function ProposalInfo({
     ].includes(p.status) && p.id !== proposal.id
   )
 
+  // The committee is only stamped onto the proposal once voters are assigned,
+  // so proposals still in discussion have none to link to.
+  const committeeId = proposal.committeeId?.length
+    ? committeeIdToSafeFileName(Buffer.from(proposal.committeeId))
+    : null;
+
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -1116,15 +1123,30 @@ export function ProposalInfo({
                 </div>
               )}
 
-              <div className="text-sm md:text-base inline-flex items-center justify-between gap-3 mt-2 mb-6 p-1 pr-4">
-                Created By
-                <UserPill nfdName={nfd.data?.name} variant="secondary" address={proposal.proposer} />
-                <span className="text-2xl font-semibold text-algo-blue dark:text-algo-teal">
-                  //
-                </span>
-                <span className="text-algo-black-50 dark:text-white">
-                  {formatDistanceToNow(new Date((Number(proposal.openTs) * 1000)), { addSuffix: true }).replace('about ', '').replace(' minutes', 'm').replace(' minute', 'm').replace(' hours', 'h').replace(' hour', 'h').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}
-                </span>
+              <div className="flex flex-col items-start mt-2 mb-6">
+                <div className="text-sm md:text-base inline-flex items-center justify-between gap-3 p-1 pr-4">
+                  Created By
+                  <UserPill nfdName={nfd.data?.name} variant="secondary" address={proposal.proposer} />
+                  <span className="text-2xl font-semibold text-algo-blue dark:text-algo-teal">
+                    //
+                  </span>
+                  <span className="text-algo-black-50 dark:text-white">
+                    {formatDistanceToNow(new Date((Number(proposal.openTs) * 1000)), { addSuffix: true }).replace('about ', '').replace(' minutes', 'm').replace(' minute', 'm').replace(' hours', 'h').replace(' hour', 'h').replace(' days', 'd').replace(' day', 'd').replace(' weeks', 'w').replace(' week', 'w')}
+                  </span>
+                </div>
+
+                {!!committeeId && (
+                  <div className="text-sm md:text-base flex flex-wrap items-center gap-3 p-1 pr-4">
+                    Voting Committee
+                    <Link
+                      to={`/committee/${committeeId}`}
+                      title={`View committee ${committeeId}`}
+                      className="font-mono text-algo-blue dark:text-algo-teal hover:underline"
+                    >
+                      {truncateCommitteeId(committeeId)}
+                    </Link>
+                  </div>
+                )}
               </div>
 
               {!!_pastProposals && !!_pastProposals.length && (

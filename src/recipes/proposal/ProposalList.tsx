@@ -81,6 +81,23 @@ export const proposalFilter = (
   return passes;
 };
 
+/**
+ * The order proposals are listed in across the app: voting proposals first
+ * (soonest to close leading), then everything else most recently opened first.
+ */
+export const proposalListOrder = (
+  a: ProposalSummaryCardDetails,
+  b: ProposalSummaryCardDetails,
+): number => {
+  const aVoting = a.status === ProposalStatus.ProposalStatusVoting;
+  const bVoting = b.status === ProposalStatus.ProposalStatusVoting;
+  if (aVoting !== bVoting) return aVoting ? -1 : 1;
+  if (aVoting && bVoting) {
+    return Number((a.voteOpenTs + a.votingDuration) - (b.voteOpenTs + b.votingDuration));
+  }
+  return Number(b.openTs - a.openTs);
+};
+
 export function StackedList({
   proposals,
   activeAddress,

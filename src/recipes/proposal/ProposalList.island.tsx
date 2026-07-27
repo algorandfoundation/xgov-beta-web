@@ -3,7 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { useWallet } from "@txnlab/use-wallet-react";
 
 import { queryClient } from "@/stores/query.ts";
-import { type ProposalSummaryCardDetails, ProposalStatus } from "@/api";
+import { type ProposalSummaryCardDetails } from "@/api";
 import {
   useGetAllProposals,
   useNFDs,
@@ -12,7 +12,7 @@ import {
   useSearchParamsObserver,
   UseWallet,
 } from "@/hooks";
-import { proposalFilter, StackedList } from "@/recipes";
+import { proposalFilter, proposalListOrder, StackedList } from "@/recipes";
 import { LoadingSpinner } from "@/components/LoadingSpinner/LoadingSpinner";
 
 export function StackedListIsland({
@@ -61,18 +61,7 @@ export function StackedListQuery({
     () =>
       proposalsWithNFDs
         .filter((proposal) => proposalFilter(proposal, _searchParams))
-        .sort((a, b) => {
-          const aVoting = a.status === ProposalStatus.ProposalStatusVoting;
-          const bVoting = b.status === ProposalStatus.ProposalStatusVoting;
-          // Voting proposals come first
-          if (aVoting !== bVoting) return aVoting ? -1 : 1;
-          // Among voting proposals, sort by vote end time ascending (soonest ending first)
-          if (aVoting && bVoting) {
-            return Number((a.voteOpenTs + a.votingDuration) - (b.voteOpenTs + b.votingDuration));
-          }
-          // Remaining sorted by open timestamp descending (most recent first)
-          return Number(b.openTs - a.openTs);
-        }),
+        .sort(proposalListOrder),
     [proposalsWithNFDs, _searchParams],
   );
 
