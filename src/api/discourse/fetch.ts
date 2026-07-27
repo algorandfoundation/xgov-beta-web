@@ -20,6 +20,7 @@ export async function fetchDiscourseUsers(url: string, init: RequestInit = {}){
 export interface TopicSummary {
   postCount: number;
   recentAvatars: string[];
+  notice: string | null;
 }
 
 export async function fetchDiscourseTopic(url: string, init: RequestInit = {}, size: number = 48): Promise<TopicSummary | null> {
@@ -60,7 +61,8 @@ export async function fetchDiscourseTopic(url: string, init: RequestInit = {}, s
     
     return {
       postCount,
-      recentAvatars
+      recentAvatars,
+      notice: topic.post_stream.posts[0]?.notice?.cooked ?? null,
     }
   })
 }
