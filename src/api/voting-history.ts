@@ -90,7 +90,13 @@ export async function getVotingHistory(
 ): Promise<VoteHistoryEntry[]> {
   // Fetch transactions for both the xGov address and their voting address (if delegated)
   const addresses = new Set([xgovAddress]);
-  if (votingAddress && votingAddress !== xgovAddress) {
+  // Accounts without a voting delegation have their voting address set to either
+  // the zero address or themselves; skip so we don't query the indexer unnecessarily
+  if (
+    votingAddress &&
+    votingAddress !== xgovAddress &&
+    votingAddress !== algosdk.ALGORAND_ZERO_ADDRESS_STRING
+  ) {
     addresses.add(votingAddress);
   }
 
