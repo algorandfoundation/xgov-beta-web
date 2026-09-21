@@ -1,9 +1,14 @@
 import {
-  WalletId,
   WalletManager,
   WalletProvider,
-  type SupportedWallet,
+  type WalletAdapterConfig,
 } from "@txnlab/use-wallet-react";
+import { defly } from "@txnlab/use-wallet-defly";
+import { exodus } from "@txnlab/use-wallet-exodus";
+import { kibisis } from "@txnlab/use-wallet-kibisis";
+import { kmd } from "@txnlab/use-wallet-kmd";
+import { lute } from "@txnlab/use-wallet-lute";
+import { pera } from "@txnlab/use-wallet-pera";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "../src/components/ui/tooltip";
@@ -23,16 +28,16 @@ BigInt.prototype.toJSON = function () {
 
 const queryCache = new QueryClient();
 
-let walletProviders: SupportedWallet[] = [
-  WalletId.PERA,
-  WalletId.DEFLY,
-  { id: WalletId.LUTE, options: { siteName: "XGov Beta" } },
-  WalletId.EXODUS,
-  WalletId.KIBISIS,
+let walletProviders: WalletAdapterConfig[] = [
+  pera(),
+  defly(),
+  lute({ siteName: "XGov Beta" }),
+  exodus(),
+  kibisis(),
 ];
 
 if (import.meta.env.PUBLIC_KMD_SERVER) {
-  walletProviders = [WalletId.KMD, ...walletProviders];
+  walletProviders = [kmd(), ...walletProviders];
 }
 
 const walletManager = new WalletManager({
